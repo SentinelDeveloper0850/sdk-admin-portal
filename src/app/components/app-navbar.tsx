@@ -66,7 +66,7 @@ export default function AppNavbar() {
       </NavbarContent>
 
       <NavbarContent justify="end">
-        <NavbarItem className="hidden md:flex">
+        <NavbarItem className="hidden sm:flex">
           <ThemeSwitcher />
         </NavbarItem>
         {/* <NavbarItem className="hidden lg:flex">
