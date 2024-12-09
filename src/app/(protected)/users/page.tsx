@@ -110,7 +110,6 @@ const UsersPage: React.FC = () => {
             <Button isIconOnly color="primary" size="sm">
               <IconPlus />
             </Button>
-            ,
           </Link>,
         ]}
       />

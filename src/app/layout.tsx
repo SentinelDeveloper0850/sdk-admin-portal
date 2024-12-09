@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 
 import "antd/dist/reset.css";
 
-import Footer from "./components/app-footer";
 import Providers from "./components/providers";
 import "./globals.css";
 
@@ -32,14 +31,11 @@ export default function RootLayout({
           href="/logo.png"
           media="(prefers-color-scheme: dark)"
         />
-        {/* <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css"  rel="stylesheet" /> */}
       </head>
       <body className="h-screen w-screen">
         <Providers>
-          <main className="flex-grow overflow-auto">{children}</main>
-          <Footer />
+          {children}
         </Providers>
-        {/* <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script> */}
       </body>
     </html>
   );

@@ -1,91 +1,123 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React from "react";
 
-import { Button, Col, Form, Input, Row, message } from "antd";
+import { MailOutlined } from "@ant-design/icons";
+import { Button, Form, Input, Select, message } from "antd";
 
 import PageHeader from "@/app/components/page-header";
 
-const CreateUser: React.FC = () => {
+const CreateUser = () => {
+  const form = Form.useForm();
+  const selectedRole = Form.useWatch("role", form[0]);
+
   const router = useRouter();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSubmit = async (values: any) => {
     try {
       // Simulate API call (Replace with actual API integration)
-      console.log("Vehicle Data:", values);
+      console.log("Values:", values);
 
-      message.success("Vehicle created successfully!");
-      router.push("/vehicles"); // Navigate back to the Vehicles page
+      message.success("User created successfully!");
+      router.back(); // Navigate back to the Vehicles page
     } catch (error) {
       console.error(error);
-      message.error("Failed to create vehicle.");
+      message.error("Failed to create user.");
     }
   };
 
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
-        title="Create Vehicle"
-        subtitle="Add a new vehicle to your fleet"
+        title="Invite User"
+        subtitle="Invite a new user to the team"
         actions={[]}
       />
-      <Form layout="vertical" onFinish={handleSubmit}>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Enter name"
-              name="fname"
-              rules={[
-                {
-                  required: true,
-                  message: "Please enter user name",
-                },
-              ]}
-            >
-              <Input placeholder="Enter name" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Enter last name"
-              name="lname"
-              rules={[
-                {
-                  required: true,
-                  message: "Please enter user last name",
-                },
-              ]}
-            >
-              <Input placeholder="Enter last name" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Enter user role"
-              name="role"
-              rules={[
-                {
-                  required: true,
-                  message: "Please enter user role",
-                },
-              ]}
-            >
-              <Input placeholder="Enter user role" />
-            </Form.Item>
-          </Col>
-        </Row>
+      <Form
+        form={form[0]}
+        layout="vertical"
+        onFinish={handleSubmit}
+        className="w-1/3 items-start justify-start"
+      >
+        <Form.Item
+          label="First Names"
+          name="firstNames"
+          rules={[
+            {
+              required: true,
+              message: "Required",
+            },
+          ]}
+        >
+          <Input placeholder="Enter user first names" />
+        </Form.Item>
+        <Form.Item
+          label="Last Name"
+          name="lastName"
+          rules={[
+            {
+              required: true,
+              message: "Required",
+            },
+          ]}
+        >
+          <Input placeholder="Enter user last name" />
+        </Form.Item>
+        {selectedRole != "driver" && (
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              {
+                required: true,
+                message: "Required",
+              },
+            ]}
+          >
+            <Input
+              addonBefore={<MailOutlined />}
+              placeholder="Enter user email"
+            />
+          </Form.Item>
+        )}
+        <Form.Item
+          label="Phone"
+          name="phone"
+          rules={[
+            {
+              required: true,
+              message: "Required",
+            },
+          ]}
+        >
+          <Input addonBefore="+27" placeholder="Enter user phone" />
+        </Form.Item>
+        <Form.Item
+          label="User Role"
+          name="role"
+          rules={[
+            {
+              required: true,
+              message: "Required",
+            },
+          ]}
+        >
+          <Select placeholder="Select a role for the user">
+            <Select.Option key="1" value="admin">
+              Admin
+            </Select.Option>
+            <Select.Option key="2" value="driver">
+              Driver
+            </Select.Option>
+          </Select>
+        </Form.Item>
 
-        <Row justify="center">
-          <Col>
-            <Form.Item>
-              <Button type="primary" htmlType="submit">
-                Send Invite
-              </Button>
-            </Form.Item>
-          </Col>
-        </Row>
+        <Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            Send Invite
+          </Button>
+        </Form.Item>
       </Form>
     </div>
   );

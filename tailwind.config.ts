@@ -20,7 +20,17 @@ export default {
               DEFAULT: "#ffac00",
             },
           }
-        }
+        },
+        dark: {
+          colors: {
+            background: "#11181C", // or DEFAULT
+            foreground: "#FFFFFF", // or 50 to 900 DEFAULT
+            primary: {
+              foreground: "#11181C",
+              DEFAULT: "#ffac00",
+            },
+          }
+        },
       }
     }),
   ],

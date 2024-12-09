@@ -4,13 +4,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Button, Card, CardBody } from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
 import { Form, Input } from "antd";
 import axios from "axios";
 
 import { useAuth } from "@/context/auth-context";
-
-import PageHeader from "../page-header";
 
 const LoginForm = () => {
   const [form] = Form.useForm();
@@ -43,15 +41,9 @@ const LoginForm = () => {
       // Update user in context
       setUser(data.user);
 
-      // notification.success({
-      //   message: "Login successful",
-      // });
       router.push("/dashboard"); // Redirect to dashboard
     } catch (error: any) {
       console.error(error);
-      // notification.error({
-      //   message: error.message,
-      // });
     }
   };
 
@@ -74,31 +66,30 @@ const LoginForm = () => {
   ];
 
   return (
-    <Card>
-      <CardBody className="p-6">
-        <PageHeader
-          title="Login"
-          subtitle="Enter your email and password to access your account"
-          noDivider
-        />
-        <Form form={form} layout="vertical" onFinish={handleLogin}>
-          <Form.Item label="Email" name="email" rules={emailRules}>
-            <Input type="email" placeholder="Enter your email" />
-          </Form.Item>
-          <Form.Item label="Password" name="password" rules={passwordRules}>
-            <Input.Password placeholder="Enter your password" />
-          </Form.Item>
-          <Button color="primary" fullWidth onClick={() => form.submit()}>
-            Login
-          </Button>
-          <Link href="/auth/login">
-            <p className="mt-2 p-2 text-center">
-              Forgot password? <b>Recover</b>
-            </p>
-          </Link>
-        </Form>
-      </CardBody>
-    </Card>
+    <>
+      {/* <Card>
+        <CardBody className="p-6"> */}
+      <h1>Sign in</h1>
+      <p>Enter your email and password to access your account</p>
+      <Form form={form} layout="vertical" onFinish={handleLogin}>
+        <Form.Item label="Email" name="email" rules={emailRules}>
+          <Input type="email" placeholder="Enter your email" />
+        </Form.Item>
+        <Form.Item label="Password" name="password" rules={passwordRules}>
+          <Input.Password placeholder="Enter your password" />
+        </Form.Item>
+        <Button color="primary" fullWidth onClick={() => form.submit()}>
+          Login
+        </Button>
+        <Link href="/auth/login">
+          <p className="mt-2 p-2 text-center">
+            Forgot password? <b>Recover</b>
+          </p>
+        </Link>
+      </Form>
+      {/* </CardBody>
+      </Card> */}
+    </>
   );
 };
 
