@@ -1,5 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { z, ZodError } from "zod";
+import { ZodError, z } from "zod";
 
 export const env = createEnv({
   server: {
@@ -14,5 +14,5 @@ export const env = createEnv({
     process.exit(1);
   },
   emptyStringAsUndefined: true,
-  experimental__runtimeEnv: process.env
+  experimental__runtimeEnv: process.env,
 });

@@ -1,12 +1,14 @@
+/* eslint-disable @next/next/no-sync-scripts */
 import type { Metadata } from "next";
 
-import AppNavbar from "./components/app-navbar";
+import "antd/dist/reset.css";
+
+import Footer from "./components/app-footer";
 import Providers from "./components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Next.js Starter App",
-  description: "A basic starter for next.js",
+  title: "SDK Admin Portal",
 };
 
 export default function RootLayout({
@@ -17,18 +19,27 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <title>SDK Admin Portal</title>
         <link
           rel="icon"
-          href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>"
+          type="image/svg+xml"
+          href="/logo.png"
+          media="(prefers-color-scheme: light)"
         />
+        <link
+          rel="icon"
+          type="image/svg+xml"
+          href="/logo.png"
+          media="(prefers-color-scheme: dark)"
+        />
+        {/* <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css"  rel="stylesheet" /> */}
       </head>
       <body className="h-screen w-screen">
         <Providers>
-          <AppNavbar />
-          <main className="flex-grow overflow-auto bg-[url(/light-bg.svg)] bg-cover dark:bg-[url(/dark-bg.svg)]">
-            {children}
-          </main>
+          <main className="flex-grow overflow-auto">{children}</main>
+          <Footer />
         </Providers>
+        {/* <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script> */}
       </body>
     </html>
   );

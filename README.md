@@ -2,7 +2,15 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, install the project dependencies:
+
+Because the project uses Next15, peer dependencies may have not updated to be compatible, therefore we need to ensure that we install the legacy dependencies that were functional with Next14. The respective peers will update their packages at some point to support Next15, in which case this will no longer be necessary.
+
+```
+npm install --legacy-peer-deps
+```
+
+Next, run the development server:
 
 ```bash
 npm run dev

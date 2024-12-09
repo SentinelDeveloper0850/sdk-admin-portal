@@ -22,7 +22,7 @@ export function ThemeSwitcher({ showLabel }: { showLabel?: boolean }) {
       isSelected={theme === "light"}
       onValueChange={() => setTheme(theme === "light" ? "dark" : "light")}
       size="md"
-      color="success"
+      color="primary"
       startContent={<IconSun />}
       endContent={<IconMoon />}
     >

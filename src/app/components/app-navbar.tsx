@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import Image from "next/image";
+import { useState } from "react";
 
 import {
   Link,
@@ -12,12 +13,11 @@ import {
   NavbarMenuItem,
   NavbarMenuToggle,
 } from "@nextui-org/react";
-import { IconPackage } from "@tabler/icons-react";
 
 import { ThemeSwitcher } from "./theme-switcher";
 
 export default function AppNavbar() {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // Correct state management
 
   const menuItems = [
     {
@@ -43,21 +43,26 @@ export default function AppNavbar() {
   ];
 
   return (
-    <Navbar onMenuOpenChange={setIsMenuOpen}>
+    <Navbar
+      onMenuOpenChange={(isOpen) => setIsMenuOpen(isOpen)}
+      className="z-20"
+    >
       <NavbarContent>
         <NavbarMenuToggle
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           className="md:hidden"
         />
         <NavbarBrand>
-          <IconPackage />
-          <p className="font-bold text-inherit">Next.js Starter</p>
+          <Image src="/logoWhite.svg" alt="logo" width={85} height={75} />
+          {/* <p className="ml-2 font-semibold text-inherit">FleetSync</p> */}
         </NavbarBrand>
       </NavbarContent>
 
       <NavbarContent className="hidden gap-4 md:flex" justify="center">
         {menuItems.map((item, index) => (
-          <NavbarItem key={`${item}-${index}`}>
+          <NavbarItem key={index}>
+            {" "}
+            {/* Use index if labels are unique */}
             <Link color="foreground" href={item.href} size="lg">
               {item.label}
             </Link>
@@ -66,17 +71,12 @@ export default function AppNavbar() {
       </NavbarContent>
 
       <NavbarContent justify="end">
-        <NavbarItem className="hidden sm:flex">
+        <NavbarItem className="hidden md:flex">
           <ThemeSwitcher />
         </NavbarItem>
-        {/* <NavbarItem className="hidden lg:flex">
-          <Link href="#">Login</Link>
+        <NavbarItem className="hidden lg:flex">
+          <Link href="/auth/login">Login</Link>
         </NavbarItem>
-        <NavbarItem>
-          <Button as={Link} color="primary" href="#" variant="flat">
-            Sign Up
-          </Button>
-        </NavbarItem> */}
       </NavbarContent>
 
       <NavbarMenu>
@@ -84,7 +84,9 @@ export default function AppNavbar() {
           <ThemeSwitcher showLabel />
         </NavbarMenuItem>
         {menuItems.map((item, index) => (
-          <NavbarMenuItem key={`${item}-${index}`}>
+          <NavbarMenuItem key={index}>
+            {" "}
+            {/* Unique key to avoid React warnings */}
             <Link className="w-full" href={item.href} size="lg">
               {item.label}
             </Link>
