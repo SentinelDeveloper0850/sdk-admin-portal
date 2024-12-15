@@ -1,16 +1,18 @@
 import { Divider, Flex, Space } from "antd";
 
-const PageHeader = ({
+export default function PageHeader({
   title = "Page Title",
   subtitle = null,
   actions = [],
   noDivider = false,
+  children,
 }: {
   title: string;
-  subtitle: string | null;
+  subtitle?: string | null;
   actions?: React.ReactNode[];
   noDivider?: boolean;
-}) => {
+  children?: React.ReactNode;
+}) {
   return (
     <>
       <Flex className="mb-6" justify="space-between">
@@ -20,9 +22,8 @@ const PageHeader = ({
         </div>
         <Space>{...actions}</Space>
       </Flex>
+      {children}
       {!noDivider && <Divider />}
     </>
   );
-};
-
-export default PageHeader;
+}

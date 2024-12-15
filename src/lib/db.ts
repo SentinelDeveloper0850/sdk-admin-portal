@@ -1,28 +1,34 @@
-import mongoose from "mongoose";
+import mongoose, { ConnectionStates } from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const connectionString = process.env.MONGODB_URI;
 
-let cachedConn: typeof mongoose | null = null;
+if (!connectionString) throw new Error("🧭 ~ Please define MONGODB_URI environment variable inside .env");
+
+let cachedConnection: typeof mongoose | null = null;
 
 export async function connectToDatabase() {
-  try {
-    if (cachedConn) {
-      console.log("Connected to MongoDB existing connection");
-      return cachedConn;
+  if (mongoose.connection.readyState != ConnectionStates.connected) {
+    try {
+
+      if (cachedConnection) {
+        console.log("🧭 ~ Using cached database connection");
+        return cachedConnection;
+      }
+
+      if (connectionString) {
+        const connection = await mongoose.connect(connectionString);
+        console.log("🧭 ~ Connected to database");
+        cachedConnection = connection;
+      } else {
+        throw new Error("🧭 ~ Please define MONGODB_URI environment variable inside .env");
+      }
+
+      return cachedConnection;
+    } catch (error) {
+      console.log("🧭 ~ Error connecting to database: ", error);
+      throw error;
     }
-
-    console.log("MONGODB_URI", MONGODB_URI);
-
-    if (MONGODB_URI) {
-      const conn = await mongoose.connect(MONGODB_URI);
-      console.log("Connected to MongoDB");
-      cachedConn = conn;
-    } else {
-      console.log("No MONGODB_URI provided");
-    }
-
-    return cachedConn;
-  } catch (error) {
-    console.log("Connected error: ", error);
+  } else {
+    console.log("🧭 ~ Database is already connected");
   }
 }
