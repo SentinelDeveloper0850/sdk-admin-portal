@@ -142,6 +142,8 @@ export const importTransactions = async (payload: any) => {
 
     const importDataList: IEftImportData[] = await IEftImportDataModel.find();
 
+    console.log("importTransactions ~ payload", payload)
+
     const transactions = payload.transactions;
     const statementDate = payload.statementMonth;
 
@@ -162,9 +164,9 @@ export const importTransactions = async (payload: any) => {
         for (let index = 0; index < transactions.length; index++) {
           const element = transactions[index];
 
-          let _amount = `${element.Amount}`;
-          let _description = `${element.Description}`;
-          let _additionalInformation = `${element.__EMPTY ? element.__EMPTY : ''} ${element.__EMPTY1 ? element.EMPTY1 : ''}`;
+          let _amount = `${element.Amount ?? element.amount}`;
+          let _description = `${element.Description ?? element.description}`;
+          let _additionalInformation = `${element.__EMPTY ?? element.__EMPTY1 ?? element.additionalInformation ?? ''}`;
 
           if (_amount !== undefined || _description !== undefined) {
             if ((_amount.toString().includes(' Cr')) || _amount.toString().includes('Cr')) {
@@ -173,8 +175,8 @@ export const importTransactions = async (payload: any) => {
               _additionalInformation = _additionalInformation.trim().replace('  ', ' ');
               _amount = _amount.toString().trim().replace(' ', '');
 
-              let _day = element.Date.substr(0, 2);
-              let _month = element.Date.substr(3, 3);
+              let _day = element.Date ? element.Date.substr(0, 2) : element.date ? element.date.substr(0, 2) : '00';
+              let _month = element.Date ? element.Date.substr(3, 3) : element.date ? element.date.substr(3, 3) : '00';
 
               let _statementMonth = statementDate.split('-').pop();
               let _statementYear = statementDate.substr(0, 4);
@@ -198,6 +200,8 @@ export const importTransactions = async (payload: any) => {
                 date: _date,
                 uuid: importData.uuid,
               };
+
+              console.log(`Transaction to import #${index + 1}`, transaction)
 
               _transactions.push(transaction);
             }

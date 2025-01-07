@@ -37,11 +37,16 @@ export async function POST(request: Request) {
       );
     }
 
+    return NextResponse.json(
+      { message: "Internal Server Error ~ Error importing transactions" },
+      { status: 500 }
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.error("Error fetching transactions:", error.message);
+    console.error("Error importing transactions:", error.message);
     return NextResponse.json(
-      { message: "Internal Server Error ~ Error fetching transactions" },
+      { message: "Internal Server Error ~ Error importing transactions" },
       { status: 500 }
     );
   }
