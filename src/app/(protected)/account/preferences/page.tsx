@@ -1,9 +1,10 @@
+import PageHeader from "@/app/components/page-header";
 import React from "react";
 
 const AccountPreferences = () => {
   return (
     <div>
-      <h1>User Account Preferences</h1>
+      <PageHeader title="Account Preferences" />
     </div>
   );
 };

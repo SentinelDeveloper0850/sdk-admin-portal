@@ -11,7 +11,7 @@ const menuItems: {
   { id: 1, name: "Dashboard", url: "/dashboard" },
   { id: 2, name: "EFT Transactions", url: "/transactions/eft" },
   { id: 3, name: "Easypay Transactions", url: "/transactions/easypay" },
-  { id: 4, name: "Receipt Management", url: "/receipts" },
+  // { id: 4, name: "Receipt Management", url: "/receipts" },
   // { id: 5, name: "Policies", url: "/users" },
   // { id: 6, name: "Graves", url: "/bookings" },
   // { id: 7, name: "Funerals", url: "/bookings" },

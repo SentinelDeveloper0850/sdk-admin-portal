@@ -78,7 +78,7 @@ export default function AppBarOnline() {
                 </p>
                 <Divider className="mt-2" />
               </DropdownItem>
-              <DropdownItem key="profile" color="primary">
+              {/* <DropdownItem key="profile" color="primary">
                 <Link href="/account/profile">
                   <span>Profile</span>
                 </Link>
@@ -87,7 +87,7 @@ export default function AppBarOnline() {
                 <Link href="/account/preferences">
                   <span>Preferences</span>
                 </Link>
-              </DropdownItem>
+              </DropdownItem> */}
               <DropdownItem key="logout" color="danger" onClick={handleLogout}>
                 Logout
               </DropdownItem>

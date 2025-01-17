@@ -48,7 +48,6 @@ export const config = {
   matcher: [
     "/dashboard",
     "/transactions/:path*",
-    "/receipts/:path*",
     "/users/:path*",
   ], // Apply middleware to specific routes
 };
