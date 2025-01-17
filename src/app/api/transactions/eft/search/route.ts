@@ -14,8 +14,6 @@ export async function POST(request: Request) {
 
       const response = await searchTransactions(searchText);
 
-      console.log("searchTransactionsByText api", response)
-
       if (response.success) {
         return NextResponse.json(
           response.data,
@@ -28,8 +26,6 @@ export async function POST(request: Request) {
       const { amount, filterType } = body;
 
       const response = await searchTransactionsByAmount(amount, filterType);
-
-      console.log("searchTransactionsByAmount api", response)
 
       if (response.success) {
         return NextResponse.json(
