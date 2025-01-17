@@ -216,6 +216,7 @@ export const importTransactions = async (payload: any) => {
       await parseData().then(async () => {
         if (_transactions.length > 0) {
           await EftTransactionModel.insertMany([..._transactions]);
+          importData.numberOfTransactions = _transactions.length;
           await new IEftImportDataModel(importData).save();
           return { success: true, message: 'Transactions imported' };
         } else {

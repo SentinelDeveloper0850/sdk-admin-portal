@@ -30,7 +30,7 @@ const LoginForm = () => {
 
       if (response.status != 200) {
         const errorData = response.data;
-        throw new Error(errorData.message || "Login failed");
+        throw new Error(errorData.message || "Sign in failed");
       }
 
       const data = response.data;
@@ -79,9 +79,9 @@ const LoginForm = () => {
           <Input.Password placeholder="Enter your password" />
         </Form.Item>
         <Button color="primary" fullWidth onClick={() => form.submit()}>
-          Login
+          Sign in
         </Button>
-        <Link href="/auth/login">
+        <Link href="/auth/signin">
           <p className="mt-2 p-2 text-center">
             Forgot password? <b>Recover</b>
           </p>

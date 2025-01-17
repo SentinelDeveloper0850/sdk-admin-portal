@@ -23,13 +23,13 @@ import { useAuth } from "@/context/auth-context";
 
 import { ThemeSwitcher } from "./theme-switcher";
 
-export default function OnlineAppNavbar() {
+export default function AppBarOnline() {
   const router = useRouter();
   const { user } = useAuth();
 
   const handleLogout = () => {
     logout(); // Clear the token
-    router.push("/auth/login"); // Redirect to login page
+    router.push("/auth/signin"); // Redirect to login page
   };
 
   return (

@@ -13,7 +13,7 @@ export interface IEftTransaction extends Document {
 
 // Define the schema
 const EftTransactionSchema: Schema = new Schema({
-  uuid: { type: String, required: true, unique: true },
+  uuid: { type: String, required: true },
   date: { type: String, required: true },
   additionalInformation: { type: String, required: false, default: "--" },
   description: { type: String, required: false, default: "--" },

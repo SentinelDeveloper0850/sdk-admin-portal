@@ -40,3 +40,14 @@ export const loginUser = async (email: string, password: string) => {
     throw new Error("JWT secret is not set");
   }
 };
+
+export const sendPasswordResetLink = async (email: string) => {
+  // Find the user by email
+  const user = await UserModel.findOne({ email });
+
+  if (!user) {
+    throw new Error("Invalid email address provided");
+  }
+
+  
+};

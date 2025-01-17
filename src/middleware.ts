@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
 
     // If no token is present, redirect to the login page
     if (!token) {
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+      return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
 
     try {
@@ -37,7 +37,7 @@ export function middleware(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Invalid token:", err.message);
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+      return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
   }
 
@@ -47,9 +47,8 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard",
-    "/trips/:path*",
-    "/vehicles/:path*",
-    "/drivers/:path*",
+    "/transactions/:path*",
+    "/receipts/:path*",
     "/users/:path*",
   ], // Apply middleware to specific routes
 };

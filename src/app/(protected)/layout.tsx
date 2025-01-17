@@ -1,12 +1,12 @@
 import React from "react";
 
-import OnlineAppNavbar from "../components/app-bar";
+import AppBarOnline from "../components/app-bar-online";
 import SideNavBar from "../components/side-navbar";
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="h-full w-full">
-      <OnlineAppNavbar />
+      <AppBarOnline />
       <div className="flex h-full w-full">
         <SideNavBar />
         <section className="w-full">

@@ -16,7 +16,7 @@ import {
 
 import { ThemeSwitcher } from "./theme-switcher";
 
-export default function AppNavbar() {
+export default function AppBarOffline() {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // Correct state management
 
   const menuItems = [
@@ -45,7 +45,7 @@ export default function AppNavbar() {
   return (
     <Navbar
       onMenuOpenChange={(isOpen) => setIsMenuOpen(isOpen)}
-      className="z-20"
+      className="z-20 border-b-1 border-b-gray-200 dark:border-b-gray-700"
     >
       <NavbarContent>
         <NavbarMenuToggle
@@ -53,8 +53,13 @@ export default function AppNavbar() {
           className="md:hidden"
         />
         <NavbarBrand>
-          <Image src="/logoWhite.svg" alt="logo" width={85} height={75} />
-          {/* <p className="ml-2 font-semibold text-inherit">FleetSync</p> */}
+          <Image
+            src="/logo.png"
+            alt="logo"
+            width={75}
+            height={75}
+            className="p-4"
+          />
         </NavbarBrand>
       </NavbarContent>
 
@@ -75,7 +80,7 @@ export default function AppNavbar() {
           <ThemeSwitcher />
         </NavbarItem>
         <NavbarItem className="hidden lg:flex">
-          <Link href="/auth/login">Login</Link>
+          <Link href="/auth/signin">Sign in</Link>
         </NavbarItem>
       </NavbarContent>
 
