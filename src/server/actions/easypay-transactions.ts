@@ -124,24 +124,7 @@ export const importTransactions = async (payload: any) => {
   await connectToDatabase();
 
   try {
-    const MONTHS = [
-      { id: '01', name: 'Jan' },
-      { id: '02', name: 'Feb' },
-      { id: '03', name: 'Mar' },
-      { id: '04', name: 'Apr' },
-      { id: '05', name: 'May' },
-      { id: '06', name: 'Jun' },
-      { id: '07', name: 'Jul' },
-      { id: '08', name: 'Aug' },
-      { id: '09', name: 'Sep' },
-      { id: '10', name: 'Oct' },
-      { id: '11', name: 'Nov' },
-      { id: '12', name: 'Dec' },
-    ];
-
     const importDataList: IEasypayImportData[] = await EasypayImportDataModel.find();
-
-    // console.log("importTransactions ~ payload", payload)
 
     const transactions = payload.transactions;
     const statementDate = payload.statementMonth;
@@ -158,7 +141,6 @@ export const importTransactions = async (payload: any) => {
     let existingImportData = importDataList.find((item: IEasypayImportData) => item.uuid === importData.uuid);
 
     const parseData = async () => {
-      console.log('Transactions to parse: =>', transactions.length);
       try {
         for (let index = 0; index < transactions.length; index++) {
           const element = transactions[index];
@@ -169,26 +151,8 @@ export const importTransactions = async (payload: any) => {
           let _uuid = `${element.uuid}`;
 
           if (_amount !== undefined || _easypayNumber !== undefined) {
-            _amount = _amount.replace(' Cr', '').replace('Cr', '').replace(',', '');
+            _amount = _amount.replace(',', '');
             _amount = _amount.toString().trim().replace(' ', '');
-
-            // let _day = element.Date ? element.Date.substr(0, 2) : element.date ? element.date.substr(0, 2) : '00';
-            // let _month = element.Date ? element.Date.substr(3, 3) : element.date ? element.date.substr(3, 3) : '00';
-
-            // let _statementMonth = statementDate.split('-').pop();
-            // let _statementYear = statementDate.substr(0, 4);
-
-            // let _year = _statementYear;
-
-            // for (let index = 0; index < MONTHS.length; index++) {
-            //   if (_month === MONTHS[index].name) {
-            //     _month = MONTHS[index].id;
-            //   }
-            // }
-
-            // if (_month === '12' && _statementMonth === '01') _year = Number(_statementYear) - 1;
-
-            // let _date = `${_year}/${_month}/${_day}`;
 
             const transaction: any = {
               amount: Number(_amount),
@@ -202,6 +166,7 @@ export const importTransactions = async (payload: any) => {
         }
       } catch (exception) {
         console.log(exception);
+        return { success: false, message: 'Something went wrong - Unable to parse the transaction data' };
       }
     };
 

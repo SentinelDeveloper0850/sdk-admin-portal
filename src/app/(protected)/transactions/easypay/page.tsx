@@ -262,7 +262,6 @@ export default function EasypayTransactionsPage() {
         return;
       }
 
-      console.log("bulkCreateTransactions response", response);
       fetchTransactions();
     } catch (err) {
       console.log(err);
