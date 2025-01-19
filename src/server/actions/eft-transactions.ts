@@ -142,7 +142,7 @@ export const importTransactions = async (payload: any) => {
 
     const importDataList: IEftImportData[] = await IEftImportDataModel.find();
 
-    console.log("importTransactions ~ payload", payload)
+    // console.log("importTransactions ~ payload", payload)
 
     const transactions = payload.transactions;
     const statementDate = payload.statementMonth;
@@ -159,7 +159,7 @@ export const importTransactions = async (payload: any) => {
     let existingImportData = importDataList.find((item: IEftImportData) => item.uuid === importData.uuid);
 
     const parseData = async () => {
-      console.log('Transactions to parse: =>', transactions.length);
+      // console.log('Transactions to parse: =>', transactions.length);
       try {
         for (let index = 0; index < transactions.length; index++) {
           const element = transactions[index];
@@ -201,7 +201,7 @@ export const importTransactions = async (payload: any) => {
                 uuid: importData.uuid,
               };
 
-              console.log(`Transaction to import #${index + 1}`, transaction)
+              // console.log(`Transaction to import #${index + 1}`, transaction)
 
               _transactions.push(transaction);
             }
@@ -220,7 +220,7 @@ export const importTransactions = async (payload: any) => {
           await new IEftImportDataModel(importData).save();
           return { success: true, message: 'Transactions imported' };
         } else {
-          console.log('Transactions parsed: => ', _transactions);
+          // console.log('Transactions parsed: => ', _transactions);
           return { success: false, message: 'Unable to import the transactions' };
         }
       });

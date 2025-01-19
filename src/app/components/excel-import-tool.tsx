@@ -42,7 +42,7 @@ export const ExcelImportTool = () => {
         return;
       }
 
-      console.log("bulkCreateTransactions response", response);
+      // console.log("bulkCreateTransactions response", response);
     } catch (err) {
       console.log(err);
       setError("An error occurred while bulk creating transactions.");

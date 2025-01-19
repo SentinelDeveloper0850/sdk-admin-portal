@@ -2,29 +2,23 @@
 
 import { useEffect, useState } from "react";
 
-import {
-  Button,
-  Col,
-  Drawer,
-  Form,
-  List,
-  Row,
-  Select,
-  Space,
-  Spin,
-  Statistic,
-  Table,
-  notification,
-} from "antd";
+
+
+import { Button, Col, Drawer, Form, List, Row, Select, Space, Spin, Statistic, Table, notification } from "antd";
 import Search from "antd/es/input/Search";
 import Papa from "papaparse";
 
+
+
 import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
+
+
 
 import { CsvImportTool } from "@/app/components/csv-import-tool";
 import PageHeader from "@/app/components/page-header";
 import { IEasypayImport } from "@/app/interfaces/easypay-import.interface";
 import { useAuth } from "@/context/auth-context";
+
 
 interface IEasypayTransaction {
   _id: string;
@@ -105,6 +99,7 @@ export default function EasypayTransactionsPage() {
   };
 
   const searchTransactions = async (value: string) => {
+    setLoading(true);
     try {
       const response = await fetch("/api/transactions/easypay/search", {
         method: "POST",
@@ -125,10 +120,13 @@ export default function EasypayTransactionsPage() {
     } catch (err) {
       console.log(err);
       setError("An error occurred while searching transactions.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const searchByAmount = async ({ amount, filterType }: any) => {
+    setLoading(true);
     try {
       const response = await fetch("/api/transactions/easypay/search", {
         method: "POST",
@@ -153,6 +151,8 @@ export default function EasypayTransactionsPage() {
     } catch (err) {
       console.log(err);
       setError("An error occurred while searching transactions.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -267,17 +267,9 @@ export default function EasypayTransactionsPage() {
       console.log(err);
       setError("An error occurred while bulk creating transactions.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div style={{ padding: "20px", textAlign: "center" }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -334,96 +326,98 @@ export default function EasypayTransactionsPage() {
         </Row>
       </PageHeader>
 
-      <Form
-        layout="vertical"
-        style={{
-          width: "100%",
-          borderBottom: "1px solid #ddd",
-          padding: "2rem 1rem 3rem 1rem",
-        }}
-      >
-        <Space
-          size={32}
-          wrap
-          style={{
-            display: "flex",
-            justifyContent: "flex-start",
-            paddingBottom: "0",
-            width: "100%",
-          }}
-        >
-          <Form.Item style={{ marginBottom: "0" }}>
-            <p
+      {!loading ? (
+        <main>
+          <Form
+            layout="vertical"
+            style={{
+              width: "100%",
+              borderBottom: "1px solid #ddd",
+              padding: "2rem 1rem 3rem 1rem",
+            }}
+          >
+            <Space
+              size={32}
+              wrap
               style={{
-                marginBottom: ".5rem",
-                textTransform: "uppercase",
-                letterSpacing: ".2rem",
+                display: "flex",
+                justifyContent: "flex-start",
+                paddingBottom: "0",
+                width: "100%",
               }}
             >
-              Search for reference
-            </p>
-            <Search
-              allowClear
-              value={search}
-              placeholder="Search Text..."
-              onChange={(event: any) => setSearch(event.target.value)}
-              onSearch={(value: string) => {
-                if (value.length > 0) {
-                  searchTransactions(value);
-                } else {
-                  setTransactions([]);
-                }
-              }}
-            />
-          </Form.Item>
-          <Form.Item style={{ marginBottom: "0" }}>
-            <p
-              style={{
-                marginBottom: ".5rem",
-                textTransform: "uppercase",
-                letterSpacing: ".2rem",
-              }}
-            >
-              Search for Amount
-            </p>
-            <Space>
-              <Search
-                allowClear
-                defaultValue={""}
-                value={amount}
-                placeholder="1000"
-                onChange={(event: any) =>
-                  event.target.value === ""
-                    ? setAmount("")
-                    : setAmount(Number(event.target.value))
-                }
-                addonBefore={
-                  <Select
-                    value={amountFilterType}
-                    onChange={(value: string) => setAmountFilterType(value)}
-                    suffixIcon={null}
-                    defaultValue={"="}
-                    style={{ width: "6rem" }}
-                  >
-                    <Select.Option value={"="}>=</Select.Option>
-                    <Select.Option value={">"}>&gt;</Select.Option>
-                    <Select.Option value={"<"}>&lt;</Select.Option>
-                  </Select>
-                }
-                onSearch={async (value: string) => {
-                  if (value.length > 0) {
-                    searchByAmount({
-                      amount: amount,
-                      filterType: amountFilterType,
-                    });
-                  } else {
-                    setTransactions([]);
-                  }
-                }}
-              />
-            </Space>
-          </Form.Item>
-          {/* {isAdmin && transactions.length > 0 && (
+              <Form.Item style={{ marginBottom: "0" }}>
+                <p
+                  style={{
+                    marginBottom: ".5rem",
+                    textTransform: "uppercase",
+                    letterSpacing: ".2rem",
+                  }}
+                >
+                  Search for reference
+                </p>
+                <Search
+                  allowClear
+                  value={search}
+                  placeholder="Search Text..."
+                  onChange={(event: any) => setSearch(event.target.value)}
+                  onSearch={(value: string) => {
+                    if (value.length > 0) {
+                      searchTransactions(value);
+                    } else {
+                      setTransactions([]);
+                    }
+                  }}
+                />
+              </Form.Item>
+              <Form.Item style={{ marginBottom: "0" }}>
+                <p
+                  style={{
+                    marginBottom: ".5rem",
+                    textTransform: "uppercase",
+                    letterSpacing: ".2rem",
+                  }}
+                >
+                  Search for Amount
+                </p>
+                <Space>
+                  <Search
+                    allowClear
+                    defaultValue={""}
+                    value={amount}
+                    placeholder="1000"
+                    onChange={(event: any) =>
+                      event.target.value === ""
+                        ? setAmount("")
+                        : setAmount(Number(event.target.value))
+                    }
+                    addonBefore={
+                      <Select
+                        value={amountFilterType}
+                        onChange={(value: string) => setAmountFilterType(value)}
+                        suffixIcon={null}
+                        defaultValue={"="}
+                        style={{ width: "6rem" }}
+                      >
+                        <Select.Option value={"="}>=</Select.Option>
+                        <Select.Option value={">"}>&gt;</Select.Option>
+                        <Select.Option value={"<"}>&lt;</Select.Option>
+                      </Select>
+                    }
+                    onSearch={async (value: string) => {
+                      if (value.length > 0) {
+                        searchByAmount({
+                          amount: amount,
+                          filterType: amountFilterType,
+                        });
+                      } else {
+                        setTransactions([]);
+                      }
+                    }}
+                  />
+                </Space>
+              </Form.Item>
+              {/* {isAdmin && transactions.length > 0 && (
             <Form.Item style={{ marginBottom: "0", marginTop: "2.5rem" }}>
               <Space>
                 <Button
@@ -436,39 +430,47 @@ export default function EasypayTransactionsPage() {
               </Space>
             </Form.Item>
           )} */}
-        </Space>
-      </Form>
-      <Table
-        rowKey="_id"
-        bordered
-        dataSource={transactions}
-        rowClassName="cursor-pointer hover:bg-gray-100"
-        columns={[
-          {
-            title: "Transaction Date",
-            dataIndex: "date",
-            key: "date",
-            sorter: (a, b) =>
-              new Date(a.date).getTime() - new Date(b.date).getTime(),
-          },
-          {
-            title: "File ID",
-            dataIndex: "uuid",
-            key: "uuid",
-          },
-          {
-            title: "Easypay Number",
-            dataIndex: "easypayNumber",
-          },
-          {
-            title: "Amount",
-            dataIndex: "amount",
-            key: "amount",
-            render: (value: number) => formatToMoneyWithCurrency(value),
-            sorter: (a, b) => a.amount - b.amount,
-          },
-        ]}
-      />
+            </Space>
+          </Form>
+
+          <Table
+            rowKey="_id"
+            bordered
+            loading={loading}
+            dataSource={transactions}
+            rowClassName="cursor-pointer hover:bg-gray-100"
+            columns={[
+              {
+                title: "Transaction Date",
+                dataIndex: "date",
+                key: "date",
+                sorter: (a, b) =>
+                  new Date(a.date).getTime() - new Date(b.date).getTime(),
+              },
+              {
+                title: "File ID",
+                dataIndex: "uuid",
+                key: "uuid",
+              },
+              {
+                title: "Easypay Number",
+                dataIndex: "easypayNumber",
+              },
+              {
+                title: "Amount",
+                dataIndex: "amount",
+                key: "amount",
+                render: (value: number) => formatToMoneyWithCurrency(value),
+                sorter: (a, b) => a.amount - b.amount,
+              },
+            ]}
+          />
+        </main>
+      ) : (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          <Spin size="large" />
+        </div>
+      )}
       <Drawer
         title="EFT Import History"
         placement="right"
