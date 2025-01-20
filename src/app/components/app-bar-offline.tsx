@@ -23,23 +23,7 @@ export default function AppBarOffline() {
     {
       label: "Home",
       href: "/",
-    },
-    {
-      label: "About",
-      href: "/about",
-    },
-    {
-      label: "Contact",
-      href: "/contact",
-    },
-    {
-      label: "FAQ",
-      href: "/faq",
-    },
-    {
-      label: "Blog",
-      href: "/blog",
-    },
+    }
   ];
 
   return (
@@ -68,9 +52,9 @@ export default function AppBarOffline() {
           <NavbarItem key={index}>
             {" "}
             {/* Use index if labels are unique */}
-            <Link color="foreground" href={item.href} size="lg">
+            {/* <Link color="foreground" href={item.href} size="lg">
               {item.label}
-            </Link>
+            </Link> */}
           </NavbarItem>
         ))}
       </NavbarContent>

@@ -14,7 +14,6 @@ export default function Providers({ children }: { children: ReactNode }) {
     <AuthProvider>
       <NextUIProvider
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
         navigate={router.push}
         className="flex h-full w-full flex-col"
       >

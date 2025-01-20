@@ -1,29 +1,29 @@
 "use client";
 
+import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const menuItems: {
-  id: number;
-  name: string;
-  url: unknown;
-}[] = [
-  { id: 1, name: "Dashboard", url: "/dashboard" },
-  { id: 2, name: "EFT Transactions", url: "/transactions/eft" },
-  { id: 3, name: "Easypay Transactions", url: "/transactions/easypay" },
-  // { id: 4, name: "Receipt Management", url: "/receipts" },
-  // { id: 5, name: "Policies", url: "/users" },
-  // { id: 6, name: "Graves", url: "/bookings" },
-  // { id: 7, name: "Funerals", url: "/bookings" },
-  // { id: 8, name: "Documents", url: "/bookings" },
-  // { id: 9, name: "Terms", url: "/bookings" },
-  // { id: 10, name: "FAQS", url: "/bookings" },
-  { id: 11, name: "Users", url: "/users" },
-  // { id: 12, name: "Settings", url: "/bookings" },
-];
+import { useEffect } from "react";
 
 const SideNavBar = () => {
   const pathname = usePathname();
+  
+  const menuItems: {
+    id: number;
+    name: string;
+    url: unknown;
+  }[] = [
+    { id: 1, name: "Dashboard", url: "/dashboard" },
+    { id: 2, name: "EFT Transactions", url: "/transactions/eft" },
+    { id: 3, name: "Easypay Transactions", url: "/transactions/easypay" },
+  ];
+  
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user && user.role == "admin") menuItems.push({ id: 4, name: "Users", url: "/users" })
+  }, [user]);
+
   return (
     <section className="h-full w-64 overflow-auto bg-white dark:bg-zinc-900">
       <div className="grid gap-0">

@@ -14,9 +14,7 @@ export function middleware(request: NextRequest) {
   // Define routes that require authentication
   const protectedRoutes = [
     "/dashboard",
-    "/trips",
-    "/vehicles",
-    "/drivers",
+    "/transactions",
     "/users",
   ];
 
