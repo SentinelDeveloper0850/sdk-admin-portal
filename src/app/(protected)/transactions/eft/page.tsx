@@ -343,11 +343,13 @@ export default function EftTransactionsPage() {
             title: "Description",
             dataIndex: "description",
             key: "description",
+             sorter: (a, b) => a.description.localeCompare(b.description),
           },
           {
             title: "Additional Information",
             dataIndex: "additionalInformation",
             key: "additionalInformation",
+             sorter: (a, b) => a.additionalInformation.localeCompare(b.additionalInformation),
           },
           {
             title: "Amount",

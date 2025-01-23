@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 const SideNavBar = () => {
   const pathname = usePathname();
-  
+
   const menuItems: {
     id: number;
     name: string;
@@ -16,8 +16,9 @@ const SideNavBar = () => {
     { id: 1, name: "Dashboard", url: "/dashboard" },
     { id: 2, name: "EFT Transactions", url: "/transactions/eft" },
     { id: 3, name: "Easypay Transactions", url: "/transactions/easypay" },
+    { id: 4, name: "Users", url: "/users" },
   ];
-  
+
   const { user } = useAuth();
 
   useEffect(() => {

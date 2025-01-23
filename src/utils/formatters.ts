@@ -90,3 +90,45 @@ export const formatStringTo3CharSplit = (text: string) => {
 export const onlyUnique = (value: any, index: number, self: any) => {
   return self.indexOf(value) === index;
 }
+
+const padZero = (num: number) => {
+  return (num < 10 ? '0' : '') + num;
+}
+
+export const getCurrentDateTime = () => {
+  const date = getCurrentDate();
+  const time = getCurrentTime();
+  return `${date} ${time}`;
+}
+
+export const getCurrentTime = () => {
+  const date = new Date();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const second = date.getSeconds();
+  return `${padZero(hour)}:${padZero(minute)}:${padZero(second)}`;
+}
+
+export const getCurrentDate = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${padZero(day)}/${padZero(month)}/${year}`;
+}
+
+export const getTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const second = date.getSeconds();
+  return `${padZero(hour)}:${padZero(minute)}:${padZero(second)}`;
+}
+
+export const getDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${padZero(day)}/${padZero(month)}/${year}`;
+}

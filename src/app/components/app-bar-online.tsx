@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
@@ -73,8 +72,11 @@ export default function AppBarOnline() {
             <DropdownMenu aria-label="Profile Actions" variant="flat">
               <DropdownItem key="user" className="h-14 gap-2 hover:bg-white">
                 <p className="font-semibold">{user?.name ?? "Unknown User"}</p>
-                <p className="font-semibold">
+                {/* <p className="font-semibold">
                   {user?.email ?? "Email not available"}
+                </p> */}
+                <p className="font-semibold">
+                  {user?.role ?? "Role not available"}
                 </p>
                 <Divider className="mt-2" />
               </DropdownItem>
