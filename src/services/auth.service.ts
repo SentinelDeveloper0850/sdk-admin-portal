@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import UserModel from "@/app/models/user.schema";
+import UsersModel from "@/app/models/user.schema";
 
 // JWT secret and expiration
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -9,7 +9,7 @@ const JWT_EXPIRES_IN = "1h";
 
 export const loginUser = async (email: string, password: string) => {
   // Find the user by email
-  const user = await UserModel.findOne({ email });
+  const user = await UsersModel.findOne({ email });
 
   if (!user) {
     throw new Error("Invalid email or password");
@@ -43,11 +43,11 @@ export const loginUser = async (email: string, password: string) => {
 
 export const sendPasswordResetLink = async (email: string) => {
   // Find the user by email
-  const user = await UserModel.findOne({ email });
+  const user = await UsersModel.findOne({ email });
 
   if (!user) {
     throw new Error("Invalid email address provided");
   }
 
-  
+
 };

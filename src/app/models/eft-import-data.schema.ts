@@ -5,6 +5,7 @@ export interface IEftImportData extends Document {
   _id?: string;
   uuid: string;
   date: string;
+  source: string;
   numberOfTransactions: number;
   createdBy: string;
   created_at: Date;
@@ -14,6 +15,7 @@ export interface IEftImportData extends Document {
 const IEftImportDataSchema: Schema = new Schema({
   uuid: { type: String, required: true, unique: true },
   date: { type: String, required: true },
+  source: { type: String, required: true },
   numberOfTransactions: { type: Number, required: true },
   createdBy: { type: String, required: true },
   created_at: {

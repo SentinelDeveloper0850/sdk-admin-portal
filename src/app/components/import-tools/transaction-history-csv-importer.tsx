@@ -1,6 +1,6 @@
-export const CsvImportTool = ({
+export const TransactionHistoryCsvImporter = ({
   handleChange,
-  label = "Import CSV File",
+  label = "Import Transaction History (CSV)",
   allowMultiple = false,
 }: any) => {
   return (

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { fetchAll, importTransactions } from "@/server/actions/eft-transactions";
+import { fetchAll, importFromBankStatement, importFromTransactionHistory } from "@/server/actions/eft-transactions";
 
 export async function GET(_request: Request) {
   try {
@@ -28,9 +28,15 @@ export async function POST(request: Request) {
     // Parse the request body
     const payload = await request.json();
 
-    const response = await importTransactions(payload);
+    let response;
 
-    if (response.success) {
+    if (payload.source == "Transaction History") {
+      response = await importFromTransactionHistory(payload);
+    } else {
+      response = await importFromBankStatement(payload);
+    }
+
+    if (response?.success) {
       return NextResponse.json(
         response,
         { status: 200 }

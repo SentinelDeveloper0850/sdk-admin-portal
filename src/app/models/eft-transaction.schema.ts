@@ -5,6 +5,7 @@ export interface IEftTransaction extends Document {
   _id?: string;
   uuid: string;
   date: string;
+  source: string;
   additionalInformation: string;
   description: string;
   amount: string;
@@ -15,6 +16,7 @@ export interface IEftTransaction extends Document {
 const EftTransactionSchema: Schema = new Schema({
   uuid: { type: String, required: true },
   date: { type: String, required: true },
+  source: { type: String, required: true },
   additionalInformation: { type: String, required: false, default: "--" },
   description: { type: String, required: false, default: "--" },
   amount: { type: Number, required: true },

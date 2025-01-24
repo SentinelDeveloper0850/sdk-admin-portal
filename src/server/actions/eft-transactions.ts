@@ -121,7 +121,7 @@ export const findOne = async (id: string) => {
   }
 }
 
-export const importTransactions = async (payload: any) => {
+export const importFromBankStatement = async (payload: any) => {
   await connectToDatabase();
 
   try {
@@ -142,8 +142,6 @@ export const importTransactions = async (payload: any) => {
 
     const importDataList: IEftImportData[] = await IEftImportDataModel.find();
 
-    // console.log("importTransactions ~ payload", payload)
-
     const transactions = payload.transactions;
     const statementDate = payload.statementMonth;
 
@@ -151,6 +149,7 @@ export const importTransactions = async (payload: any) => {
       uuid: payload.uuid,
       date: new Date(),
       numberOfTransactions: transactions.length,
+      source: payload.source,
       createdBy: 'Given Somdaka'
     }
 
@@ -199,6 +198,7 @@ export const importTransactions = async (payload: any) => {
                 additionalInformation: _additionalInformation.replace('  ', ' '),
                 date: _date,
                 uuid: importData.uuid,
+                source: payload.source
               };
 
               // console.log(`Transaction to import #${index + 1}`, transaction)
@@ -236,6 +236,39 @@ export const importTransactions = async (payload: any) => {
     return {
       success: false,
       message: "Internal Server Error ~ Error importing eft transactions"
+    };
+  }
+}
+
+export const importFromTransactionHistory = async (payload: any) => {
+  await connectToDatabase();
+
+  try {
+    const importDataList: IEftImportData[] = await IEftImportDataModel.find();
+
+    const transactions = payload.transactions.map((item: any) => ({ ...item, source: payload.source }));
+    const statementDate = payload.statementMonth;
+
+    const importData = { ...payload.importData, source: payload.source };
+
+    let existingImportData = importDataList.find((item: IEftImportData) => item.uuid === importData.uuid);
+
+    if (!existingImportData) {
+      if (transactions.length > 0) {
+        await EftTransactionModel.insertMany(transactions);
+        await new IEftImportDataModel(importData).save();
+        return { success: true, message: 'Transactions imported' };
+      } else {
+        return { success: false, message: 'Unable to import the transactions' };
+      }
+    } else {
+      return { success: true, message: `${statementDate} Transactions already imported` }
+    }
+  } catch (error: any) {
+    console.error("Error importing eft transactions from the Transaction History:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error importing eft transactions from the Transaction History"
     };
   }
 }

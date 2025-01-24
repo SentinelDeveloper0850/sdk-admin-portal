@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button, Card, CardBody } from "@nextui-org/react";
-import { Divider, Form, Input } from "antd";
+import { Alert, Divider, Form, Input } from "antd";
 import axios from "axios";
 
 import { useAuth } from "@/context/auth-context";
@@ -30,11 +31,16 @@ const passwordRules: any = [
 
 const LoginPage = () => {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | boolean>(false);
 
   const { setUser } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (values: any) => {
+    setLoading(true);
+    setError(false);
+
     try {
       const response = await axios.post(
         "/api/auth/login",
@@ -47,8 +53,9 @@ const LoginPage = () => {
       );
 
       if (response.status != 200) {
-        const errorData = response.data;
-        throw new Error(errorData.message || "Login failed");
+        console.log("login response", response);
+        setError("Something went wrong");
+        return;
       }
 
       const data = response.data;
@@ -61,7 +68,10 @@ const LoginPage = () => {
 
       router.push("/dashboard"); // Redirect to dashboard
     } catch (error: any) {
-      console.error(error);
+      console.error(error.response.data.message);
+      setError(error.response.data.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,6 +100,14 @@ const LoginPage = () => {
       <p className="mb-4 px-2 text-sm italic text-gray-500">
         Enter your email and password to access your account
       </p>
+      {error && (
+        <Alert
+          showIcon
+          type="error"
+          message={error ?? "No error detected..."}
+          className="mb-4"
+        />
+      )}
       <Card>
         <CardBody className="p-6">
           <Form form={form} layout="vertical" onFinish={handleLogin}>
@@ -99,7 +117,12 @@ const LoginPage = () => {
             <Form.Item label="Password" name="password" rules={passwordRules}>
               <Input.Password placeholder="Enter your password" />
             </Form.Item>
-            <Button color="primary" fullWidth onClick={() => form.submit()}>
+            <Button
+              color="primary"
+              fullWidth
+              onClick={() => form.submit()}
+              isLoading={loading}
+            >
               Sign in
             </Button>
             <Link href="/auth/forgot-password" className="hover:text-primary">

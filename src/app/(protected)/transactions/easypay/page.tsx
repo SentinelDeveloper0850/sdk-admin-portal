@@ -2,23 +2,29 @@
 
 import { useEffect, useState } from "react";
 
-
-
-import { Button, Col, Drawer, Form, List, Row, Select, Space, Spin, Statistic, Table, notification } from "antd";
+import {
+  Button,
+  Col,
+  Drawer,
+  Form,
+  List,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  notification,
+} from "antd";
 import Search from "antd/es/input/Search";
 import Papa from "papaparse";
 
-
-
 import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
 
-
-
-import { CsvImportTool } from "@/app/components/csv-import-tool";
+import { EasypayCsvImporter } from "@/app/components/import-tools/easypay-csv-importer";
 import PageHeader from "@/app/components/page-header";
 import { IEasypayImport } from "@/app/interfaces/easypay-import.interface";
 import { useAuth } from "@/context/auth-context";
-
 
 interface IEasypayTransaction {
   _id: string;
@@ -315,7 +321,7 @@ export default function EasypayTransactionsPage() {
           >
             {user?.role == "admin" && (
               <Space>
-                <CsvImportTool
+                <EasypayCsvImporter
                   handleChange={fileChangeHandler}
                   allowMultiple
                   label="Import Easypay Statement"

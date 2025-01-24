@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import UserModel from "@/app/models/user.schema";
+import UsersModel from "@/app/models/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export async function POST(request: Request) {
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     }
 
     // Check if the user already exists
-    const existingUser = await UserModel.findOne({ email });
+    const existingUser = await UsersModel.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
         { message: "User already exists" },
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     // Create a new user
-    const user = new UserModel({
+    const user = new UsersModel({
       name,
       email,
       password, // Password hashing is handled in the schema pre-save hook

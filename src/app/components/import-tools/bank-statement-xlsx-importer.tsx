@@ -1,10 +1,13 @@
 import { useRef, useState } from "react";
 
+
+
 import { CloseCircleFilled } from "@ant-design/icons";
 import { DatePicker, Space, notification } from "antd";
 import * as XLSX from "xlsx";
 
-export const ExcelImportTool = () => {
+
+export const BankStatementExcelImporter = () => {
   const fileRef = useRef() as React.MutableRefObject<HTMLInputElement>;
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +36,7 @@ export const ExcelImportTool = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, source: "Transaction History" }),
       });
 
       if (!response.ok) {
@@ -133,7 +136,7 @@ export const ExcelImportTool = () => {
             letterSpacing: "0.15rem",
           }}
         >
-          Import Excel File
+          Import Bank Statement (XLSX)
         </label>
       )}
       <Space style={{ display: "flex", justifyContent: "flex-end" }}>

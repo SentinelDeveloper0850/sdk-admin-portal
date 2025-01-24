@@ -7,7 +7,7 @@ import { Button } from "@nextui-org/react";
 import { IconPlus } from "@tabler/icons-react";
 import { Table, Tag } from "antd";
 
-import { getDate, getTime } from "@/utils/formatters";
+import { capitalizeFirstLetter, getDate, getTime } from "@/utils/formatters";
 
 import PageHeader from "@/app/components/page-header";
 
@@ -36,6 +36,33 @@ const UsersPage = () => {
     }
   };
 
+  const deactivateUser = async (id: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/users`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, status: "Inactive" }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to deactivate user");
+        return;
+      }
+
+      const data = await response.json();
+      setUsers(data.users);
+    } catch (err) {
+      console.log(err);
+      setError("An error occurred while attempting to deactivate the user.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -46,11 +73,11 @@ const UsersPage = () => {
         title="Manage Users"
         subtitle="Create, update, and delete Users from your system"
         actions={[
-          <Link key={1} href="/users/create">
-            <Button isIconOnly color="primary" size="sm">
-              <IconPlus />
-            </Button>
-          </Link>,
+          // <Link key={1} href="/users/create">
+          //   <Button isIconOnly color="primary" size="sm">
+          //     <IconPlus />
+          //   </Button>
+          // </Link>,
         ]}
       />
 
@@ -76,8 +103,19 @@ const UsersPage = () => {
             title: "Role",
             dataIndex: "role",
             key: "role",
-            render: (value: string) => <Tag color="blue">{value}</Tag>,
+            render: (value: string) => (
+              <Tag>{capitalizeFirstLetter(value)}</Tag>
+            ),
             sorter: (a, b) => a.role.localeCompare(b.role),
+          },
+          {
+            title: "Status",
+            dataIndex: "status",
+            key: "status",
+            render: (value: string) => (
+              <Tag color={value == "Active" ? "green" : "red"}>{value}</Tag>
+            ),
+            sorter: (a, b) => a.status.localeCompare(b.role),
           },
           {
             title: "Date Created",
@@ -91,6 +129,25 @@ const UsersPage = () => {
             sorter: (a, b) =>
               new Date(a.date).getTime() - new Date(b.date).getTime(),
           },
+          // {
+          //   title: "Actions",
+          //   dataIndex: "actions",
+          //   key: "actions",
+          //   render: (_value: any, record: any) => (
+          //     <div className="flex justify-between">
+          //       {record.status == "Active" ? (
+          //         <Button color="danger" size="sm" onPress={() => deactivateUser(record._id)}>
+          //           Deactivate
+          //         </Button>
+          //       ) : (
+          //         <Button color="primary" size="sm">
+          //           Activate
+          //         </Button>
+          //       )}
+          //     </div>
+          //   ),
+          //   sorter: (a, b) => a.status.localeCompare(b.role),
+          // },
         ]}
       />
     </div>
