@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Button } from "@nextui-org/react";
+import { Button, Image } from "@nextui-org/react";
 import { IconPlus } from "@tabler/icons-react";
-import { Table, Tag } from "antd";
+import { Space, Table, Tag } from "antd";
 
 import { capitalizeFirstLetter, getDate, getTime } from "@/utils/formatters";
 
@@ -72,13 +72,15 @@ const UsersPage = () => {
       <PageHeader
         title="Manage Users"
         subtitle="Create, update, and delete Users from your system"
-        actions={[
-          // <Link key={1} href="/users/create">
-          //   <Button isIconOnly color="primary" size="sm">
-          //     <IconPlus />
-          //   </Button>
-          // </Link>,
-        ]}
+        actions={
+          [
+            // <Link key={1} href="/users/create">
+            //   <Button isIconOnly color="primary" size="sm">
+            //     <IconPlus />
+            //   </Button>
+            // </Link>,
+          ]
+        }
       />
 
       <Table
@@ -104,7 +106,9 @@ const UsersPage = () => {
             dataIndex: "role",
             key: "role",
             render: (value: string) => (
-              <Tag>{capitalizeFirstLetter(value)}</Tag>
+              <Tag color={value == "admin" ? "gold" : undefined}>
+                {capitalizeFirstLetter(value)}
+              </Tag>
             ),
             sorter: (a, b) => a.role.localeCompare(b.role),
           },
