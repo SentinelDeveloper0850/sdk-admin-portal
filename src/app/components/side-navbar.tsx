@@ -16,7 +16,8 @@ const SideNavBar = () => {
     { id: 1, name: "Dashboard", url: "/dashboard" },
     { id: 2, name: "EFT Transactions", url: "/transactions/eft" },
     { id: 3, name: "Easypay Transactions", url: "/transactions/easypay" },
-    { id: 4, name: "Users", url: "/users" },
+    { id: 4, name: "Daily Activity", url: "/daily-activity" },
+    { id: 5, name: "Users", url: "/users" },
   ];
 
   const { user } = useAuth();

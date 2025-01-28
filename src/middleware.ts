@@ -15,6 +15,7 @@ export function middleware(request: NextRequest) {
   const protectedRoutes = [
     "/dashboard",
     "/transactions",
+    "/daily-activity",
     "/users",
   ];
 
@@ -50,6 +51,7 @@ export const config = {
   matcher: [
     "/dashboard",
     "/transactions/:path*",
+    "/daily-activity/:path*",
     "/users/:path*",
   ], // Apply middleware to specific routes
 };

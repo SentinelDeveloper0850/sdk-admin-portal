@@ -101,6 +101,12 @@ export const getCurrentDateTime = () => {
   return `${date} ${time}`;
 }
 
+export const getDateTime = (dateString: string) => {
+  const date = getDate(dateString);
+  const time = getTime(dateString);
+  return `${date} ${time}`;
+}
+
 export const getCurrentTime = () => {
   const date = new Date();
   const hour = date.getHours();
@@ -122,7 +128,7 @@ export const getTime = (dateString: string) => {
   const hour = date.getHours();
   const minute = date.getMinutes();
   const second = date.getSeconds();
-  return `${padZero(hour)}:${padZero(minute)}:${padZero(second)}`;
+  return `${padZero(hour)}:${padZero(minute)}`;
 }
 
 export const getDate = (dateString: string) => {
