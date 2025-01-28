@@ -22,7 +22,12 @@ import {
 import dayjs from "dayjs";
 import sweetAlert from "sweetalert";
 
-import { getDate, getDateTime, getTime } from "@/utils/formatters";
+import {
+  getCurrentDate,
+  getDate,
+  getDateTime,
+  getTime,
+} from "@/utils/formatters";
 
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
@@ -179,7 +184,7 @@ export default function DailyActivityPage() {
             userName: user.name,
             activities: reportActivities,
             branch: values.branch,
-            date: reportDate,
+            date: getDate(reportDate),
             time: reportTime,
             comments: values.comments,
           }),
@@ -261,13 +266,24 @@ export default function DailyActivityPage() {
     return current && current.isAfter(dayjs(), "day"); // 'day' ensures it's only comparing by date (ignoring time)
   };
 
+  const reportSubmissionDue = () => {
+    if (reports) {
+      const currentDate = getCurrentDate();
+      const todaysReport = reports.find((report) => report.date == currentDate);
+
+      if (todaysReport) return false;
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
         title="Daily Activity"
         actions={[
           <Space>
-            {user.role != "admin" && (
+            {user.role != "admin" && reportSubmissionDue() && (
               <Button color="primary" onPress={() => setCreateDrawerOpen(true)}>
                 Submit Report
               </Button>
