@@ -1,9 +1,10 @@
 "use client";
 
-import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+
+import { useAuth } from "@/context/auth-context";
 
 const SideNavBar = () => {
   const pathname = usePathname();
@@ -16,6 +17,7 @@ const SideNavBar = () => {
     { id: 1, name: "Dashboard", url: "/dashboard" },
     { id: 2, name: "EFT Transactions", url: "/transactions/eft" },
     { id: 3, name: "Easypay Transactions", url: "/transactions/easypay" },
+    { id: 3, name: "Policies", url: "/policies" },
     { id: 4, name: "Daily Activity", url: "/daily-activity" },
     { id: 5, name: "Users", url: "/users" },
   ];
@@ -23,7 +25,8 @@ const SideNavBar = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user && user.role == "admin") menuItems.push({ id: 4, name: "Users", url: "/users" })
+    if (user && user.role == "admin")
+      menuItems.push({ id: 4, name: "Users", url: "/users" });
   }, [user]);
 
   return (
@@ -33,20 +36,19 @@ const SideNavBar = () => {
           const url = item.url ?? "";
 
           if (pathname.includes(item.url as string))
+            return (
+              <Link key={item.id} href={url}>
+                <div className="flex cursor-pointer items-center gap-4 border-l-large border-l-primary px-4 py-3 text-primary hover:bg-[#FFC107] hover:text-[#2B3E50]">
+                  <p className="text-sm font-normal uppercase tracking-wider">
+                    {item.name}
+                  </p>
+                </div>
+              </Link>
+            );
 
           return (
             <Link key={item.id} href={url}>
-              <div className="border-l-large border-l-primary text-primary flex cursor-pointer items-center gap-4 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]">
-                <p className="text-sm font-normal uppercase tracking-wider">
-                  {item.name}
-                </p>
-              </div>
-            </Link>
-          );
-
-          return (
-            <Link key={item.id} href={url}>
-              <div className="border-l-large border-l-transparent flex cursor-pointer items-center gap-4 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]">
+              <div className="flex cursor-pointer items-center gap-4 border-l-large border-l-transparent px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]">
                 <p className="text-sm font-normal uppercase tracking-wider">
                   {item.name}
                 </p>

@@ -2,35 +2,22 @@
 
 import { useEffect, useState } from "react";
 
+
+
 import { Button, Divider } from "@nextui-org/react";
-import {
-  Avatar,
-  Col,
-  DatePicker,
-  Descriptions,
-  Drawer,
-  Form,
-  Input,
-  List,
-  Row,
-  Select,
-  Space,
-  Spin,
-  Table,
-  TimePicker,
-} from "antd";
+import { Avatar, Col, DatePicker, Descriptions, Drawer, Form, Input, List, Row, Select, Space, Spin, Table, TimePicker } from "antd";
 import dayjs from "dayjs";
 import sweetAlert from "sweetalert";
 
-import {
-  getCurrentDate,
-  getDate,
-  getDateTime,
-  getTime,
-} from "@/utils/formatters";
+
+
+import { getCurrentDate, getDate, getDateTime, getTime } from "@/utils/formatters";
+
+
 
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
+
 
 const branches = ["Kaalfontein", "Mangweni", "Ndulwini", "Sangweni", "Simunye"];
 
@@ -117,10 +104,12 @@ export default function DailyActivityPage() {
   const fetchReports = async () => {
     setLoading(true);
 
+    const userId = user.id ?? user._id;
+
     const url =
       user.role == "admin"
         ? "/api/daily-activity"
-        : `/api/daily-activity?userId=${user._id}`;
+        : `/api/daily-activity?userId=${userId}`;
 
     try {
       const response = await fetch(url, {
@@ -280,7 +269,7 @@ export default function DailyActivityPage() {
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
-        title="Daily Activity"
+        title="Daily Activity Reports"
         actions={[
           <Space>
             {user.role != "admin" && reportSubmissionDue() && (
