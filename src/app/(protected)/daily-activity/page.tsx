@@ -162,6 +162,7 @@ export default function DailyActivityPage() {
       if (reportActivities.length !== 0) {
         const reportDate = dayjs(values.date).format("YYYY-MM-DD");
         const reportTime = dayjs(values.time).format("HH:MM");
+        const userId = user.id ?? user._id;
 
         const response = await fetch("/api/daily-activity", {
           method: "POST",
@@ -169,7 +170,7 @@ export default function DailyActivityPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            userId: user._id,
+            userId,
             userName: user.name,
             activities: reportActivities,
             branch: values.branch,
