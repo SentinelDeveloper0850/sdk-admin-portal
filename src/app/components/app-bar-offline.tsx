@@ -23,7 +23,11 @@ export default function AppBarOffline() {
     {
       label: "Home",
       href: "/",
-    }
+    },
+    {
+      label: "Sign in",
+      href: "/auth/signin",
+    },
   ];
 
   return (

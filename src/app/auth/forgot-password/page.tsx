@@ -90,7 +90,7 @@ const ForgotPasswordPage = () => {
       <p className="mb-4 px-2 text-sm italic text-gray-500">
         We'll send you a link to reset your password
       </p>
-      <Card>
+      <Card className="dark:bg-slate-50">
         <CardBody className="p-6">
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
             <Form.Item label="Email" name="email" rules={emailRules}>

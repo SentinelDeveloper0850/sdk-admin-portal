@@ -36,7 +36,7 @@ export const BankStatementExcelImporter = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...payload, source: "Transaction History" }),
+        body: JSON.stringify({ ...payload, source: "Bank Statement" }),
       });
 
       if (!response.ok) {

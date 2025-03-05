@@ -108,7 +108,7 @@ const LoginPage = () => {
           className="mb-4"
         />
       )}
-      <Card>
+      <Card className="dark:bg-slate-50">
         <CardBody className="p-6">
           <Form form={form} layout="vertical" onFinish={handleLogin}>
             <Form.Item label="Email" name="email" rules={emailRules}>
