@@ -63,28 +63,11 @@ export default function SocietiesPage() {
       }
 
       const data = await response.json();
-      setSocieties(data);
+      setSocieties(data.societies);
+      setStats({ count: data.count });
     } catch (err) {
       console.log(err);
       setError("An error occurred while searching societies.");
-    }
-  };
-
-  const handleImport = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch("/api/societies/import", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (res.ok) {
-      message.success("CSV imported successfully");
-      fetchSocieties(); // refresh list
-    } else {
-      const data = await res.json();
-      message.error(data.message || "Import failed");
     }
   };
 
@@ -126,7 +109,7 @@ export default function SocietiesPage() {
         <Form.Item label="Search Societies">
           <Search
             allowClear
-            placeholder="Search by Society Name"
+            placeholder="Search by Society name, chairman, treasurer, secretary, etc..."
             onSearch={(value) => {
               if (value.length > 0) {
                 searchSocieties(value);

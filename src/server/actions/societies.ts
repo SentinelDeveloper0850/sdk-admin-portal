@@ -35,9 +35,21 @@ export const searchSocieties = async (searchText: string, page = 1, limit = 100)
   try {
     await connectToDatabase();
 
+    const regex = new RegExp(searchText, "i");
+
     const societies = await Model.find({
       $or: [
-        { name: { $regex: searchText, $options: "i" } },
+        { name: regex },
+        { societyId: regex },
+        { chairmanFullNames: regex },
+        { chairmanPhone: regex },
+        { secretaryFullNames: regex },
+        { secretaryPhone: regex },
+        { treasurerFullNames: regex },
+        { treasurerPhone: regex },
+        { phone: regex },
+        { fax: regex },
+        { address: regex },
       ],
     })
       .skip((page - 1) * limit)
@@ -46,7 +58,8 @@ export const searchSocieties = async (searchText: string, page = 1, limit = 100)
 
     return {
       success: true,
-      data: societies,
+      societies,
+      count: societies.length,
     };
   } catch (error: any) {
     console.error("Error searching societies:", error.message);
