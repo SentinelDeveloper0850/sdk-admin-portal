@@ -161,15 +161,20 @@ export default function PoliciesPage() {
         columns={[
           {
             title: "Easipol Member ID",
-            dataIndex: "memberID",
-            key: "memberID",
+            dataIndex: "memberId",
+            key: "memberId",
           },
           {
             title: "Policy Number",
             dataIndex: "policyNumber",
             key: "policyNumber",
           },
-          { title: "Main Member", dataIndex: "fullname", key: "fullname" },
+          {
+            title: "Easypay Number",
+            dataIndex: "easypayNumber",
+            key: "easypayNumber",
+          },
+          { title: "Main Member", dataIndex: "fullName", key: "fullName" },
           { title: "Product", dataIndex: "productName", key: "productName" },
           {
             title: "Payment History",
