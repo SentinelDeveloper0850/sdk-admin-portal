@@ -32,7 +32,7 @@ const SideNavBar = () => {
   }, [user]);
 
   return (
-    <section className="h-full w-64 overflow-auto bg-white dark:bg-zinc-900">
+    <section className="h-full w-full overflow-auto bg-white dark:bg-zinc-900">
       <div className="grid gap-0">
         {menuItems.map((item) => {
           const url = item.url ?? "";

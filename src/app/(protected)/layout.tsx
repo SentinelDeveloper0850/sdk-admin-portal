@@ -5,15 +5,15 @@ import SideNavBar from "../components/side-navbar";
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="h-full w-full">
+    <div className="flex h-screen w-full flex-col">
       <AppBarOnline />
-      <div className="flex h-full w-full">
-        <SideNavBar />
-        <section className="w-full">
-          <div className="h-full bg-zinc-100 p-4 dark:bg-zinc-800">
-            {children}
-          </div>
-        </section>
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="sticky top-0 h-screen w-64 shrink-0">
+          <SideNavBar />
+        </aside>
+        <main className="flex-1 overflow-y-auto bg-zinc-100 p-4 dark:bg-zinc-800">
+          {children}
+        </main>
       </div>
     </div>
   );
