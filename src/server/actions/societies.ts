@@ -1,0 +1,113 @@
+"use server";
+import fs from "fs";
+import path from "path";
+import Papa from "papaparse";
+import { SocietyModel as Model } from "@/app/models/society.schema";
+import { connectToDatabase } from "@/lib/db";
+
+export const fetchAllSocieties = async (page = 1, limit = 0) => {
+  try {
+    await connectToDatabase();
+
+    const numberOfSocieties = await Model.countDocuments();
+    const societies = await Model.find()
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .maxTimeMS(60000); // Prevents excessive query times
+
+    return {
+      success: true,
+      data: {
+        count: numberOfSocieties,
+        societies: societies,
+      },
+    };
+  } catch (error: any) {
+    console.error("Error fetching societies:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error fetching societies",
+    };
+  }
+};
+
+export const searchSocieties = async (searchText: string, page = 1, limit = 100) => {
+  try {
+    await connectToDatabase();
+
+    const societies = await Model.find({
+      $or: [
+        { name: { $regex: searchText, $options: "i" } },
+      ],
+    })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .maxTimeMS(60000); // Prevents excessive query times
+
+    return {
+      success: true,
+      data: societies,
+    };
+  } catch (error: any) {
+    console.error("Error searching societies:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error searching societies",
+    };
+  }
+};
+
+export const importSociety = async (data: any) => {
+  await connectToDatabase();
+
+  try {
+    const existingPolicy = await Model.findOne({ name: data.name });
+
+    if (existingPolicy) {
+      return { success: false, message: "Society already exists with this name." };
+    }
+
+    const newSociety = new Model(data);
+    await newSociety.save();
+
+    return {
+      success: true,
+      data: newSociety,
+    };
+  } catch (error: any) {
+    console.error("Error importing society:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error importing society",
+    };
+  }
+};
+
+export async function importSocietiesFromCSV(filePath: string) {
+  const fileContent = fs.readFileSync(filePath, "utf8");
+
+  const { data, errors } = Papa.parse(fileContent, {
+    header: true,
+    skipEmptyLines: true,
+  });
+
+  if (errors.length > 0) {
+    throw new Error("CSV parsing error: " + JSON.stringify(errors));
+  }
+
+  for (const row of data as any[]) {
+    if (!row.name) continue;
+
+    const exists = await Model.findOne({ name: row.name });
+    if (!exists) {
+      await Model.create({
+        name: row.name,
+        contactPerson: row.contactPerson,
+        phoneNumber: row.phoneNumber,
+        email: row.email,
+        type: row.type,
+        cloudinaryFolder: row.cloudinaryFolder,
+      });
+    }
+  }
+}

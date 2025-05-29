@@ -19,9 +19,10 @@ const SideNavBar = () => {
     // { id: 3, name: "EFT Analysis", url: "/transactions/eft/analyze" },
     { id: 4, name: "Easypay Transactions", url: "/transactions/easypay" },
     { id: 5, name: "Policies", url: "/policies" },
-    { id: 6, name: "Daily Activity", url: "/daily-activity" },
-    { id: 7, name: "Users", url: "/users" },
-    // { id: 8, name: "Communication", url: "/communication" },
+    { id: 6, name: "Societies", url: "/societies" },
+    { id: 7, name: "Daily Activity", url: "/daily-activity" },
+    { id: 8, name: "Users", url: "/users" },
+    // { id: 9, name: "Communication", url: "/communication" },
   ];
 
   const { user } = useAuth();
