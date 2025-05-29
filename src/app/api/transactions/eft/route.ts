@@ -27,6 +27,7 @@ export async function POST(request: Request) {
   try {
     // Parse the request body
     const payload = await request.json();
+    console.log("🚀 ~ POST ~ payload:", payload)
 
     let response;
 

@@ -141,7 +141,6 @@ export const importFromBankStatement = async (payload: any) => {
     ];
 
     const importDataList: IEftImportData[] = await IEftImportDataModel.find();
-
     const transactions = payload.transactions;
     const statementDate = payload.statementMonth;
 
@@ -157,8 +156,9 @@ export const importFromBankStatement = async (payload: any) => {
 
     let existingImportData = importDataList.find((item: IEftImportData) => item.uuid === importData.uuid);
 
-    const parseData = async () => {
-      // console.log('Transactions to parse: =>', transactions.length);
+    console.log("🚀 ~ importFromBankStatement ~ existingImportData:", existingImportData)
+
+    if (!existingImportData) {
       try {
         for (let index = 0; index < transactions.length; index++) {
           const element = transactions[index];
@@ -201,19 +201,17 @@ export const importFromBankStatement = async (payload: any) => {
                 source: payload.source
               };
 
-              // console.log(`Transaction to import #${index + 1}`, transaction)
-
               _transactions.push(transaction);
             }
           }
+
         }
       } catch (exception) {
         console.error(exception);
       }
-    };
 
-    if (!existingImportData) {
-      await parseData().then(async () => {
+      console.log("🚀 ~ importFromBankStatement ~ _transactions:", _transactions)
+      if (_transactions.length > 0) {
         if (_transactions.length > 0) {
           await EftTransactionModel.insertMany([..._transactions]);
           importData.numberOfTransactions = _transactions.length;
@@ -223,7 +221,7 @@ export const importFromBankStatement = async (payload: any) => {
           // console.log('Transactions parsed: => ', _transactions);
           return { success: false, message: 'Unable to import the transactions' };
         }
-      });
+      }
     } else {
       return { success: true, message: `${statementDate} Transactions already imported` }
     }
@@ -245,6 +243,7 @@ export const importFromTransactionHistory = async (payload: any) => {
 
   try {
     const importDataList: IEftImportData[] = await IEftImportDataModel.find();
+    console.log("🚀 ~ importFromTransactionHistory ~ importDataList:", importDataList)
 
     const transactions = payload.transactions.map((item: any) => ({ ...item, source: payload.source }));
     const statementDate = payload.statementMonth;

@@ -1,0 +1,120 @@
+**SDK Admin Portal Rebuild Spec (v0.0.0)**
+
+---
+
+### 📅 Release Scope: v0.0.0 (Minimum Viable Internal Tool)
+This version aims to faithfully replicate the functionality of the current SDK Admin Portal with an improved foundation for future enhancements. The primary users are internal staff at **Somdaka Funerals**, with the **Transactions module** being mission-critical.
+
+---
+
+## ✨ Core Modules & Pages
+
+### 1. 📊 Dashboard
+- Overview of recent activity
+- Basic stats: total users, transactions today, recent imports
+- Can be a placeholder in v0.0.0 with mocked metrics
+
+### 2. 👤 User Management
+- List users (paginated table)
+- Create new user
+- Edit/view existing user
+- Delete user (optional)
+
+### 3. 📆 Account Settings
+- Update Profile Info
+- Set Preferences (timezone, language, etc.)
+
+### 4. ✉️ Authentication (Public Pages)
+- Login
+- Register (if needed)
+- Forgot Password (email or OTP-based recovery)
+
+---
+
+## 💳 Transactions Module (**High Priority**)
+
+This is the **most heavily used** module in the system. It supports operational financial record-keeping and validation at Somdaka Funerals.
+
+### ✅ Shared Features (EasyPay + EFT)
+- Tabular display of transactions with the following fields:
+  - name, description, additionalInformation, amount, date, created_at
+- Search by text and filter by amount range/type
+- Import history drawer with log of past uploads
+- Statistics block with total count or sum
+- All dates should be parsed and displayed in ISO format (from UTC)
+
+### 🚀 EasyPay Transactions
+- CSV Import only
+- Import parses data and posts to `POST /api/transactions/easypay`
+- Uses PapaParse on frontend
+- Transactions persist to DB with `uuid` and meta
+- Search and Import History handled via:
+  - `POST /api/transactions/easypay/search`
+  - `GET /api/transactions/easypay/import-history`
+
+### 🚀 EFT Transactions
+- Supports **two upload modes**:
+  - Transaction History CSV
+  - Bank Statement XLSX
+- Smart backend logic auto-detects type:
+  ```ts
+  if (payload.source === "Transaction History") {
+    importFromTransactionHistory(...)
+  } else {
+    importFromBankStatement(...)
+  }
+  ```
+- Same API structure as EasyPay:
+  - `POST /api/transactions/eft`
+  - `POST /api/transactions/eft/search`
+  - `GET /api/transactions/eft/import-history`
+
+---
+
+## 📝 Policy Management
+- Basic CRUD interface for managing policies
+- Includes search functionality
+
+## ⏰ Daily Activity
+- Simple logging module (currently unclear if it's tied to attendance or system usage)
+- List view only in v0.0.0
+
+---
+
+## ⚖️ Tech Stack (Target)
+- **Framework**: Next.js (App Router)
+- **Styling**: TailwindCSS + Ant Design (NextUI optional)
+- **Auth**: JWT-based or email/password (local strategy)
+- **DB**: MongoDB via Mongoose
+- **Deployment**: Vercel (initially), scalable to VPS
+
+---
+
+## 🔧 Scalability & Extensibility Notes
+- Backend logic abstracted into `/server/actions` for clean separation
+- Interfaces defined per module (`interfaces/*.ts`)
+- Reusable components: CSVImporter, XLSXImporter, PageHeader, etc.
+
+---
+
+## 📗 Post-v0 Enhancements (Not in v0)
+- Role-based Access Control (RBAC)
+- Notification system (on import success/fail)
+- Exporting data as CSV or XLSX
+- Merge Duplicate Transactions tool
+- Transaction tagging & notes
+- Custom date range filters
+
+---
+
+## ⚠️ Critical Notes for Rebuild
+- **Transaction data integrity is non-negotiable**
+- All imports must preserve original uploaded structure
+- Error handling must be clear and logged for all import actions
+- Ensure the import flow supports retry without duplication
+- Keep backend logic modular: each transaction source should be extendable
+
+---
+
+Let me know if we need to trim, tweak, or add anything before we move to wireframes.
+

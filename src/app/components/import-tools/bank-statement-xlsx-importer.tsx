@@ -78,7 +78,9 @@ export const BankStatementExcelImporter = () => {
   };
 
   const handleFile = async (event: any) => {
+    console.log("🚀 ~ handleFile ~ event:", event)
     const _file = event.target.files[0];
+    console.log("🚀 ~ handleFile ~ _file:", _file)
 
     if (!_file) return;
 
@@ -93,6 +95,7 @@ export const BankStatementExcelImporter = () => {
     setFileName(_file.name);
 
     const data = await _file.arrayBuffer();
+    console.log("🚀 ~ handleFile ~ data:", data)
 
     parseExcelData(data);
   };

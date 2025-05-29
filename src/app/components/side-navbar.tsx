@@ -16,10 +16,12 @@ const SideNavBar = () => {
   }[] = [
     { id: 1, name: "Dashboard", url: "/dashboard" },
     { id: 2, name: "EFT Transactions", url: "/transactions/eft" },
-    { id: 3, name: "Easypay Transactions", url: "/transactions/easypay" },
-    { id: 3, name: "Policies", url: "/policies" },
-    { id: 4, name: "Daily Activity", url: "/daily-activity" },
-    { id: 5, name: "Users", url: "/users" },
+    // { id: 3, name: "EFT Analysis", url: "/transactions/eft/analyze" },
+    { id: 4, name: "Easypay Transactions", url: "/transactions/easypay" },
+    { id: 5, name: "Policies", url: "/policies" },
+    { id: 6, name: "Daily Activity", url: "/daily-activity" },
+    { id: 7, name: "Users", url: "/users" },
+    // { id: 8, name: "Communication", url: "/communication" },
   ];
 
   const { user } = useAuth();
