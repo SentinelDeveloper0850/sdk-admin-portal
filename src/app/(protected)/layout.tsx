@@ -8,7 +8,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="flex h-screen w-full flex-col">
       <AppBarOnline />
       <div className="flex flex-1 overflow-hidden">
-        <aside className="sticky top-0 h-screen w-64 shrink-0">
+        <aside className="sticky top-0 h-screen shrink-0 transition-all duration-200">
           <SideNavBar />
         </aside>
         <main className="flex-1 overflow-y-auto bg-zinc-100 p-4 dark:bg-zinc-800">

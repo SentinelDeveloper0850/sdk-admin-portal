@@ -2,67 +2,103 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useState } from "react";
+
+import {
+  Banknote,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  FolderKanban,
+  LayoutDashboard,
+  ListOrdered,
+  Shield,
+  Users,
+} from "lucide-react";
 
 import { useAuth } from "@/context/auth-context";
+import { Tooltip } from "antd";
 
 const SideNavBar = () => {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
 
-  const menuItems: {
-    id: number;
-    name: string;
-    url: unknown;
-  }[] = [
-    { id: 1, name: "Dashboard", url: "/dashboard" },
-    { id: 2, name: "EFT Transactions", url: "/transactions/eft" },
-    // { id: 3, name: "EFT Analysis", url: "/transactions/eft/analyze" },
-    { id: 4, name: "Easypay Transactions", url: "/transactions/easypay" },
-    { id: 5, name: "Policies", url: "/policies" },
-    { id: 6, name: "Societies", url: "/societies" },
-    { id: 7, name: "Daily Activity", url: "/daily-activity" },
-    { id: 8, name: "Users", url: "/users" },
-    // { id: 9, name: "Communication", url: "/communication" },
+  const menuItems = [
+    {
+      id: 1,
+      name: "Dashboard",
+      icon: <LayoutDashboard size={18} />,
+      url: "/dashboard",
+    },
+    {
+      id: 2,
+      name: "EFT Transactions",
+      icon: <Banknote size={18} />,
+      url: "/transactions/eft",
+    },
+    {
+      id: 3,
+      name: "Easypay Transactions",
+      icon: <Banknote size={18} />,
+      url: "/transactions/easypay",
+    },
+    { id: 4, name: "Policies", icon: <FileText size={18} />, url: "/policies" },
+    { id: 5, name: "Societies", icon: <Users size={18} />, url: "/societies" },
+    {
+      id: 6,
+      name: "Daily Activity",
+      icon: <ListOrdered size={18} />,
+      url: "/daily-activity",
+    },
+    { id: 7, name: "Users", icon: <Shield size={18} />, url: "/users" },
   ];
 
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (user && user.role == "admin")
-      menuItems.push({ id: 4, name: "Users", url: "/users" });
-  }, [user]);
-
   return (
-    <section className="h-full w-full overflow-auto bg-white dark:bg-zinc-900">
+    <section
+      className={`h-full ${collapsed ? "w-16" : "w-64"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}
+    >
+      <div className={`flex ${collapsed ? "justify-center" : "justify-end"} p-2`}>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-zinc-500 hover:text-black dark:hover:text-white"
+        >
+          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        </button>
+      </div>
       <div className="grid gap-0">
         {menuItems.map((item) => {
-          const url = item.url ?? "";
+          const isActive = pathname.includes(item.url);
+          const baseClass =
+            "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
+          const borderClass = isActive
+            ? "border-l-4 border-l-primary text-primary"
+            : "border-l-4 border-l-transparent";
 
-          if (pathname.includes(item.url as string))
-            return (
-              <Link key={item.id} href={url}>
-                <div className="flex cursor-pointer items-center gap-4 border-l-large border-l-primary px-4 py-3 text-primary hover:bg-[#FFC107] hover:text-[#2B3E50]">
-                  <p className="text-sm font-normal uppercase tracking-wider">
-                    {item.name}
-                  </p>
-                </div>
-              </Link>
-            );
-
-          return (
-            <Link key={item.id} href={url}>
-              <div className="flex cursor-pointer items-center gap-4 border-l-large border-l-transparent px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]">
+          const content = (
+            <div className={`${baseClass} ${borderClass}`}>
+              {item.icon}
+              {!collapsed && (
                 <p className="text-sm font-normal uppercase tracking-wider">
                   {item.name}
                 </p>
-              </div>
+              )}
+            </div>
+          );
+
+          return (
+            <Link key={item.id} href={item.url}>
+              {collapsed ? (
+                <Tooltip title={item.name} placement="right">
+                  {content}
+                </Tooltip>
+              ) : (
+                content
+              )}
             </Link>
           );
         })}
       </div>
-      {/* <div className="absolute bottom-3 left-3 animate-bounce rounded-full bg-slate-200 p-1">
-        <IconHelp className="cursor-pointer text-[#0056b3]" />
-      </div> */}
     </section>
   );
 };
