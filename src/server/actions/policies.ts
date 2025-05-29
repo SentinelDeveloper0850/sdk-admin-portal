@@ -3,7 +3,7 @@
 import { PolicyModel } from "@/app/models/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
-export const fetchAllPolicies = async (page = 1, limit = 100) => {
+export const fetchAllPolicies = async (page = 1, limit = 0) => {
   try {
     await connectToDatabase();
 
