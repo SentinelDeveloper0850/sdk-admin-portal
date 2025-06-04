@@ -210,25 +210,48 @@ export const importFromBankStatement = async (payload: any) => {
         console.error(exception);
       }
 
-      console.log("🚀 ~ importFromBankStatement ~ _transactions:", _transactions)
+      console.log("🚀 ~ importFromBankStatement ~ _transactions:", _transactions.length);
+
       if (_transactions.length > 0) {
-        if (_transactions.length > 0) {
-          await EftTransactionModel.insertMany([..._transactions]);
-          importData.numberOfTransactions = _transactions.length;
-          await new IEftImportDataModel(importData).save();
-          return { success: true, message: 'Transactions imported' };
-        } else {
-          // console.log('Transactions parsed: => ', _transactions);
-          return { success: false, message: 'Unable to import the transactions' };
+        const validTransactions = [];
+        const invalidTransactions = [];
+
+        for (const txn of _transactions) {
+          const parsedAmount = Number(txn.amount);
+          if (isNaN(parsedAmount)) {
+            console.warn("⚠️ Invalid transaction amount:", txn);
+            invalidTransactions.push(txn);
+          } else {
+            validTransactions.push(txn); // keep original string format
+          }
         }
+
+        if (validTransactions.length > 0) {
+          await EftTransactionModel.insertMany(validTransactions);
+          importData.numberOfTransactions = validTransactions.length;
+          await new IEftImportDataModel(importData).save();
+
+          return {
+            success: true,
+            message: `Transactions imported (${validTransactions.length})`,
+            invalidCount: invalidTransactions.length,
+            invalidTransactions
+          };
+        } else {
+          return {
+            success: false,
+            message: "No valid transactions to import",
+            invalidCount: invalidTransactions.length,
+            invalidTransactions
+          };
+        }
+      } else {
+        return { success: false, message: 'Unable to import the transactions' };
       }
+
     } else {
-      return { success: true, message: `${statementDate} Transactions already imported` }
+      return { success: false, message: `${statementDate} Transactions already imported` }
     }
-    return {
-      success: false,
-      message: "Internal Server Error ~ Error importing eft transactions"
-    };
   } catch (error: any) {
     console.error("Error importing eft transactions:", error.message);
     return {
