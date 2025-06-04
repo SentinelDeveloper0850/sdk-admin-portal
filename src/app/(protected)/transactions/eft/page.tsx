@@ -2,30 +2,23 @@
 
 import { useEffect, useState } from "react";
 
-import {
-  Alert,
-  Button,
-  Col,
-  Drawer,
-  Form,
-  List,
-  Row,
-  Select,
-  Space,
-  Spin,
-  Statistic,
-  Table,
-  notification,
-} from "antd";
+
+
+import { Alert, Button, Col, Drawer, Form, List, Row, Select, Space, Spin, Statistic, Table, notification } from "antd";
 import Search from "antd/es/input/Search";
 import Papa from "papaparse";
 
+
+
 import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
+
+
 
 import { BankStatementExcelImporter } from "@/app/components/import-tools/bank-statement-xlsx-importer";
 import { TransactionHistoryCsvImporter } from "@/app/components/import-tools/transaction-history-csv-importer";
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
+
 
 interface IEftTransaction {
   _id: string;
@@ -198,13 +191,18 @@ export default function EftTransactionsPage() {
                 const _transactions: any[] = [];
 
                 records.map((item) => {
-                  if (!item[1].trim().includes("-"))
+                  if (!item[1].trim().includes("-")) {
+                    const _amountString = item[1] as string;
+                    const _amount = _amountString
+                      .replace(",", "")
+                      .replace(",", "");
                     _transactions.push({
                       date: item[0],
-                      amount: item[1].trim(),
+                      amount: _amount.trim(),
                       description: item[3],
                       uuid: _uuid,
                     });
+                  }
                 });
 
                 const _numberOfTransactions = _transactions.length;
