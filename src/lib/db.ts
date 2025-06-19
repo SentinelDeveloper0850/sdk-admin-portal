@@ -1,6 +1,6 @@
 import mongoose, { ConnectionStates } from "mongoose";
 
-const connectionString = process.env.MONGODB_URI;
+const connectionString = process.env.MONGODB_URI || "mongodb://169.1.24.233:8001/sdk-admin-portal";
 
 if (!connectionString) throw new Error("🧭 ~ Please define MONGODB_URI environment variable inside .env");
 

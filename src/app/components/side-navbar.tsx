@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import {
   Banknote,
+  Calendar,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -51,7 +52,13 @@ const SideNavBar = () => {
       icon: <ListOrdered size={18} />,
       url: "/daily-activity",
     },
-    { id: 7, name: "Users", icon: <Shield size={18} />, url: "/users" },
+    {
+      id: 7,
+      name: "Shifts",
+      icon: <Calendar size={18} />,
+      url: "/shifts",
+    },
+    { id: 8, name: "Users", icon: <Shield size={18} />, url: "/users" },
   ];
 
   return (
