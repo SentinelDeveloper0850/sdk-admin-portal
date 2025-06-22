@@ -218,7 +218,7 @@ export default function EasypayTransactionsPage() {
                       uuid: _uuid,
                       date: statementDate,
                       numberOfTransactions: _numberOfTransactions,
-                      createdBy: user.fullnames ?? "--",
+                      createdBy: user?.name ?? "--",
                       created_at: new Date(),
                     },
                   };
