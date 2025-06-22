@@ -5,6 +5,8 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 export interface IUser extends Document {
   name: string;
   email: string;
+  phone?: string;
+  address?: string;
   password: string;
   role: string;
   status: string;
@@ -34,6 +36,8 @@ const preferencesSchema = new mongoose.Schema({
 const userSchema: Schema<IUser> = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  phone: { type: String, default: "" },
+  address: { type: String, default: "" },
   password: { type: String, required: true },
   role: { type: String, default: "user" },
   status: { type: String, default: "Inactive" },

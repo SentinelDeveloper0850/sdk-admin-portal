@@ -2,27 +2,34 @@
 
 import React, { useState } from "react";
 
-
-
-import { Avatar, Button, Divider, Input, Select, SelectItem, Spinner, Switch } from "@nextui-org/react";
-import { Drawer, message } from "antd";
+import {
+  Avatar,
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Divider,
+  Input,
+  Spinner,
+} from "@nextui-org/react";
+import { Drawer, Tag, message } from "antd";
 import dayjs from "dayjs";
-
-
 
 import PageHeader from "@/app/components/page-header";
 import { ThemeSwitcher } from "@/app/components/theme-switcher";
 import { useAuth } from "@/context/auth-context";
 
-
 const MAX_FILE_SIZE_MB = 2;
 
 const ProfilePage: React.FC = () => {
-  const { user, setUser, userId } = useAuth();
+  const { user, setUser } = useAuth();
   const avatarUrl = user?.avatarUrl || "/default-avatar.png";
 
   const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState(user?.name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [address, setAddress] = useState(user?.address || "");
   const [avatar, setAvatar] = useState(user?.avatarUrl || "");
   const [theme, setTheme] = useState<"light" | "dark" | "system">(
     user?.preferences?.theme || "system"
@@ -35,6 +42,8 @@ const ProfilePage: React.FC = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
+        phone,
+        address,
         avatarUrl: avatar,
         preferences: { theme },
       }),
@@ -82,16 +91,16 @@ const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <PageHeader
         title="My Profile"
         subtitle="Manage your user details and preferences"
       />
 
-      <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Profile Section */}
-        <section>
-          <div className="mb-6 flex items-center gap-4">
+        <Card>
+          <CardHeader className="flex items-center gap-4 border-b border-gray-200 dark:border-gray-200">
             <Avatar
               src={avatarUrl}
               size="lg"
@@ -107,12 +116,29 @@ const ProfilePage: React.FC = () => {
                 {user?.email ?? "No email"}
               </p>
             </div>
-          </div>
+          </CardHeader>
 
-          <div className="space-y-3 text-sm">
+          <CardBody className="space-y-3 border-b border-gray-200 text-sm dark:border-gray-200">
+            <h3 className="italic">Contact Details</h3>
+            <div className="flex justify-between text-gray-400">
+              <span>Email Address</span>
+              <span>{user?.email}</span>
+            </div>
+            <div className="flex justify-between text-gray-400">
+              <span>Phone Number</span>
+              <span>{user?.phone ?? "--"}</span>
+            </div>
+            <div className="flex justify-between text-gray-400">
+              <span>Physical Address</span>
+              <span>{user?.address ?? "--"}</span>
+            </div>
+            <Divider />
+            <h3 className="italic">Access Details</h3>
             <div className="flex justify-between text-gray-400">
               <span>Role</span>
-              <span className="dark:text-white">{user?.role ?? "N/A"}</span>
+              <Tag color="orange" className="mr-0 text-xs italic">
+                {user?.role?.toUpperCase() ?? "No Role"}
+              </Tag>
             </div>
             <div className="flex justify-between text-gray-400">
               <span>Status</span>
@@ -132,38 +158,38 @@ const ProfilePage: React.FC = () => {
                 </span>
               </div>
             )}
-          </div>
+          </CardBody>
 
-          <div className="mt-6">
-            <Button
-              onClick={() => setEditOpen(true)}
-              color="primary"
-            >
+          <CardFooter>
+            <Button onClick={() => setEditOpen(true)} color="default" size="sm">
               Edit Profile
             </Button>
-          </div>
-        </section>
+          </CardFooter>
+        </Card>
 
         {/* Preferences Section */}
-        <section>
-          <h2 className="mb-4 text-lg font-semibold">Preferences</h2>
-          <div className="space-y-6 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Theme</span>
-              <ThemeSwitcher />
+        <Card>
+          <CardHeader className="border-b border-gray-200 dark:border-gray-200">
+            <h2 className="text-lg font-semibold">Preferences</h2>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-6 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Theme</span>
+                <ThemeSwitcher onThemeChange={(newTheme: "system" | "dark" | "light") => {
+                  setTheme(newTheme);
+                  handleSave();
+                }} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Language</span>
+                <span className="text-xs dark:text-white">
+                  English (default)
+                </span>
+              </div>
             </div>
-            {/* <Divider />
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Email Notifications</span>
-              <Switch isSelected={true} disabled />
-            </div> */}
-            <Divider />
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Language</span>
-              <span className="text-xs dark:text-white">English (default)</span>
-            </div>
-          </div>
-        </section>
+          </CardBody>
+        </Card>
       </div>
 
       <Drawer
@@ -172,12 +198,34 @@ const ProfilePage: React.FC = () => {
         width={400}
         onClose={() => setEditOpen(false)}
         open={editOpen}
+        footer={
+          <div className="flex justify-end gap-2 pt-4">
+            <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button color="primary" onClick={handleSave} disabled={uploading}>
+              Save
+            </Button>
+          </div>
+        }
       >
         <div className="space-y-4">
           <Input
             label="Full Name"
             value={name}
             onValueChange={setName}
+            fullWidth
+          />
+
+          <Input
+            label="Phone Number"
+            value={phone}
+            onValueChange={setPhone}
+            fullWidth
+          />
+
+          <Input
+            label="Physical Address"
+            value={address}
+            onValueChange={setAddress}
             fullWidth
           />
 
@@ -194,6 +242,7 @@ const ProfilePage: React.FC = () => {
             <input
               type="file"
               accept="image/*"
+              hidden
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleAvatarUpload(file);
@@ -208,29 +257,6 @@ const ProfilePage: React.FC = () => {
                 className="mx-auto mt-4 h-20 w-20 rounded-full object-cover"
               />
             )}
-          </div>
-
-          <Select
-            label="Theme Preference"
-            selectedKeys={[theme]}
-            onSelectionChange={(keys) => {
-              const selected = Array.from(keys)[0];
-              if (typeof selected === "string") {
-                setTheme(selected as "light" | "dark" | "system");
-              }
-            }}
-            fullWidth
-          >
-            <SelectItem key="light">Light</SelectItem>
-            <SelectItem key="dark">Dark</SelectItem>
-            <SelectItem key="system">System</SelectItem>
-          </Select>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button color="primary" onClick={handleSave} disabled={uploading}>
-              Save
-            </Button>
           </div>
         </div>
       </Drawer>

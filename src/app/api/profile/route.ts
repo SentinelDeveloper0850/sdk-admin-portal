@@ -4,7 +4,6 @@ import { updateUserProfile } from "@/server/actions/users";
 
 export async function PATCH(req: NextRequest) {
   const user = await getUserFromRequest(req);
-  console.log("🚀 ~ PATCH ~ user:", user)
 
   if (!user || !user._id) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });

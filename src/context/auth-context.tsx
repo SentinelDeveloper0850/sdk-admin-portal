@@ -4,9 +4,17 @@
 import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+
+
 import axios from "axios";
 
+
+
 import type { IUser } from "@/app/models/user.schema";
+
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -39,21 +47,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        const response = await axios.get("/api/auth/user", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Only fetch if user is not already set (prevents overwrite after login)
+        if (!user) {
+          const response = await axios.get("/api/auth/user", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
-        setUser(response.data.user);
+          setUser(response.data.user);
+        }
       } catch (error: any) {
         console.error("Error fetching user details:", error);
-        // Handle expired token or unauthorized access
         if (error.response?.status === 401) {
           document.cookie =
             "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
           setUser(null);
-          router.push("/auth/signin"); // Redirect to signin
+          router.push("/auth/signin");
         }
       } finally {
         setLoading(false);
@@ -61,7 +71,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     fetchUserDetails();
-  }, [router]);
+  }, [user, router]);
+  
 
   // Show loading spinner until user details are fetched
   if (loading) {

@@ -3,6 +3,8 @@ import { UserModel } from "@/app/models/user.schema";
 
 interface UpdateProfilePayload {
   name?: string;
+  phone?: string;
+  address?: string;
   avatarUrl?: string;
   preferences?: {
     theme?: "light" | "dark" | "system";
@@ -11,7 +13,7 @@ interface UpdateProfilePayload {
 }
 
 export async function updateUserProfile(userId: string, payload: UpdateProfilePayload) {
-  console.log("🚀 ~ updateUserProfile ~ payload:", payload)
+  console.log("🚀 ~ server-action:users ~ updateUserProfile ~ payload:", payload)
   try {
     await connectToDatabase();
 
@@ -19,12 +21,14 @@ export async function updateUserProfile(userId: string, payload: UpdateProfilePa
       userId,
       {
         ...(payload.name && { name: payload.name }),
+        ...(payload.phone && { phone: payload.phone }),
+        ...(payload.address && { address: payload.address }),
         ...(payload.avatarUrl && { avatarUrl: payload.avatarUrl }),
         ...(payload.preferences && { preferences: payload.preferences }),
       },
       { new: true } // return the updated document
     );
-    console.log("🚀 ~ updateUserProfile ~ updatedUser:", updatedUser)
+    console.log("🚀 ~ server-action:users ~ updateUserProfile ~ updatedUser:", updatedUser)
 
     if (!updatedUser) {
       return { success: false, message: "User not found" };
@@ -32,7 +36,7 @@ export async function updateUserProfile(userId: string, payload: UpdateProfilePa
 
     return { success: true, user: updatedUser };
   } catch (err: any) {
-    console.error("updateUserProfile error:", err);
+    console.error("server-action:users ~ updateUserProfile error:", err);
     return { success: false, message: err.message || "Internal server error" };
   }
 }

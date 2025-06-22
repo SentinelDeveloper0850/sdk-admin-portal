@@ -23,6 +23,7 @@ import { logout } from "@/utils/auth";
 import { useAuth } from "@/context/auth-context";
 
 import { ThemeSwitcher } from "./theme-switcher";
+import { Tag } from "antd";
 
 export default function AppBarOnline() {
   const router = useRouter();
@@ -70,18 +71,13 @@ export default function AppBarOnline() {
                 as="button"
                 className="transition-transform"
                 size="sm"
-                src={avatarUrl}
-              >
-                {!avatarUrl && <ImUser />}
-              </Avatar>
+                src={user?.avatarUrl}
+              />
             </DropdownTrigger>
             <DropdownMenu aria-label="Profile Actions" variant="flat">
-              <DropdownItem key="user" className="h-14 gap-2 hover:bg-white">
+              <DropdownItem key="user" className="h-14 gap-2 hover:bg-white border-b rounded-b-none">
                 <p className="font-semibold">{user?.name ?? "Unknown User"}</p>
-                <p className="font-semibold">
-                  {user?.role ?? "Role not available"}
-                </p>
-                <Divider className="mt-2" />
+                <Tag color="orange" className="italic text-xs">{user?.role?.toUpperCase() ?? "No Role"}</Tag>
               </DropdownItem>
               <DropdownItem
                 key="profile"
