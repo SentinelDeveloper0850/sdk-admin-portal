@@ -104,6 +104,14 @@ export default function DailyActivityPage() {
   const fetchReports = async () => {
     setLoading(true);
 
+    if (!user) {
+      return sweetAlert({
+        title: "User not detected",
+        icon: "error",
+        timer: 2000,
+      });
+    }
+
     const userId = user.id ?? user._id;
 
     const url =
@@ -157,6 +165,14 @@ export default function DailyActivityPage() {
 
   const submitReport = async (values: any) => {
     setLoading(true);
+
+    if (!user) {
+      return sweetAlert({
+        title: "User not detected",
+        icon: "error",
+        timer: 2000,
+      });
+    }
 
     try {
       if (reportActivities.length !== 0) {
@@ -241,6 +257,14 @@ export default function DailyActivityPage() {
   };
 
   const resetForm = () => {
+    if (!user) {
+      return sweetAlert({
+        title: "User not detected",
+        icon: "error",
+        timer: 2000,
+      });
+    }
+
     form.resetFields();
     setSelectedActivity(undefined);
     setReportActivities([]);
@@ -273,7 +297,7 @@ export default function DailyActivityPage() {
         title="Daily Activity Reports"
         actions={[
           <Space>
-            {user.role != "admin" && reportSubmissionDue() && (
+            {user?.role != "admin" && reportSubmissionDue() && (
               <Button color="primary" onPress={() => setCreateDrawerOpen(true)}>
                 Submit Report
               </Button>
@@ -389,7 +413,7 @@ export default function DailyActivityPage() {
                   },
                 ]}
               >
-                <Input disabled value={user.name} />
+                <Input disabled value={user?.name} />
               </Form.Item>
             </Col>
             <Col span={12}>
