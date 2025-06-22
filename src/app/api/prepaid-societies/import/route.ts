@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error(error);
     return NextResponse.json(
-      { message: error.message || "Failed to import societies" },
+      { message: error.message || "Failed to import prepaid societies" },
       { status: 500 }
     );
   }

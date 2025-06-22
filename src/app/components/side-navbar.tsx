@@ -45,19 +45,19 @@ const SideNavBar = () => {
       url: "/transactions/easypay",
     },
     { id: 4, name: "Policies", icon: <FileText size={18} />, url: "/policies" },
-    { id: 5, name: "Societies", icon: <Users size={18} />, url: "/societies" },
+    { id: 5, name: "Prepaid Societies", icon: <Users size={18} />, url: "/prepaid-societies" },
     {
       id: 6,
       name: "Daily Activity",
       icon: <ListOrdered size={18} />,
       url: "/daily-activity",
     },
-    {
-      id: 7,
-      name: "Shifts",
-      icon: <Calendar size={18} />,
-      url: "/shifts",
-    },
+    // {
+    //   id: 7,
+    //   name: "Shifts",
+    //   icon: <Calendar size={18} />,
+    //   url: "/shifts",
+    // },
     { id: 8, name: "Users", icon: <Shield size={18} />, url: "/users" },
   ];
 

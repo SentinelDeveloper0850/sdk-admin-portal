@@ -16,7 +16,7 @@ export async function GET() {
     );
   } catch (error: any) {
     return NextResponse.json(
-      { message: error.message || "Failed to fetch societies" },
+      { message: error.message || "Failed to fetch prepaid societies" },
       { status: 500 }
     );
   }

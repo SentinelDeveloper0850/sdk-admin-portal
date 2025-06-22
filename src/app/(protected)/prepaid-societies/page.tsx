@@ -2,26 +2,19 @@
 
 import { useEffect, useState } from "react";
 
+
+
 import { UploadOutlined } from "@ant-design/icons";
-import {
-  Button,
-  Col,
-  Form,
-  Modal,
-  Row,
-  Space,
-  Spin,
-  Statistic,
-  Table,
-  Upload,
-  message,
-} from "antd";
+import { Button, Col, Form, Modal, Row, Space, Spin, Statistic, Table, Upload, message } from "antd";
 import Search from "antd/es/input/Search";
+
+
 
 import PageHeader from "@/app/components/page-header";
 import { ISociety } from "@/app/models/society.schema";
 
-export default function SocietiesPage() {
+
+export default function PrepaidSocietiesPage() {
   const [societies, setSocieties] = useState<ISociety[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | boolean>(false);
@@ -30,10 +23,10 @@ export default function SocietiesPage() {
   const fetchSocieties = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/societies");
+      const response = await fetch("/api/prepaid-societies");
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.message || "Failed to fetch societies");
+        setError(errorData.message || "Failed to fetch prepaid societies");
         return;
       }
 
@@ -42,7 +35,7 @@ export default function SocietiesPage() {
       setStats({ count: data.count });
     } catch (err) {
       console.log(err);
-      setError("An error occurred while fetching societies.");
+      setError("An error occurred while fetching prepaid societies.");
     } finally {
       setLoading(false);
     }
@@ -50,7 +43,7 @@ export default function SocietiesPage() {
 
   const searchSocieties = async (value: string) => {
     try {
-      const response = await fetch("/api/societies/search", {
+      const response = await fetch("/api/prepaid-societies/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ searchText: value }),
@@ -58,7 +51,7 @@ export default function SocietiesPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.message || "Failed to search societies");
+        setError(errorData.message || "Failed to search prepaid societies");
         return;
       }
 
@@ -67,7 +60,7 @@ export default function SocietiesPage() {
       setStats({ count: data.count });
     } catch (err) {
       console.log(err);
-      setError("An error occurred while searching societies.");
+      setError("An error occurred while searching prepaid societies.");
     }
   };
 
@@ -88,11 +81,11 @@ export default function SocietiesPage() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <PageHeader title="Societies">
+      <PageHeader title="Prepaid Societies">
         <Row gutter={16} justify="space-between">
           <Col>
             <Space size={32}>
-              <Statistic title="Total Societies" value={stats.count} />
+              <Statistic title="Total Societies" value={stats.count} className="dark:text-white" />
             </Space>
           </Col>
         </Row>
