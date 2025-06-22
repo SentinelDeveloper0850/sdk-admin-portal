@@ -45,7 +45,7 @@ const ClaimsTable = ({
       ],
       filteredValue: statusFilter || null,
       onFilter: (value: any, record: any) => record.status === value,
-      render: (status: string) => {
+      render: (status: string, record: any) => {
         const color = {
           Submitted: "default",
           "In Review": "blue",
@@ -53,7 +53,16 @@ const ClaimsTable = ({
           Rejected: "red",
         }[status];
 
-        return <Tag color={color}>{status}</Tag>;
+        return (
+          <>
+            <Tag color={color}>{status}</Tag>
+            {record.isOverdue && (
+              <span className="ml-2 text-xs font-semibold text-red-600">
+                Overdue
+              </span>
+            )}
+          </>
+        );
       },
     },
     {
@@ -66,30 +75,40 @@ const ClaimsTable = ({
       title: "Submitted",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (val: string) => (
-        <>
-          {dayjs(val).format("DD MMM YYYY")}
+      render: (_: any, record: any) => (
+        <div>
+          {dayjs(record.createdAt).format("DD MMM YYYY")}
           <br />
-          <span className="text-xs text-gray-400">{dayjs(val).fromNow()}</span>
-        </>
+          <span className="text-xs text-gray-400">
+            {dayjs(record.createdAt).fromNow()}
+          </span>
+        </div>
       ),
     },
   ];
 
-  const sortedClaims = [...claims].sort((a, b) => {
-    const rank = (status: string) =>
-      status === "Submitted"
-        ? 1
-        : status === "In Review"
-          ? 2
-          : status === "Approved"
-            ? 999
-            : status === "Rejected"
-              ? 9999
-              : 10000;
+  const now = dayjs();
 
-    return rank(a.status) - rank(b.status);
-  });
+  const sortedClaims = [...claims]
+    .map((claim) => ({
+      ...claim,
+      isOverdue:
+        ["Submitted", "In Review"].includes(claim.status) &&
+        now.diff(dayjs(claim.createdAt), "hour") >= 24,
+    }))
+    .sort((a, b) => {
+      const rank = (status: string) =>
+        status === "Submitted"
+          ? 1
+          : status === "In Review"
+            ? 2
+            : status === "Approved"
+              ? 999
+              : status === "Rejected"
+                ? 9999
+                : 10000;
+      return rank(a.status) - rank(b.status);
+    });
 
   return (
     <>
@@ -112,6 +131,9 @@ const ClaimsTable = ({
         onRow={(record) => ({
           onClick: () => onView(record._id),
         })}
+        rowClassName={(record) =>
+          record.isOverdue ? "bg-red-50 dark:bg-red-900/30" : ""
+        }
       />
     </>
   );
