@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  const claims = await ClaimModel.find({ submittedBy: user._id }).sort({ createdAt: -1 });
+  const claims = await ClaimModel.find({ submittedBy: user._id }).populate("submittedBy").sort({ createdAt: -1 });
 
   return NextResponse.json({ success: true, claims });
 }

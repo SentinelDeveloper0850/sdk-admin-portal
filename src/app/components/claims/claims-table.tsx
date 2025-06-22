@@ -53,6 +53,12 @@ const ClaimsTable = ({
       },
     },
     {
+      title: "Submitted By",
+      dataIndex: "submittedBy",
+      key: "submittedBy",
+      render: (user: any) => user?.name || "—",
+    },
+    {
       title: "Submitted",
       dataIndex: "createdAt",
       key: "createdAt",
