@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Button, Image } from "@nextui-org/react";
+import { Avatar, Button, Image } from "@nextui-org/react";
 import { IconPlus } from "@tabler/icons-react";
 import { Space, Table, Tag } from "antd";
 
@@ -94,6 +94,21 @@ const UsersPage = () => {
             dataIndex: "name",
             key: "name",
             sorter: (a, b) => a.name.localeCompare(b.name),
+            render: (name, user) => {
+              return (
+                <div className="flex items-center gap-4">
+                  <Avatar
+                    src={user.avatarUrl}
+                    size="sm"
+                    isBordered
+                    radius="full"
+                  />
+                    <span className="text-sm">
+                      {name ?? "Unnamed"}
+                    </span>
+              </div>
+              )
+            }
           },
           {
             title: "Email",

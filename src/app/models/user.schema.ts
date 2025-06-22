@@ -8,8 +8,27 @@ export interface IUser extends Document {
   password: string;
   role: string;
   status: string;
+  avatarUrl?: string;
+  preferences?: {
+    theme?: "light" | "dark" | "system";
+    notifications?: boolean;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
+
+const preferencesSchema = new mongoose.Schema({
+  theme: {
+    type: String,
+    enum: ["light", "dark", "system"],
+    default: "system",
+  },
+  notifications: {
+    type: Boolean,
+    default: true,
+  },
+}, { _id: false }); // prevent creating _id for subdocument
 
 // Define the schema
 const userSchema: Schema<IUser> = new Schema({
@@ -18,6 +37,8 @@ const userSchema: Schema<IUser> = new Schema({
   password: { type: String, required: true },
   role: { type: String, default: "user" },
   status: { type: String, default: "Inactive" },
+  avatarUrl: { type: String, default: "" },
+  preferences: { type: preferencesSchema, default: () => ({}) },
 }, { timestamps: true });
 
 // Hash password before saving

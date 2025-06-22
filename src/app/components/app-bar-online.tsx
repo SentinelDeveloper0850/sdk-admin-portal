@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
@@ -15,6 +16,7 @@ import {
   NavbarContent,
   NavbarItem,
 } from "@nextui-org/react";
+import { ImUser } from "react-icons/im";
 
 import { logout } from "@/utils/auth";
 
@@ -30,6 +32,8 @@ export default function AppBarOnline() {
     logout(); // Clear the token
     router.push("/auth/signin"); // Redirect to login page
   };
+
+  const avatarUrl = user?.avatarUrl || "/default-avatar.png";
 
   return (
     <Navbar
@@ -65,31 +69,27 @@ export default function AppBarOnline() {
                 isBordered
                 as="button"
                 className="transition-transform"
-                color="primary"
-                src="https://i.pravatar.cc/150"
-              />
+                size="sm"
+                src={avatarUrl}
+              >
+                {!avatarUrl && <ImUser />}
+              </Avatar>
             </DropdownTrigger>
             <DropdownMenu aria-label="Profile Actions" variant="flat">
               <DropdownItem key="user" className="h-14 gap-2 hover:bg-white">
                 <p className="font-semibold">{user?.name ?? "Unknown User"}</p>
-                {/* <p className="font-semibold">
-                  {user?.email ?? "Email not available"}
-                </p> */}
                 <p className="font-semibold">
                   {user?.role ?? "Role not available"}
                 </p>
                 <Divider className="mt-2" />
               </DropdownItem>
-              {/* <DropdownItem key="profile" color="primary">
-                <Link href="/account/profile">
-                  <span>Profile</span>
-                </Link>
+              <DropdownItem
+                key="profile"
+                color="primary"
+                href="/account/profile"
+              >
+                Profile
               </DropdownItem>
-              <DropdownItem key="preferences" color="primary">
-                <Link href="/account/preferences">
-                  <span>Preferences</span>
-                </Link>
-              </DropdownItem> */}
               <DropdownItem key="logout" color="danger" onClick={handleLogout}>
                 Logout
               </DropdownItem>

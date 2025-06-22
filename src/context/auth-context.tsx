@@ -6,17 +6,22 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 import axios from "axios";
 
+import type { IUser } from "@/app/models/user.schema";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // Define the shape of the context
 interface AuthContextType {
-  user: any;
-  setUser: React.Dispatch<React.SetStateAction<any>>;
+  user: IUser | null;
+  setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
+  userId?: string;
 }
 
 // Create the AuthContext
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
@@ -64,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={{ user, setUser, userId: user?._id?.toString() }}>
       {children}
     </AuthContext.Provider>
   );
