@@ -4,21 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { Tooltip } from "antd";
 import {
   Banknote,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   FileText,
-  FolderKanban,
   LayoutDashboard,
   ListOrdered,
   Shield,
   Users,
 } from "lucide-react";
+import { HiOutlineDocumentCurrencyDollar } from "react-icons/hi2";
 
 import { useAuth } from "@/context/auth-context";
-import { Tooltip } from "antd";
 
 const SideNavBar = () => {
   const pathname = usePathname();
@@ -45,12 +44,23 @@ const SideNavBar = () => {
       url: "/transactions/easypay",
     },
     { id: 4, name: "Policies", icon: <FileText size={18} />, url: "/policies" },
-    { id: 5, name: "Prepaid Societies", icon: <Users size={18} />, url: "/prepaid-societies" },
+    {
+      id: 5,
+      name: "Prepaid Societies",
+      icon: <Users size={18} />,
+      url: "/prepaid-societies",
+    },
     {
       id: 6,
       name: "Daily Activity",
       icon: <ListOrdered size={18} />,
       url: "/daily-activity",
+    },
+    {
+      id: 7,
+      name: "Claims",
+      icon: <HiOutlineDocumentCurrencyDollar size={18} />,
+      url: "/claims",
     },
     // {
     //   id: 7,
@@ -65,7 +75,9 @@ const SideNavBar = () => {
     <section
       className={`h-full ${collapsed ? "w-16" : "w-64"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}
     >
-      <div className={`flex ${collapsed ? "justify-center" : "justify-end"} p-2`}>
+      <div
+        className={`flex ${collapsed ? "justify-center" : "justify-end"} p-2`}
+      >
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="text-zinc-500 hover:text-black dark:hover:text-white"
