@@ -4,7 +4,11 @@ import { useState } from "react";
 
 import { Checkbox } from "@nextui-org/react";
 import { Table, Tag } from "antd";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
+
+dayjs.extend(relativeTime);
 
 const ClaimsTable = ({
   claims,
@@ -62,7 +66,13 @@ const ClaimsTable = ({
       title: "Submitted",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (val: string) => new Date(val).toLocaleDateString(),
+      render: (val: string) => (
+        <>
+          {dayjs(val).format("DD MMM YYYY")}
+          <br />
+          <span className="text-xs text-gray-400">{dayjs(val).fromNow()}</span>
+        </>
+      ),
     },
   ];
 
@@ -83,7 +93,9 @@ const ClaimsTable = ({
 
   return (
     <>
-      <Checkbox className="mb-1"size="sm"
+      <Checkbox
+        className="mb-1"
+        size="sm"
         isSelected={!!statusFilter}
         onValueChange={(checked) =>
           setStatusFilter(checked ? ["Submitted", "In Review"] : null)
