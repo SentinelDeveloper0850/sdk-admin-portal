@@ -1,21 +1,59 @@
 // src/models/claim.schema.ts
 import mongoose, { Schema, Document } from "mongoose";
 
+export interface IClaimComment {
+  author: mongoose.Types.ObjectId; text: string; createdAt: Date
+}
+
 export interface IClaim extends Document {
   policyId: string;
+  policyPlan: string;
   claimantName: string;
+  claimNumber: string;
+  claimAmount?: number;
+  claimType: "Cash" | "Service";
+  schemeType: "Individual" | "Society";
+  societyName?: string;
   reason: string;
   status: "Draft" | "Submitted" | "In Review" | "Approved" | "Rejected";
   submittedBy: mongoose.Types.ObjectId;
   documents: Array<{ name: string; url: string }>;
   notes: Array<{ author: mongoose.Types.ObjectId; text: string; createdAt: Date }>;
-  comments: Array<{ author: mongoose.Types.ObjectId; text: string; createdAt: Date }>;
+  comments: Array<IClaimComment>;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const claimSchema = new Schema<IClaim>(
   {
+    schemeType: {
+      type: String,
+      enum: ["Individual", "Society"],
+      required: true,
+    },
+    societyName: {
+      type: String,
+      required: false
+    },
+    policyPlan: {
+      type: String,
+      default: "",
+    },
+    claimType: {
+      type: String,
+      enum: ["Cash", "Service"],
+      default: "Cash",
+    },
+    claimNumber: {
+      type: String,
+      required: true,
+      unique: true
+    },
+    claimAmount: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
     policyId: { type: String, required: true },
     claimantName: { type: String, required: true },
     reason: { type: String, required: true },

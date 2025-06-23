@@ -21,6 +21,12 @@ export const loginUser = async (email: string, password: string) => {
     throw new Error("Invalid email or password");
   }
 
+  // Check if account is active
+  const isActive = user.status === "Active";
+  if (!isActive) {
+    throw new Error("Account is inactive. Contact your administrator to reactivate your account.");
+  }
+
   if (JWT_SECRET) {
     // Generate a JWT token
     const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, {
