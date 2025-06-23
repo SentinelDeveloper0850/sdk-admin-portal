@@ -8,7 +8,8 @@ export interface IUser extends Document {
   phone?: string;
   address?: string;
   password: string;
-  role: string;
+  role?: string; // legacy (keep for now)
+  roles?: string[]; // new — primary source of truth moving forward
   status: string;
   avatarUrl?: string;
   preferences?: {
@@ -39,7 +40,8 @@ const userSchema: Schema<IUser> = new Schema({
   phone: { type: String, default: "" },
   address: { type: String, default: "" },
   password: { type: String, required: true },
-  role: { type: String, default: "user" },
+  role: { type: String, default: "member", required: false },
+  roles: { type: Array<String>, default: ["member"], required: false },
   status: { type: String, default: "Inactive" },
   avatarUrl: { type: String, default: "" },
   preferences: { type: preferencesSchema, default: () => ({}) },
