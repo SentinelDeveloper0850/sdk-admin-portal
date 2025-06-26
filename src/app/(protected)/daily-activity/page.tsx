@@ -2,24 +2,38 @@
 
 import { useEffect, useState } from "react";
 
-
-
 import { Button, Divider } from "@nextui-org/react";
-import { Avatar, Col, DatePicker, Descriptions, Drawer, Form, Input, List, Row, Select, Space, Spin, Table, TimePicker } from "antd";
+import {
+  Avatar,
+  Col,
+  DatePicker,
+  Descriptions,
+  Drawer,
+  Form,
+  Input,
+  List,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Table,
+  TimePicker,
+} from "antd";
 import dayjs from "dayjs";
 import sweetAlert from "sweetalert";
 
-
-
-import { getCurrentDate, getDate, getDateTime, getTime } from "@/utils/formatters";
-
-
+import {
+  getCurrentDate,
+  getDate,
+  getDateTime,
+  getTime,
+} from "@/utils/formatters";
+import { hasRole } from "@/utils/helpers/hasRole";
 
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
 
-
-const branches = ["Kaalfontein", "Mangweni", "Ndulwini", "Sangweni", "Simunye"];
+const branches = ["Kaalfontein", "Mangweni", "Ndulwini", "Sangweni", "Simunye", "Daveyton"];
 
 const activities = [
   {
@@ -114,10 +128,9 @@ export default function DailyActivityPage() {
 
     const userId = user.id ?? user._id;
 
-    const url =
-      user.role == "admin"
-        ? "/api/daily-activity"
-        : `/api/daily-activity?userId=${userId}`;
+    const url = hasRole(user, "admin")
+      ? "/api/daily-activity"
+      : `/api/daily-activity?userId=${userId}`;
 
     try {
       const response = await fetch(url, {
