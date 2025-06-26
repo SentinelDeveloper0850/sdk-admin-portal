@@ -74,6 +74,12 @@ const activities = [
     rules: [],
     channel: ["Walk-in", "Telephonic", "Email", "Facebook", "Website"],
   },
+  {
+    id: 7,
+    name: "Society",
+    type: "society",
+    rules: [],
+  },
 ];
 
 export default function DailyActivityPage() {
@@ -252,8 +258,7 @@ export default function DailyActivityPage() {
       name: activity,
     };
 
-    if (selectedActivity.type == "policy")
-      newActivity.policyNumber = policyNumber;
+    if (selectedActivity.type == "policy") newActivity.policyNumber = policyNumber;
     if (activity == "Claim Processing") newActivity.claimNumber = claimNumber;
 
     setReportActivities((prev) => {
