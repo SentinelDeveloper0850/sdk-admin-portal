@@ -1,5 +1,25 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
+export interface IDailyActivity {
+  _id?: string;
+  userId: string;
+  userName: string;
+  createdAt?: Date;
+  activities: {
+    name: string;
+    policyNumber?: string;
+    claimNumber?: string;
+  }[];
+  isWhatsAppGroupCreated: boolean;
+  areDocumentsSubmittedToDiscord: boolean;
+  speedPointsUpload?: string; // base64 or file URL
+  massReceipts?: boolean;
+  date: string; // typically in YYYY-MM-DD
+  time: string; // e.g., '14:30'
+  branch: string;
+  comments?: string;
+}
+
 // Define schema for Daily Activity
 const dailyActivitySchema = new Schema({
   userId: {
@@ -21,6 +41,11 @@ const dailyActivitySchema = new Schema({
       type: String,
       required: true,
       trim: true,
+    },
+    societyName: {
+      type: String,
+      required: false,
+      trim: true, 
     },
     policyNumber: {
       type: String,

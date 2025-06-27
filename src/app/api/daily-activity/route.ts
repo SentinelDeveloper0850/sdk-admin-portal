@@ -2,35 +2,37 @@ import { NextResponse } from "next/server";
 
 import { DailyActivityModel } from "@/app/models/daily-activity.schema";
 import { connectToDatabase } from "@/lib/db";
+import UserModel from "@/app/models/user.schema";
 
 export async function GET(request: Request) {
+  await connectToDatabase();
 
-  // Retrieve the userId from the query string (e.g., ?userId=JohnDoe)
   const url = new URL(request.url);
-  const userId = url.searchParams.get('userId');
-
-  // If userId is not provided, return an error
-  if (!userId) {
-    const reports = await DailyActivityModel.find();
-
-    if (!reports) {
-      return NextResponse.json({ message: "Daily activities not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(reports, { status: 200 });
-  }
+  const userId = url.searchParams.get("userId");
 
   try {
-    // Fetch reports for the specified userId from the database
-    const reports = await DailyActivityModel.find({ userId: userId });
+    const reports = userId
+      ? await DailyActivityModel.find({ userId })
+      : await DailyActivityModel.find();
 
-    // If no reports are found, return a 404 error
-    if (reports.length === 0) {
-      return NextResponse.json({ message: 'No reports found for this user' }, { status: 404 });
+    if (!reports || reports.length === 0) {
+      return NextResponse.json(
+        { message: "No reports found" },
+        { status: 404 }
+      );
     }
 
-    // Return the reports if found
-    return NextResponse.json(reports, { status: 200 });
+    const reportsWithAuthor = await Promise.all(
+      reports.map(async (report) => {
+        const user = await UserModel.findById(report.userId).select("name email avatarUrl");
+        return {
+          ...report.toObject(),
+          author: user ? { _id: user._id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } : null,
+        };
+      })
+    );
+
+    return NextResponse.json(reportsWithAuthor, { status: 200 });
   } catch (error) {
     console.error('Error fetching reports:', error);
     return NextResponse.json({ message: 'Failed to fetch reports' }, { status: 500 });

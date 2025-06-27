@@ -1,39 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { Button, Divider } from "@nextui-org/react";
-import {
-  Avatar,
-  Col,
-  DatePicker,
-  Descriptions,
-  Drawer,
-  Form,
-  Input,
-  List,
-  Row,
-  Select,
-  Space,
-  Spin,
-  Table,
-  TimePicker,
-} from "antd";
+
+
+import { Avatar, Button, Divider } from "@nextui-org/react";
+import { Avatar as AntAvatar, Col, DatePicker, Descriptions, Drawer, Form, Input, List, Row, Select, Space, Spin, Table, TimePicker } from "antd";
 import dayjs from "dayjs";
 import sweetAlert from "sweetalert";
 
-import {
-  getCurrentDate,
-  getDate,
-  getDateTime,
-  getTime,
-} from "@/utils/formatters";
+
+
+import { getCurrentDate, getDate, getDateTime, getTime } from "@/utils/formatters";
 import { hasRole } from "@/utils/helpers/hasRole";
 
+
+
 import PageHeader from "@/app/components/page-header";
+import { IDailyActivity } from "@/app/models/daily-activity.schema";
 import { useAuth } from "@/context/auth-context";
 
-const branches = ["Kaalfontein", "Mangweni", "Ndulwini", "Sangweni", "Simunye", "Daveyton"];
+
+const branches = [
+  "Kaalfontein",
+  "Mangweni",
+  "Ndulwini",
+  "Sangweni",
+  "Simunye",
+  "Daveyton",
+];
 
 const activities = [
   {
@@ -134,9 +129,9 @@ export default function DailyActivityPage() {
 
     const userId = user.id ?? user._id;
 
-    const url = hasRole(user, "admin")
-      ? "/api/daily-activity"
-      : `/api/daily-activity?userId=${userId}`;
+    const url = user?.role == "admin"
+        ? "/api/daily-activity"
+        : `/api/daily-activity?userId=${userId}`;
 
     try {
       const response = await fetch(url, {
@@ -253,13 +248,12 @@ export default function DailyActivityPage() {
   };
 
   const addActivityToReport = () => {
-    const { activity, policyNumber, claimNumber } = form.getFieldsValue();
-    let newActivity: any = {
-      name: activity,
-    };
+    const { activity, policyNumber, claimNumber, societyName } = form.getFieldsValue();
+    let newActivity: any = { name: activity };
 
     if (selectedActivity.type == "policy") newActivity.policyNumber = policyNumber;
     if (activity == "Claim Processing") newActivity.claimNumber = claimNumber;
+    if (activity == "Society") newActivity.societyName = societyName;
 
     setReportActivities((prev) => {
       return [...prev, newActivity];
@@ -298,16 +292,22 @@ export default function DailyActivityPage() {
     return current && current.isAfter(dayjs(), "day"); // 'day' ensures it's only comparing by date (ignoring time)
   };
 
-  const reportSubmissionDue = () => {
+  const reportSubmissionDue = useMemo(() => {
     if (reports) {
       const currentDate = getCurrentDate();
-      const todaysReport = reports.find((report) => report.date == currentDate);
-
-      if (todaysReport) return false;
+      const todaysReport = reports
+      .filter((report) => report.userId == user?._id)
+      .find((report) => report.date == currentDate);
+      
+      console.log("🚀 ~ reportSubmissionDue ~ todaysReport:", todaysReport)
+      if (todaysReport !== undefined) {
+        return false;
+      } else {
+        return true;
+      }
     }
 
-    return true;
-  };
+  }, [reports, user]);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -315,7 +315,7 @@ export default function DailyActivityPage() {
         title="Daily Activity Reports"
         actions={[
           <Space>
-            {user?.role != "admin" && reportSubmissionDue() && (
+            {user?.role == "admin" || reportSubmissionDue == true && (
               <Button color="primary" onPress={() => setCreateDrawerOpen(true)}>
                 Submit Report
               </Button>
@@ -337,12 +337,24 @@ export default function DailyActivityPage() {
                 title: "Reporter",
                 dataIndex: "userName",
                 key: "userName",
+                render: (value: string, record: any) => (
+                  <div className="flex items-center gap-4">
+                    <Avatar
+                      src={record.author?.avatarUrl ?? ""}
+                      size="sm"
+                      isBordered
+                      radius="full"
+                    />
+                    <span className="text-sm">
+                      {record.author?.name ?? "Unnamed"}
+                    </span>
+                  </div>
+                ),
               },
               {
                 title: "Report Date",
                 dataIndex: "date",
                 key: "date",
-                render: (val: string, record: any) => <span>{val}</span>,
                 sorter: (a: any, b: any) =>
                   new Date(a.date).getTime() - new Date(b.date).getTime(),
               },
@@ -350,13 +362,14 @@ export default function DailyActivityPage() {
                 title: "Submission Date",
                 dataIndex: "createdAt",
                 key: "createdAt",
-                render: (val: string, record: any) => (
+                render: (val: string) => (
                   <span>
                     {getDate(val)} {getTime(val)}
                   </span>
                 ),
                 sorter: (a: any, b: any) =>
-                  new Date(a.date).getTime() - new Date(b.date).getTime(),
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime(),
               },
               {
                 title: "Branch",
@@ -370,16 +383,24 @@ export default function DailyActivityPage() {
                 render: (activities: any[]) => (
                   <span>
                     {activities.length}{" "}
-                    {activities.length == 1 ? "Activity" : "Activities"}
+                    {activities.length === 1 ? "Activity" : "Activities"}
                   </span>
                 ),
               },
-              {
-                title: "Comments",
-                dataIndex: "comments",
-                key: "comments",
-              },
             ]}
+            expandable={{
+              expandedRowRender: (record: any) =>
+                record.comments ? (
+                  <div className="ml-0 whitespace-pre-wrap p-0 text-gray-700">
+                    💬<strong className="ml-1">Comments:</strong>
+                    <br />
+                    <p className="ml-1">{record.comments}</p>
+                  </div>
+                ) : (
+                  <i className="text-gray-400">No comments provided.</i>
+                ),
+              rowExpandable: (record) => !!record.comments,
+            }}
             onRow={(record: any) => {
               return {
                 onClick: () => {
@@ -401,7 +422,7 @@ export default function DailyActivityPage() {
         closable={true}
         onClose={() => setCreateDrawerOpen(false)}
         open={createDrawerOpen}
-        width="40%"
+        width="50%"
         footer={
           <Space>
             <Button color="primary" onPress={() => form.submit()}>
@@ -511,6 +532,19 @@ export default function DailyActivityPage() {
                   <Input />
                 </Form.Item>
               )}
+              {selectedActivity && selectedActivity.type == "society" && (
+                <Form.Item
+                  label="Society Name"
+                  name="societyName"
+                  rules={[
+                    {
+                      required: true,
+                    },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              )}
             </Col>
             <Col span={12}>
               {selectedActivity &&
@@ -545,21 +579,26 @@ export default function DailyActivityPage() {
           <Divider />
           <List
             dataSource={reportActivities}
-            renderItem={(item, index) => (
+            renderItem={(item, index) => {
+
+              let description = undefined;
+
+              if (item.policyNumber && item.claimNumber) {
+                description = `Policy #${item.policyNumber}, Claim #${item.claimNumber}`;
+              } else if (item.policyNumber) {
+                description = `Policy #${item.policyNumber}`;
+              }
+              if (item.societyName) description = item.societyName;
+              
+              return (
               <List.Item key={index}>
                 <List.Item.Meta
-                  avatar={<Avatar>{index + 1}</Avatar>}
+                  avatar={<AntAvatar>{index + 1}</AntAvatar>}
                   title={item.name}
-                  description={
-                    item.policyNumber && item.claimNumber
-                      ? `Policy #${item.policyNumber}, Claim #${item.claimNumber}`
-                      : item.policyNumber
-                        ? `Policy #${item.policyNumber}`
-                        : undefined
-                  }
+                  description={description}
                 />
               </List.Item>
-            )}
+            )}}
           />
         </Form>
       </Drawer>
@@ -601,35 +640,46 @@ export default function DailyActivityPage() {
                   span: 2,
                   children: getDateTime(selectedReport.createdAt),
                 },
-                {
-                  key: 5,
-                  label: "Comments",
-                  span: 3,
-                  children: selectedReport.comments,
-                },
+                // {
+                //   key: 5,
+                //   label: "Comments",
+                //   span: 3,
+                //   children: selectedReport.comments,
+                // },
               ]}
             />
+            <Divider className="mt-4" />
+            <div className="ml-0 mt-4 whitespace-pre-wrap p-0 text-gray-700">
+              💬<strong className="ml-1">Comments:</strong>
+              <br />
+              <p className="ml-1">{selectedReport.comments}</p>
+            </div>
             <Divider className="mt-4" />
             <h4 className="mb-2 mt-4 text-medium font-semibold">
               Report Activities
             </h4>
             <List
               dataSource={selectedReport.activities}
-              renderItem={(item: any, index) => (
+              renderItem={(item: any, index) => {
+
+                let description = undefined;
+
+                if (item.policyNumber && item.claimNumber) {
+                  description = `Policy #${item.policyNumber}, Claim #${item.claimNumber}`;
+                } else if (item.policyNumber) {
+                  description = `Policy #${item.policyNumber}`;
+                }
+                if (item.societyName) description = item.societyName;
+                
+                return (
                 <List.Item key={index}>
                   <List.Item.Meta
-                    avatar={<Avatar>{index + 1}</Avatar>}
+                    avatar={<AntAvatar>{index + 1}</AntAvatar>}
                     title={item.name}
-                    description={
-                      item.policyNumber && item.claimNumber
-                        ? `Policy #${item.policyNumber}, Claim #${item.claimNumber}`
-                        : item.policyNumber
-                          ? `Policy #${item.policyNumber}`
-                          : undefined
-                    }
+                    description={description}
                   />
                 </List.Item>
-              )}
+              )}}
             />
           </>
         )}
