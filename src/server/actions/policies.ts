@@ -1,6 +1,6 @@
 "use server";
 
-import { PolicyModel } from "@/app/models/policy.schema";
+import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const fetchAllPolicies = async (page = 1, limit = 0) => {

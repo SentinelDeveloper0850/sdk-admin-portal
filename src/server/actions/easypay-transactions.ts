@@ -3,11 +3,11 @@
 import {
   EasypayImportDataModel,
   IEasypayImportData,
-} from "@/app/models/easypay-import-data.schema";
+} from "@/app/models/scheme/easypay-import-data.schema";
 import {
   EasypayTransactionModel,
   IEasypayTransaction,
-} from "@/app/models/easypay-transaction.schema";
+} from "@/app/models/scheme/easypay-transaction.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const fetchAll = async () => {

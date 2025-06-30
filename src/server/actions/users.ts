@@ -1,4 +1,4 @@
-import { UserModel } from "@/app/models/user.schema";
+import { UserModel } from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 interface UpdateProfilePayload {

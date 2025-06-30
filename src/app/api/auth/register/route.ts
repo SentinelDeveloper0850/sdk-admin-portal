@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import UsersModel from "@/app/models/user.schema";
+import UsersModel from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export async function POST(request: Request) {

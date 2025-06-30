@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import UsersModel from "@/app/models/user.schema";
+import UsersModel from "@/app/models/hr/user.schema";
 
 export async function GET(request: Request) {
   const users = await UsersModel.find();

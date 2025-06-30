@@ -4,9 +4,21 @@
 import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+
+
 import axios from "axios";
 
-import type { IUser } from "@/app/models/user.schema";
+
+
+import type { IUser } from "@/app/models/hr/user.schema";
+
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -30,43 +42,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        const token = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("auth-token="))
-          ?.split("=")[1];
+  const fetchUserDetails = async () => {
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("auth-token="))
+      ?.split("=")[1];
 
-        if (!token) {
-          setLoading(false);
-          return;
-        }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-        // Only fetch if user is not already set (prevents overwrite after login)
-        if (!user) {
-          const response = await axios.get("/api/auth/user", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          setUser(response.data.user);
-        }
-      } catch (error: any) {
-        console.error("Error fetching user details:", error);
-        if (error.response?.status === 401) {
-          document.cookie =
-            "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-          setUser(null);
-          router.push("/auth/signin");
-        }
-      } finally {
-        setLoading(false);
+    try {
+      const response = await axios.get("/api/auth/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUser(response.data.user);
+    } catch (error: any) {
+      console.error("Error fetching user details:", error);
+      if (error.response?.status === 401) {
+        document.cookie =
+          "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+        setUser(null);
+        router.push("/auth/signin");
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchUserDetails();
+  useEffect(() => {
+    if (!user && loading) {
+      fetchUserDetails();
+    }
   }, [user, router]);
 
   // Show loading spinner until user details are fetched

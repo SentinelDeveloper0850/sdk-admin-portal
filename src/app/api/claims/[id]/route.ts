@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { ClaimModel } from "@/app/models/claim.schema";
+import { ClaimModel } from "@/app/models/scheme/claim.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 

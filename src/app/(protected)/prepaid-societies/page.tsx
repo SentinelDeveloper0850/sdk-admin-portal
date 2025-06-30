@@ -2,24 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-import { UploadOutlined } from "@ant-design/icons";
-import {
-  Button,
-  Col,
-  Form,
-  Modal,
-  Row,
-  Space,
-  Spin,
-  Statistic,
-  Table,
-  Upload,
-  message,
-} from "antd";
+import { Col, Form, Row, Space, Spin, Statistic, Table } from "antd";
 import Search from "antd/es/input/Search";
 
 import PageHeader from "@/app/components/page-header";
-import { ISociety } from "@/app/models/society.schema";
+import { ISociety } from "@/app/models/scheme/society.schema";
 
 export default function PrepaidSocietiesPage() {
   const [societies, setSocieties] = useState<ISociety[]>([]);

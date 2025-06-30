@@ -1,5 +1,5 @@
-import { Schema, model, Types } from 'mongoose';
-import { ELeaveRequestStatus, ELeaveType } from '../enums/leave.enum';
+import { model, Schema, Types } from 'mongoose';
+import { ELeaveRequestStatus, ELeaveType } from '../../enums/hr/leave.enum';
 
 interface LeaveRequest {
   _id: string;

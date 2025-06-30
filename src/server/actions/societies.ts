@@ -2,9 +2,8 @@
 
 import fs from "fs";
 import Papa from "papaparse";
-import path from "path";
 
-import { SocietyModel as Model } from "@/app/models/society.schema";
+import { SocietyModel as Model } from "@/app/models/scheme/society.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const fetchAllSocieties = async (page = 1, limit = 0) => {

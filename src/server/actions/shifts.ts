@@ -1,5 +1,5 @@
-import { ShiftModel as Model } from "@/app/models/shift.schema";
-import { IUser } from "@/app/models/user.schema";
+import { ShiftModel as Model } from "@/app/models/hr/shift.schema";
+import { IUser } from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 interface CalendarShift {

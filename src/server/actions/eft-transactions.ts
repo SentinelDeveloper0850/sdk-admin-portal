@@ -3,11 +3,11 @@
 import {
   IEftImportData,
   IEftImportDataModel,
-} from "@/app/models/eft-import-data.schema";
+} from "@/app/models/scheme/eft-import-data.schema";
 import {
   EftTransactionModel,
   IEftTransaction,
-} from "@/app/models/eft-transaction.schema";
+} from "@/app/models/scheme/eft-transaction.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const fetchAll = async () => {

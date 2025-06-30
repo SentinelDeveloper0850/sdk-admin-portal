@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import jwt from "jsonwebtoken";
 
-import UserModel, { IUser } from "@/app/models/user.schema";
+import UserModel, { IUser } from "@/app/models/hr/user.schema";
 
 export async function getUserFromRequest(req: NextRequest) {
   const token = req.cookies.get("auth-token")?.value;

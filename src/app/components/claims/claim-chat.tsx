@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Spinner } from "@nextui-org/react";
 import dayjs from "dayjs";
 
-import { IClaimComment } from "@/app/models/claim.schema";
-import { IUser } from "@/app/models/user.schema";
+import { IClaimComment } from "@/app/models/scheme/claim.schema";
+import { IUser } from "@/app/models/hr/user.schema";
 import { useAuth } from "@/context/auth-context";
 
 interface IProps {
@@ -31,7 +31,9 @@ const ClaimChat = ({ comments, onSendMessage, loading }: IProps) => {
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-none">
-      <h3 className="border-b p-2 pl-0 dark:border-zinc-700 font-semibold">Comments</h3>
+      <h3 className="border-b p-2 pl-0 font-semibold dark:border-zinc-700">
+        Comments
+      </h3>
       {/* Messages */}
       <div className="flex-1 space-y-3 overflow-y-auto bg-primary/20 p-4 pl-0 dark:bg-[#212121]">
         {comments.length === 0 && (
@@ -76,7 +78,7 @@ const ClaimChat = ({ comments, onSendMessage, loading }: IProps) => {
         <input
           type="text"
           aria-label="Comment input"
-          className="flex-1 rounded-full border px-4 py-2 focus:outline-none dark:bg-zinc-800 dark:text-white dark:border-zinc-700"
+          className="flex-1 rounded-full border px-4 py-2 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}

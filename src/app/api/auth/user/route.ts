@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import jwt from "jsonwebtoken";
 
-import UsersModel from "@/app/models/user.schema";
+import UsersModel from "@/app/models/hr/user.schema";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined in the environment variables.");

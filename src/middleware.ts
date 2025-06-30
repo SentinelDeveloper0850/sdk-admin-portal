@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
 import { jwtVerify } from "jose";
 
-// Check for the JWT secret in the environment variables
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined in the environment variables.");
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-export function middleware(request: NextRequest) {
-  // Define routes that require authentication
+export async function middleware(request: NextRequest) {
   const protectedRoutes = [
     "/dashboard",
     "/transactions",
@@ -23,46 +20,38 @@ export function middleware(request: NextRequest) {
     "/account",
   ];
 
-  // Check if the current route is protected
-  if (
-    protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
-  ) {
+  const pathname = request.nextUrl.pathname;
+
+  // Only run if the route is protected
+  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     const token = request.cookies.get("auth-token")?.value;
 
-    // If no token is present, redirect to the login page
     if (!token) {
       return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
 
     try {
-      // Verify the token
-      jwtVerify(token, new TextEncoder().encode(JWT_SECRET))
-        .then((value) => {
-          // If the token is valid, proceed with the request
-          return NextResponse.next();
-        })
-        .catch((value) => {
-          // If the token is invalid, redirect to the login page
-          return NextResponse.redirect(new URL("/auth/signin", request.url));
-        });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error("Invalid token:", err.message);
+      await jwtVerify(token, JWT_SECRET);
+      return NextResponse.next(); // Token valid, proceed
+    } catch (err) {
+      console.error("JWT verification failed:", err);
       return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
   }
+
+  // For non-protected routes, just continue
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
     "/dashboard",
     "/transactions/:path*",
-    "/daily-activity/:path*",
     "/policies/:path*",
     "/prepaid-societies/:path*",
     "/daily-activity/:path*",
     "/claims/:path*",
     "/users/:path*",
     "/account/:path*",
-  ], // Apply middleware to specific routes
+  ],
 };

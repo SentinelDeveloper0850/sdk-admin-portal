@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { ISociety } from "@/app/models/society.schema";
 import { searchSocieties } from "@/server/actions/societies";
 
 export async function POST(req: Request) {
@@ -17,17 +16,17 @@ export async function POST(req: Request) {
 
     const response:
       | {
-          success: boolean;
-          societies: any[];
-          count: number;
-          message?: undefined;
-        }
+        success: boolean;
+        societies: any[];
+        count: number;
+        message?: undefined;
+      }
       | {
-          success: boolean;
-          message: string;
-          societies?: undefined;
-          count?: undefined;
-        } = await searchSocieties(searchText);
+        success: boolean;
+        message: string;
+        societies?: undefined;
+        count?: undefined;
+      } = await searchSocieties(searchText);
 
     if (response?.success) {
       return NextResponse.json({

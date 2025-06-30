@@ -2,18 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 
-import {
-  Select,
-  SelectItem,
-  Spinner,
-} from "@nextui-org/react";
+import { Select, SelectItem, Spinner } from "@nextui-org/react";
 import { Card, Drawer, Space, Tag, message } from "antd";
 import dayjs from "dayjs";
 
-import { IClaim } from "@/app/models/claim.schema";
+import { formatToMoneyWithCurrency } from "@/utils/formatters";
+
+import { IClaim } from "@/app/models/scheme/claim.schema";
 
 import ClaimChat from "./claim-chat";
-import { formatToMoneyWithCurrency } from "@/utils/formatters";
 
 interface Props {
   open: boolean;
@@ -93,7 +90,7 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-  
+
       const json = await res.json();
       if (json.success) {
         message.success("Status updated");
@@ -102,7 +99,7 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
         message.error("Failed to update status");
       }
     } catch (error) {
-      console.log("🚀 ~ handleStatusUpdate ~ error:", error)
+      console.log("🚀 ~ handleStatusUpdate ~ error:", error);
       message.error("Failed to update status");
     }
   };
@@ -118,13 +115,12 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
       extra={
         <Space>
           <Select
-            className="max-w-xs w-[120px] rounded-xl dark:border dark:border-zinc-700"
+            className="w-[120px] max-w-xs rounded-xl dark:border dark:border-zinc-700"
             disabled={loading}
             selectedKeys={[claim?.status!]}
             onSelectionChange={(keys) => {
               const newStatus = Array.from(keys)[0];
-              if (typeof newStatus === "string")
-                handleStatusUpdate(newStatus);
+              if (typeof newStatus === "string") handleStatusUpdate(newStatus);
             }}
           >
             <SelectItem key="Submitted">Submitted</SelectItem>
@@ -140,7 +136,7 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
       ) : claim ? (
         <div className="grid h-full grid-cols-1 gap-0 md:grid-cols-3">
           {/* Left Panel */}
-          <div className="space-y-4 border-r dark:border-zinc-700 p-4">
+          <div className="space-y-4 border-r p-4 dark:border-zinc-700">
             <Card title="Claim Information" size="small">
               <div className="mb-4">
                 <h3 className="font-semibold">Claimant</h3>
@@ -159,9 +155,7 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
 
               <div>
                 <h3 className="font-semibold">Claim Amount</h3>
-                <p>
-                  {formatToMoneyWithCurrency(claim.claimAmount!)}
-                </p>
+                <p>{formatToMoneyWithCurrency(claim.claimAmount!)}</p>
               </div>
             </Card>
 
@@ -193,7 +187,7 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
           </div>
 
           {/* Middle Panel */}
-          <div className="space-y-4 border-r dark:border-zinc-700 p-4">
+          <div className="space-y-4 border-r p-4 dark:border-zinc-700">
             <Card title="Policy Information" size="small">
               <div className="mb-4">
                 <h3 className="font-semibold">Scheme Type</h3>

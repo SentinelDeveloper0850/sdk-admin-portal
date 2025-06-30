@@ -1,10 +1,10 @@
 "use server";
 
-import { EasypayTransactionModel } from "@/app/models/easypay-transaction.schema";
-import { EftTransactionModel } from "@/app/models/eft-transaction.schema";
-import { PolicyModel } from "@/app/models/policy.schema";
-import { SocietyModel } from "@/app/models/society.schema";
-import { UserModel } from "@/app/models/user.schema";
+import { EasypayTransactionModel } from "@/app/models/scheme/easypay-transaction.schema";
+import { EftTransactionModel } from "@/app/models/scheme/eft-transaction.schema";
+import { PolicyModel } from "@/app/models/scheme/policy.schema";
+import { SocietyModel } from "@/app/models/scheme/society.schema";
+import { UserModel } from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const getDashboardData = async () => {
