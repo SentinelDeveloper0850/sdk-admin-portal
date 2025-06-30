@@ -19,6 +19,7 @@ import dayjs from "dayjs";
 import PageHeader from "@/app/components/page-header";
 import { ThemeSwitcher } from "@/app/components/theme-switcher";
 import { useAuth } from "@/context/auth-context";
+import Image from "next/image";
 
 const MAX_FILE_SIZE_MB = 2;
 
@@ -253,7 +254,7 @@ const ProfilePage: React.FC = () => {
             />
             {uploading && <Spinner className="mt-2" label="Uploading..." />}
             {avatar && !uploading && (
-              <img
+              <Image
                 src={avatar}
                 alt="Uploaded Avatar"
                 className="mx-auto mt-4 h-20 w-20 rounded-full object-cover"

@@ -28,10 +28,8 @@ import {
   getDateTime,
   getTime,
 } from "@/utils/formatters";
-import { hasRole } from "@/utils/helpers/hasRole";
 
 import PageHeader from "@/app/components/page-header";
-import { IDailyActivity } from "@/app/models/daily-activity.schema";
 import { useAuth } from "@/context/auth-context";
 
 const branches = [
@@ -659,12 +657,6 @@ export default function DailyActivityPage() {
                   span: 2,
                   children: getDateTime(selectedReport.createdAt),
                 },
-                // {
-                //   key: 5,
-                //   label: "Comments",
-                //   span: 3,
-                //   children: selectedReport.comments,
-                // },
               ]}
             />
             <Divider className="mt-4" />

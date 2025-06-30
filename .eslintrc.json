@@ -6,6 +6,7 @@
     "prefer-template": "warn",
     "semi": "warn",
     "quotes": ["warn", "double"],
+    "no-explicit-any": false,
     "check-file/filename-naming-convention": [
       "warn",
       {
