@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import mongoose, { Document, Schema, Model } from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 
 // Define the interface for TypeScript
 export interface IUser extends Document {
@@ -21,31 +21,37 @@ export interface IUser extends Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const preferencesSchema = new mongoose.Schema({
-  theme: {
-    type: String,
-    enum: ["light", "dark", "system"],
-    default: "system",
+const preferencesSchema = new mongoose.Schema(
+  {
+    theme: {
+      type: String,
+      enum: ["light", "dark", "system"],
+      default: "system",
+    },
+    notifications: {
+      type: Boolean,
+      default: true,
+    },
   },
-  notifications: {
-    type: Boolean,
-    default: true,
-  },
-}, { _id: false }); // prevent creating _id for subdocument
+  { _id: false }
+); // prevent creating _id for subdocument
 
 // Define the schema
-const userSchema: Schema<IUser> = new Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  phone: { type: String, default: "" },
-  address: { type: String, default: "" },
-  password: { type: String, required: true },
-  role: { type: String, default: "member", required: false },
-  roles: { type: Array<String>, default: ["member"], required: false },
-  status: { type: String, default: "Inactive" },
-  avatarUrl: { type: String, default: "" },
-  preferences: { type: preferencesSchema, default: () => ({}) },
-}, { timestamps: true });
+const userSchema: Schema<IUser> = new Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    phone: { type: String, default: "" },
+    address: { type: String, default: "" },
+    password: { type: String, required: true },
+    role: { type: String, default: "member", required: false },
+    roles: { type: Array<String>, default: ["member"], required: false },
+    status: { type: String, default: "Inactive" },
+    avatarUrl: { type: String, default: "" },
+    preferences: { type: preferencesSchema, default: () => ({}) },
+  },
+  { timestamps: true }
+);
 
 // Hash password before saving
 userSchema.pre<IUser>("save", async function (next) {
@@ -57,11 +63,14 @@ userSchema.pre<IUser>("save", async function (next) {
 });
 
 // Compare passwords
-userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
 // Check if the model is already compiled
-export const UserModel: Model<IUser> = mongoose.models.users || mongoose.model<IUser>("users", userSchema);
+export const UserModel: Model<IUser> =
+  mongoose.models.users || mongoose.model<IUser>("users", userSchema);
 
 export default UserModel;

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { DailyActivityModel } from "@/app/models/daily-activity.schema";
-import { connectToDatabase } from "@/lib/db";
 import UserModel from "@/app/models/user.schema";
+import { connectToDatabase } from "@/lib/db";
 
 export async function GET(request: Request) {
   await connectToDatabase();
@@ -24,18 +24,30 @@ export async function GET(request: Request) {
 
     const reportsWithAuthor = await Promise.all(
       reports.map(async (report) => {
-        const user = await UserModel.findById(report.userId).select("name email avatarUrl");
+        const user = await UserModel.findById(report.userId).select(
+          "name email avatarUrl"
+        );
         return {
           ...report.toObject(),
-          author: user ? { _id: user._id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } : null,
+          author: user
+            ? {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                avatarUrl: user.avatarUrl,
+              }
+            : null,
         };
       })
     );
 
     return NextResponse.json(reportsWithAuthor, { status: 200 });
   } catch (error) {
-    console.error('Error fetching reports:', error);
-    return NextResponse.json({ message: 'Failed to fetch reports' }, { status: 500 });
+    console.error("Error fetching reports:", error);
+    return NextResponse.json(
+      { message: "Failed to fetch reports" },
+      { status: 500 }
+    );
   }
 }
 
@@ -53,7 +65,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ report }, { status: 200 });
   } catch (error) {
     console.error("Error creating report:", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
-

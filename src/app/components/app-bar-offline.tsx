@@ -49,7 +49,7 @@ export default function AppBarOffline() {
             className="p-4"
           />
 
-          <h1 className="mb-0 text-md font-semibold text-gray-800 dark:text-white uppercase">
+          <h1 className="text-md mb-0 font-semibold uppercase text-gray-800 dark:text-white">
             Somdaka Funerals
           </h1>
         </NavbarBrand>

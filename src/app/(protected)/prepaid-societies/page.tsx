@@ -2,17 +2,24 @@
 
 import { useEffect, useState } from "react";
 
-
-
 import { UploadOutlined } from "@ant-design/icons";
-import { Button, Col, Form, Modal, Row, Space, Spin, Statistic, Table, Upload, message } from "antd";
+import {
+  Button,
+  Col,
+  Form,
+  Modal,
+  Row,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Upload,
+  message,
+} from "antd";
 import Search from "antd/es/input/Search";
-
-
 
 import PageHeader from "@/app/components/page-header";
 import { ISociety } from "@/app/models/society.schema";
-
 
 export default function PrepaidSocietiesPage() {
   const [societies, setSocieties] = useState<ISociety[]>([]);
@@ -85,7 +92,11 @@ export default function PrepaidSocietiesPage() {
         <Row gutter={16} justify="space-between">
           <Col>
             <Space size={32}>
-              <Statistic title="Total Societies" value={stats.count} className="dark:text-white" />
+              <Statistic
+                title="Total Societies"
+                value={stats.count}
+                className="dark:text-white"
+              />
             </Space>
           </Col>
         </Row>
@@ -119,31 +130,47 @@ export default function PrepaidSocietiesPage() {
         dataSource={societies}
         columns={[
           { title: "Easipol_ID", dataIndex: "societyId" },
-          { title: "Name", dataIndex: "name", render: (value: string, record: ISociety) => (
-            <div>
-              <p>{value}</p>
-              <p>{record.phone}</p>
-            </div>
-          ) },
+          {
+            title: "Name",
+            dataIndex: "name",
+            render: (value: string, record: ISociety) => (
+              <div>
+                <p>{value}</p>
+                <p>{record.phone}</p>
+              </div>
+            ),
+          },
           { title: "Address", dataIndex: "address" },
-          { title: "Chairperson", dataIndex: "chairmanFullNames", render: (value: string, record: ISociety) => (
-            <div>
-              <p>{value}</p>
-              <p>{record.chairmanPhone}</p>
-            </div>
-          ) },
-          { title: "Secretary", dataIndex: "secretaryFullNames", render: (value: string, record: ISociety) => (
-            <div>
-              <p>{value}</p>
-              <p>{record.secretaryPhone}</p>
-            </div>
-          ) },
-          { title: "Treasurer", dataIndex: "treasurerFullNames", render: (value: string, record: ISociety) => (
-            <div>
-              <p>{value}</p>
-              <p>{record.treasurerPhone}</p>
-            </div>
-          ) },
+          {
+            title: "Chairperson",
+            dataIndex: "chairmanFullNames",
+            render: (value: string, record: ISociety) => (
+              <div>
+                <p>{value}</p>
+                <p>{record.chairmanPhone}</p>
+              </div>
+            ),
+          },
+          {
+            title: "Secretary",
+            dataIndex: "secretaryFullNames",
+            render: (value: string, record: ISociety) => (
+              <div>
+                <p>{value}</p>
+                <p>{record.secretaryPhone}</p>
+              </div>
+            ),
+          },
+          {
+            title: "Treasurer",
+            dataIndex: "treasurerFullNames",
+            render: (value: string, record: ISociety) => (
+              <div>
+                <p>{value}</p>
+                <p>{record.treasurerPhone}</p>
+              </div>
+            ),
+          },
           {
             title: "Balance",
             dataIndex: "balance",

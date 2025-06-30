@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 // Define the interface for TypeScript
 export interface IPolicy extends Document {
@@ -102,4 +102,5 @@ const PolicySchema: Schema = new Schema({
 
 // Export the model
 export const PolicyModel =
-  mongoose.models["policies"] || mongoose.model<IPolicy>("policies", PolicySchema);
+  mongoose.models["policies"] ||
+  mongoose.model<IPolicy>("policies", PolicySchema);

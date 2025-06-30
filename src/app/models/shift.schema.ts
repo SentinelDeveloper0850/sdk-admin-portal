@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 
 // Define the interface for TypeScript
 export interface IShift extends Document {
@@ -40,6 +40,9 @@ const shiftSchema: Schema = new Schema(
 
 shiftSchema.index({ weekendStart: 1 });
 
-export const ShiftModel: Model<IShift> = mongoose.model<IShift>("Shift", shiftSchema);
+export const ShiftModel: Model<IShift> = mongoose.model<IShift>(
+  "Shift",
+  shiftSchema
+);
 
 export default ShiftModel;

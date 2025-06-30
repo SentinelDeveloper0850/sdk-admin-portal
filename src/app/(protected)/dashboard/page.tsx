@@ -2,17 +2,26 @@
 
 import React, { useEffect, useState } from "react";
 
-
-
 import { Card } from "@nextui-org/react";
-import { BadgeCheck, ChurchIcon, GroupIcon, ScrollText, ShieldCheck, Users } from "lucide-react";
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  BadgeCheck,
+  ChurchIcon,
+  GroupIcon,
+  ScrollText,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-
-
-import { CardContent } from "@/app/components/ui/card";
 import PageHeader from "@/app/components/page-header";
-
+import { CardContent } from "@/app/components/ui/card";
 
 interface DashboardStats {
   userCount: number;
@@ -41,7 +50,8 @@ const notices = [
   { id: 2, message: "🛠 Scheduled maintenance: Sunday, 10 PM – 12 AM." },
 ];
 
-const formatNumber = (num: number) => new Intl.NumberFormat("en-ZA").format(num);
+const formatNumber = (num: number) =>
+  new Intl.NumberFormat("en-ZA").format(num);
 
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -98,7 +108,10 @@ const DashboardPage: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {cardStats.map((item, idx) => (
-          <Card key={idx} className="bg-muted border-border dark:border-[#333] border">
+          <Card
+            key={idx}
+            className="bg-muted border-border border dark:border-[#333]"
+          >
             <CardContent className="flex items-center justify-between p-4">
               <div>
                 <p className="text-muted-foreground text-sm">{item.label}</p>

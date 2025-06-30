@@ -1,4 +1,5 @@
 "use server";
+
 import { EasypayTransactionModel } from "@/app/models/easypay-transaction.schema";
 import { EftTransactionModel } from "@/app/models/eft-transaction.schema";
 import { PolicyModel } from "@/app/models/policy.schema";
@@ -12,7 +13,8 @@ export const getDashboardData = async () => {
 
     const prepaidSocietyCount = await SocietyModel.countDocuments();
     const eftTransactionCount = await EftTransactionModel.countDocuments();
-    const easypayTransactionCount = await EasypayTransactionModel.countDocuments();
+    const easypayTransactionCount =
+      await EasypayTransactionModel.countDocuments();
     const userCount = await UserModel.countDocuments();
     const policyCount = await PolicyModel.countDocuments();
 
@@ -23,7 +25,7 @@ export const getDashboardData = async () => {
         prepaidSocietyCount,
         eftTransactionCount,
         easypayTransactionCount,
-        policyCount
+        policyCount,
       },
     };
   } catch (error: any) {

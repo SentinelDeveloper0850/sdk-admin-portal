@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { cloudinary } from "@/lib/cloudinary";
 
 export async function POST(req: NextRequest) {
@@ -6,7 +7,10 @@ export async function POST(req: NextRequest) {
   const file = formData.get("file") as File;
 
   if (!file) {
-    return NextResponse.json({ success: false, message: "No file provided" }, { status: 400 });
+    return NextResponse.json(
+      { success: false, message: "No file provided" },
+      { status: 400 }
+    );
   }
 
   const arrayBuffer = await file.arrayBuffer();
@@ -15,7 +19,7 @@ export async function POST(req: NextRequest) {
   const uploadResult = await new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder: "claims/documents"
+        folder: "claims/documents",
       },
       (err, result) => {
         if (err) reject(err);
@@ -25,5 +29,8 @@ export async function POST(req: NextRequest) {
     stream.end(buffer);
   });
 
-  return NextResponse.json({ success: true, url: (uploadResult as any).secure_url });
+  return NextResponse.json({
+    success: true,
+    url: (uploadResult as any).secure_url,
+  });
 }

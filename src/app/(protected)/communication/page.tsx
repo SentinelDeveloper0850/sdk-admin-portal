@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-
-
 import {
   Button,
   Col,
@@ -20,10 +18,8 @@ import {
 import { getDateTime } from "@/utils/formatters";
 
 import whatsappIcon from "@/app/components/icons/Whatsapp.svg";
-
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
-
 
 interface IExternalComm {
   _id: string;
@@ -150,7 +146,7 @@ export default function CommunicationPage() {
       {error && (
         <div style={{ color: "red", marginBottom: "20px" }}>{error}</div>
       )}
-      
+
       <Table
         rowKey="_id"
         bordered
@@ -166,9 +162,18 @@ export default function CommunicationPage() {
             dataIndex: "email",
             key: "email",
           },
-          { title: "Phone number", dataIndex: "phone", key: "phone", render(value: string) {
-            return <><span>{value}</span> <span>{whatsappIcon}</span></>
-          } },
+          {
+            title: "Phone number",
+            dataIndex: "phone",
+            key: "phone",
+            render(value: string) {
+              return (
+                <>
+                  <span>{value}</span> <span>{whatsappIcon}</span>
+                </>
+              );
+            },
+          },
           {
             title: "Status",
             dataIndex: "status",

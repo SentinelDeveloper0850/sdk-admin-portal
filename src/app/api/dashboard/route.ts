@@ -1,5 +1,6 @@
-import { getDashboardData } from "@/server/actions/dashboard";
 import { NextResponse } from "next/server";
+
+import { getDashboardData } from "@/server/actions/dashboard";
 
 export async function GET() {
   const result = await getDashboardData();

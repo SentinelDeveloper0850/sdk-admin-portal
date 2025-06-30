@@ -1,5 +1,6 @@
-import PageHeader from "@/app/components/page-header";
 import React from "react";
+
+import PageHeader from "@/app/components/page-header";
 
 const AccountPreferences = () => {
   return (

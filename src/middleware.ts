@@ -36,14 +36,16 @@ export function middleware(request: NextRequest) {
 
     try {
       // Verify the token
-      jwtVerify(token, new TextEncoder().encode(JWT_SECRET)).then((value) => {
-        // If the token is valid, proceed with the request
-        return NextResponse.next();
-      }).catch((value) => {
-        // If the token is invalid, redirect to the login page
-        return NextResponse.redirect(new URL("/auth/signin", request.url));
-      });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      jwtVerify(token, new TextEncoder().encode(JWT_SECRET))
+        .then((value) => {
+          // If the token is valid, proceed with the request
+          return NextResponse.next();
+        })
+        .catch((value) => {
+          // If the token is invalid, redirect to the login page
+          return NextResponse.redirect(new URL("/auth/signin", request.url));
+        });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Invalid token:", err.message);
       return NextResponse.redirect(new URL("/auth/signin", request.url));

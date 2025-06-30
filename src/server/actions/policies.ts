@@ -29,7 +29,11 @@ export const fetchAllPolicies = async (page = 1, limit = 0) => {
   }
 };
 
-export const searchPolicies = async (searchText: string, page = 1, limit = 100) => {
+export const searchPolicies = async (
+  searchText: string,
+  page = 1,
+  limit = 100
+) => {
   try {
     await connectToDatabase();
 
@@ -60,10 +64,15 @@ export const importPolicy = async (policyData: any) => {
   await connectToDatabase();
 
   try {
-    const existingPolicy = await PolicyModel.findOne({ policyNumber: policyData.policyNumber });
+    const existingPolicy = await PolicyModel.findOne({
+      policyNumber: policyData.policyNumber,
+    });
 
     if (existingPolicy) {
-      return { success: false, message: "Policy already exists with this Policy Number." };
+      return {
+        success: false,
+        message: "Policy already exists with this Policy Number.",
+      };
     }
 
     const newPolicy = new PolicyModel(policyData);

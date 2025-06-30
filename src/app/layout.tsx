@@ -33,9 +33,7 @@ export default function RootLayout({
         />
       </head>
       <body className="h-screen w-screen">
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

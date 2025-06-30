@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 
-import { fetchAll, importFromBankStatement, importFromTransactionHistory } from "@/server/actions/eft-transactions";
+import {
+  fetchAll,
+  importFromBankStatement,
+  importFromTransactionHistory,
+} from "@/server/actions/eft-transactions";
 
 export async function GET(_request: Request) {
   try {
     const response = await fetchAll();
 
     if (response.success) {
-      return NextResponse.json(
-        response.data,
-        { status: 200 }
-      );
+      return NextResponse.json(response.data, { status: 200 });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   try {
     // Parse the request body
     const payload = await request.json();
-    console.log("🚀 ~ POST ~ payload:", payload)
+    console.log("🚀 ~ POST ~ payload:", payload);
 
     let response;
 
@@ -38,10 +39,7 @@ export async function POST(request: Request) {
     }
 
     if (response?.success) {
-      return NextResponse.json(
-        response,
-        { status: 200 }
-      );
+      return NextResponse.json(response, { status: 200 });
     }
 
     return NextResponse.json(
@@ -58,4 +56,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

@@ -1,7 +1,13 @@
-"use server"
+"use server";
 
-import { EasypayImportDataModel, IEasypayImportData } from "@/app/models/easypay-import-data.schema";
-import { EasypayTransactionModel, IEasypayTransaction } from "@/app/models/easypay-transaction.schema";
+import {
+  EasypayImportDataModel,
+  IEasypayImportData,
+} from "@/app/models/easypay-import-data.schema";
+import {
+  EasypayTransactionModel,
+  IEasypayTransaction,
+} from "@/app/models/easypay-transaction.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const fetchAll = async () => {
@@ -19,86 +25,99 @@ export const fetchAll = async () => {
       data: {
         count: numberOfTransactions,
         transactions: transactions,
-      }
+      },
     };
-
   } catch (error: any) {
     console.error("Error fetching easypay transactions:", error.message);
     return {
       success: false,
-      message: "Internal Server Error ~ Error fetching easypay transactions"
+      message: "Internal Server Error ~ Error fetching easypay transactions",
     };
   }
-}
+};
 
 export const searchTransactions = async (searchText: string) => {
   try {
     await connectToDatabase();
 
     const transactions = await EasypayTransactionModel.find({
-      $or: [
-        { easypayNumber: { $regex: searchText, $options: "i" } },
-      ],
-    })
-      .sort({ date: -1 });
+      $or: [{ easypayNumber: { $regex: searchText, $options: "i" } }],
+    }).sort({ date: -1 });
 
     return {
       success: true,
       data: transactions,
     };
   } catch (error: any) {
-    console.error("Error searching easypay transactions by text", error.message);
+    console.error(
+      "Error searching easypay transactions by text",
+      error.message
+    );
     return {
       success: false,
-      message: "Internal Server Error ~ Error searching easypay transactions by text",
+      message:
+        "Internal Server Error ~ Error searching easypay transactions by text",
     };
   }
 };
 
-
-export const searchTransactionsByAmount = async (amount: number, filter: string) => {
+export const searchTransactionsByAmount = async (
+  amount: number,
+  filter: string
+) => {
   try {
     await connectToDatabase();
 
     const transactions = await EasypayTransactionModel.find({
-      $or: [{ amount: filter === '>' ? { $gt: amount } : filter === '<' ? { $lt: amount } : { $eq: amount } }],
-    })
-      .sort({ amount: filter === '<' ? 'desc' : 'asc' });
+      $or: [
+        {
+          amount:
+            filter === ">"
+              ? { $gt: amount }
+              : filter === "<"
+                ? { $lt: amount }
+                : { $eq: amount },
+        },
+      ],
+    }).sort({ amount: filter === "<" ? "desc" : "asc" });
 
     return {
       success: true,
-      data: transactions
+      data: transactions,
     };
-
   } catch (error: any) {
-    console.error("Error searching easypay transactions by amount", error.message);
+    console.error(
+      "Error searching easypay transactions by amount",
+      error.message
+    );
     return {
       success: false,
-      message: "Internal Server Error ~ Error searching easypay transactions by amount"
+      message:
+        "Internal Server Error ~ Error searching easypay transactions by amount",
     };
   }
-}
+};
 
 export const fetchImportHistory = async () => {
   try {
     await connectToDatabase();
 
-    const importHistory = await EasypayImportDataModel.find()
-      .sort({ uuid: -1 });
+    const importHistory = await EasypayImportDataModel.find().sort({
+      uuid: -1,
+    });
 
     return {
       success: true,
-      data: importHistory
+      data: importHistory,
     };
-
   } catch (error: any) {
     console.error("Error fetching easypay import history:", error.message);
     return {
       success: false,
-      message: "Internal Server Error ~ Error fetching easypay import history"
+      message: "Internal Server Error ~ Error fetching easypay import history",
     };
   }
-}
+};
 
 export const findOne = async (id: string) => {
   try {
@@ -108,23 +127,23 @@ export const findOne = async (id: string) => {
 
     return {
       success: true,
-      data: transaction
+      data: transaction,
     };
-
   } catch (error: any) {
     console.error("Error fetching easypay transaction:", error.message);
     return {
       success: false,
-      message: "Internal Server Error ~ Error fetching easypay transaction"
+      message: "Internal Server Error ~ Error fetching easypay transaction",
     };
   }
-}
+};
 
 export const importTransactions = async (payload: any) => {
   await connectToDatabase();
 
   try {
-    const importDataList: IEasypayImportData[] = await EasypayImportDataModel.find();
+    const importDataList: IEasypayImportData[] =
+      await EasypayImportDataModel.find();
 
     const transactions = payload.transactions;
     const statementDate = payload.statementMonth;
@@ -133,12 +152,14 @@ export const importTransactions = async (payload: any) => {
       uuid: payload.uuid,
       date: new Date(),
       numberOfTransactions: transactions.length,
-      createdBy: 'Given Somdaka'
-    }
+      createdBy: "Given Somdaka",
+    };
 
     const _transactions: IEasypayTransaction[] = [];
 
-    let existingImportData = importDataList.find((item: IEasypayImportData) => item.uuid === importData.uuid);
+    let existingImportData = importDataList.find(
+      (item: IEasypayImportData) => item.uuid === importData.uuid
+    );
 
     const parseData = async () => {
       try {
@@ -151,8 +172,8 @@ export const importTransactions = async (payload: any) => {
           let _uuid = `${element.uuid}`;
 
           if (_amount !== undefined || _easypayNumber !== undefined) {
-            _amount = _amount.replace(',', '');
-            _amount = _amount.toString().trim().replace(' ', '');
+            _amount = _amount.replace(",", "");
+            _amount = _amount.toString().trim().replace(" ", "");
 
             const transaction: any = {
               amount: Number(_amount),
@@ -166,7 +187,11 @@ export const importTransactions = async (payload: any) => {
         }
       } catch (exception) {
         console.log(exception);
-        return { success: false, message: 'Something went wrong - Unable to parse the transaction data' };
+        return {
+          success: false,
+          message:
+            "Something went wrong - Unable to parse the transaction data",
+        };
       }
     };
 
@@ -176,20 +201,26 @@ export const importTransactions = async (payload: any) => {
           await EasypayTransactionModel.insertMany([..._transactions]);
           importData.numberOfTransactions = _transactions.length;
           await new EasypayImportDataModel(importData).save();
-          return { success: true, message: 'Transactions imported' };
+          return { success: true, message: "Transactions imported" };
         } else {
-          return { success: false, message: 'Unable to import the transactions' };
+          return {
+            success: false,
+            message: "Unable to import the transactions",
+          };
         }
       });
     } else {
-      return { success: true, message: `${statementDate} Transactions already imported` }
+      return {
+        success: true,
+        message: `${statementDate} Transactions already imported`,
+      };
     }
-    return { success: true, message: 'Transactions imported' };;
+    return { success: true, message: "Transactions imported" };
   } catch (error: any) {
     console.error("Error importing easypay transactions:", error.message);
     return {
       success: false,
-      message: "Internal Server Error ~ Error importing easypay transactions"
+      message: "Internal Server Error ~ Error importing easypay transactions",
     };
   }
-}
+};

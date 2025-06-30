@@ -1,8 +1,10 @@
 // src/models/claim.schema.ts
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IClaimComment {
-  author: mongoose.Types.ObjectId; text: string; createdAt: Date
+  author: mongoose.Types.ObjectId;
+  text: string;
+  createdAt: Date;
 }
 
 export interface IClaim extends Document {
@@ -18,7 +20,11 @@ export interface IClaim extends Document {
   status: "Draft" | "Submitted" | "In Review" | "Approved" | "Rejected";
   submittedBy: mongoose.Types.ObjectId;
   documents: Array<{ name: string; url: string }>;
-  notes: Array<{ author: mongoose.Types.ObjectId; text: string; createdAt: Date }>;
+  notes: Array<{
+    author: mongoose.Types.ObjectId;
+    text: string;
+    createdAt: Date;
+  }>;
   comments: Array<IClaimComment>;
   createdAt: Date;
   updatedAt: Date;
@@ -33,7 +39,7 @@ const claimSchema = new Schema<IClaim>(
     },
     societyName: {
       type: String,
-      required: false
+      required: false,
     },
     policyPlan: {
       type: String,
@@ -47,7 +53,7 @@ const claimSchema = new Schema<IClaim>(
     claimNumber: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
     claimAmount: {
       type: Number,
@@ -57,7 +63,11 @@ const claimSchema = new Schema<IClaim>(
     policyId: { type: String, required: true },
     claimantName: { type: String, required: true },
     reason: { type: String, required: true },
-    status: { type: String, default: "Draft", enum: ["Draft", "Submitted", "In Review", "Approved", "Rejected"] },
+    status: {
+      type: String,
+      default: "Draft",
+      enum: ["Draft", "Submitted", "In Review", "Approved", "Rejected"],
+    },
     submittedBy: { type: Schema.Types.ObjectId, ref: "users" },
     documents: [
       {
@@ -83,4 +93,5 @@ const claimSchema = new Schema<IClaim>(
   { timestamps: true }
 );
 
-export const ClaimModel = mongoose.models.Claim || mongoose.model<IClaim>("Claim", claimSchema);
+export const ClaimModel =
+  mongoose.models.Claim || mongoose.model<IClaim>("Claim", claimSchema);

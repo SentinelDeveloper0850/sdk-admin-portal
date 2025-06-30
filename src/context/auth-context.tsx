@@ -4,17 +4,13 @@
 import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-
-
 import axios from "axios";
-
-
 
 import type { IUser } from "@/app/models/user.schema";
 
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -72,7 +68,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     fetchUserDetails();
   }, [user, router]);
-  
 
   // Show loading spinner until user details are fetched
   if (loading) {
@@ -80,7 +75,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, userId: user?._id?.toString() }}>
+    <AuthContext.Provider
+      value={{ user, setUser, userId: user?._id?.toString() }}
+    >
       {children}
     </AuthContext.Provider>
   );

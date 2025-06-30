@@ -2,17 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-
-
 import { Button, Spinner } from "@nextui-org/react";
-
-
 
 import ClaimDetailsDrawer from "@/app/components/claims/claim-details-drawer";
 import ClaimsTable from "@/app/components/claims/claims-table";
 import NewClaimDrawer from "@/app/components/claims/new-claim-drawer";
 import PageHeader from "@/app/components/page-header";
-
 
 interface Claim {
   _id: string;

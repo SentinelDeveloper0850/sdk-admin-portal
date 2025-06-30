@@ -1,15 +1,18 @@
 import mongoose, { ConnectionStates } from "mongoose";
 
-const connectionString = process.env.MONGODB_URI || "mongodb://169.1.24.233:8001/sdk-admin-portal";
+const connectionString =
+  process.env.MONGODB_URI || "mongodb://169.1.24.233:8001/sdk-admin-portal";
 
-if (!connectionString) throw new Error("🧭 ~ Please define MONGODB_URI environment variable inside .env");
+if (!connectionString)
+  throw new Error(
+    "🧭 ~ Please define MONGODB_URI environment variable inside .env"
+  );
 
 let cachedConnection: typeof mongoose | null = null;
 
 export async function connectToDatabase() {
   if (mongoose.connection.readyState != ConnectionStates.connected) {
     try {
-
       if (cachedConnection) {
         console.log("🧭 ~ Using cached database connection");
         return cachedConnection;
@@ -20,7 +23,9 @@ export async function connectToDatabase() {
         console.log("🧭 ~ Connected to database");
         cachedConnection = connection;
       } else {
-        throw new Error("🧭 ~ Please define MONGODB_URI environment variable inside .env");
+        throw new Error(
+          "🧭 ~ Please define MONGODB_URI environment variable inside .env"
+        );
       }
 
       return cachedConnection;

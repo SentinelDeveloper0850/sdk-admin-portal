@@ -16,6 +16,7 @@ import {
   NavbarContent,
   NavbarItem,
 } from "@nextui-org/react";
+import { Tag } from "antd";
 import { ImUser } from "react-icons/im";
 
 import { logout } from "@/utils/auth";
@@ -23,7 +24,6 @@ import { logout } from "@/utils/auth";
 import { useAuth } from "@/context/auth-context";
 
 import { ThemeSwitcher } from "./theme-switcher";
-import { Tag } from "antd";
 
 export default function AppBarOnline() {
   const router = useRouter();
@@ -75,9 +75,14 @@ export default function AppBarOnline() {
               />
             </DropdownTrigger>
             <DropdownMenu aria-label="Profile Actions" variant="flat">
-              <DropdownItem key="user" className="h-14 gap-2 hover:bg-white border-b rounded-b-none">
+              <DropdownItem
+                key="user"
+                className="h-14 gap-2 rounded-b-none border-b hover:bg-white"
+              >
                 <p className="font-semibold">{user?.name ?? "Unknown User"}</p>
-                <Tag color="orange" className="italic text-xs">{user?.role?.toUpperCase() ?? "No Role"}</Tag>
+                <Tag color="orange" className="text-xs italic">
+                  {user?.role?.toUpperCase() ?? "No Role"}
+                </Tag>
               </DropdownItem>
               <DropdownItem
                 key="profile"

@@ -103,12 +103,10 @@ const UsersPage = () => {
                     isBordered
                     radius="full"
                   />
-                    <span className="text-sm">
-                      {name ?? "Unnamed"}
-                    </span>
-              </div>
-              )
-            }
+                  <span className="text-sm">{name ?? "Unnamed"}</span>
+                </div>
+              );
+            },
           },
           {
             title: "Email",

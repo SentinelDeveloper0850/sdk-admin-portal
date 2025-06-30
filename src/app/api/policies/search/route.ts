@@ -1,5 +1,6 @@
-import { searchPolicies } from "@/server/actions/policies";
 import { NextResponse } from "next/server";
+
+import { searchPolicies } from "@/server/actions/policies";
 
 export async function POST(request: Request) {
   try {

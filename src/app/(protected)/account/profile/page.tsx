@@ -176,10 +176,12 @@ const ProfilePage: React.FC = () => {
             <div className="space-y-6 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Theme</span>
-                <ThemeSwitcher onThemeChange={(newTheme: "system" | "dark" | "light") => {
-                  setTheme(newTheme);
-                  handleSave();
-                }} />
+                <ThemeSwitcher
+                  onThemeChange={(newTheme: "system" | "dark" | "light") => {
+                    setTheme(newTheme);
+                    handleSave();
+                  }}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Language</span>

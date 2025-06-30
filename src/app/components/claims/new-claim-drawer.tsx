@@ -88,7 +88,7 @@ const NewClaimDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
   const resetForm = () => {
     form.resetFields();
     setDocuments([]);
-  }
+  };
 
   return (
     <Drawer

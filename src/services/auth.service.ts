@@ -24,14 +24,20 @@ export const loginUser = async (email: string, password: string) => {
   // Check if account is active
   const isActive = user.status === "Active";
   if (!isActive) {
-    throw new Error("Account is inactive. Contact your administrator to reactivate your account.");
+    throw new Error(
+      "Account is inactive. Contact your administrator to reactivate your account."
+    );
   }
 
   if (JWT_SECRET) {
     // Generate a JWT token
-    const token = jwt.sign({ userId: user._id, role: user.role, roles: user.roles }, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    });
+    const token = jwt.sign(
+      { userId: user._id, role: user.role, roles: user.roles },
+      JWT_SECRET,
+      {
+        expiresIn: JWT_EXPIRES_IN,
+      }
+    );
 
     return {
       token,
@@ -40,7 +46,7 @@ export const loginUser = async (email: string, password: string) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        roles: user.roles
+        roles: user.roles,
       },
     };
   } else {
@@ -55,6 +61,4 @@ export const sendPasswordResetLink = async (email: string) => {
   if (!user) {
     throw new Error("Invalid email address provided");
   }
-
-
 };

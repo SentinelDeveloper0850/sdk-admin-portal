@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 
-
-
 import { PlusOutlined, SwapOutlined } from "@ant-design/icons";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -11,11 +9,8 @@ import FullCalendar from "@fullcalendar/react";
 import { Button, Drawer, Tag } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 
-
-
 import PageHeader from "@/app/components/page-header";
 import { getAllShiftsForCalendar } from "@/server/actions/shifts";
-
 
 interface CalendarShift {
   id: string;
@@ -61,7 +56,6 @@ const ShiftsPage = () => {
 
     loadShifts();
   }, []);
-  
 
   const handleEventClick = (info: any) => {
     setSelectedShift(info.event.extendedProps);

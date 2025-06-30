@@ -1,5 +1,5 @@
-import { connectToDatabase } from "@/lib/db";
 import { UserModel } from "@/app/models/user.schema";
+import { connectToDatabase } from "@/lib/db";
 
 interface UpdateProfilePayload {
   name?: string;
@@ -12,8 +12,14 @@ interface UpdateProfilePayload {
   };
 }
 
-export async function updateUserProfile(userId: string, payload: UpdateProfilePayload) {
-  console.log("🚀 ~ server-action:users ~ updateUserProfile ~ payload:", payload)
+export async function updateUserProfile(
+  userId: string,
+  payload: UpdateProfilePayload
+) {
+  console.log(
+    "🚀 ~ server-action:users ~ updateUserProfile ~ payload:",
+    payload
+  );
   try {
     await connectToDatabase();
 
@@ -28,7 +34,10 @@ export async function updateUserProfile(userId: string, payload: UpdateProfilePa
       },
       { new: true } // return the updated document
     );
-    console.log("🚀 ~ server-action:users ~ updateUserProfile ~ updatedUser:", updatedUser)
+    console.log(
+      "🚀 ~ server-action:users ~ updateUserProfile ~ updatedUser:",
+      updatedUser
+    );
 
     if (!updatedUser) {
       return { success: false, message: "User not found" };

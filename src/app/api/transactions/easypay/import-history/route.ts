@@ -7,10 +7,7 @@ export async function GET(_request: Request) {
     const response = await fetchImportHistory();
 
     if (response.success) {
-      return NextResponse.json(
-        response.data,
-        { status: 200 }
-      );
+      return NextResponse.json(response.data, { status: 200 });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

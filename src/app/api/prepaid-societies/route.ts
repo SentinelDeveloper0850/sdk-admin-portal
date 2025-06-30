@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { fetchAllSocieties } from "@/server/actions/societies";
 
 export async function GET() {

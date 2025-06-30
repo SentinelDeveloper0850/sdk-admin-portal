@@ -27,4 +27,6 @@ const EftTransactionSchema: Schema = new Schema({
 });
 
 // Check if the model is already compiled
-export const EftTransactionModel = mongoose.models['eft-transactions'] || mongoose.model<IEftTransaction>("eft-transactions", EftTransactionSchema);
+export const EftTransactionModel =
+  mongoose.models["eft-transactions"] ||
+  mongoose.model<IEftTransaction>("eft-transactions", EftTransactionSchema);

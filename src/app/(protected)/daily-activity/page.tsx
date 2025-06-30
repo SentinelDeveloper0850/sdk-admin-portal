@@ -2,24 +2,37 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-
-
 import { Avatar, Button, Divider } from "@nextui-org/react";
-import { Avatar as AntAvatar, Col, DatePicker, Descriptions, Drawer, Form, Input, List, Row, Select, Space, Spin, Table, TimePicker } from "antd";
+import {
+  Avatar as AntAvatar,
+  Col,
+  DatePicker,
+  Descriptions,
+  Drawer,
+  Form,
+  Input,
+  List,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Table,
+  TimePicker,
+} from "antd";
 import dayjs from "dayjs";
 import sweetAlert from "sweetalert";
 
-
-
-import { getCurrentDate, getDate, getDateTime, getTime } from "@/utils/formatters";
+import {
+  getCurrentDate,
+  getDate,
+  getDateTime,
+  getTime,
+} from "@/utils/formatters";
 import { hasRole } from "@/utils/helpers/hasRole";
-
-
 
 import PageHeader from "@/app/components/page-header";
 import { IDailyActivity } from "@/app/models/daily-activity.schema";
 import { useAuth } from "@/context/auth-context";
-
 
 const branches = [
   "Kaalfontein",
@@ -129,7 +142,8 @@ export default function DailyActivityPage() {
 
     const userId = user.id ?? user._id;
 
-    const url = user?.role == "admin"
+    const url =
+      user?.role == "admin"
         ? "/api/daily-activity"
         : `/api/daily-activity?userId=${userId}`;
 
@@ -248,10 +262,12 @@ export default function DailyActivityPage() {
   };
 
   const addActivityToReport = () => {
-    const { activity, policyNumber, claimNumber, societyName } = form.getFieldsValue();
+    const { activity, policyNumber, claimNumber, societyName } =
+      form.getFieldsValue();
     let newActivity: any = { name: activity };
 
-    if (selectedActivity.type == "policy") newActivity.policyNumber = policyNumber;
+    if (selectedActivity.type == "policy")
+      newActivity.policyNumber = policyNumber;
     if (activity == "Claim Processing") newActivity.claimNumber = claimNumber;
     if (activity == "Society") newActivity.societyName = societyName;
 
@@ -296,17 +312,16 @@ export default function DailyActivityPage() {
     if (reports) {
       const currentDate = getCurrentDate();
       const todaysReport = reports
-      .filter((report) => report.userId == user?._id)
-      .find((report) => report.date == currentDate);
-      
-      console.log("🚀 ~ reportSubmissionDue ~ todaysReport:", todaysReport)
+        .filter((report) => report.userId == user?._id)
+        .find((report) => report.date == currentDate);
+
+      console.log("🚀 ~ reportSubmissionDue ~ todaysReport:", todaysReport);
       if (todaysReport !== undefined) {
         return false;
       } else {
         return true;
       }
     }
-
   }, [reports, user]);
 
   return (
@@ -315,11 +330,15 @@ export default function DailyActivityPage() {
         title="Daily Activity Reports"
         actions={[
           <Space>
-            {user?.role == "admin" || reportSubmissionDue == true && (
-              <Button color="primary" onPress={() => setCreateDrawerOpen(true)}>
-                Submit Report
-              </Button>
-            )}
+            {user?.role == "admin" ||
+              (reportSubmissionDue == true && (
+                <Button
+                  color="primary"
+                  onPress={() => setCreateDrawerOpen(true)}
+                >
+                  Submit Report
+                </Button>
+              ))}
           </Space>,
         ]}
       />
@@ -580,7 +599,6 @@ export default function DailyActivityPage() {
           <List
             dataSource={reportActivities}
             renderItem={(item, index) => {
-
               let description = undefined;
 
               if (item.policyNumber && item.claimNumber) {
@@ -589,16 +607,17 @@ export default function DailyActivityPage() {
                 description = `Policy #${item.policyNumber}`;
               }
               if (item.societyName) description = item.societyName;
-              
+
               return (
-              <List.Item key={index}>
-                <List.Item.Meta
-                  avatar={<AntAvatar>{index + 1}</AntAvatar>}
-                  title={item.name}
-                  description={description}
-                />
-              </List.Item>
-            )}}
+                <List.Item key={index}>
+                  <List.Item.Meta
+                    avatar={<AntAvatar>{index + 1}</AntAvatar>}
+                    title={item.name}
+                    description={description}
+                  />
+                </List.Item>
+              );
+            }}
           />
         </Form>
       </Drawer>
@@ -661,7 +680,6 @@ export default function DailyActivityPage() {
             <List
               dataSource={selectedReport.activities}
               renderItem={(item: any, index) => {
-
                 let description = undefined;
 
                 if (item.policyNumber && item.claimNumber) {
@@ -670,16 +688,17 @@ export default function DailyActivityPage() {
                   description = `Policy #${item.policyNumber}`;
                 }
                 if (item.societyName) description = item.societyName;
-                
+
                 return (
-                <List.Item key={index}>
-                  <List.Item.Meta
-                    avatar={<AntAvatar>{index + 1}</AntAvatar>}
-                    title={item.name}
-                    description={description}
-                  />
-                </List.Item>
-              )}}
+                  <List.Item key={index}>
+                    <List.Item.Meta
+                      avatar={<AntAvatar>{index + 1}</AntAvatar>}
+                      title={item.name}
+                      description={description}
+                    />
+                  </List.Item>
+                );
+              }}
             />
           </>
         )}

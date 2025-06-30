@@ -1,7 +1,8 @@
 // app/api/upload/avatar/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { cloudinary } from "@/lib/cloudinary";
+
 import { getUserFromRequest } from "@/lib/auth";
+import { cloudinary } from "@/lib/cloudinary";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -9,11 +10,17 @@ export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
 
   if (!user || !user._id) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   if (!file) {
-    return NextResponse.json({ success: false, message: "No file provided" }, { status: 400 });
+    return NextResponse.json(
+      { success: false, message: "No file provided" },
+      { status: 400 }
+    );
   }
 
   const arrayBuffer = await file.arrayBuffer();
@@ -25,7 +32,7 @@ export async function POST(req: NextRequest) {
         folder: "avatars",
         public_id: `user_${user._id}`,
         overwrite: true,
-        resource_type: "image"
+        resource_type: "image",
       },
       (err, result) => {
         if (err) reject(err);
@@ -36,5 +43,8 @@ export async function POST(req: NextRequest) {
     stream.end(buffer);
   });
 
-  return NextResponse.json({ success: true, url: (uploadResult as any).secure_url });
+  return NextResponse.json({
+    success: true,
+    url: (uploadResult as any).secure_url,
+  });
 }

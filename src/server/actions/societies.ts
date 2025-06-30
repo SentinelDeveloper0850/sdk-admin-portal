@@ -1,7 +1,9 @@
 "use server";
+
 import fs from "fs";
-import path from "path";
 import Papa from "papaparse";
+import path from "path";
+
 import { SocietyModel as Model } from "@/app/models/society.schema";
 import { connectToDatabase } from "@/lib/db";
 
@@ -31,7 +33,11 @@ export const fetchAllSocieties = async (page = 1, limit = 0) => {
   }
 };
 
-export const searchSocieties = async (searchText: string, page = 1, limit = 100) => {
+export const searchSocieties = async (
+  searchText: string,
+  page = 1,
+  limit = 100
+) => {
   try {
     await connectToDatabase();
 
@@ -77,7 +83,10 @@ export const importSociety = async (data: any) => {
     const existingPolicy = await Model.findOne({ name: data.name });
 
     if (existingPolicy) {
-      return { success: false, message: "Society already exists with this name." };
+      return {
+        success: false,
+        message: "Society already exists with this name.",
+      };
     }
 
     const newSociety = new Model(data);

@@ -1,5 +1,6 @@
-import { fetchAllPolicies, importPolicy } from "@/server/actions/policies";
 import { NextResponse } from "next/server";
+
+import { fetchAllPolicies, importPolicy } from "@/server/actions/policies";
 
 export async function GET(_request: Request) {
   try {

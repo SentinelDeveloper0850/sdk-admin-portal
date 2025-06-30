@@ -14,9 +14,8 @@ export const getAllShiftsForCalendar = async () => {
   try {
     await connectToDatabase();
 
-    const shifts = await Model.find()
-      .populate("saturday sunday", "name");
-  
+    const shifts = await Model.find().populate("saturday sunday", "name");
+
     return shifts.map((shift) => ({
       id: shift._id!.toString(),
       weekendStart: shift.weekendStart.toISOString(),

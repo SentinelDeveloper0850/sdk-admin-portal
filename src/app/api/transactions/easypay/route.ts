@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 
-import { fetchAll, importTransactions } from "@/server/actions/easypay-transactions";
+import {
+  fetchAll,
+  importTransactions,
+} from "@/server/actions/easypay-transactions";
 
 export async function GET(_request: Request) {
   try {
     const response = await fetchAll();
 
     if (response.success) {
-      return NextResponse.json(
-        response.data,
-        { status: 200 }
-      );
+      return NextResponse.json(response.data, { status: 200 });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,10 +31,7 @@ export async function POST(request: Request) {
     const response = await importTransactions(payload);
 
     if (response.success) {
-      return NextResponse.json(
-        response,
-        { status: 200 }
-      );
+      return NextResponse.json(response, { status: 200 });
     }
 
     return NextResponse.json(
@@ -51,4 +48,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

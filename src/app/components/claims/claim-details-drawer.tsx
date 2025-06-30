@@ -201,7 +201,7 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
             </Card>
           </div>
 
-          <div className="w-1/3 h-full">
+          <div className="h-full w-1/3">
             <ClaimChat
               comments={claim.comments}
               onSendMessage={(message: string) => handleAddComment(message)}

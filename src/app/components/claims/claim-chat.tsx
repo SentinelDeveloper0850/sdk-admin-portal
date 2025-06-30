@@ -35,7 +35,9 @@ const ClaimChat = ({ comments, onSendMessage, loading }: IProps) => {
       {/* Messages */}
       <div className="flex-1 space-y-3 overflow-y-auto bg-primary/20 p-4">
         {comments.length === 0 && (
-          <p className="text-center italic text-gray-400 pt-6">No comments yet</p>
+          <p className="pt-6 text-center italic text-gray-400">
+            No comments yet
+          </p>
         )}
 
         {comments.map((comment) => {

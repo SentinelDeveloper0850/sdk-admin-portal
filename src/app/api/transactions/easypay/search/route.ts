@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { searchTransactions, searchTransactionsByAmount } from "@/server/actions/easypay-transactions";
+import {
+  searchTransactions,
+  searchTransactionsByAmount,
+} from "@/server/actions/easypay-transactions";
 
 export async function POST(request: Request) {
   try {
@@ -9,29 +12,23 @@ export async function POST(request: Request) {
 
     const searchType = body.searchType;
 
-    if (searchType == 'text') {
+    if (searchType == "text") {
       const searchText = body.searchText;
 
       const response = await searchTransactions(searchText);
 
       if (response.success) {
-        return NextResponse.json(
-          response.data,
-          { status: 200 }
-        );
+        return NextResponse.json(response.data, { status: 200 });
       }
     }
 
-    if (searchType == 'amount') {
+    if (searchType == "amount") {
       const { amount, filterType } = body;
 
       const response = await searchTransactionsByAmount(amount, filterType);
 
       if (response.success) {
-        return NextResponse.json(
-          response.data,
-          { status: 200 }
-        );
+        return NextResponse.json(response.data, { status: 200 });
       }
     }
 
