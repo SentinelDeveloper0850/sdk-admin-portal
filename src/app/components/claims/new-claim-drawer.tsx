@@ -1,32 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
-import { Button, Input, Select, SelectItem, Textarea } from "@nextui-org/react";
-import { Drawer, message } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Drawer,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Upload,
+  message,
+} from "antd";
 import sweetAlert from "sweetalert";
+
+const { TextArea } = Input;
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmitted?: () => void;
+  onSubmitted: () => void;
 }
 
 const NewClaimDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
-  const [claimantName, setClaimantName] = useState<string>("");
-  const [societyName, setSocietyName] = useState<string>("");
-  const [policyId, setPolicyId] = useState<string>("");
-  const [policyPlan, setPolicyPlan] = useState<string>("");
-  const [claimNumber, setClaimNumber] = useState<string>("");
-  const [schemeType, setSchemeType] = useState<"Individual" | "Society">();
-  const [claimType, setClaimType] = useState<"Cash" | "Service">("Cash");
-  const [claimAmount, setClaimAmount] = useState<number>(2500);
-  const [reason, setReason] = useState("");
-  const [documents, setDocuments] = useState<{ name: string; url: string }[]>(
-    []
-  );
-  const [uploading, setUploading] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const [uploading, setUploading] = React.useState(false);
+  const [documents, setDocuments] = React.useState<
+    { name: string; url: string }[]
+  >([]);
 
   const handleFileUpload = async (file: File) => {
     setUploading(true);
@@ -42,44 +44,29 @@ const NewClaimDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
     setUploading(false);
 
     if (json.success) {
-      setDocuments((prev) => [...prev, { name: file.name, url: json.url }]);
-      sweetAlert({
-        icon: "success",
-        title: "File uploaded",
-        timer: 1000,
-      });
+      const doc = { name: file.name, url: json.url };
+      setDocuments((prev) => [...prev, doc]);
+      message.success("File uploaded successfully");
+      return false; // prevent default upload behavior
     } else {
-      sweetAlert({
-        icon: "error",
-        title: "Upload failed",
-      });
+      message.error("Upload failed");
+      return Upload.LIST_IGNORE;
     }
   };
 
-  const handleCancel = () => {};
-
   const handleSubmit = async () => {
-    setLoading(true);
-
     try {
+      const values = await form.validateFields();
+      const payload = { ...values, documents };
+
       const res = await fetch("/api/claims", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          claimantName,
-          policyId,
-          reason,
-          documents,
-          societyName,
-          policyPlan,
-          claimNumber,
-          schemeType,
-          claimType,
-          claimAmount,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
+
       if (res.ok) {
         sweetAlert({
           icon: "success",
@@ -87,136 +74,132 @@ const NewClaimDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
           text: "Your claim has been successfully submitted.",
           timer: 2000,
         });
+        resetForm();
         onClose();
-        onSubmitted?.();
+        onSubmitted();
       } else {
         message.error(json.message || "Error submitting claim");
-        sweetAlert({
-          icon: "error",
-          title: json.message || "Error submitting claim",
-        });
       }
-    } catch {
-      sweetAlert({
-        icon: "error",
-        title: "Error submitting claim",
-      });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      message.error("Please correct the errors in the form.");
     }
   };
+
+  const resetForm = () => {
+    form.resetFields();
+    setDocuments([]);
+  }
 
   return (
     <Drawer
       title="Submit a New Claim"
-      placement="right"
       width={600}
-      onClose={onClose}
+      onClose={() => {
+        resetForm();
+        onClose();
+      }}
       open={open}
+      destroyOnClose
       footer={
         <div className="flex justify-end gap-2">
-          <Button color="danger" onClick={handleCancel} disabled={loading}>
-            Cancel
-          </Button>
-          <Button color="primary" onClick={handleSubmit} isLoading={loading}>
+          <Button onClick={resetForm}>Reset</Button>
+          <Button type="primary" onClick={handleSubmit} loading={uploading}>
             Submit Claim
           </Button>
         </div>
       }
     >
-      <div className="space-y-4">
-        <Input
+      <Form layout="vertical" form={form}>
+        <Form.Item
+          name="claimantName"
           label="Claimant Name"
-          value={claimantName}
-          onValueChange={setClaimantName}
-        />
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
 
-        <Select
+        <Form.Item
+          name="schemeType"
           label="Scheme Type"
-          value={schemeType}
-          onChange={(e) => {
-            setSchemeType(e.target.value as "Individual" | "Society");
-          }}
+          rules={[{ required: true }]}
         >
-          <SelectItem key={"Individual"} value="Individual">
-            Individual
-          </SelectItem>
-          <SelectItem key={"Society"} value="Society">
-            Society
-          </SelectItem>
-        </Select>
+          <Select options={[{ value: "Individual" }, { value: "Society" }]} />
+        </Form.Item>
 
-        {schemeType === "Society" && (
-          <Input
+        {form.getFieldValue("schemeType") === "Society" && (
+          <Form.Item
+            name="societyName"
             label="Society Name"
-            value={societyName}
-            onValueChange={setSocietyName}
-          />
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
         )}
 
-        <Input
+        <Form.Item
+          name="policyId"
           label="Policy Number"
-          value={policyId}
-          onValueChange={setPolicyId}
-        />
-
-        <Input
-          label="Policy Plan"
-          value={policyPlan}
-          onValueChange={setPolicyPlan}
-        />
-
-        <Select
-          label="Claim Type"
-          value={claimType}
-          onChange={(e) => {
-            setClaimType(e.target.value as "Cash" | "Service");
-          }}
+          rules={[{ required: true }]}
         >
-          <SelectItem key="Cash" value="Cash">
-            Cash
-          </SelectItem>
-          <SelectItem key="Service" value="Service">
-            Service
-          </SelectItem>
-        </Select>
+          <Input />
+        </Form.Item>
 
-        <Input
+        <Form.Item
+          name="policyPlan"
+          label="Policy Plan"
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item
+          name="claimType"
+          label="Claim Type"
+          rules={[{ required: true }]}
+        >
+          <Select options={[{ value: "Cash" }, { value: "Service" }]} />
+        </Form.Item>
+
+        <Form.Item
+          name="claimNumber"
           label="Claim Number"
-          value={claimNumber}
-          onValueChange={setClaimNumber}
-        />
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
 
-        {claimType === "Cash" && (
-          <Input
+        {form.getFieldValue("claimType") === "Cash" && (
+          <Form.Item
+            name="claimAmount"
             label="Claim Amount"
-            value={claimAmount.toString()}
-            onValueChange={(val) => setClaimAmount(parseInt(val))}
-            type="number"
-            step={500}
-          />
+            rules={[{ required: true }]}
+          >
+            <InputNumber min={0} step={500} style={{ width: "100%" }} />
+          </Form.Item>
         )}
 
-        <Textarea label="Reason" value={reason} onValueChange={setReason} />
+        <Form.Item name="reason" label="Reason" rules={[{ required: true }]}>
+          <TextArea rows={3} />
+        </Form.Item>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Supporting Documents</label>
-          <input
-            type="file"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileUpload(file);
-            }}
-            disabled={uploading}
-          />
-          {uploading && <p className="text-xs text-gray-400">Uploading...</p>}
-          <ul className="list-disc pl-5 text-sm text-green-600">
+        <Form.Item label="Supporting Documents">
+          <Upload
+            beforeUpload={handleFileUpload}
+            showUploadList={false}
+            multiple={false}
+            accept=".pdf,.jpg,.png"
+          >
+            <Button icon={<PlusOutlined />} loading={uploading}>
+              Upload File
+            </Button>
+          </Upload>
+          <ul className="mt-2 list-disc pl-5 text-sm text-green-600">
             {documents.map((doc) => (
               <li key={doc.url}>{doc.name}</li>
             ))}
           </ul>
-        </div>
-      </div>
+        </Form.Item>
+      </Form>
     </Drawer>
   );
 };

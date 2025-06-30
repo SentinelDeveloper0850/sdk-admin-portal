@@ -108,7 +108,7 @@ const LoginPage = () => {
           className="mb-4"
         />
       )}
-      <Card className="dark:bg-slate-50">
+      <Card className="dark:bg-zinc-800">
         <CardBody className="p-6">
           <Form form={form} layout="vertical" onFinish={handleLogin}>
             <Form.Item label="Email" name="email" rules={emailRules}>
@@ -125,7 +125,7 @@ const LoginPage = () => {
             >
               Sign in
             </Button>
-            <Link href="/auth/forgot-password" className="hover:text-primary">
+            <Link href="/auth/forgot-password" className="dark:text-white hover:text-primary dark:hover:text-primary">
               <p className="p-2 text-center">
                 Forgot password? <b>Recover</b>
               </p>

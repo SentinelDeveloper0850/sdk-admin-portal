@@ -98,7 +98,7 @@ const DashboardPage: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {cardStats.map((item, idx) => (
-          <Card key={idx} className="bg-muted border-border border">
+          <Card key={idx} className="bg-muted border-border dark:border-[#333] border">
             <CardContent className="flex items-center justify-between p-4">
               <div>
                 <p className="text-muted-foreground text-sm">{item.label}</p>
