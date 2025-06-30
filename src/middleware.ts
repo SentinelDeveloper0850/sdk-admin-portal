@@ -15,8 +15,12 @@ export function middleware(request: NextRequest) {
   const protectedRoutes = [
     "/dashboard",
     "/transactions",
+    "/policies",
+    "/prepaid-societies",
     "/daily-activity",
+    "/claims",
     "/users",
+    "/account",
   ];
 
   // Check if the current route is protected
@@ -52,6 +56,11 @@ export const config = {
     "/dashboard",
     "/transactions/:path*",
     "/daily-activity/:path*",
+    "/policies/:path*",
+    "/prepaid-societies/:path*",
+    "/daily-activity/:path*",
+    "/claims/:path*",
     "/users/:path*",
+    "/account/:path*",
   ], // Apply middleware to specific routes
 };
