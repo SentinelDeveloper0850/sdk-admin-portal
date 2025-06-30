@@ -4,7 +4,7 @@ import { Spin } from "antd";
 
 export default function Loading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white dark:bg-[#212121]">
+    <div className="flex flex-col min-h-screen items-center justify-center bg-white dark:bg-[#212121]">
       <div className="flex items-center justify-center">
         <Spin size="large" tip="Loading..." />
       </div>
