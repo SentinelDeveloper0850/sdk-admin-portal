@@ -3,25 +3,38 @@
 import React, { useEffect, useState } from "react";
 
 import {
-  Button,
   Select,
   SelectItem,
   Spinner,
-  Textarea,
 } from "@nextui-org/react";
-import { Card, Drawer, Tag, message } from "antd";
+import { Card, Drawer, Space, Tag, message } from "antd";
 import dayjs from "dayjs";
 
 import { IClaim } from "@/app/models/claim.schema";
 
-import { DrawerContent } from "../ui/drawer";
 import ClaimChat from "./claim-chat";
+import { formatToMoneyWithCurrency } from "@/utils/formatters";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   claimId: string | null;
 }
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "Submitted":
+      return "default";
+    case "In Review":
+      return "gold";
+    case "Approved":
+      return "green";
+    case "Rejected":
+      return "red";
+    default:
+      return "blue";
+  }
+};
 
 const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
   const [claim, setClaim] = useState<IClaim>();
@@ -33,10 +46,6 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/claims/${claimId}`);
-      if (!res.ok) {
-        message.error("Failed to fetch claim");
-        return;
-      }
       const json = await res.json();
       if (json.success) {
         setClaim(json.claim);
@@ -71,27 +80,29 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
       setComment("");
       await refreshClaim();
     } else {
-      sweetAlert({
-        icon: "error",
-        title: "Failed to post comment",
-      });
+      // message.error("Failed to post comment");
     }
 
     setPostingComment(false);
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
-    const res = await fetch(`/api/claims/${claimId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-
-    const json = await res.json();
-    if (json.success) {
-      message.success("Status updated");
-      await refreshClaim();
-    } else {
+    try {
+      const res = await fetch(`/api/claims/${claimId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+  
+      const json = await res.json();
+      if (json.success) {
+        message.success("Status updated");
+        await refreshClaim();
+      } else {
+        message.error("Failed to update status");
+      }
+    } catch (error) {
+      console.log("🚀 ~ handleStatusUpdate ~ error:", error)
       message.error("Failed to update status");
     }
   };
@@ -104,13 +115,32 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
       onClose={onClose}
       open={open}
       bodyStyle={{ padding: 0 }}
+      extra={
+        <Space>
+          <Select
+            className="max-w-xs w-[120px] rounded-xl dark:border dark:border-zinc-700"
+            disabled={loading}
+            selectedKeys={[claim?.status!]}
+            onSelectionChange={(keys) => {
+              const newStatus = Array.from(keys)[0];
+              if (typeof newStatus === "string")
+                handleStatusUpdate(newStatus);
+            }}
+          >
+            <SelectItem key="Submitted">Submitted</SelectItem>
+            <SelectItem key="In Review">In Review</SelectItem>
+            <SelectItem key="Approved">Approved</SelectItem>
+            <SelectItem key="Rejected">Rejected</SelectItem>
+          </Select>
+        </Space>
+      }
     >
       {loading ? (
         <Spinner label="Loading..." />
       ) : claim ? (
-        <div className="flex h-full gap-0">
-          {/* Claim Info */}
-          <div className="w-1/3 space-y-4 p-4 pr-0">
+        <div className="grid h-full grid-cols-1 gap-0 md:grid-cols-3">
+          {/* Left Panel */}
+          <div className="space-y-4 border-r dark:border-zinc-700 p-4">
             <Card title="Claim Information" size="small">
               <div className="mb-4">
                 <h3 className="font-semibold">Claimant</h3>
@@ -129,20 +159,31 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
 
               <div>
                 <h3 className="font-semibold">Claim Amount</h3>
-                <p>R {claim.claimAmount}</p>
+                <p>
+                  {formatToMoneyWithCurrency(claim.claimAmount!)}
+                </p>
               </div>
             </Card>
 
             <Card title="Documentation" size="small">
-              <ul className="list-disc pl-5 text-sm text-blue-600">
-                {claim.documents.map((doc: any) => (
-                  <li key={doc.url}>
-                    <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                      {doc.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {claim.documents?.length > 0 ? (
+                <ul className="space-y-2 text-sm text-blue-500">
+                  {claim.documents.map((doc: any) => (
+                    <li key={doc.url}>
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 hover:underline"
+                      >
+                        📄 {doc.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-400">No documents uploaded</p>
+              )}
             </Card>
 
             <div>
@@ -151,7 +192,8 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
             </div>
           </div>
 
-          <div className="w-1/3 space-y-4 p-4">
+          {/* Middle Panel */}
+          <div className="space-y-4 border-r dark:border-zinc-700 p-4">
             <Card title="Policy Information" size="small">
               <div className="mb-4">
                 <h3 className="font-semibold">Scheme Type</h3>
@@ -181,36 +223,27 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
                 <h3 className="font-semibold">Submitted</h3>
                 <p>{dayjs(claim.createdAt).format("DD MMM YYYY [at] HH:mm")}</p>
               </div>
+
               <div>
-                <h3 className="font-semibold">Status</h3>
-                <Select
-                  selectedKeys={[claim.status]}
-                  onSelectionChange={(keys) => {
-                    const newStatus = Array.from(keys)[0];
-                    if (typeof newStatus === "string")
-                      handleStatusUpdate(newStatus);
-                  }}
-                  className="max-w-xs"
-                >
-                  <SelectItem key="Submitted">Submitted</SelectItem>
-                  <SelectItem key="In Review">In Review</SelectItem>
-                  <SelectItem key="Approved">Approved</SelectItem>
-                  <SelectItem key="Rejected">Rejected</SelectItem>
-                </Select>
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="font-semibold">Status</h3>
+                  <Tag color={getStatusColor(claim.status)}>{claim.status}</Tag>
+                </div>
               </div>
             </Card>
           </div>
 
-          <div className="h-full w-1/3">
+          {/* Right Panel */}
+          <div className="h-full p-4">
             <ClaimChat
               comments={claim.comments}
-              onSendMessage={(message: string) => handleAddComment(message)}
+              onSendMessage={handleAddComment}
               loading={postingComment}
             />
           </div>
         </div>
       ) : (
-        <p className="text-gray-400">Select a claim to view details</p>
+        <p className="p-4 text-gray-400">Select a claim to view details</p>
       )}
     </Drawer>
   );

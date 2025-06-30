@@ -30,10 +30,10 @@ const ClaimChat = ({ comments, onSendMessage, loading }: IProps) => {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-none border-l">
-      <h3 className="border-b p-2 font-semibold">Comments</h3>
+    <div className="flex h-full flex-col overflow-hidden rounded-none">
+      <h3 className="border-b p-2 pl-0 dark:border-zinc-700 font-semibold">Comments</h3>
       {/* Messages */}
-      <div className="flex-1 space-y-3 overflow-y-auto bg-primary/20 p-4">
+      <div className="flex-1 space-y-3 overflow-y-auto bg-primary/20 p-4 pl-0 dark:bg-[#212121]">
         {comments.length === 0 && (
           <p className="pt-6 text-center italic text-gray-400">
             No comments yet
@@ -72,11 +72,11 @@ const ClaimChat = ({ comments, onSendMessage, loading }: IProps) => {
       </div>
 
       {/* Input */}
-      <div className="flex items-center gap-2 border-t bg-white p-3">
+      <div className="flex items-center gap-2 bg-white p-3 pl-0 dark:bg-[#212121]">
         <input
           type="text"
           aria-label="Comment input"
-          className="flex-1 rounded-full border px-4 py-2 focus:outline-none"
+          className="flex-1 rounded-full border px-4 py-2 focus:outline-none dark:bg-zinc-800 dark:text-white dark:border-zinc-700"
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
@@ -89,7 +89,7 @@ const ClaimChat = ({ comments, onSendMessage, loading }: IProps) => {
         />
         <button
           aria-label="Send message"
-          className="rounded-full bg-primary px-4 py-2 uppercase text-gray-800 hover:bg-primary/75 disabled:opacity-50"
+          className="rounded-full bg-primary px-4 py-2 uppercase text-gray-800 hover:bg-primary/75 disabled:opacity-50 dark:text-black"
           onClick={handleSend}
           disabled={loading}
         >
