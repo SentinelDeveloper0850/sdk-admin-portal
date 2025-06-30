@@ -10,7 +10,7 @@
     "prefer-template": ["error"],
     "semi": ["error"],
     "quotes": ["error", "double"],
-    "no-explicit-any": false,
+    "no-explicit-any": 0,
     "check-file/filename-naming-convention": [
       "error",
       {
