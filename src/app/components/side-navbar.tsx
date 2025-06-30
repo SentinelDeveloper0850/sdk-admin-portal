@@ -4,20 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+
+
 import { Tooltip } from "antd";
-import {
-  Banknote,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  LayoutDashboard,
-  ListOrdered,
-  Shield,
-  Users,
-} from "lucide-react";
+import { Banknote, ChevronLeft, ChevronRight, FileText, LayoutDashboard, ListOrdered, Shield, User, UserCircleIcon, Users } from "lucide-react";
 import { HiOutlineDocumentCurrencyDollar } from "react-icons/hi2";
 
+
+
 import { useAuth } from "@/context/auth-context";
+
 
 const SideNavBar = () => {
   const pathname = usePathname();
@@ -62,13 +58,13 @@ const SideNavBar = () => {
       icon: <HiOutlineDocumentCurrencyDollar size={18} />,
       url: "/claims",
     },
-    // {
-    //   id: 7,
-    //   name: "Shifts",
-    //   icon: <Calendar size={18} />,
-    //   url: "/shifts",
-    // },
     { id: 8, name: "Users", icon: <Shield size={18} />, url: "/users" },
+    {
+      id: 9,
+      name: "My Account",
+      icon: <UserCircleIcon size={18} />,
+      url: "/account",
+    },
   ];
 
   return (
