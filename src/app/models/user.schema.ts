@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import mongoose, { Document, Model, Schema } from "mongoose";
+import { IEmployee } from "./employee.schema";
 
 // Define the interface for TypeScript
 export interface IUser extends Document {
@@ -12,6 +13,8 @@ export interface IUser extends Document {
   roles?: string[]; // new — primary source of truth moving forward
   status: string;
   avatarUrl?: string;
+  employeeId?: string; // Optional FK to Employee
+  employee?: IEmployee;
   preferences?: {
     theme?: "light" | "dark" | "system";
     notifications?: boolean;
@@ -49,6 +52,12 @@ const userSchema: Schema<IUser> = new Schema(
     status: { type: String, default: "Inactive" },
     avatarUrl: { type: String, default: "" },
     preferences: { type: preferencesSchema, default: () => ({}) },
+    employee: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Employee',
+      required: false,
+      default: null
+    }
   },
   { timestamps: true }
 );
