@@ -48,6 +48,10 @@ export default function AppBarOffline() {
             height={75}
             className="p-4"
           />
+
+          <h1 className="mb-0 text-md font-semibold text-gray-800 dark:text-white uppercase">
+            Somdaka Funerals
+          </h1>
         </NavbarBrand>
       </NavbarContent>
 
