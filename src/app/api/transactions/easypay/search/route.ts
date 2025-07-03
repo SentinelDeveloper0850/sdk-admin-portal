@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   searchTransactions,
   searchTransactionsByAmount,
+  searchTransactionsByDate,
 } from "@/server/actions/easypay-transactions";
 
 export async function POST(request: Request) {
@@ -26,6 +27,16 @@ export async function POST(request: Request) {
       const { amount, filterType } = body;
 
       const response = await searchTransactionsByAmount(amount, filterType);
+
+      if (response.success) {
+        return NextResponse.json(response.data, { status: 200 });
+      }
+    }
+
+    if (searchType == "date") {
+      const { date } = body;
+
+      const response = await searchTransactionsByDate(date);
 
       if (response.success) {
         return NextResponse.json(response.data, { status: 200 });

@@ -135,6 +135,31 @@ export const searchTransactionsByAmount = async (
   }
 };
 
+export const searchTransactionsByDate = async (
+  date: string
+) => {
+  try {
+    await connectToDatabase();
+
+    const transactions = await EasypayTransactionModel.find({ date });
+
+    return {
+      success: true,
+      data: transactions,
+    };
+  } catch (error: any) {
+    console.error(
+      "Error searching easypay transactions by date",
+      error.message
+    );
+    return {
+      success: false,
+      message:
+        "Internal Server Error ~ Error searching easypay transactions by date",
+    };
+  }
+};
+
 export const fetchImportHistory = async () => {
   try {
     await connectToDatabase();

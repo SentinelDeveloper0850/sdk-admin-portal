@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   Button,
   Col,
+  DatePicker,
   Drawer,
   Form,
   List,
@@ -17,6 +18,8 @@ import {
   notification,
 } from "antd";
 import Search from "antd/es/input/Search";
+import { Dayjs } from "dayjs";
+import { saveAs } from "file-saver";
 import Papa from "papaparse";
 
 import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
@@ -165,6 +168,46 @@ export default function EasypayTransactionsPage() {
     }
   };
 
+  const searchByDate = async ({
+    date,
+    dateString,
+  }: {
+    date: Dayjs;
+    dateString: string | string[];
+  }) => {
+    try {
+      setLoading(true);
+      const formattedDate = (dateString as String).replaceAll("-", "/");
+
+      if (formattedDate) {
+        const response = await fetch("/api/transactions/easypay/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            date: formattedDate,
+            searchType: "date",
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          setError(errorData.message || "Failed to search transactions");
+          return;
+        }
+
+        const data = await response.json();
+        setTransactions(data);
+      }
+    } catch (err) {
+      console.log(err);
+      setError("An error occurred while searching transactions.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchTransactions();
   }, []);
@@ -294,13 +337,34 @@ export default function EasypayTransactionsPage() {
         setError(errorData.message || "Failed to sync policy numbers");
         return;
       }
-      
     } catch (error) {
-      console.log("🚀 ~ syncPolicyNumbers ~ error:", error)
+      console.log("🚀 ~ syncPolicyNumbers ~ error:", error);
     } finally {
       setSyncing(false);
     }
-  }
+  };
+
+  const exportToCSV = () => {
+    if (!transactions.length) {
+      notification.warning({
+        message: "No transactions to export",
+      });
+      return;
+    }
+
+    const csv = Papa.unparse(
+      transactions.map((tx) => ({
+        "Transaction Date": tx.date,
+        "File ID": tx.uuid,
+        "Policy Number": (tx as any).policyNumber ?? "",
+        "Easypay Number": (tx as any).easypayNumber ?? "",
+        Amount: tx.amount,
+      }))
+    );
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, "easypay-transactions.csv");
+  };
 
   if (error) {
     return (
@@ -323,6 +387,9 @@ export default function EasypayTransactionsPage() {
               }}
             >
               Import History
+            </Button>
+            <Button onClick={exportToCSV} disabled={!transactions.length}>
+              Export CSV
             </Button>
             {/* <Button onClick={syncPolicyNumbers} loading={syncing} disabled={syncing}>
               {syncing ? "Syncing..." : "Sync Policy Numbers"}
@@ -364,29 +431,17 @@ export default function EasypayTransactionsPage() {
         <main>
           <Form
             layout="vertical"
+            className="w-full"
             style={{
-              width: "100%",
               borderBottom: "1px solid #ddd",
               padding: "2rem 1rem 3rem 1rem",
             }}
           >
-            <Space
-              size={32}
-              wrap
-              style={{
-                display: "flex",
-                justifyContent: "flex-start",
-                paddingBottom: "0",
-                width: "100%",
-              }}
-            >
+            <Space size={32} wrap className="flex w-full pb-0">
               <Form.Item style={{ marginBottom: "0" }}>
                 <p
-                  style={{
-                    marginBottom: ".5rem",
-                    textTransform: "uppercase",
-                    letterSpacing: ".2rem",
-                  }}
+                  className="mb-2 uppercase dark:text-white"
+                  style={{ letterSpacing: ".2rem" }}
                 >
                   Search for reference
                 </p>
@@ -395,22 +450,17 @@ export default function EasypayTransactionsPage() {
                   value={search}
                   placeholder="Search Text..."
                   onChange={(event: any) => setSearch(event.target.value)}
-                  onSearch={(value: string) => {
-                    if (value.length > 0) {
-                      searchTransactions(value);
-                    } else {
-                      setTransactions([]);
-                    }
-                  }}
+                  onSearch={(value: string) =>
+                    value.length > 0
+                      ? searchTransactions(value)
+                      : setTransactions([])
+                  }
                 />
               </Form.Item>
               <Form.Item style={{ marginBottom: "0" }}>
                 <p
-                  style={{
-                    marginBottom: ".5rem",
-                    textTransform: "uppercase",
-                    letterSpacing: ".2rem",
-                  }}
+                  className="mb-2 uppercase dark:text-white"
+                  style={{ letterSpacing: ".2rem" }}
                 >
                   Search for Amount
                 </p>
@@ -431,39 +481,53 @@ export default function EasypayTransactionsPage() {
                         onChange={(value: string) => setAmountFilterType(value)}
                         suffixIcon={null}
                         defaultValue={"="}
-                        style={{ width: "6rem" }}
+                        className="w-10"
                       >
                         <Select.Option value={"="}>=</Select.Option>
                         <Select.Option value={">"}>&gt;</Select.Option>
                         <Select.Option value={"<"}>&lt;</Select.Option>
                       </Select>
                     }
-                    onSearch={async (value: string) => {
-                      if (value.length > 0) {
-                        searchByAmount({
-                          amount: amount,
-                          filterType: amountFilterType,
-                        });
-                      } else {
-                        setTransactions([]);
-                      }
-                    }}
+                    onSearch={async (value: string) =>
+                      value.length > 0
+                        ? searchByAmount({
+                            amount: amount,
+                            filterType: amountFilterType,
+                          })
+                        : setTransactions([])
+                    }
+                  />
+                </Space>
+              </Form.Item>
+              <Form.Item style={{ marginBottom: "0" }}>
+                <p
+                  className="mb-2 uppercase dark:text-white"
+                  style={{ letterSpacing: ".2rem" }}
+                >
+                  Search for Date
+                </p>
+                <Space>
+                  <DatePicker
+                    onChange={(date, dateString) =>
+                      searchByDate({ date, dateString })
+                    }
                   />
                 </Space>
               </Form.Item>
               {/* {isAdmin && transactions.length > 0 && (
-            <Form.Item style={{ marginBottom: "0", marginTop: "2.5rem" }}>
-              <Space>
-                <Button
-                  loading={status === "Deleting selected transactions"}
-                  onClick={showDeleteConfirm}
-                  danger
-                >
-                  <DeleteOutlined /> Permanently Delete Selected
-                </Button>
-              </Space>
-            </Form.Item>
-          )} */}
+                <Form.Item style={{ marginBottom: "0", marginTop: "2.5rem" }}>
+                  <Space>
+                    <Button
+                      loading={status === "Deleting selected transactions"}
+                      onClick={showDeleteConfirm}
+                      danger
+                    >
+                      <DeleteOutlined /> Permanently Delete Selected
+                    </Button>
+                  </Space>
+                </Form.Item>
+              )} 
+               */}
             </Space>
           </Form>
 

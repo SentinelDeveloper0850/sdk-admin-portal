@@ -420,3 +420,52 @@ a:hover {
 .dark .ant-card-bordered {
   border: 1px solid #2e2e2e;
 }
+
+/* Dark Mode Styles for AntD DatePicker */
+.dark .ant-picker {
+  background-color: #212121;
+  color: white;
+  border-color: #444;
+}
+
+.dark .ant-picker-input > input {
+  color: white;
+}
+
+.dark .ant-picker-suffix,
+.dark .ant-picker-clear {
+  color: #ffac00;
+}
+
+.dark .ant-picker-dropdown {
+  background-color: #212121;
+  color: white;
+}
+
+.dark .ant-picker-cell-in-view {
+  color: white;
+}
+
+.dark .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+.dark .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.dark .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+  background-color: #ffac00;
+  color: black;
+}
+
+.dark .ant-picker-header,
+.dark .ant-picker-content,
+.dark .ant-picker-footer {
+  background-color: #212121;
+  color: white;
+}
+
+.ant-picker-body {
+  padding: 0 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark .ant-picker-input > input::placeholder {
+  color: #bbbbbb;
+}
