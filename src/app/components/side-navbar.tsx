@@ -59,12 +59,6 @@ const SideNavBar = () => {
       url: "/claims",
     },
     { id: 8, name: "Users", icon: <Shield size={18} />, url: "/users" },
-    {
-      id: 9,
-      name: "My Account",
-      icon: <UserCircleIcon size={18} />,
-      url: "/account",
-    },
   ];
 
   return (
