@@ -8,6 +8,7 @@ import {
   EasypayTransactionModel,
   IEasypayTransaction,
 } from "@/app/models/scheme/easypay-transaction.schema";
+import { IPolicy, PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const fetchAll = async () => {
@@ -57,6 +58,42 @@ export const searchTransactions = async (searchText: string) => {
       success: false,
       message:
         "Internal Server Error ~ Error searching easypay transactions by text",
+    };
+  }
+};
+
+export const syncPolicyNumbers = async () => {
+  try {
+    await connectToDatabase();
+
+    const policies = await PolicyModel.find({}, 'policyNumber easypayNumber');
+    const policyMap = new Map(policies.map((policy: IPolicy) => [policy.easypayNumber, policy.policyNumber]));
+
+    const transactions = await EasypayTransactionModel.find({});
+    
+    let updatedCount = 0;
+    
+    for (const transaction of transactions) {
+      const policyNumber = policyMap.get(transaction.easypayNumber);
+      if (policyNumber && transaction.policyNumber !== policyNumber) {
+        transaction.policyNumber = policyNumber;
+        await transaction.save();
+        console.log(`🚀 ~ syncPolicyNumbers ~ transaction (${transaction.easypayNumber}) updated with policy (${policyNumber})`);
+        updatedCount++;
+      }
+    }
+
+    console.log(`Successfully updated ${updatedCount} transaction(s).`);
+
+    return {
+      success: true,
+      message: `Updated ${updatedCount} transaction(s) with policy numbers.`,
+    };
+  } catch (error: any) {
+    console.error("Error syncing policy numbers", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error syncing policy numbers",
     };
   }
 };

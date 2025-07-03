@@ -6,6 +6,7 @@ export interface IEasypayTransaction extends Document {
   uuid: string;
   date: string;
   easypayNumber: string;
+  policyNumber?: string;
   amount: string;
   created_at: string;
 }
@@ -15,6 +16,7 @@ const EasypayTransactionSchema: Schema = new Schema({
   uuid: { type: String, required: true },
   date: { type: String, required: true },
   easypayNumber: { type: String, required: false, default: "--" },
+  policyNumber: { type: String, required: false },
   amount: { type: Number, required: true },
   created_at: {
     type: Date,

@@ -31,7 +31,7 @@ export interface IPolicy extends Document {
   dateCaptured?: Date;
   maturityTerm?: number;
   groupName?: string;
-  easyPayNumber?: string;
+  easypayNumber?: string;
   confidentialNotes?: string;
   overrideNAEDOWithEFT?: boolean;
   employeeID?: string;
@@ -81,7 +81,7 @@ const PolicySchema: Schema = new Schema({
   dateCaptured: { type: Date },
   maturityTerm: { type: Number },
   groupName: { type: String },
-  easyPayNumber: { type: String },
+  easypayNumber: { type: String },
   confidentialNotes: { type: String, default: "" },
   overrideNAEDOWithEFT: { type: Boolean },
   employeeID: { type: String },

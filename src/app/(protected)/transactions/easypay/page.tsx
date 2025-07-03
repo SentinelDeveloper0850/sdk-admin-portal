@@ -51,6 +51,9 @@ export default function EasypayTransactionsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [syncing, setSyncing] = useState<boolean>(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
   const [stats, setStats] = useState<{ count: number }>({ count: 0 });
 
   const [imports, setImports] = useState<IEasypayImportData[]>([]);
@@ -277,6 +280,28 @@ export default function EasypayTransactionsPage() {
     }
   };
 
+  const syncPolicyNumbers = async () => {
+    try {
+      setSyncing(true);
+
+      const response = await fetch("/api/transactions/easypay/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to sync policy numbers");
+        return;
+      }
+      
+    } catch (error) {
+      console.log("🚀 ~ syncPolicyNumbers ~ error:", error)
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   if (error) {
     return (
       <div style={{ padding: "20px", textAlign: "center" }}>
@@ -299,6 +324,9 @@ export default function EasypayTransactionsPage() {
             >
               Import History
             </Button>
+            {/* <Button onClick={syncPolicyNumbers} loading={syncing} disabled={syncing}>
+              {syncing ? "Syncing..." : "Sync Policy Numbers"}
+            </Button> */}
           </Space>,
         ]}
       >
@@ -457,6 +485,10 @@ export default function EasypayTransactionsPage() {
                 title: "File ID",
                 dataIndex: "uuid",
                 key: "uuid",
+              },
+              {
+                title: "Policy Number",
+                dataIndex: "policyNumber",
               },
               {
                 title: "Easypay Number",
