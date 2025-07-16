@@ -4,21 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-
-
 import { Tooltip } from "antd";
-import { Banknote, ChevronLeft, ChevronRight, FileText, LayoutDashboard, ListOrdered, Shield, User, UserCircleIcon, Users } from "lucide-react";
+import {
+  Banknote,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  LayoutDashboard,
+  ListOrdered,
+  Shield,
+  Users,
+} from "lucide-react";
 import { HiOutlineDocumentCurrencyDollar } from "react-icons/hi2";
 
-
-
 import { useAuth } from "@/context/auth-context";
-
 
 const SideNavBar = () => {
   const pathname = usePathname();
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [openMenus, setOpenMenus] = useState<number[]>([]); // track open submenu items
 
   const menuItems = [
     {
@@ -32,6 +37,20 @@ const SideNavBar = () => {
       name: "EFT Transactions",
       icon: <Banknote size={18} />,
       url: "/transactions/eft",
+      children: [
+        {
+          id: "view-eft-transactions",
+          name: "View",
+          icon: <Banknote size={18} />,
+          url: "/transactions/eft",
+        },
+        {
+          id: "import-eft-transactions-via-transaction-history",
+          name: "Importer",
+          icon: <Banknote size={18} />,
+          url: "/transactions/eft-importer",
+        },
+      ],
     },
     {
       id: 3,
@@ -39,7 +58,26 @@ const SideNavBar = () => {
       icon: <Banknote size={18} />,
       url: "/transactions/easypay",
     },
-    { id: 4, name: "Policies", icon: <FileText size={18} />, url: "/policies" },
+    {
+      id: 4,
+      name: "Policies",
+      icon: <FileText size={18} />,
+      url: "/policies",
+      children: [
+        {
+          id: "view-policies",
+          name: "View Policies",
+          icon: <Banknote size={18} />,
+          url: "/policies/view",
+        },
+        {
+          id: "signup-requests",
+          name: "Signup Requests",
+          icon: <Banknote size={18} />,
+          url: "/policies/signup-requests",
+        },
+      ],
+    },
     {
       id: 5,
       name: "Prepaid Societies",
@@ -61,6 +99,12 @@ const SideNavBar = () => {
     { id: 8, name: "Users", icon: <Shield size={18} />, url: "/users" },
   ];
 
+  const toggleSubmenu = (id: number) => {
+    setOpenMenus((prev) =>
+      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
+    );
+  };
+
   return (
     <section
       className={`h-full ${collapsed ? "w-16" : "w-64"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}
@@ -75,14 +119,55 @@ const SideNavBar = () => {
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
+
       <div className="grid gap-0">
         {menuItems.map((item) => {
-          const isActive = pathname.includes(item.url);
+          const isActive = pathname.startsWith(item.url || "");
           const baseClass =
             "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
           const borderClass = isActive
             ? "border-l-4 border-l-primary text-primary"
             : "border-l-4 border-l-transparent";
+
+          if (item.children && item.children.length > 0) {
+            const isOpen = openMenus.includes(item.id);
+
+            return (
+              <div key={item.id}>
+                <div
+                  className={`${baseClass} ${borderClass}`}
+                  onClick={() => toggleSubmenu(item.id)}
+                >
+                  {item.icon}
+                  {!collapsed && (
+                    <p className="text-sm font-normal uppercase tracking-wider">
+                      {item.name}
+                    </p>
+                  )}
+                </div>
+
+                {isOpen &&
+                  !collapsed &&
+                  item.children.map((child) => {
+                    const childActive = pathname.startsWith(child.url || "");
+                    return (
+                      <Link key={child.id} href={child.url!}>
+                        <div
+                          className={`ml-6 flex items-center gap-2 px-4 py-2 text-sm hover:bg-[#ffe082] ${
+                            childActive
+                              ? "font-semibold text-primary"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {child.icon}
+                          <span>{child.name}</span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+              </div>
+            );
+          }
 
           const content = (
             <div className={`${baseClass} ${borderClass}`}>
@@ -95,7 +180,7 @@ const SideNavBar = () => {
             </div>
           );
 
-          return (
+          return item.url ? (
             <Link key={item.id} href={item.url}>
               {collapsed ? (
                 <Tooltip title={item.name} placement="right">
@@ -105,6 +190,8 @@ const SideNavBar = () => {
                 content
               )}
             </Link>
+          ) : (
+            <div key={item.id}>{content}</div>
           );
         })}
       </div>

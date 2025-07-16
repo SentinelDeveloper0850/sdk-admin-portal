@@ -6,6 +6,7 @@ import {
   Alert,
   Button,
   Col,
+  Divider,
   Drawer,
   Form,
   List,
@@ -26,8 +27,9 @@ import { BankStatementExcelImporter } from "@/app/components/import-tools/bank-s
 import { TransactionHistoryCsvImporter } from "@/app/components/import-tools/transaction-history-csv-importer";
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
+import EftPdfImporter from "@/app/components/import-tools/transaction-history-pdf-importer";
 
-interface IEftTransaction {
+export interface IEftTransaction {
   _id: string;
   uuid: string;
   name: string;
@@ -38,7 +40,7 @@ interface IEftTransaction {
   created_at: string;
 }
 
-interface IEftImportData {
+export interface IEftImportData {
   _id: string;
   uuid: string;
   date: string;
@@ -458,6 +460,11 @@ export default function EftTransactionsPage() {
           )} */}
         </Space>
       </Form>
+
+      <Divider/>
+      <EftPdfImporter />
+      <Divider/>
+
       <Table
         rowKey="_id"
         bordered
