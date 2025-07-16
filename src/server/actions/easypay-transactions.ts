@@ -149,7 +149,7 @@ export const syncPolicyNumbers = async () => {
       'easypayNumber policyNumber'
     );
 
-    console.log("🚀 ~ syncPolicyNumbers ~ transaction count:", transactions.length)
+    // console.log("🚀 ~ syncPolicyNumbers ~ transaction count:", transactions.length)
 
     // Step 3: Group transactions by easypayNumber
     const groups: Record<string, string[]> = {}; // easypayNumber → [transaction._id]
@@ -161,7 +161,7 @@ export const syncPolicyNumbers = async () => {
       groups[epNum].push(txn._id.toString());
     }
 
-    console.log("🚀 ~ syncPolicyNumbers ~ groups:", groups)
+    // console.log("🚀 ~ syncPolicyNumbers ~ groups:", groups)
 
     // Step 4: Bulk update transactions per group
     let updatedCount = 0;
@@ -175,12 +175,12 @@ export const syncPolicyNumbers = async () => {
       );
 
       updatedCount += result.modifiedCount;
-      console.log(`✅ Updated ${result.modifiedCount} transaction(s) for easypayNumber ${easypayNumber}`);
+      // console.log(`✅ Updated ${result.modifiedCount} transaction(s) for easypayNumber ${easypayNumber}`);
     }
 
     return {
       success: true,
-      message: `Updated ${updatedCount} transaction(s) with policy numbers.`,
+      message: `Updated ${updatedCount} transactions with policy numbers.`,
     };
   } catch (error: any) {
     console.error("Error syncing policy numbers", error.message);
