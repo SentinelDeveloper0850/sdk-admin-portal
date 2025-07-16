@@ -8,7 +8,7 @@ import {
   EasypayTransactionModel,
   IEasypayTransaction,
 } from "@/app/models/scheme/easypay-transaction.schema";
-import { IPolicy, PolicyModel } from "@/app/models/scheme/policy.schema";
+import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const fetchAll = async () => {
@@ -66,24 +66,45 @@ export const syncPolicyNumbers = async () => {
   try {
     await connectToDatabase();
 
+    // Step 1: Build map of easypayNumber -> policyNumber
     const policies = await PolicyModel.find({}, 'policyNumber easypayNumber');
-    const policyMap = new Map(policies.map((policy: IPolicy) => [policy.easypayNumber, policy.policyNumber]));
+    const policyMap = new Map(policies.map(p => [p.easypayNumber, p.policyNumber]));
 
-    const transactions = await EasypayTransactionModel.find({});
-    
-    let updatedCount = 0;
-    
-    for (const transaction of transactions) {
-      const policyNumber = policyMap.get(transaction.easypayNumber);
-      if (policyNumber && transaction.policyNumber !== policyNumber) {
-        transaction.policyNumber = policyNumber;
-        await transaction.save();
-        console.log(`🚀 ~ syncPolicyNumbers ~ transaction (${transaction.easypayNumber}) updated with policy (${policyNumber})`);
-        updatedCount++;
-      }
+    // Step 2: Find only transactions missing a policyNumber
+    const transactions = await EasypayTransactionModel.find(
+      {
+        $or: [
+          { policyNumber: { $exists: false } },
+          { policyNumber: null },
+          { policyNumber: "" }
+        ]
+      },
+      'easypayNumber'
+    );
+
+    // Step 3: Group transactions by easypayNumber
+    const groups: Record<string, string[]> = {}; // easypayNumber → [transaction._id]
+    for (const txn of transactions) {
+      const epNum = txn.easypayNumber;
+      if (!epNum) continue;
+      if (!groups[epNum]) groups[epNum] = [];
+      groups[epNum].push(txn._id.toString());
     }
 
-    console.log(`Successfully updated ${updatedCount} transaction(s).`);
+    // Step 4: Bulk update transactions per group
+    let updatedCount = 0;
+    for (const [easypayNumber, txnIds] of Object.entries(groups)) {
+      const policyNumber = policyMap.get(easypayNumber);
+      if (!policyNumber) continue;
+
+      const result = await EasypayTransactionModel.updateMany(
+        { _id: { $in: txnIds } },
+        { $set: { policyNumber } }
+      );
+
+      updatedCount += result.modifiedCount;
+      console.log(`✅ Updated ${result.modifiedCount} transaction(s) for easypayNumber ${easypayNumber}`);
+    }
 
     return {
       success: true,
