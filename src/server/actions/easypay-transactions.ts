@@ -15,17 +15,35 @@ export const fetchAll = async () => {
   try {
     await connectToDatabase();
 
-    const numberOfTransactions = await EasypayTransactionModel.countDocuments();
+    // Count all transactions
+    const totalCountPromise = EasypayTransactionModel.countDocuments();
 
-    const transactions = await EasypayTransactionModel.find()
+    // Count only those needing sync
+    const toSyncCountPromise = EasypayTransactionModel.countDocuments({
+      $or: [
+        { policyNumber: { $exists: false } },
+        { policyNumber: null },
+        { policyNumber: "" }
+      ]
+    });
+
+    // Fetch recent 1000 transactions
+    const recentTransactionsPromise = EasypayTransactionModel.find()
       .sort({ date: -1 })
       .limit(1000);
+
+    const [count, toSync, transactions] = await Promise.all([
+      totalCountPromise,
+      toSyncCountPromise,
+      recentTransactionsPromise
+    ]);
 
     return {
       success: true,
       data: {
-        count: numberOfTransactions,
-        transactions: transactions,
+        count,
+        toSync,
+        transactions,
       },
     };
   } catch (error: any) {
