@@ -49,6 +49,7 @@ const SideNavBar = () => {
           name: "Importer",
           icon: <Banknote size={18} />,
           url: "/transactions/eft-importer",
+          adminOnly: true,
         },
       ],
     },
@@ -96,7 +97,13 @@ const SideNavBar = () => {
       icon: <HiOutlineDocumentCurrencyDollar size={18} />,
       url: "/claims",
     },
-    { id: 8, name: "Users", icon: <Shield size={18} />, url: "/users" },
+    {
+      id: 8,
+      name: "Users",
+      icon: <Shield size={18} />,
+      url: "/users",
+      adminOnly: true,
+    },
   ];
 
   const toggleSubmenu = (id: number) => {
@@ -104,6 +111,8 @@ const SideNavBar = () => {
       prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
     );
   };
+
+  const isAdmin = user?.role?.toLowerCase() == "admin";
 
   return (
     <section
@@ -132,6 +141,10 @@ const SideNavBar = () => {
           if (item.children && item.children.length > 0) {
             const isOpen = openMenus.includes(item.id);
 
+            const children = isAdmin
+              ? item.children
+              : item.children.filter((v) => !v.adminOnly);
+
             return (
               <div key={item.id}>
                 <div
@@ -148,7 +161,7 @@ const SideNavBar = () => {
 
                 {isOpen &&
                   !collapsed &&
-                  item.children.map((child) => {
+                  children.map((child) => {
                     const childActive = pathname.startsWith(child.url || "");
                     return (
                       <Link key={child.id} href={child.url!}>
