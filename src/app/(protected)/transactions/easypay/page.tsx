@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { EyeOutlined } from "@ant-design/icons";
 import {
   Button,
   Col,
@@ -20,7 +21,9 @@ import {
 import Search from "antd/es/input/Search";
 import { Dayjs } from "dayjs";
 import { saveAs } from "file-saver";
+import { EyeClosed } from "lucide-react";
 import Papa from "papaparse";
+import sweetAlert from "sweetalert";
 
 import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
 
@@ -28,6 +31,7 @@ import { EasypayCsvImporter } from "@/app/components/import-tools/easypay-csv-im
 import PageHeader from "@/app/components/page-header";
 import { IEasypayImport } from "@/app/interfaces/easypay-import.interface";
 import { useAuth } from "@/context/auth-context";
+import { syncPolicyNumbers } from "@/server/actions/easypay-transactions";
 
 interface IEasypayTransaction {
   _id: string;
@@ -54,10 +58,14 @@ export default function EasypayTransactionsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [showToSync, setShowToSync] = useState<boolean>(false);
   const [syncing, setSyncing] = useState<boolean>(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  const [stats, setStats] = useState<{ count: number }>({ count: 0 });
+  const [stats, setStats] = useState<{ count: number; toSync: number }>({
+    count: 0,
+    toSync: 0,
+  });
 
   const [imports, setImports] = useState<IEasypayImportData[]>([]);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
@@ -80,10 +88,33 @@ export default function EasypayTransactionsPage() {
 
       const data = await response.json();
       setTransactions(data.transactions);
-      setStats({ count: data.count });
+      setStats({ count: data.count, toSync: data.toSync });
+      setShowToSync(false);
     } catch (err) {
       console.log(err);
       setError("An error occurred while fetching transactions.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTransactionsToSync = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/transactions/easypay/sync");
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to fetch transactions to sync");
+        return;
+      }
+
+      const data = await response.json();
+      setTransactions(data.transactions);
+      setStats({ count: data.count, toSync: data.toSync });
+      setShowToSync(true);
+    } catch (err) {
+      console.log(err);
+      setError("An error occurred while fetching transactions to sync.");
     } finally {
       setLoading(false);
     }
@@ -323,19 +354,25 @@ export default function EasypayTransactionsPage() {
     }
   };
 
-  const syncPolicyNumbers = async () => {
+  const sync = async () => {
     try {
       setSyncing(true);
 
-      const response = await fetch("/api/transactions/easypay/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const result = await syncPolicyNumbers();
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to sync policy numbers");
-        return;
+      if (result.success) {
+        sweetAlert({
+          title: result.message,
+          icon: "success",
+          timer: 2000,
+        });
+        await fetchTransactions();
+      } else {
+        sweetAlert({
+          title: result.message,
+          icon: "error",
+          timer: 2000,
+        });
       }
     } catch (error) {
       console.log("🚀 ~ syncPolicyNumbers ~ error:", error);
@@ -380,6 +417,17 @@ export default function EasypayTransactionsPage() {
         title="Easypay Transactions"
         actions={[
           <Space>
+            {stats.toSync > 0 && (
+              <Button
+                loading={syncing}
+                disabled={syncing}
+                onClick={async () => {
+                  await sync();
+                }}
+              >
+                {syncing ? "Syncing..." : "Sync Policy Numbers"}
+              </Button>
+            )}
             <Button
               onClick={async () => {
                 await fetchImportHistory();
@@ -403,10 +451,22 @@ export default function EasypayTransactionsPage() {
             style={{ display: "flex", justifyContent: "flex-start" }}
           >
             <Space size={32}>
-              <Statistic title="Total Transactions" value={stats.count} />
+              <Statistic title="Total" value={stats.count} />
+              <Statistic title="Selected" value={transactions?.length || 0} />
               <Statistic
-                title="Selected Transactions"
-                value={transactions?.length || 0}
+                title={
+                  <Space>
+                    <span>To Sync</span>
+                    {!showToSync ? (
+                      <EyeOutlined
+                        onClick={() => !loading && fetchTransactionsToSync()}
+                      />
+                    ) : (
+                      <EyeClosed width="1em" height="1em" />
+                    )}
+                  </Space>
+                }
+                value={stats.toSync}
               />
             </Space>
           </Col>

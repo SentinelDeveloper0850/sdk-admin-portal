@@ -55,6 +55,55 @@ export const fetchAll = async () => {
   }
 };
 
+export const fetchToSync = async () => {
+  try {
+    await connectToDatabase();
+
+    // Count all transactions
+    const totalCountPromise = EasypayTransactionModel.countDocuments();
+
+    // Count only those needing sync
+    const toSyncCountPromise = EasypayTransactionModel.countDocuments({
+      $or: [
+        { policyNumber: { $exists: false } },
+        { policyNumber: null },
+        { policyNumber: "" }
+      ]
+    });
+
+    // Fetch recent 1000 transactions
+    const recentTransactionsPromise = EasypayTransactionModel.find({
+      $or: [
+        { policyNumber: { $exists: false } },
+        { policyNumber: null },
+        { policyNumber: "" }
+      ]
+    })
+      .sort({ date: -1 });
+
+    const [count, toSync, transactions] = await Promise.all([
+      totalCountPromise,
+      toSyncCountPromise,
+      recentTransactionsPromise
+    ]);
+
+    return {
+      success: true,
+      data: {
+        count,
+        toSync,
+        transactions,
+      },
+    };
+  } catch (error: any) {
+    console.error("Error fetching easypay transactions:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error fetching easypay transactions",
+    };
+  }
+};
+
 export const searchTransactions = async (searchText: string) => {
   try {
     await connectToDatabase();
@@ -97,17 +146,22 @@ export const syncPolicyNumbers = async () => {
           { policyNumber: "" }
         ]
       },
-      'easypayNumber'
+      'easypayNumber policyNumber'
     );
+
+    console.log("🚀 ~ syncPolicyNumbers ~ transaction count:", transactions.length)
 
     // Step 3: Group transactions by easypayNumber
     const groups: Record<string, string[]> = {}; // easypayNumber → [transaction._id]
+
     for (const txn of transactions) {
       const epNum = txn.easypayNumber;
       if (!epNum) continue;
       if (!groups[epNum]) groups[epNum] = [];
       groups[epNum].push(txn._id.toString());
     }
+
+    console.log("🚀 ~ syncPolicyNumbers ~ groups:", groups)
 
     // Step 4: Bulk update transactions per group
     let updatedCount = 0;
