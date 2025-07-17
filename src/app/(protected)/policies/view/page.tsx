@@ -16,7 +16,6 @@ import {
 import Search from "antd/es/input/Search";
 
 import PageHeader from "@/app/components/page-header";
-import { useAuth } from "@/context/auth-context";
 
 interface IPolicy {
   _id: string;
@@ -37,8 +36,6 @@ export default function PoliciesPage() {
   const [error, setError] = useState<string | boolean>(false);
   const [stats, setStats] = useState<{ count: number }>({ count: 0 });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-
-  const { user } = useAuth();
 
   const fetchPolicies = async () => {
     try {

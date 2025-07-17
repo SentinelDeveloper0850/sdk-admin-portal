@@ -29,9 +29,12 @@ import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
 
 import { EasypayCsvImporter } from "@/app/components/import-tools/easypay-csv-importer";
 import PageHeader from "@/app/components/page-header";
+import { useRole } from "@/app/hooks/use-role";
 import { IEasypayImport } from "@/app/interfaces/easypay-import.interface";
 import { useAuth } from "@/context/auth-context";
 import { syncPolicyNumbers } from "@/server/actions/easypay-transactions";
+
+import { ERoles } from "../../../../../types/roles.enum";
 
 interface IEasypayTransaction {
   _id: string;
@@ -75,6 +78,8 @@ export default function EasypayTransactionsPage() {
   const [amount, setAmount] = useState<number | string>("");
 
   const { user } = useAuth();
+
+  const { hasRole } = useRole();
 
   const fetchTransactions = async () => {
     try {
@@ -417,17 +422,6 @@ export default function EasypayTransactionsPage() {
         title="Easypay Transactions"
         actions={[
           <Space>
-            {stats.toSync > 0 && (
-              <Button
-                loading={syncing}
-                disabled={syncing}
-                onClick={async () => {
-                  await sync();
-                }}
-              >
-                {syncing ? "Syncing..." : "Sync Policy Numbers"}
-              </Button>
-            )}
             <Button
               onClick={async () => {
                 await fetchImportHistory();
@@ -436,12 +430,24 @@ export default function EasypayTransactionsPage() {
             >
               Import History
             </Button>
-            <Button onClick={exportToCSV} disabled={!transactions.length}>
-              Export CSV
-            </Button>
-            {/* <Button onClick={syncPolicyNumbers} loading={syncing} disabled={syncing}>
-              {syncing ? "Syncing..." : "Sync Policy Numbers"}
-            </Button> */}
+
+            {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) &&
+              stats.toSync > 0 && (
+                <Button
+                  loading={syncing}
+                  disabled={syncing}
+                  onClick={async () => {
+                    await sync();
+                  }}
+                >
+                  {syncing ? "Syncing..." : "Sync Policy Numbers"}
+                </Button>
+              )}
+            {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
+              <Button onClick={exportToCSV} disabled={!transactions.length}>
+                Export CSV
+              </Button>
+            )}
           </Space>,
         ]}
       >
@@ -453,21 +459,23 @@ export default function EasypayTransactionsPage() {
             <Space size={32}>
               <Statistic title="Total" value={stats.count} />
               <Statistic title="Selected" value={transactions?.length || 0} />
-              <Statistic
-                title={
-                  <Space>
-                    <span>To Sync</span>
-                    {!showToSync ? (
-                      <EyeOutlined
-                        onClick={() => !loading && fetchTransactionsToSync()}
-                      />
-                    ) : (
-                      <EyeClosed width="1em" height="1em" />
-                    )}
-                  </Space>
-                }
-                value={stats.toSync}
-              />
+              {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
+                <Statistic
+                  title={
+                    <Space>
+                      <span>To Sync</span>
+                      {!showToSync ? (
+                        <EyeOutlined
+                          onClick={() => !loading && fetchTransactionsToSync()}
+                        />
+                      ) : (
+                        <EyeClosed width="1em" height="1em" />
+                      )}
+                    </Space>
+                  }
+                  value={stats.toSync}
+                />
+              )}
             </Space>
           </Col>
           <Col

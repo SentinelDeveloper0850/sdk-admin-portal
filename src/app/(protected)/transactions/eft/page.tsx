@@ -25,9 +25,12 @@ import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
 
 import { BankStatementExcelImporter } from "@/app/components/import-tools/bank-statement-xlsx-importer";
 import { TransactionHistoryCsvImporter } from "@/app/components/import-tools/transaction-history-csv-importer";
-import PageHeader from "@/app/components/page-header";
-import { useAuth } from "@/context/auth-context";
 import EftPdfImporter from "@/app/components/import-tools/transaction-history-pdf-importer";
+import PageHeader from "@/app/components/page-header";
+import { useRole } from "@/app/hooks/use-role";
+import { useAuth } from "@/context/auth-context";
+
+import { ERoles } from "../../../../../types/roles.enum";
 
 export interface IEftTransaction {
   _id: string;
@@ -64,6 +67,8 @@ export default function EftTransactionsPage() {
   const [amount, setAmount] = useState<number | string>("");
 
   const { user } = useAuth();
+
+  const { hasRole } = useRole();
 
   const fetchTransactions = async () => {
     try {
@@ -334,7 +339,7 @@ export default function EftTransactionsPage() {
             span={12}
             style={{ display: "flex", justifyContent: "flex-end" }}
           >
-            {user?.role == "admin" && (
+            {hasRole(ERoles.Admin) && (
               <Space>
                 <BankStatementExcelImporter />
                 <TransactionHistoryCsvImporter
@@ -461,9 +466,13 @@ export default function EftTransactionsPage() {
         </Space>
       </Form>
 
-      <Divider/>
-      <EftPdfImporter />
-      <Divider/>
+      {hasRole(ERoles.Admin) && (
+        <>
+          <Divider />
+          <EftPdfImporter />
+          <Divider />
+        </>
+      )}
 
       <Table
         rowKey="_id"
