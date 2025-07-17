@@ -6,7 +6,6 @@ import {
   Alert,
   Button,
   Col,
-  Divider,
   Drawer,
   Form,
   List,
@@ -25,7 +24,6 @@ import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
 
 import { BankStatementExcelImporter } from "@/app/components/import-tools/bank-statement-xlsx-importer";
 import { TransactionHistoryCsvImporter } from "@/app/components/import-tools/transaction-history-csv-importer";
-import EftPdfImporter from "@/app/components/import-tools/transaction-history-pdf-importer";
 import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
 import { useAuth } from "@/context/auth-context";
@@ -465,14 +463,6 @@ export default function EftTransactionsPage() {
           )} */}
         </Space>
       </Form>
-
-      {hasRole(ERoles.Admin) && (
-        <>
-          <Divider />
-          <EftPdfImporter />
-          <Divider />
-        </>
-      )}
 
       <Table
         rowKey="_id"
