@@ -17,6 +17,7 @@ export const roleLabels: Record<string, string> = {
   // Sales & Client Relations
   society_consultant: "Society Consultant",
   scheme_consultant: "Scheme Consultant",
+  scheme_consultant_online: "Scheme Consultant (Online)",
 
   // Fleet & Logistics
   driver: "Driver",
