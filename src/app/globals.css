@@ -29,6 +29,13 @@ a:hover {
   border-color: #333 !important;
 }
 
+.dark
+  .ant-table-wrapper
+  .ant-table-thead
+  th.ant-table-column-has-sorters:hover {
+  background: #2a2a2a;
+}
+
 .dark .ant-table-tbody > tr > td {
   background-color: #212121;
   color: white;
@@ -447,8 +454,12 @@ a:hover {
 }
 
 .dark .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
-.dark .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
-.dark .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+.dark
+  .ant-picker-cell-in-view.ant-picker-cell-range-start
+  .ant-picker-cell-inner,
+.dark
+  .ant-picker-cell-in-view.ant-picker-cell-range-end
+  .ant-picker-cell-inner {
   background-color: #ffac00;
   color: black;
 }

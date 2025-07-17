@@ -12,6 +12,7 @@ export interface IUser extends Document {
   role?: string; // legacy (keep for now)
   roles?: string[]; // new — primary source of truth moving forward
   status: string;
+  mustChangePassword?: boolean;
   avatarUrl?: string;
   employeeId?: string; // Optional FK to Employee
   employee?: IEmployee;
@@ -50,6 +51,7 @@ const userSchema: Schema<IUser> = new Schema(
     role: { type: String, default: "member", required: false },
     roles: { type: Array<String>, default: ["member"], required: false },
     status: { type: String, default: "Inactive" },
+    mustChangePassword: { type: Boolean, default: false, required: false },
     avatarUrl: { type: String, default: "" },
     preferences: { type: preferencesSchema, default: () => ({}) },
     employee: {

@@ -443,7 +443,10 @@ export default function DailyActivityPage() {
         footer={
           <Space>
             <Button color="primary" onPress={() => form.submit()}>
-              Submit
+              Save Draft
+            </Button>
+            <Button color="primary" onPress={() => form.submit()}>
+              Save & Submit
             </Button>
             <Button
               color="danger"

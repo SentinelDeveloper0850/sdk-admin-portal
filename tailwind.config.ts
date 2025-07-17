@@ -25,9 +25,12 @@ export default {
             background: "#FFFFFF", // or DEFAULT
             foreground: "#11181C", // or 50 to 900 DEFAULT
             primary: {
-              foreground: "#FFFFFF",
+              foreground: "#11181C",
               DEFAULT: "#ffac00",
             },
+            danger: {
+              DEFAULT: "#d52625"
+            }
           }
         },
         dark: {
@@ -38,6 +41,9 @@ export default {
               foreground: "#11181C",
               DEFAULT: "#ffac00",
             },
+            danger: {
+              DEFAULT: "#d52625"
+            }
           }
         },
       }
