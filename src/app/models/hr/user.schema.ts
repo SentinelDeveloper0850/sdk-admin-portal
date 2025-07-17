@@ -22,6 +22,8 @@ export interface IUser extends Document {
   };
   createdAt?: Date;
   updatedAt?: Date;
+  deletedAt?: Date;
+  deletedBy?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -51,6 +53,8 @@ const userSchema: Schema<IUser> = new Schema(
     role: { type: String, default: "member", required: false },
     roles: { type: Array<String>, default: ["member"], required: false },
     status: { type: String, default: "Inactive" },
+    deletedAt: { type: Date, required: false },
+    deletedBy: { type: String, required: false },
     mustChangePassword: { type: Boolean, default: false, required: false },
     avatarUrl: { type: String, default: "" },
     preferences: { type: preferencesSchema, default: () => ({}) },

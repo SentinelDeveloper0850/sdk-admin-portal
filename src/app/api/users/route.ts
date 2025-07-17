@@ -3,7 +3,7 @@ import { generateTemporaryPassword } from "@/utils/generators/password";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const users = await UsersModel.find().sort({ createdAt: -1 });
+  const users = await UsersModel.find({ deletedAt: null }).sort({ createdAt: -1 });
 
   if (!users) {
     return NextResponse.json({ message: "Users not found" }, { status: 404 });
@@ -65,6 +65,21 @@ export async function POST(request: Request) {
     // Check if the user already exists
     const existingUser = await UsersModel.findOne({ email });
     if (existingUser) {
+      if (existingUser.deletedAt) {
+        // Reactivate the user instead of creating a new one
+        existingUser.deletedAt = undefined;
+        existingUser.deletedBy = undefined;
+        existingUser.status = "Reinvited";
+        existingUser.mustChangePassword = true;
+        existingUser.password = generateTemporaryPassword();
+        await existingUser.save();
+
+        return NextResponse.json(
+          { message: "User reactivated successfully", user: existingUser },
+          { status: 200 }
+        );
+      }
+
       return NextResponse.json(
         { message: "User already exists" },
         { status: 400 }
@@ -98,5 +113,30 @@ export async function POST(request: Request) {
       { message: "Error creating user" },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { id, deletedBy } = await request.json();
+
+    if (!id) {
+      return NextResponse.json({ message: "ID is required" }, { status: 400 });
+    }
+
+    const user = await UsersModel.findByIdAndUpdate(
+      id,
+      { deletedAt: new Date(), deletedBy: deletedBy || null },
+      { new: true }
+    );
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "User soft deleted", user }, { status: 200 });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
