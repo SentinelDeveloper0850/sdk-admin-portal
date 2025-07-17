@@ -31,11 +31,14 @@ import sweetAlert from "sweetalert";
 
 import { capitalizeFirstLetter, getDate, getTime } from "@/utils/formatters";
 import { roleLabels } from "@/utils/helpers/roles";
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
 import CoreRoleSelect from "@/app/components/roles/core-role-select";
 import RoleSelect from "@/app/components/roles/role-select";
 import { useAuth } from "@/context/auth-context";
+
+import { ERoles } from "../../../../types/roles.enum";
 
 const UsersPage = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -646,4 +649,4 @@ const UsersPage = () => {
   );
 };
 
-export default UsersPage;
+export default withRoleGuard(UsersPage, [ERoles.Admin, ERoles.HRManager]);
