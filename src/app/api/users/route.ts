@@ -1,8 +1,10 @@
 import UsersModel from "@/app/models/hr/user.schema";
+import { connectToDatabase } from "@/lib/db";
 import { generateTemporaryPassword } from "@/utils/generators/password";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
+  await connectToDatabase();
   const users = await UsersModel.find({ deletedAt: null }).sort({ createdAt: -1 });
 
   if (!users) {
@@ -14,7 +16,8 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    // Parse the request body
+    await connectToDatabase();
+
     const body = await request.json();
 
     const { id, ...rest } = body;
@@ -26,7 +29,6 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Update user by ID
     const updatedUser = await UsersModel.findByIdAndUpdate(id, rest, {
       new: true,
     });
@@ -38,7 +40,6 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Return the updated user
     return NextResponse.json({ user: updatedUser }, { status: 200 });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -51,7 +52,8 @@ export async function PUT(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    // Parse the request body
+    await connectToDatabase();
+
     const body = await request.json();
     const { name, email, phone, role, roles } = body;
 
@@ -118,6 +120,8 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    await connectToDatabase();
+
     const { id, deletedBy } = await request.json();
 
     if (!id) {

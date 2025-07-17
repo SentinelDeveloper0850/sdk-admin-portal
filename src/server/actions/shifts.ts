@@ -2,14 +2,6 @@ import { ShiftModel as Model } from "@/app/models/hr/shift.schema";
 import { IUser } from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
-interface CalendarShift {
-  id: string;
-  weekendStart: string;
-  saturday: { _id: string; name: string }[];
-  sunday: { _id: string; name: string }[];
-  groupNote?: string;
-}
-
 export const getAllShiftsForCalendar = async () => {
   try {
     await connectToDatabase();

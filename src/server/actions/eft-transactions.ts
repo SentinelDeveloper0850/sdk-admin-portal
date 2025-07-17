@@ -170,11 +170,6 @@ export const importFromBankStatement = async (payload: any) => {
       (item: IEftImportData) => item.uuid === importData.uuid
     );
 
-    console.log(
-      "🚀 ~ importFromBankStatement ~ existingImportData:",
-      existingImportData
-    );
-
     if (!existingImportData) {
       try {
         for (let index = 0; index < transactions.length; index++) {
@@ -246,11 +241,6 @@ export const importFromBankStatement = async (payload: any) => {
         console.error(exception);
       }
 
-      console.log(
-        "🚀 ~ importFromBankStatement ~ _transactions:",
-        _transactions.length
-      );
-
       if (_transactions.length > 0) {
         const validTransactions = [];
         const invalidTransactions = [];
@@ -307,10 +297,6 @@ export const importFromTransactionHistory = async (payload: any) => {
 
   try {
     const importDataList: IEftImportData[] = await IEftImportDataModel.find();
-    console.log(
-      "🚀 ~ importFromTransactionHistory ~ importDataList:",
-      importDataList
-    );
 
     const transactions = payload.transactions.map((item: any) => ({
       ...item,

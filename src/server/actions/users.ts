@@ -16,10 +16,6 @@ export async function updateUserProfile(
   userId: string,
   payload: UpdateProfilePayload
 ) {
-  console.log(
-    "🚀 ~ server-action:users ~ updateUserProfile ~ payload:",
-    payload
-  );
   try {
     await connectToDatabase();
 

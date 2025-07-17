@@ -7,7 +7,6 @@ export const runtime = "nodejs"; // Use Node.js runtime instead of Edge
 
 export async function POST(request: Request) {
   try {
-    // Ensure the database connection is established
     await connectToDatabase();
 
     const body = await request.json();

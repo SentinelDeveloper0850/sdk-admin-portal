@@ -105,6 +105,8 @@ export const importSociety = async (data: any) => {
 };
 
 export async function importSocietiesFromCSV(filePath: string) {
+  await connectToDatabase();
+
   const fileContent = fs.readFileSync(filePath, "utf8");
 
   const { data, errors } = Papa.parse(fileContent, {

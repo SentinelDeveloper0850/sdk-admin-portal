@@ -31,11 +31,11 @@ export async function GET(request: Request) {
           ...report.toObject(),
           author: user
             ? {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                avatarUrl: user.avatarUrl,
-              }
+              _id: user._id,
+              name: user.name,
+              email: user.email,
+              avatarUrl: user.avatarUrl,
+            }
             : null,
         };
       })
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await connectToDatabase();
-    // Parse the request body
+
     const body = await request.json();
 
     const report = new DailyActivityModel(body);

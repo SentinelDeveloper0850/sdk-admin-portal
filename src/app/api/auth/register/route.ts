@@ -5,7 +5,6 @@ import { connectToDatabase } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
-    // Ensure database connection
     await connectToDatabase();
 
     // Parse the request body

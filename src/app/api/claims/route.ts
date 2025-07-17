@@ -4,8 +4,6 @@ import { ClaimModel } from "@/app/models/scheme/claim.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
-// your JWT cookie parser
-
 export async function POST(req: NextRequest) {
   await connectToDatabase();
   const user = await getUserFromRequest(req);

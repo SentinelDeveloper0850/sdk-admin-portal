@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
 import UsersModel from "@/app/models/hr/user.schema";
+import { connectToDatabase } from "@/lib/db";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined in the environment variables.");
@@ -21,6 +22,8 @@ export async function GET(request: Request) {
   try {
     // Verify the token
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+
+    await connectToDatabase();
 
     // Fetch user details from the database
     const user = await UsersModel.findById(decoded.userId).select("-password");
