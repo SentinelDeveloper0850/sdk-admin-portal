@@ -12,8 +12,8 @@ export async function GET(request: Request) {
 
   try {
     const reports = userId
-      ? await DailyActivityModel.find({ userId })
-      : await DailyActivityModel.find();
+      ? await DailyActivityModel.find({ userId }).sort({ createdAt: -1 })
+      : await DailyActivityModel.find().sort({ createdAt: -1 });
 
     if (!reports || reports.length === 0) {
       return NextResponse.json(
