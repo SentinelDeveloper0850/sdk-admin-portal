@@ -17,11 +17,11 @@ import {
 } from "lucide-react";
 import { HiOutlineDocumentCurrencyDollar } from "react-icons/hi2";
 
-import { useAuth } from "@/context/auth-context";
+import { ERoles } from "../../../types/roles.enum";
+import { useRole } from "../hooks/use-role";
 
 const SideNavBar = () => {
   const pathname = usePathname();
-  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState<number[]>([]); // track open submenu items
 
@@ -49,7 +49,7 @@ const SideNavBar = () => {
           name: "Importer",
           icon: <Banknote size={18} />,
           url: "/transactions/eft-importer",
-          adminOnly: true,
+          allowedRoles: [ERoles.Admin],
         },
       ],
     },
@@ -84,6 +84,7 @@ const SideNavBar = () => {
       name: "Prepaid Societies",
       icon: <Users size={18} />,
       url: "/prepaid-societies",
+      allowedRoles: [ERoles.Admin, ERoles.SocietyConsultant],
     },
     {
       id: 6,
@@ -102,7 +103,7 @@ const SideNavBar = () => {
       name: "Users",
       icon: <Shield size={18} />,
       url: "/users",
-      adminOnly: true,
+      allowedRoles: [ERoles.Admin, ERoles.HRManager],
     },
   ];
 
@@ -112,7 +113,25 @@ const SideNavBar = () => {
     );
   };
 
-  const isAdmin = user?.role?.toLowerCase() == "admin";
+  const { hasRole } = useRole();
+
+  const filteredMenuItems = menuItems
+    .map((item) => {
+      // Filter children if any
+      const children = item.children?.filter(
+        (child) => !child.allowedRoles || hasRole(child.allowedRoles)
+      );
+
+      return {
+        ...item,
+        children,
+      };
+    })
+    .filter(
+      (item) =>
+        (!item.allowedRoles || hasRole(item.allowedRoles)) &&
+        (item.children === undefined || item.children.length > 0)
+    );
 
   return (
     <section
@@ -130,7 +149,7 @@ const SideNavBar = () => {
       </div>
 
       <div className="grid gap-0">
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const isActive = pathname.startsWith(item.url || "");
           const baseClass =
             "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
@@ -140,10 +159,6 @@ const SideNavBar = () => {
 
           if (item.children && item.children.length > 0) {
             const isOpen = openMenus.includes(item.id);
-
-            const children = isAdmin
-              ? item.children
-              : item.children.filter((v) => !v.adminOnly);
 
             return (
               <div key={item.id}>
@@ -161,7 +176,7 @@ const SideNavBar = () => {
 
                 {isOpen &&
                   !collapsed &&
-                  children.map((child) => {
+                  item.children.map((child) => {
                     const childActive = pathname.startsWith(child.url || "");
                     return (
                       <Link key={child.id} href={child.url!}>
