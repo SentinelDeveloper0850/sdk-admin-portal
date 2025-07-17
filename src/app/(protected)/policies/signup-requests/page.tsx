@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 
 import { Col, Row, Space, Spin, Statistic, Table } from "antd";
 
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
 import PageHeader from "@/app/components/page-header";
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
 import { getPolicySignups } from "@/server/actions/policy-signup";
 
-export default function SignupRequestsPage() {
+import { ERoles } from "../../../../../types/roles.enum";
+
+const SignupRequestsPage = () => {
   const [requests, setRequests] = useState<IPolicySignUp[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | boolean>(false);
@@ -165,4 +169,9 @@ export default function SignupRequestsPage() {
       />
     </div>
   );
-}
+};
+
+export default withRoleGuard(SignupRequestsPage, [
+  ERoles.Admin,
+  ERoles.SchemeConsultantOnline,
+]);

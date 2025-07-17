@@ -17,6 +17,7 @@ export enum ERoles {
   // Sales & Client Relations
   SocietyConsultant = "society_consultant",
   SchemeConsultant = "scheme_consultant",
+  SchemeConsultantOnline = "scheme_consultant_online",
 
   // Fleet & Logistics
   Driver = "driver",

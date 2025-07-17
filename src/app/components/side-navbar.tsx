@@ -76,6 +76,7 @@ const SideNavBar = () => {
           name: "Signup Requests",
           icon: <Banknote size={18} />,
           url: "/policies/signup-requests",
+          allowedRoles: [ERoles.Admin, ERoles.SchemeConsultantOnline],
         },
       ],
     },
