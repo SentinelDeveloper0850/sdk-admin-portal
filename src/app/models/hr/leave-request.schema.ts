@@ -1,8 +1,8 @@
-import { model, Schema, Types } from 'mongoose';
+import mongoose, { Model, Schema, Types } from 'mongoose';
 import { ELeaveRequestStatus, ELeaveType } from '../../enums/hr/leave.enum';
 
-interface LeaveRequest {
-  _id: string;
+export interface ILeaveRequest {
+  _id?: string;
   employeeId: string;
   type: ELeaveType;
   reason: string;
@@ -47,4 +47,7 @@ const LeaveRequestSchema = new Schema(
   { timestamps: true }
 );
 
-export const LeaveRequest = model('LeaveRequest', LeaveRequestSchema);
+export const LeaveRequest: Model<ILeaveRequest> = mongoose.models.Shift || mongoose.model<ILeaveRequest>(
+  "leave-request",
+  LeaveRequestSchema
+);
