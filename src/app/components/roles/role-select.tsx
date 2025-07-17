@@ -18,23 +18,6 @@ import { useTheme } from "next-themes";
 const { OptGroup, Option } = Select;
 
 const groupedRoles = [
-  // {
-  //   category: "Core Roles",
-  //   roles: [
-  //     {
-  //       key: "admin",
-  //       label: "Admin",
-  //       description: "Full system access and configuration",
-  //       icon: <ShieldCheck size={16} />,
-  //     },
-  //     {
-  //       key: "member",
-  //       label: "Member",
-  //       description: "Standard access with limited permissions",
-  //       icon: <User size={16} />,
-  //     },
-  //   ],
-  // },
   {
     category: "Claims & Compliance",
     roles: [
@@ -98,7 +81,15 @@ const groupedRoles = [
       {
         key: "scheme_consultant",
         label: "Scheme Consultant",
-        description: "Manages external burial schemes",
+        description:
+          "Handles walk-in client signups and in-person scheme consultations",
+        icon: <Users size={16} />,
+      },
+      {
+        key: "scheme_consultant_online",
+        label: "Scheme Consultant (Online)",
+        description:
+          "Manages online policy signups and client support from the website",
         icon: <Users size={16} />,
       },
     ],
