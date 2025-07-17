@@ -46,6 +46,9 @@ const UsersPage = () => {
   const [createDrawerOpen, setCreateDrawerOpen] = useState<boolean>(false);
   const [viewDrawerOpen, setViewDrawerOpen] = useState<boolean>(false);
 
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+
   const [form] = Form.useForm();
   const { user } = useAuth();
 
@@ -173,6 +176,57 @@ const UsersPage = () => {
       console.error(error);
       sweetAlert({
         title: "Failed to create new user!",
+        text: error?.response?.data?.message,
+        icon: "error",
+      });
+    }
+  };
+
+  const handleUpdate = async (values: any) => {
+    try {
+      const { firstNames, lastname, ...rest } = values;
+      const name = `${firstNames} ${lastname}`;
+
+      const response = await axios.put(
+        "/api/users",
+        JSON.stringify({
+          ...rest,
+          id: editingUser._id,
+          name,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status !== 200) {
+        sweetAlert({
+          title: "Failed to update user!",
+          text: response.data.message,
+          icon: "error",
+        });
+        return;
+      }
+
+      sweetAlert({
+        title: "User updated successfully!",
+        icon: "success",
+        timer: 2000,
+      });
+
+      setUsers((prev) =>
+        prev.map((u) => (u._id === editingUser._id ? response.data.user : u))
+      );
+
+      form.resetFields();
+      setEditDrawerOpen(false);
+      setEditingUser(null);
+    } catch (error: any) {
+      console.error(error);
+      sweetAlert({
+        title: "Failed to update user!",
         text: error?.response?.data?.message,
         icon: "error",
       });
@@ -309,6 +363,28 @@ const UsersPage = () => {
               <Dropdown
                 overlay={
                   <Menu>
+                    <Menu.Item
+                      key="edit"
+                      icon={<UserOutlined />}
+                      onClick={() => {
+                        form.setFieldsValue({
+                          firstNames: record.name
+                            .split(" ")
+                            .slice(0, -1)
+                            .join(" "),
+                          lastname: record.name.split(" ").slice(-1).join(" "),
+                          email: record.email,
+                          phone: record.phone,
+                          role: record.role,
+                          roles: record.roles,
+                        });
+                        setEditingUser(record);
+                        setEditDrawerOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Menu.Item>
+
                     {record.status === "Active" && (
                       <Menu.Item
                         key="deactivate"
@@ -318,6 +394,7 @@ const UsersPage = () => {
                         Deactivate
                       </Menu.Item>
                     )}
+
                     <Menu.Item
                       key="delete"
                       icon={<DeleteOutlined />}
@@ -468,6 +545,91 @@ const UsersPage = () => {
                     message: "Required",
                   },
                 ]}
+              >
+                <CoreRoleSelect />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Additional Roles" name="roles">
+                <RoleSelect />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Drawer>
+
+      <Drawer
+        title="Update User"
+        placement="right"
+        closable={false}
+        onClose={() => {
+          setEditDrawerOpen(false);
+          setEditingUser(null);
+          form.resetFields();
+        }}
+        open={editDrawerOpen}
+        width="50%"
+        footer={
+          <Space>
+            <Button
+              color="danger"
+              size="md"
+              onClick={() => setEditDrawerOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button color="primary" size="md" onClick={() => form.submit()}>
+              Save Changes
+            </Button>
+          </Space>
+        }
+      >
+        <Form form={form} layout="vertical" onFinish={handleUpdate}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="First Names"
+                name="firstNames"
+                rules={[{ required: true, message: "Required" }]}
+              >
+                <Input suffix={<UserOutlined />} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Surname"
+                name="lastname"
+                rules={[{ required: true, message: "Required" }]}
+              >
+                <Input suffix={<UserOutlined />} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Email Address"
+                name="email"
+                rules={[
+                  { required: true, message: "Required" },
+                  { type: "email" },
+                ]}
+              >
+                <Input suffix={<MailOutlined />} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Phone Number"
+                name="phone"
+                rules={[{ required: true, message: "Required" }, { len: 10 }]}
+              >
+                <Input suffix={<PhoneOutlined />} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Primary Role"
+                name="role"
+                rules={[{ required: true, message: "Required" }]}
               >
                 <CoreRoleSelect />
               </Form.Item>
