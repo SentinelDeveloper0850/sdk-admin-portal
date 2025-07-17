@@ -4,21 +4,15 @@
 import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-
-
 import axios from "axios";
-
-
 
 import type { IUser } from "@/app/models/hr/user.schema";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -31,6 +25,7 @@ interface AuthContextType {
   user: IUser | null;
   setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
   userId?: string;
+  loading: boolean;
 }
 
 // Create the AuthContext
@@ -86,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, userId: user?._id?.toString() }}
+      value={{ user, loading, setUser, userId: user?._id?.toString() }}
     >
       {children}
     </AuthContext.Provider>

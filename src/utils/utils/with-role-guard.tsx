@@ -1,4 +1,5 @@
-// utils/with-role-guard.tsx
+"use client";
+
 import { Result } from "antd";
 
 import { useRole } from "@/app/hooks/use-role";

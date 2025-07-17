@@ -1,4 +1,8 @@
+"use client";
+
 import React from "react";
+
+import { withAuth } from "@/utils/utils/with-auth";
 
 import AppBarOnline from "../components/app-bar-online";
 import SideNavBar from "../components/side-navbar";
@@ -19,4 +23,4 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default ProtectedLayout;
+export default withAuth(ProtectedLayout);
