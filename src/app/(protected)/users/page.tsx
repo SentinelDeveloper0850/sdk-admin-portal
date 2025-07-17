@@ -146,6 +146,52 @@ const UsersPage = () => {
     }
   };
 
+  const deleteUser = async (id: string) => {
+    try {
+      const confirmed = await sweetAlert({
+        title: "Are you sure?",
+        text: "This will remove the user from the system.",
+        icon: "warning",
+        buttons: ["Cancel", "Yes, delete it!"],
+        dangerMode: true,
+      });
+
+      if (!confirmed) return;
+
+      const response = await fetch(`/api/users`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        sweetAlert({
+          title: "Failed to delete user!",
+          text: errorData.message,
+          icon: "error",
+        });
+        return;
+      }
+
+      sweetAlert({
+        title: "User deleted",
+        icon: "success",
+        timer: 2000,
+      });
+
+      // Refetch users after deletion
+      fetchUsers();
+    } catch (err) {
+      console.error("Delete error:", err);
+      sweetAlert({
+        title: "Error deleting user",
+        text: "Please try again later.",
+        icon: "error",
+      });
+    }
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
@@ -221,25 +267,26 @@ const UsersPage = () => {
             sorter: (a, b) =>
               new Date(a.date).getTime() - new Date(b.date).getTime(),
           },
-          // {
-          //   title: "Actions",
-          //   dataIndex: "actions",
-          //   key: "actions",
-          //   render: (_value: any, record: any) => (
-          //     <div className="flex justify-between">
-          //       {record.status == "Active" ? (
-          //         <Button color="danger" size="sm" onPress={() => deactivateUser(record._id)}>
-          //           Deactivate
-          //         </Button>
-          //       ) : (
-          //         <Button color="primary" size="sm">
-          //           Activate
-          //         </Button>
-          //       )}
-          //     </div>
-          //   ),
-          //   sorter: (a, b) => a.status.localeCompare(b.role),
-          // },
+          {
+            title: "Actions",
+            key: "actions",
+            render: (_: any, record: any) => (
+              <Space>
+                {record.status === "Active" && (
+                  <Button size="sm" onClick={() => deactivateUser(record._id)}>
+                    Deactivate
+                  </Button>
+                )}
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={() => deleteUser(record._id)}
+                >
+                  Delete
+                </Button>
+              </Space>
+            ),
+          },
         ]}
       />
 
