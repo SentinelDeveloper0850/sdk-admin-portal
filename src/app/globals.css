@@ -480,3 +480,30 @@ a:hover {
 .dark .ant-picker-input > input::placeholder {
   color: #bbbbbb;
 }
+
+/* Override OptGroup label color in Ant Design dark mode */
+.dark .ant-select-dropdown .ant-select-item-group {
+  font-weight: 500;
+  color: #ffac00 !important;
+  padding-left: 8px;
+  margin-top: 4px;
+}
+
+.dark
+  .ant-select-dropdown
+  .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: rgba(255, 172, 0, 0.1); /* Subtle glow */
+}
+
+.dark .ant-select-dropdown {
+  border-radius: 10px;
+}
+
+.dark .ant-select-dropdown {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Fix Ant Design Select placeholder color in dark mode */
+.dark .ant-select-selection-placeholder {
+  color: #cccccc !important;
+}

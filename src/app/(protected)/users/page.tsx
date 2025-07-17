@@ -9,7 +9,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button } from "@nextui-org/react";
-import { Col, Drawer, Form, Input, Row, Select, Space, Table, Tag } from "antd";
+import { Col, Drawer, Form, Input, Row, Space, Table, Tag } from "antd";
 import axios from "axios";
 import { AiOutlineUserAdd } from "react-icons/ai";
 import sweetAlert from "sweetalert";
@@ -17,6 +17,8 @@ import sweetAlert from "sweetalert";
 import { capitalizeFirstLetter, getDate, getTime } from "@/utils/formatters";
 
 import PageHeader from "@/app/components/page-header";
+import CoreRoleSelect from "@/app/components/roles/core-role-select";
+import RoleSelect from "@/app/components/roles/role-select";
 import { useAuth } from "@/context/auth-context";
 
 const UsersPage = () => {
@@ -143,10 +145,6 @@ const UsersPage = () => {
       });
     }
   };
-
-  const roles = ["admin", "member"];
-
-  const additionalRoles = ["admin", "member"];
 
   return (
     <div style={{ padding: "20px" }}>
@@ -360,24 +358,12 @@ const UsersPage = () => {
                   },
                 ]}
               >
-                <Select>
-                  {roles.map((item) => (
-                    <Select.Option key={item} value={item}>
-                      {capitalizeFirstLetter(item)}
-                    </Select.Option>
-                  ))}
-                </Select>
+                <CoreRoleSelect />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item label="Additional Roles" name="roles">
-                <Select mode="tags">
-                  {additionalRoles.map((item) => (
-                    <Select.Option key={item} value={item}>
-                      {capitalizeFirstLetter(item)}
-                    </Select.Option>
-                  ))}
-                </Select>
+                <RoleSelect />
               </Form.Item>
             </Col>
           </Row>
