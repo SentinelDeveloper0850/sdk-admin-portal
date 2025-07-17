@@ -1,4 +1,4 @@
-import mongoose, { Document, Model, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 export interface IDailyActivity {
   _id?: string;
@@ -63,12 +63,6 @@ const dailyActivitySchema = new Schema({
         type: String,
         required: false,
         trim: true,
-        validate: {
-          validator: function (value: any) {
-            return value === undefined || /^[A-Za-z0-9]+$/.test(value); // Optional and alphanumeric validation
-          },
-          message: "Invalid claim number format.",
-        },
       },
     },
   ],
