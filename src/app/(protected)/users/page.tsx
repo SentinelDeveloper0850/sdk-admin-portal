@@ -3,18 +3,34 @@
 import { useEffect, useState } from "react";
 
 import {
+  DeleteOutlined,
   MailOutlined,
+  MoreOutlined,
   PhoneOutlined,
   PlusOutlined,
+  StopOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button } from "@nextui-org/react";
-import { Col, Drawer, Form, Input, Row, Space, Table, Tag } from "antd";
+import {
+  Button as AntButton,
+  Col,
+  Drawer,
+  Dropdown,
+  Form,
+  Input,
+  Menu,
+  Row,
+  Space,
+  Table,
+  Tag,
+} from "antd";
 import axios from "axios";
 import { AiOutlineUserAdd } from "react-icons/ai";
 import sweetAlert from "sweetalert";
 
 import { capitalizeFirstLetter, getDate, getTime } from "@/utils/formatters";
+import { roleLabels } from "@/utils/helpers/roles";
 
 import PageHeader from "@/app/components/page-header";
 import CoreRoleSelect from "@/app/components/roles/core-role-select";
@@ -44,7 +60,24 @@ const UsersPage = () => {
       }
 
       const data = await response.json();
-      setUsers(data.users);
+
+      const updatedUsers = data.users.map((v: any) => {
+        const firstRole = v.roles[0] ?? null;
+        const isAdmin = v.role === "admin";
+
+        let additionalRoles = [...v.roles];
+
+        if (isAdmin && firstRole === "member") {
+          additionalRoles.shift();
+        }
+
+        return {
+          ...v,
+          roles: additionalRoles,
+        };
+      });
+
+      setUsers(updatedUsers);
     } catch (err) {
       console.log(err);
       setError("An error occurred while fetching users.");
@@ -158,10 +191,12 @@ const UsersPage = () => {
 
       if (!confirmed) return;
 
+      const deletedBy = user?._id?.toString();
+
       const response = await fetch(`/api/users`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, deletedBy }),
       });
 
       if (!response.ok) {
@@ -180,8 +215,8 @@ const UsersPage = () => {
         timer: 2000,
       });
 
-      // Refetch users after deletion
-      fetchUsers();
+      // 🔥 Remove from UI without re-fetching
+      setUsers((prevUsers) => prevUsers.filter((u) => u._id !== id));
     } catch (err) {
       console.error("Delete error:", err);
       sweetAlert({
@@ -236,11 +271,11 @@ const UsersPage = () => {
             sorter: (a, b) => a.email.localeCompare(b.email),
           },
           {
-            title: "Role",
+            title: "Roles",
             dataIndex: "role",
             key: "role",
-            render: (value: string) => (
-              <Tag color={value == "admin" ? "gold" : undefined}>
+            render: (value: string, record: any) => (
+              <Tag className="w-fit" color={value == "admin" ? "gold" : "blue"}>
                 {capitalizeFirstLetter(value)}
               </Tag>
             ),
@@ -271,23 +306,52 @@ const UsersPage = () => {
             title: "Actions",
             key: "actions",
             render: (_: any, record: any) => (
-              <Space>
-                {record.status === "Active" && (
-                  <Button size="sm" onClick={() => deactivateUser(record._id)}>
-                    Deactivate
-                  </Button>
-                )}
-                <Button
-                  color="danger"
-                  size="sm"
-                  onClick={() => deleteUser(record._id)}
-                >
-                  Delete
-                </Button>
-              </Space>
+              <Dropdown
+                overlay={
+                  <Menu>
+                    {record.status === "Active" && (
+                      <Menu.Item
+                        key="deactivate"
+                        icon={<StopOutlined />}
+                        onClick={() => deactivateUser(record._id)}
+                      >
+                        Deactivate
+                      </Menu.Item>
+                    )}
+                    <Menu.Item
+                      key="delete"
+                      icon={<DeleteOutlined />}
+                      danger
+                      onClick={() => deleteUser(record._id)}
+                    >
+                      Delete
+                    </Menu.Item>
+                  </Menu>
+                }
+                trigger={["click"]}
+              >
+                <AntButton icon={<MoreOutlined />} />
+              </Dropdown>
             ),
           },
         ]}
+        expandable={{
+          expandedRowRender: (record: any) =>
+            record.roles ? (
+              <div className="ml-0 gap-1 whitespace-pre-wrap p-0 text-gray-700">
+                🛡️<strong className="ml-1 mr-2">Additional Roles:</strong>
+                {record.roles.map((role: string) => (
+                  <Tag className="w-fit">{roleLabels[role]}</Tag>
+                ))}
+              </div>
+            ) : (
+              <i className="text-gray-400">No additional roles assigned.</i>
+            ),
+          rowExpandable: (record) =>
+            !!record.roles &&
+            record.roles.length > 0 &&
+            record.roles[0] !== record.role,
+        }}
       />
 
       <Drawer

@@ -126,7 +126,7 @@ export async function DELETE(request: Request) {
 
     const user = await UsersModel.findByIdAndUpdate(
       id,
-      { deletedAt: new Date(), deletedBy: deletedBy || null },
+      { deletedAt: new Date(), deletedBy: deletedBy || null, status: "Deleted" },
       { new: true }
     );
 
