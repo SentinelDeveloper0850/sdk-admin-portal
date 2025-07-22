@@ -61,90 +61,6 @@ export default function TransactionHistoryImporter() {
     }
   };
 
-  const parsePdf = async (file: File) => {
-    console.log("🚀 ~ parsePdf: starting...");
-    setLoading(true);
-
-    try {
-      // Dynamically import pdfjs-dist only on client
-      const pdfjsLib = await import("pdfjs-dist");
-      await import("pdfjs-dist/build/pdf.worker.entry");
-      const buffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-      let fullText = "";
-
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const text = await page.getTextContent();
-        fullText += text.items.map((item: any) => item.str).join(" ") + "\n";
-      }
-
-      const crTransactions: EditableTransaction[] = fullText
-        .split(/(?=\d{2} \w{3} \d{4})/)
-        .map((line) => line.trim())
-        .filter((line) => line.includes("CR"))
-        .map((line, index) => {
-          const regex =
-            /^(\d{2} \w{3} \d{4})\s+(.+?)\s+[\d,]+\.\d{2}\s+([\d,]+\.\d{2})\s+CR$/;
-          const match = line.match(regex);
-          if (match) {
-            const [, date, description, amountStr] = match;
-            return {
-              date,
-              description: description.trim(),
-              amount: parseFloat(amountStr.replace(/,/g, "")),
-            };
-          }
-
-          const dateMatch = line.match(/^(\d{2} \w{3} \d{4})/);
-          const amountMatch = line.match(/([\d,]+\.\d{2})\s+CR\b/);
-
-          if (dateMatch && amountMatch) {
-            const date = dateMatch[1];
-            const amount = parseFloat(amountMatch[1].replace(/,/g, ""));
-            const description = line
-              .replace(date, "")
-              .replace(amountMatch[0], "")
-              .trim();
-
-            const cleanDescription = description
-              .replace(/(.*?)\s\d+\.\d{2}.*/, "$1")
-              .replaceAll("Date", "")
-              .replaceAll("Description", "")
-              .replaceAll("Service Fee", "")
-              .replaceAll("Amount", "")
-              .replaceAll("Balance", "")
-              .replaceAll("Current", "")
-              .replaceAll("Current :", "")
-              .replaceAll("Current Balance:", "")
-              .replaceAll("Available", "")
-              .replaceAll("Available:", "")
-              .replaceAll("Available :", "")
-              .replaceAll("Date Description Service Fee Amount Balance", "");
-
-            return {
-              key: `${date}-${index}`,
-              date,
-              description: cleanDescription,
-              rawDescription: description,
-              rawLine: line,
-              amount,
-            };
-          }
-
-          return null;
-        })
-        .filter(Boolean) as EditableTransaction[];
-
-      setTransactions(crTransactions);
-    } catch (err) {
-      console.error("Error parsing PDF:", err);
-      message.error("Failed to parse PDF");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const openEditDrawer = (record: EditableTransaction) => {
     setCurrentRecord(record);
     drawerForm.setFieldsValue(record);
@@ -212,7 +128,6 @@ export default function TransactionHistoryImporter() {
             accept=".pdf"
             showUploadList={false}
             beforeUpload={(file) => {
-              parsePdf(file);
               return false;
             }}
           >
