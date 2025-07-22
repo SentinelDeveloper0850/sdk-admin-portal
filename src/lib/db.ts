@@ -1,7 +1,7 @@
 import mongoose, { ConnectionStates } from "mongoose";
 
 const connectionString =
-  process.env.MONGODB_URI || "mongodb://169.1.24.233:8001/sdk-admin-portal";
+  process.env.MONGODB_URI;
 
 if (!connectionString)
   throw new Error(

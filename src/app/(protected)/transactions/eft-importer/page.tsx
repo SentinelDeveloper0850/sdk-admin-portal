@@ -4,11 +4,8 @@ import { useMemo, useState } from "react";
 
 
 
-import { CloseOutlined, DeleteOutlined, EditOutlined, EyeOutlined, SaveOutlined, UploadOutlined } from "@ant-design/icons";
-import { Alert, Button, Col, Drawer, Form, Input, Popconfirm, Row, Space, Spin, Statistic, Table, Upload, message } from "antd";
-import Papa from "papaparse";
-import * as pdfjsLib from "pdfjs-dist";
-import "pdfjs-dist/build/pdf.worker.entry";
+import { DeleteOutlined, EditOutlined, EyeOutlined, UploadOutlined } from "@ant-design/icons";
+import { Alert, Button, Drawer, Form, Input, Popconfirm, Space, Spin, Table, Upload, message } from "antd";
 
 
 
@@ -69,6 +66,9 @@ export default function TransactionHistoryImporter() {
     setLoading(true);
 
     try {
+      // Dynamically import pdfjs-dist only on client
+      const pdfjsLib = await import("pdfjs-dist");
+      await import("pdfjs-dist/build/pdf.worker.entry");
       const buffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
       let fullText = "";
@@ -80,7 +80,7 @@ export default function TransactionHistoryImporter() {
       }
 
       const crTransactions: EditableTransaction[] = fullText
-        .split(/(?=\d{2} \w{3} \d{4})/) // split when line starts with a date
+        .split(/(?=\d{2} \w{3} \d{4})/)
         .map((line) => line.trim())
         .filter((line) => line.includes("CR"))
         .map((line, index) => {
@@ -136,13 +136,7 @@ export default function TransactionHistoryImporter() {
         })
         .filter(Boolean) as EditableTransaction[];
 
-      // console.log("🚀 ~ parsePdf ~ crTransactions:", crTransactions);
-
-      // const newTransactions = [crTransactions[0]];
-      // console.log("🚀 ~ parsePdf ~ newTransactions:", newTransactions);
-
       setTransactions(crTransactions);
-      // message.success(`Extracted ${crTransactions.length} CR transactions`);
     } catch (err) {
       console.error("Error parsing PDF:", err);
       message.error("Failed to parse PDF");
@@ -210,7 +204,7 @@ export default function TransactionHistoryImporter() {
 
   const pageActions = useMemo(() => {
     if (user && user.role === "admin") {
-      
+
       if (!transactions || transactions.length == 0) {
         return [
           <Upload

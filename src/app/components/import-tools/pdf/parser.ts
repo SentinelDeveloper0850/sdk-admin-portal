@@ -1,13 +1,3 @@
-import {
-  GlobalWorkerOptions,
-  type PDFDocumentProxy,
-  type PDFPageProxy,
-  getDocument,
-} from "pdfjs-dist";
-import type { TextItem } from "pdfjs-dist/types/src/display/api";
-
-// ✅ Direct static reference
-GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.js";
 
 /**
  * Extracts raw text from all pages of a PDF file.
@@ -18,13 +8,18 @@ export async function extractTextFromPDF(
   arrayBuffer: ArrayBuffer
 ): Promise<string> {
   try {
+    // Dynamically import pdfjs-dist only on client
+    const pdfjs = await import("pdfjs-dist");
+    const { GlobalWorkerOptions, getDocument } = pdfjs;
+    GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.js";
+
     const loadingTask = getDocument({ data: arrayBuffer });
-    const pdf: PDFDocumentProxy = await loadingTask.promise;
+    const pdf = await loadingTask.promise;
 
     let fullText = "";
 
     for (let i = 1; i <= pdf.numPages; i++) {
-      const page: PDFPageProxy = await pdf.getPage(i);
+      const page = await pdf.getPage(i);
       const content = await page.getTextContent();
 
       let lastY: number | null = null;
@@ -32,7 +27,7 @@ export async function extractTextFromPDF(
 
       for (const item of content.items) {
         if ("str" in item && "transform" in item) {
-          const textItem = item as TextItem;
+          const textItem = item as any;
           const y = textItem.transform[5];
 
           if (lastY !== null && y !== lastY) {

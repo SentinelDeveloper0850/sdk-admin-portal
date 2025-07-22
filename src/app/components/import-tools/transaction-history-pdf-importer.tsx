@@ -4,25 +4,23 @@ import { useState } from "react";
 
 import {
   Button,
-  Table,
-  Upload,
-  message,
   Form,
   Input,
   Popconfirm,
   Space,
+  Table,
+  Upload,
+  message,
 } from "antd";
 
 import {
-  UploadOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SaveOutlined,
   CloseOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  SaveOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 
-import * as pdfjsLib from "pdfjs-dist";
-import "pdfjs-dist/build/pdf.worker.entry";
 
 interface ExtractedTransaction {
   date: string;
@@ -77,6 +75,9 @@ const EftPdfImporter = () => {
     setLoading(true);
 
     try {
+      // Dynamically import pdfjs-dist only on client
+      const pdfjsLib = await import("pdfjs-dist");
+      await import("pdfjs-dist/build/pdf.worker.entry");
       const buffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
       let fullText = "";
@@ -88,7 +89,7 @@ const EftPdfImporter = () => {
       }
 
       const crTransactions: ExtractedTransaction[] = fullText
-        .split(/(?=\d{2} \w{3} \d{4})/) // split when line starts with a date
+        .split(/(?=\d{2} \w{3} \d{4})/)
         .map((line) => line.trim())
         .filter((line) => line.includes("CR"))
         .map((line) => {
