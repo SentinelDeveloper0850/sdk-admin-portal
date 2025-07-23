@@ -5,9 +5,13 @@ import {
   importTransactions,
 } from "@/server/actions/easypay-transactions";
 
-export async function GET(_request: Request) {
+export async function GET(request: Request) {
   try {
-    const response = await fetchAll();
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '50');
+
+    const response = await fetchAll(pageSize, page);
 
     if (response.success) {
       return NextResponse.json(response.data, { status: 200 });

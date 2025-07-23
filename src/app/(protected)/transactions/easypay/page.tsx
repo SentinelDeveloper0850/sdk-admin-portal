@@ -16,7 +16,6 @@ import {
   Spin,
   Statistic,
   Table,
-  notification,
 } from "antd";
 import Search from "antd/es/input/Search";
 import { Dayjs } from "dayjs";
@@ -33,6 +32,7 @@ import { useRole } from "@/app/hooks/use-role";
 import { IEasypayImport } from "@/app/interfaces/easypay-import.interface";
 import { useAuth } from "@/context/auth-context";
 import { syncPolicyNumbers } from "@/server/actions/easypay-transactions";
+import useNotification from "antd/es/notification/useNotification";
 
 import { ERoles } from "../../../../../types/roles.enum";
 
@@ -65,9 +65,11 @@ export default function EasypayTransactionsPage() {
   const [syncing, setSyncing] = useState<boolean>(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  const [stats, setStats] = useState<{ count: number; toSync: number }>({
+  const [stats, setStats] = useState<{ count: number; toSync: number; withoutPolicy: number; uniqueEasyPayWithoutPolicy: number }>({
     count: 0,
     toSync: 0,
+    withoutPolicy: 0,
+    uniqueEasyPayWithoutPolicy: 0,
   });
 
   const [imports, setImports] = useState<IEasypayImportData[]>([]);
@@ -77,14 +79,29 @@ export default function EasypayTransactionsPage() {
   const [amountFilterType, setAmountFilterType] = useState("=");
   const [amount, setAmount] = useState<number | string>("");
 
+  const [showUniqueEasyPayDrawer, setShowUniqueEasyPayDrawer] = useState(false);
+  const [uniqueEasyPayData, setUniqueEasyPayData] = useState<any>(null);
+  const [uniqueEasyPayLoading, setUniqueEasyPayLoading] = useState(false);
+  const [showToSyncDrawer, setShowToSyncDrawer] = useState(false);
+  const [toSyncData, setToSyncData] = useState<any>(null);
+  const [toSyncLoading, setToSyncLoading] = useState(false);
+  const [toSyncPagination, setToSyncPagination] = useState({
+    current: 1,
+    pageSize: 50
+  });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 50
+  });
+
   const { user } = useAuth();
-
   const { hasRole } = useRole();
+  const [notification, contextHolder] = useNotification();
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (page = 1, pageSize = 50) => {
     try {
       setLoading(true);
-      const response = await fetch("/api/transactions/easypay");
+      const response = await fetch(`/api/transactions/easypay?page=${page}&pageSize=${pageSize}`);
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch transactions");
@@ -93,7 +110,16 @@ export default function EasypayTransactionsPage() {
 
       const data = await response.json();
       setTransactions(data.transactions);
-      setStats({ count: data.count, toSync: data.toSync });
+      setStats({
+        count: data.count,
+        toSync: data.toSync,
+        withoutPolicy: data.withoutPolicy,
+        uniqueEasyPayWithoutPolicy: data.uniqueEasyPayWithoutPolicy || 0
+      });
+      setPagination({
+        current: page,
+        pageSize: pageSize
+      });
       setShowToSync(false);
     } catch (err) {
       console.log(err);
@@ -115,7 +141,12 @@ export default function EasypayTransactionsPage() {
 
       const data = await response.json();
       setTransactions(data.transactions);
-      setStats({ count: data.count, toSync: data.toSync });
+      setStats({
+        count: data.count,
+        toSync: data.toSync,
+        withoutPolicy: data.withoutPolicy,
+        uniqueEasyPayWithoutPolicy: data.uniqueEasyPayWithoutPolicy || 0
+      });
       setShowToSync(true);
     } catch (err) {
       console.log(err);
@@ -143,6 +174,72 @@ export default function EasypayTransactionsPage() {
       notification.error({
         message: "An error occurred while fetching import history.",
       });
+    }
+  };
+
+  const fetchUniqueEasyPayNumbers = async () => {
+    try {
+      setUniqueEasyPayLoading(true);
+      const response = await fetch("/api/transactions/easypay/unique-without-policy");
+      if (!response.ok) {
+        const errorData = await response.json();
+        notification.error({
+          message: errorData.message || "Failed to fetch unique EasyPay numbers",
+        });
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setUniqueEasyPayData(data.data);
+        setShowUniqueEasyPayDrawer(true);
+      } else {
+        notification.error({
+          message: "Failed to load unique EasyPay numbers"
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching unique EasyPay numbers:", err);
+      notification.error({
+        message: "Failed to fetch unique EasyPay numbers"
+      });
+    } finally {
+      setUniqueEasyPayLoading(false);
+    }
+  };
+
+  const fetchToSyncForDrawer = async (page = 1, pageSize = 50) => {
+    try {
+      setToSyncLoading(true);
+      const response = await fetch(`/api/transactions/easypay/sync?page=${page}&pageSize=${pageSize}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        notification.error({
+          message: errorData.message || "Failed to fetch transactions to sync",
+        });
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setToSyncData(data.data);
+        setToSyncPagination({
+          current: page,
+          pageSize: pageSize
+        });
+        setShowToSyncDrawer(true);
+      } else {
+        notification.error({
+          message: "Failed to load transactions to sync"
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching transactions to sync:", err);
+      notification.error({
+        message: "Failed to fetch transactions to sync"
+      });
+    } finally {
+      setToSyncLoading(false);
     }
   };
 
@@ -418,6 +515,7 @@ export default function EasypayTransactionsPage() {
 
   return (
     <div style={{ padding: "20px" }}>
+      {contextHolder}
       <PageHeader
         title="Easypay Transactions"
         actions={[
@@ -458,7 +556,21 @@ export default function EasypayTransactionsPage() {
           >
             <Space size={32}>
               <Statistic title="Total" value={stats.count} />
-              <Statistic title="Selected" value={transactions?.length || 0} />
+              <Statistic title="Displayed" value={transactions?.length || 0} />
+              <Statistic
+                title={
+                  <Space>
+                    <span>Policies to Find</span>
+                    {stats.uniqueEasyPayWithoutPolicy > 0 && (
+                      <EyeOutlined
+                        onClick={() => !uniqueEasyPayLoading && fetchUniqueEasyPayNumbers()}
+                        style={{ cursor: 'pointer', color: '#ffac00' }}
+                      />
+                    )}
+                  </Space>
+                }
+                value={stats.uniqueEasyPayWithoutPolicy}
+              />
               {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
                 <Statistic
                   title={
@@ -466,7 +578,8 @@ export default function EasypayTransactionsPage() {
                       <span>To Sync</span>
                       {!showToSync ? (
                         <EyeOutlined
-                          onClick={() => !loading && fetchTransactionsToSync()}
+                          onClick={() => !toSyncLoading && fetchToSyncForDrawer()}
+                          style={{ cursor: 'pointer', color: '#ffac00' }}
                         />
                       ) : (
                         <EyeClosed width="1em" height="1em" />
@@ -559,9 +672,9 @@ export default function EasypayTransactionsPage() {
                     onSearch={async (value: string) =>
                       value.length > 0
                         ? searchByAmount({
-                            amount: amount,
-                            filterType: amountFilterType,
-                          })
+                          amount: amount,
+                          filterType: amountFilterType,
+                        })
                         : setTransactions([])
                     }
                   />
@@ -605,6 +718,17 @@ export default function EasypayTransactionsPage() {
             loading={loading}
             dataSource={transactions}
             rowClassName="cursor-pointer hover:bg-gray-100"
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: stats.count,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+              onChange: (page, pageSize) => {
+                fetchTransactions(page, pageSize);
+              }
+            }}
             columns={[
               {
                 title: "Transaction Date",
@@ -670,6 +794,145 @@ export default function EasypayTransactionsPage() {
             </List.Item>
           )}
         />
+      </Drawer>
+      <Drawer
+        title="Unique EasyPay Numbers Without Policy"
+        placement="right"
+        closable={true}
+        width={800}
+        onClose={() => setShowUniqueEasyPayDrawer(false)}
+        open={showUniqueEasyPayDrawer}
+      >
+        {uniqueEasyPayData && (
+          <div>
+            <div style={{ marginBottom: "16px" }}>
+              <Statistic
+                title="Total Unique EasyPay Numbers"
+                value={uniqueEasyPayData.pagination?.total || 0}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </div>
+            <Table
+              dataSource={uniqueEasyPayData.uniqueEasyPayNumbers}
+              columns={[
+                {
+                  title: 'EasyPay Number',
+                  dataIndex: 'easypayNumber',
+                  key: 'easypayNumber',
+                  width: 200,
+                },
+                {
+                  title: 'Transaction Count',
+                  dataIndex: 'transactionCount',
+                  key: 'transactionCount',
+                  width: 120,
+                  render: (value: number) => (
+                    <span style={{ fontWeight: 'bold', color: value > 1 ? '#ff4d4f' : '#52c41a' }}>
+                      {value}
+                    </span>
+                  ),
+                },
+                {
+                  title: 'Total Amount',
+                  dataIndex: 'totalAmount',
+                  key: 'totalAmount',
+                  width: 120,
+                  render: (value: number) => formatToMoneyWithCurrency(value),
+                },
+                {
+                  title: 'Date Range',
+                  key: 'dateRange',
+                  width: 150,
+                  render: (_, record: any) => {
+                    const firstDate = new Date(record.firstTransactionDate).toLocaleDateString();
+                    const lastDate = new Date(record.lastTransactionDate).toLocaleDateString();
+                    return firstDate === lastDate ? firstDate : `${firstDate} - ${lastDate}`;
+                  },
+                },
+              ]}
+              pagination={{
+                current: uniqueEasyPayData.pagination?.current || 1,
+                pageSize: uniqueEasyPayData.pagination?.pageSize || 50,
+                total: uniqueEasyPayData.pagination?.total || 0,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                onChange: (page, pageSize) => {
+                  fetchUniqueEasyPayNumbers();
+                }
+              }}
+              size="small"
+            />
+          </div>
+        )}
+      </Drawer>
+      <Drawer
+        title="Transactions to Sync"
+        placement="right"
+        closable={true}
+        width={800}
+        onClose={() => setShowToSyncDrawer(false)}
+        open={showToSyncDrawer}
+      >
+        {toSyncData && (
+          <div>
+            <div style={{ marginBottom: "16px" }}>
+              <Statistic
+                title="Total Transactions to Sync"
+                value={toSyncData.toSync || 0}
+                valueStyle={{ color: '#ff4d4f' }}
+              />
+            </div>
+            <Table
+              dataSource={toSyncData.transactions}
+              columns={[
+                {
+                  title: 'Transaction Date',
+                  dataIndex: 'date',
+                  key: 'date',
+                  width: 120,
+                },
+                {
+                  title: 'File ID',
+                  dataIndex: 'uuid',
+                  key: 'uuid',
+                  width: 120,
+                },
+                {
+                  title: 'EasyPay Number',
+                  dataIndex: 'easypayNumber',
+                  key: 'easypayNumber',
+                  width: 180,
+                },
+                {
+                  title: 'Amount',
+                  dataIndex: 'amount',
+                  key: 'amount',
+                  width: 100,
+                  render: (value: number) => formatToMoneyWithCurrency(value),
+                },
+                {
+                  title: 'Description',
+                  dataIndex: 'description',
+                  key: 'description',
+                  ellipsis: true,
+                },
+              ]}
+              pagination={{
+                current: toSyncPagination.current,
+                pageSize: toSyncPagination.pageSize,
+                total: toSyncData.pagination?.total || 0,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                onChange: (page, pageSize) => {
+                  fetchToSyncForDrawer(page, pageSize);
+                }
+              }}
+              size="small"
+            />
+          </div>
+        )}
       </Drawer>
     </div>
   );

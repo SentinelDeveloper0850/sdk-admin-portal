@@ -10,15 +10,20 @@ import {
 } from "@/app/models/scheme/eft-transaction.schema";
 import { connectToDatabase } from "@/lib/db";
 
-export const fetchAll = async () => {
+export const fetchAll = async (limit?: number) => {
   try {
     await connectToDatabase();
 
     const numberOfTransactions = await EftTransactionModel.countDocuments();
 
-    const transactions = await EftTransactionModel.find()
-      .sort({ date: -1 })
-      .limit(1000);
+    let transactionsQuery = EftTransactionModel.find()
+      .sort({ date: -1 });
+
+    if (limit) {
+      transactionsQuery = transactionsQuery.limit(limit);
+    }
+
+    const transactions = await transactionsQuery;
 
     return {
       success: true,

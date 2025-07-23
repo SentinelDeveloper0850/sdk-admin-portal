@@ -23,13 +23,22 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(_request: Request) {
+export async function GET(request: Request) {
   try {
-    const response = await fetchToSync();
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '50');
+
+    const response = await fetchToSync(pageSize, page);
 
     if (response.success) {
-      return NextResponse.json(response.data, { status: 200 });
+      return NextResponse.json(response, { status: 200 });
     }
+
+    return NextResponse.json(
+      { message: "Failed to fetch transactions to sync" },
+      { status: 500 }
+    );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

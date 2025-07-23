@@ -11,9 +11,11 @@ import {
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
-export const fetchAll = async () => {
+export const fetchAll = async (pageSize: number = 50, page: number = 1) => {
   try {
     await connectToDatabase();
+
+    const skip = (page - 1) * pageSize;
 
     // Count all transactions
     const totalCountPromise = EasypayTransactionModel.countDocuments();
@@ -27,15 +29,48 @@ export const fetchAll = async () => {
       ]
     });
 
-    // Fetch recent 1000 transactions
-    const recentTransactionsPromise = EasypayTransactionModel.find()
-      .sort({ date: -1 })
-      .limit(1000);
+    // Count unique EasyPay numbers without Policy numbers
+    const uniqueEasyPayWithoutPolicyPromise = EasypayTransactionModel.aggregate([
+      {
+        $match: {
+          $or: [
+            { policyNumber: { $exists: false } },
+            { policyNumber: null },
+            { policyNumber: "" }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: "$easypayNumber"
+        }
+      },
+      {
+        $count: "uniqueCount"
+      }
+    ]);
 
-    const [count, toSync, transactions] = await Promise.all([
+    // Count transactions without Policy numbers (for backward compatibility)
+    const withoutPolicyCountPromise = EasypayTransactionModel.countDocuments({
+      $or: [
+        { policyNumber: { $exists: false } },
+        { policyNumber: null },
+        { policyNumber: "" }
+      ]
+    });
+
+    // Fetch transactions with pagination
+    const transactionsPromise = EasypayTransactionModel.find()
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(pageSize);
+
+    const [count, toSync, withoutPolicy, uniqueEasyPayWithoutPolicy, transactions] = await Promise.all([
       totalCountPromise,
       toSyncCountPromise,
-      recentTransactionsPromise
+      withoutPolicyCountPromise,
+      uniqueEasyPayWithoutPolicyPromise,
+      transactionsPromise
     ]);
 
     return {
@@ -43,7 +78,15 @@ export const fetchAll = async () => {
       data: {
         count,
         toSync,
+        withoutPolicy,
+        uniqueEasyPayWithoutPolicy: uniqueEasyPayWithoutPolicy[0]?.uniqueCount || 0,
         transactions,
+        pagination: {
+          current: page,
+          pageSize: pageSize,
+          total: count,
+          totalPages: Math.ceil(count / pageSize)
+        }
       },
     };
   } catch (error: any) {
@@ -55,9 +98,11 @@ export const fetchAll = async () => {
   }
 };
 
-export const fetchToSync = async () => {
+export const fetchToSync = async (pageSize: number = 50, page: number = 1) => {
   try {
     await connectToDatabase();
+
+    const skip = (page - 1) * pageSize;
 
     // Count all transactions
     const totalCountPromise = EasypayTransactionModel.countDocuments();
@@ -71,20 +116,54 @@ export const fetchToSync = async () => {
       ]
     });
 
-    // Fetch recent 1000 transactions
-    const recentTransactionsPromise = EasypayTransactionModel.find({
+    // Count unique EasyPay numbers without Policy numbers
+    const uniqueEasyPayWithoutPolicyPromise = EasypayTransactionModel.aggregate([
+      {
+        $match: {
+          $or: [
+            { policyNumber: { $exists: false } },
+            { policyNumber: null },
+            { policyNumber: "" }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: "$easypayNumber"
+        }
+      },
+      {
+        $count: "uniqueCount"
+      }
+    ]);
+
+    // Count transactions without Policy numbers (for backward compatibility)
+    const withoutPolicyCountPromise = EasypayTransactionModel.countDocuments({
+      $or: [
+        { policyNumber: { $exists: false } },
+        { policyNumber: null },
+        { policyNumber: "" }
+      ]
+    });
+
+    // Fetch transactions to sync with pagination
+    const transactionsPromise = EasypayTransactionModel.find({
       $or: [
         { policyNumber: { $exists: false } },
         { policyNumber: null },
         { policyNumber: "" }
       ]
     })
-      .sort({ date: -1 });
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(pageSize);
 
-    const [count, toSync, transactions] = await Promise.all([
+    const [count, toSync, withoutPolicy, uniqueEasyPayWithoutPolicy, transactions] = await Promise.all([
       totalCountPromise,
       toSyncCountPromise,
-      recentTransactionsPromise
+      withoutPolicyCountPromise,
+      uniqueEasyPayWithoutPolicyPromise,
+      transactionsPromise
     ]);
 
     return {
@@ -92,7 +171,15 @@ export const fetchToSync = async () => {
       data: {
         count,
         toSync,
+        withoutPolicy,
+        uniqueEasyPayWithoutPolicy: uniqueEasyPayWithoutPolicy[0]?.uniqueCount || 0,
         transactions,
+        pagination: {
+          current: page,
+          pageSize: pageSize,
+          total: toSync,
+          totalPages: Math.ceil(toSync / pageSize)
+        }
       },
     };
   } catch (error: any) {
@@ -376,6 +463,70 @@ export const importTransactions = async (payload: any) => {
     return {
       success: false,
       message: "Internal Server Error ~ Error importing easypay transactions",
+    };
+  }
+};
+
+export const updateTransactionPolicyNumbers = async (transactions: Array<{
+  transactionId: string;
+  policyNumber: string;
+}>) => {
+  await connectToDatabase();
+
+  try {
+    let updatedCount = 0;
+    const results = [];
+
+    for (const item of transactions) {
+      try {
+        const result = await EasypayTransactionModel.findByIdAndUpdate(
+          item.transactionId,
+          {
+            policyNumber: item.policyNumber,
+            updatedAt: new Date()
+          },
+          { new: true }
+        );
+
+        if (result) {
+          updatedCount++;
+          results.push({
+            transactionId: item.transactionId,
+            policyNumber: item.policyNumber,
+            success: true
+          });
+        } else {
+          results.push({
+            transactionId: item.transactionId,
+            policyNumber: item.policyNumber,
+            success: false,
+            error: 'Transaction not found'
+          });
+        }
+      } catch (error: any) {
+        results.push({
+          transactionId: item.transactionId,
+          policyNumber: item.policyNumber,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        updatedCount,
+        totalProcessed: transactions.length,
+        results
+      },
+      message: `Successfully updated ${updatedCount} out of ${transactions.length} transactions`
+    };
+  } catch (error: any) {
+    console.error("Error updating transaction policy numbers:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error updating transaction policy numbers",
     };
   }
 };

@@ -8,7 +8,7 @@ import {
 
 export async function GET(_request: Request) {
   try {
-    const response = await fetchAll();
+    const response = await fetchAll(1000); // Keep 1000 limit for performance
 
     if (response.success) {
       return NextResponse.json(response.data, { status: 200 });

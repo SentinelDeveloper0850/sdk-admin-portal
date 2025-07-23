@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Tooltip } from "antd";
 import {
   Banknote,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -72,6 +73,12 @@ const SideNavBar = () => {
           url: "/policies/view",
         },
         {
+          id: "policy-reconciliation",
+          name: "Reconciliation",
+          icon: <FileText size={18} />,
+          url: "/policies/recon",
+        },
+        {
           id: "signup-requests",
           name: "Signup Requests",
           icon: <Banknote size={18} />,
@@ -82,25 +89,31 @@ const SideNavBar = () => {
     },
     {
       id: 5,
+      name: "Reports",
+      icon: <BarChart3 size={18} />,
+      url: "/policies/reports",
+    },
+    {
+      id: 6,
       name: "Prepaid Societies",
       icon: <Users size={18} />,
       url: "/prepaid-societies",
       allowedRoles: [ERoles.Admin, ERoles.SocietyConsultant],
     },
     {
-      id: 6,
+      id: 7,
       name: "Daily Activity",
       icon: <ListOrdered size={18} />,
       url: "/daily-activity",
     },
     {
-      id: 7,
+      id: 8,
       name: "Claims",
       icon: <HiOutlineDocumentCurrencyDollar size={18} />,
       url: "/claims",
     },
     {
-      id: 8,
+      id: 9,
       name: "Users",
       icon: <Shield size={18} />,
       url: "/users",
@@ -182,11 +195,10 @@ const SideNavBar = () => {
                     return (
                       <Link key={child.id} href={child.url!}>
                         <div
-                          className={`ml-6 flex items-center gap-2 px-4 py-2 text-sm hover:bg-[#ffe082] ${
-                            childActive
-                              ? "font-semibold text-primary"
-                              : "text-gray-600"
-                          }`}
+                          className={`ml-6 flex items-center gap-2 px-4 py-2 text-sm hover:bg-[#ffe082] ${childActive
+                            ? "font-semibold text-primary"
+                            : "text-gray-600"
+                            }`}
                         >
                           {child.icon}
                           <span>{child.name}</span>
