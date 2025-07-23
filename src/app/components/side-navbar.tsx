@@ -77,6 +77,7 @@ const SideNavBar = () => {
           name: "Reconciliation",
           icon: <FileText size={18} />,
           url: "/policies/recon",
+          allowedRoles: [ERoles.Admin],
         },
         {
           id: "signup-requests",
@@ -91,7 +92,17 @@ const SideNavBar = () => {
       id: 5,
       name: "Reports",
       icon: <BarChart3 size={18} />,
-      url: "/policies/reports",
+      url: "/reports",
+      allowedRoles: [ERoles.Admin],
+      children: [
+        {
+          id: "report-policies",
+          name: "Policies Report",
+          icon: <Banknote size={18} />,
+          url: "/reports/policies",
+          allowedRoles: [ERoles.Admin],
+        },
+      ],
     },
     {
       id: 6,

@@ -412,7 +412,7 @@ Priority Actions:
   }
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="dark:bg-zinc-800 dark:text-white" style={{ padding: "20px" }}>
       <PageHeader
         title="Reconciliation Reports"
         subtitle="Comprehensive overview of policy and transaction reconciliation status"
@@ -446,7 +446,7 @@ Priority Actions:
       >
         <Row gutter={16}>
           <Col span={24}>
-            <Text type="secondary">
+            <Text className="dark:text-gray-300" type="secondary">
               Last updated: {new Date(reportData.lastUpdated).toLocaleString()}
             </Text>
           </Col>
@@ -456,15 +456,19 @@ Priority Actions:
       {reportData.policyReconciliation && reportData.easyPayStats && (
         <>
           {/* Policy Information Section */}
-          <Card title="Policy Information" style={{ marginBottom: "24px" }}>
+          <Card
+            title="Policy Information"
+            className="dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
+            style={{ marginBottom: "24px" }}
+          >
             <Row gutter={[16, 16]}>
               <Col span={8}>
                 <Statistic
-                  title="File Records"
+                  title={<span className="dark:text-gray-300">File Records</span>}
                   value={reportData.policyReconciliation.fileData.total}
                   valueStyle={{ color: '#1890ff' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Total policy records loaded from the policy file
                 </Text>
                 <div style={{ marginTop: "8px" }}>
@@ -474,11 +478,11 @@ Priority Actions:
               </Col>
               <Col span={8}>
                 <Statistic
-                  title="Database Records"
+                  title={<span className="dark:text-gray-300">Database Records</span>}
                   value={reportData.policyReconciliation.databaseData.total}
                   valueStyle={{ color: '#52c41a' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Total policy records in the database
                 </Text>
                 <div style={{ marginTop: "8px" }}>
@@ -488,26 +492,26 @@ Priority Actions:
               </Col>
               <Col span={8}>
                 <Statistic
-                  title="Matches"
+                  title={<span className="dark:text-gray-300">Matches</span>}
                   value={reportData.policyReconciliation.matches.length}
                   valueStyle={{ color: '#52c41a' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Policy numbers that exist in both file and database with matching EasyPay numbers
                 </Text>
               </Col>
             </Row>
 
-            <Divider />
+            <Divider className="dark:border-zinc-600" />
 
             <Row gutter={[16, 16]}>
               <Col span={6}>
                 <Statistic
-                  title="File Only"
+                  title={<span className="dark:text-gray-300">File Only</span>}
                   value={reportData.policyReconciliation.fileOnly.length}
                   valueStyle={{ color: getPriorityLevel(reportData.policyReconciliation.fileOnly.length) === 'error' ? '#ff4d4f' : '#faad14' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Policy numbers in file but not in database
                 </Text>
                 <Tag color={getPriorityLevel(reportData.policyReconciliation.fileOnly.length)} style={{ marginTop: "8px" }}>
@@ -516,11 +520,11 @@ Priority Actions:
               </Col>
               <Col span={6}>
                 <Statistic
-                  title="Database Only"
+                  title={<span className="dark:text-gray-300">Database Only</span>}
                   value={reportData.policyReconciliation.databaseOnly.length}
                   valueStyle={{ color: getPriorityLevel(reportData.policyReconciliation.databaseOnly.length) === 'error' ? '#ff4d4f' : '#faad14' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Policy numbers in database but not in file
                 </Text>
                 <Tag color={getPriorityLevel(reportData.policyReconciliation.databaseOnly.length)} style={{ marginTop: "8px" }}>
@@ -529,11 +533,11 @@ Priority Actions:
               </Col>
               <Col span={6}>
                 <Statistic
-                  title="Mismatches"
+                  title={<span className="dark:text-gray-300">Mismatches</span>}
                   value={reportData.policyReconciliation.mismatches.length}
                   valueStyle={{ color: getPriorityLevel(reportData.policyReconciliation.mismatches.length) === 'error' ? '#ff4d4f' : '#faad14' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Policy numbers with different EasyPay numbers in file vs database
                 </Text>
                 <Tag color={getPriorityLevel(reportData.policyReconciliation.mismatches.length)} style={{ marginTop: "8px" }}>
@@ -542,11 +546,11 @@ Priority Actions:
               </Col>
               <Col span={6}>
                 <Statistic
-                  title="Without EasyPay"
+                  title={<span className="dark:text-gray-300">Without EasyPay</span>}
                   value={reportData.policyReconciliation.withoutEasyPay.length}
                   valueStyle={{ color: getPriorityLevel(reportData.policyReconciliation.withoutEasyPay.length) === 'error' ? '#ff4d4f' : '#faad14' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Database policies without EasyPay numbers
                 </Text>
                 <Tag color={getPriorityLevel(reportData.policyReconciliation.withoutEasyPay.length)} style={{ marginTop: "8px" }}>
@@ -557,25 +561,29 @@ Priority Actions:
           </Card>
 
           {/* EasyPay Transaction Information Section */}
-          <Card title="EasyPay Transaction Information" style={{ marginBottom: "24px" }}>
+          <Card
+            title="EasyPay Transaction Information"
+            className="dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
+            style={{ marginBottom: "24px" }}
+          >
             <Row gutter={[16, 16]}>
               <Col span={8}>
                 <Statistic
-                  title="Total Transactions"
+                  title={<span className="dark:text-gray-300">Total Transactions</span>}
                   value={reportData.easyPayStats.count}
                   valueStyle={{ color: '#1890ff' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Total number of EasyPay transactions in the system
                 </Text>
               </Col>
               <Col span={8}>
                 <Statistic
-                  title="Unique EasyPay Numbers without Policy Numbers"
+                  title={<span className="dark:text-gray-300">Unique EasyPay Numbers without Policy Numbers</span>}
                   value={reportData.easyPayStats.uniqueEasyPayWithoutPolicy}
                   valueStyle={{ color: getPriorityLevel(reportData.easyPayStats.uniqueEasyPayWithoutPolicy) === 'error' ? '#ff4d4f' : '#faad14' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Number of unique EasyPay numbers that don't have corresponding policy numbers
                 </Text>
                 <Tag color={getPriorityLevel(reportData.easyPayStats.uniqueEasyPayWithoutPolicy)} style={{ marginTop: "8px" }}>
@@ -584,11 +592,11 @@ Priority Actions:
               </Col>
               <Col span={8}>
                 <Statistic
-                  title="Transactions without Policy Numbers"
+                  title={<span className="dark:text-gray-300">Transactions without Policy Numbers</span>}
                   value={reportData.easyPayStats.withoutPolicy}
                   valueStyle={{ color: getPriorityLevel(reportData.easyPayStats.withoutPolicy) === 'error' ? '#ff4d4f' : '#faad14' }}
                 />
-                <Text type="secondary">
+                <Text className="dark:text-gray-400" type="secondary">
                   Total number of individual transactions that don't have policy numbers assigned
                 </Text>
                 <Tag color={getPriorityLevel(reportData.easyPayStats.withoutPolicy)} style={{ marginTop: "8px" }}>
@@ -599,17 +607,22 @@ Priority Actions:
           </Card>
 
           {/* Recommended Next Steps Section */}
-          <Card title="Recommended Next Steps">
+          <Card
+            title="Recommended Next Steps"
+            className="dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
+          >
             <Alert
               message="Priority Actions"
               description="Based on the current reconciliation status, here are the recommended actions in order of priority:"
               type="info"
               showIcon
+              className="dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200"
               style={{ marginBottom: "16px" }}
             />
 
             <List
               size="small"
+              className="dark:bg-transparent"
               dataSource={[
                 {
                   priority: 'High',
@@ -638,17 +651,18 @@ Priority Actions:
                 }
               ]}
               renderItem={(priorityGroup) => (
-                <List.Item>
+                <List.Item className="dark:border-zinc-600">
                   <div style={{ width: '100%' }}>
                     <Title level={5} style={{ color: priorityGroup.color, marginBottom: '8px' }}>
                       {priorityGroup.priority} Priority
                     </Title>
                     <List
                       size="small"
+                      className="dark:bg-transparent"
                       dataSource={priorityGroup.items}
                       renderItem={(item) => (
-                        <List.Item style={{ padding: '4px 0' }}>
-                          <Text>• {item}</Text>
+                        <List.Item className="dark:border-transparent" style={{ padding: '4px 0' }}>
+                          <Text className="dark:text-gray-300">• {item}</Text>
                         </List.Item>
                       )}
                     />
