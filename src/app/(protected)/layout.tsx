@@ -3,6 +3,7 @@
 import React from "react";
 
 import { withAuth } from "@/utils/utils/with-auth";
+import { Analytics } from "@vercel/analytics/next"
 
 import AppBarOnline from "../components/app-bar-online";
 import SideNavBar from "../components/side-navbar";
@@ -19,6 +20,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
           {children}
         </main>
       </div>
+      <Analytics />
     </div>
   );
 };
