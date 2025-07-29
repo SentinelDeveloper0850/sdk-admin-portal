@@ -10,22 +10,13 @@ import type { IUser } from "@/app/models/hr/user.schema";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // Define the shape of the context
 interface AuthContextType {
   user: IUser | null;
   setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
   userId?: string;
   loading: boolean;
+  isAdmin: boolean;
 }
 
 // Create the AuthContext
@@ -74,6 +65,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, router]);
 
+  const isAdmin = user?.role === "admin";
+
   // Show loading spinner until user details are fetched
   if (loading) {
     return <div>Loading...</div>;
@@ -81,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, setUser, userId: user?._id?.toString() }}
+      value={{ user, loading, setUser, userId: user?._id?.toString(), isAdmin }}
     >
       {children}
     </AuthContext.Provider>

@@ -13,5 +13,5 @@
     "**/app/**/layout.tsx": "${dirname} - Layout",
     "**/components/**/index.tsx": "${dirname} - Component"
   },
-  "cSpell.words": ["Easypay", "nextui", "sweetalert", "tabler"]
+  "cSpell.words": ["Easypay", "nextui", "Popconfirm", "sweetalert", "tabler"]
 }
