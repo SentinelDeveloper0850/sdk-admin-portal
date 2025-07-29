@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   await connectToDatabase();
-  const users = await UsersModel.find({ deletedAt: null }).sort({ createdAt: -1 });
+  const users = await UsersModel.find({ deletedAt: null, status: { $ne: "Deleted" } }).sort({ createdAt: -1 });
 
   if (!users) {
     return NextResponse.json({ message: "Users not found" }, { status: 404 });

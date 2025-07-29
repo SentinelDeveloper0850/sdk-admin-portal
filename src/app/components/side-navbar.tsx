@@ -13,6 +13,7 @@ import {
   FileText,
   LayoutDashboard,
   ListOrdered,
+  Settings,
   Shield,
   Users,
 } from "lucide-react";
@@ -129,6 +130,36 @@ const SideNavBar = () => {
       icon: <Shield size={18} />,
       url: "/users",
       allowedRoles: [ERoles.Admin, ERoles.HRManager],
+    },
+    {
+      id: 10,
+      name: "Configurations",
+      icon: <Settings size={18} />,
+      url: "/configurations",
+      allowedRoles: [ERoles.Admin],
+      children: [
+        {
+          id: "system-config",
+          name: "System",
+          icon: <Settings size={18} />,
+          url: "/configurations/system",
+          allowedRoles: [ERoles.Admin],
+        },
+        {
+          id: "scheme-config",
+          name: "Scheme",
+          icon: <Settings size={18} />,
+          url: "/configurations/scheme",
+          allowedRoles: [ERoles.Admin],
+        },
+        {
+          id: "branches-config",
+          name: "Branches",
+          icon: <Settings size={18} />,
+          url: "/configurations/branches",
+          allowedRoles: [ERoles.Admin],
+        },
+      ],
     },
   ];
 

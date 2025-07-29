@@ -79,19 +79,23 @@ a:hover {
 }
 
 /* Input */
-.dark .ant-input {
+.dark .ant-input,
+.dark .ant-input-number-input {
   background-color: #212121;
   color: white;
   border-color: #333;
 }
 
-.dark .ant-input::placeholder {
+.dark .ant-input::placeholder,
+.dark .ant-input-number-input::placeholder {
   color: #aaa;
 }
 
 /* Input Hover & Focus */
 .dark .ant-input:hover,
-.dark .ant-input:focus {
+.dark .ant-input:focus,
+.dark .ant-input-number-input:hover,
+.dark .ant-input-number-input:focus {
   border-color: #555;
   background-color: #2a2a2a;
 }
@@ -125,19 +129,22 @@ a:hover {
   background-color: #2a2a2a;
 }
 
-.dark .ant-input-affix-wrapper {
+.dark .ant-input-affix-wrapper,
+.dark .ant-input-number-input-wrapper {
   background-color: #212121;
   color: white;
   border-color: #333;
 }
 
-.dark .ant-input-textarea {
+.dark .ant-input-textarea,
+.dark .ant-input-number-input {
   background-color: #212121;
   color: white;
   border-color: #333;
 }
 
-.dark .ant-input-textarea::placeholder {
+.dark .ant-input-textarea::placeholder,
+.dark .ant-input-number-input::placeholder {
   color: #aaa;
 }
 
@@ -218,6 +225,12 @@ a:hover {
 .dark .ant-btn-primary:focus {
   background-color: #e69b00;
   border-color: #e69b00;
+  color: black;
+}
+
+.ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
+    background: #e69b00;
+    color: black;
 }
 
 /* Default Button */
@@ -292,6 +305,7 @@ a:hover {
 .dark .ant-modal-footer .ant-btn-primary:hover {
   background-color: #e69b00;
   border-color: #e69b00;
+  color: black;
 }
 
 .dark .ant-modal-footer .ant-btn-default {
@@ -454,12 +468,8 @@ a:hover {
 }
 
 .dark .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
-.dark
-  .ant-picker-cell-in-view.ant-picker-cell-range-start
-  .ant-picker-cell-inner,
-.dark
-  .ant-picker-cell-in-view.ant-picker-cell-range-end
-  .ant-picker-cell-inner {
+.dark .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.dark .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
   background-color: #ffac00;
   color: black;
 }
@@ -475,6 +485,7 @@ a:hover {
   padding: 0 !important;
 }
 
+.dark .ant-input-number-input::placeholder,
 .dark input::placeholder,
 .dark textarea::placeholder,
 .dark .ant-picker-input > input::placeholder {
