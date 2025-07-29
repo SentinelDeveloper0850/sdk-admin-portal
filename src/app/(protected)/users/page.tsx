@@ -19,11 +19,10 @@ import {
   Dropdown,
   Form,
   Input,
-  Menu,
   Row,
   Space,
   Table,
-  Tag,
+  Tag
 } from "antd";
 import axios from "axios";
 import { AiOutlineUserAdd } from "react-icons/ai";
@@ -364,12 +363,13 @@ const UsersPage = () => {
             key: "actions",
             render: (_: any, record: any) => (
               <Dropdown
-                overlay={
-                  <Menu>
-                    <Menu.Item
-                      key="edit"
-                      icon={<UserOutlined />}
-                      onClick={() => {
+                menu={{
+                  items: [
+                    {
+                      key: "edit",
+                      icon: <UserOutlined />,
+                      label: "Edit",
+                      onClick: () => {
                         form.setFieldsValue({
                           firstNames: record.name
                             .split(" ")
@@ -383,31 +383,23 @@ const UsersPage = () => {
                         });
                         setEditingUser(record);
                         setEditDrawerOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Menu.Item>
-
-                    {record.status === "Active" && (
-                      <Menu.Item
-                        key="deactivate"
-                        icon={<StopOutlined />}
-                        onClick={() => deactivateUser(record._id)}
-                      >
-                        Deactivate
-                      </Menu.Item>
-                    )}
-
-                    <Menu.Item
-                      key="delete"
-                      icon={<DeleteOutlined />}
-                      danger
-                      onClick={() => deleteUser(record._id)}
-                    >
-                      Delete
-                    </Menu.Item>
-                  </Menu>
-                }
+                      }
+                    },
+                    ...(record.status === "Active" ? [{
+                      key: "deactivate",
+                      icon: <StopOutlined />,
+                      label: "Deactivate",
+                      onClick: () => deactivateUser(record._id)
+                    }] : []),
+                    {
+                      key: "delete",
+                      icon: <DeleteOutlined />,
+                      label: "Delete",
+                      danger: true,
+                      onClick: () => deleteUser(record._id)
+                    }
+                  ]
+                }}
                 trigger={["click"]}
               >
                 <AntButton icon={<MoreOutlined />} />
@@ -420,8 +412,8 @@ const UsersPage = () => {
             record.roles ? (
               <div className="ml-0 gap-1 whitespace-pre-wrap p-0 text-gray-700">
                 🛡️<strong className="ml-1 mr-2">Additional Roles:</strong>
-                {record.roles.map((role: string) => (
-                  <Tag className="w-fit">{roleLabels[role]}</Tag>
+                {record.roles.map((role: string, index: number) => (
+                  <Tag key={`${record._id}-${role}-${index}`} className="w-fit">{roleLabels[role]}</Tag>
                 ))}
               </div>
             ) : (
