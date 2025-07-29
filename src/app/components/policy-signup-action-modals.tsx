@@ -1,26 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { 
-  Modal, 
-  Form, 
-  Input, 
-  Select, 
-  Button, 
-  message, 
-  Space,
-  Typography,
-  Divider
-} from "antd";
-import { 
-  UserAddOutlined, 
-  CheckCircleOutlined, 
+import {
+  CheckCircleOutlined,
   CloseCircleOutlined,
-  QuestionCircleOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
-  InboxOutlined
+  InboxOutlined,
+  QuestionCircleOutlined,
+  UserAddOutlined
 } from "@ant-design/icons";
+import {
+  Button,
+  Divider,
+  Form,
+  Input,
+  message,
+  Select,
+  Space,
+  Typography
+} from "antd";
+import { useEffect, useState } from "react";
 
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
@@ -62,6 +61,7 @@ export const PolicySignupActionModals = ({
   const [loading, setLoading] = useState(false);
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     if (visible) {
@@ -101,7 +101,7 @@ export const PolicySignupActionModals = ({
     setLoading(true);
     try {
       const userId = user._id || user.id || user.email;
-      
+
       const response = await fetch(`/api/policies/signup-requests/${record._id}`, {
         method: 'PATCH',
         headers: {
@@ -118,15 +118,15 @@ export const PolicySignupActionModals = ({
       const data = await response.json();
 
       if (data.success) {
-        message.success(`${getActionTitle(action)} completed successfully`);
+        messageApi.success(`${getActionTitle(action)} completed successfully`);
         onSuccess();
         onClose();
       } else {
-        message.error(data.error || "Action failed");
+        messageApi.error(data.error || "Action failed");
       }
     } catch (error) {
       console.error("Action failed:", error);
-      message.error("An error occurred while performing the action");
+      messageApi.error("An error occurred while performing the action");
     } finally {
       setLoading(false);
     }
@@ -219,8 +219,8 @@ export const PolicySignupActionModals = ({
               <Input placeholder="Leave blank to auto-generate" />
             </Form.Item>
             <div style={{ marginBottom: 16 }}>
-              <TextArea 
-                rows={4} 
+              <TextArea
+                rows={4}
                 value={`Approving signup request for ${record.fullNames} ${record.surname} (ID: ${record.identificationNumber})`}
                 disabled
               />
@@ -345,48 +345,48 @@ export const PolicySignupActionModals = ({
     }
   };
 
-  if (!action || !record) return null;
+  if (!action || !record || !visible) return null;
 
   return (
-    <Modal
-      title={
-        <Space>
-          {getActionIcon(action)}
-          <span>{getActionTitle(action)}</span>
-        </Space>
-      }
-      open={visible}
-      onCancel={onClose}
-      footer={null}
-      width={600}
-    >
-      <div style={{ marginBottom: 16 }}>
-        <Title level={5}>Request Details</Title>
-        <p><strong>Applicant:</strong> {record.fullNames} {record.surname}</p>
-        <p><strong>ID Number:</strong> {record.identificationNumber}</p>
-        <p><strong>Plan:</strong> {record.plan}</p>
+    <>
+      {contextHolder}
+      <div style={{ padding: '16px' }}>
+        <div style={{ marginBottom: 16 }}>
+          <Title level={5}>
+            <Space>
+              {getActionIcon(action)}
+              <span>{getActionTitle(action)}</span>
+            </Space>
+          </Title>
+          <div style={{ marginBottom: 16 }}>
+            <p><strong>Applicant:</strong> {record.fullNames} {record.surname}</p>
+            <p><strong>ID Number:</strong> {record.identificationNumber}</p>
+            <p><strong>Plan:</strong> {record.plan?.name || 'Unknown Plan'}</p>
+            <p><strong>Request ID:</strong> {record.requestId}</p>
+          </div>
+        </div>
+
+        <Divider />
+
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+        >
+          {renderForm()}
+
+          <Form.Item style={{ marginTop: 24 }}>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                {getActionTitle(action)}
+              </Button>
+              <Button onClick={onClose}>
+                Cancel
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </div>
-      
-      <Divider />
-      
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-      >
-        {renderForm()}
-        
-        <Form.Item style={{ marginTop: 24 }}>
-          <Space>
-            <Button type="primary" htmlType="submit" loading={loading}>
-              {getActionTitle(action)}
-            </Button>
-            <Button onClick={onClose}>
-              Cancel
-            </Button>
-          </Space>
-        </Form.Item>
-      </Form>
-    </Modal>
+    </>
   );
 };

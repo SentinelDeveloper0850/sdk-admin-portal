@@ -231,7 +231,7 @@ export async function PATCH(
           memberID: updatedRequest.identificationNumber,
           policyNumber: updateData.generatedPolicyNumber,
           fullname: `${updatedRequest.fullNames} ${updatedRequest.surname}`,
-          productName: updatedRequest.plan,
+          productName: updatedRequest.plan?.name || updatedRequest.plan, // Handle both new and old plan structure
           cellNumber: updatedRequest.phone,
           emailAddress: updatedRequest.email,
           physicalAddress: updatedRequest.address,

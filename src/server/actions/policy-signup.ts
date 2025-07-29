@@ -190,7 +190,7 @@ export const approveRequest = async (requestId: string, approvedBy: string, poli
         memberID: request.identificationNumber,
         policyNumber: generatedPolicyNumber,
         fullname: `${request.fullNames} ${request.surname}`,
-        productName: request.plan,
+        productName: request.plan?.name || request.plan, // Handle both new and old plan structure
         cellNumber: request.phone,
         emailAddress: request.email,
         physicalAddress: request.address,

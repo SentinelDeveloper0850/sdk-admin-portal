@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-import { Col, Row, Space, Spin, Statistic, Table, message, Collapse, Popconfirm, Tag } from "antd";
+import { Badge, Col, Drawer, Image, Modal, Row, Space, Spin, Statistic, Table, Tag, message } from "antd";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
+import { PolicySignupActionModals } from "@/app/components/policy-signup-action-modals";
 import { PolicySignupActions } from "@/app/components/policy-signup-actions";
 import { PolicySignupViewModal } from "@/app/components/policy-signup-view-modal";
-import { PolicySignupActionModals } from "@/app/components/policy-signup-action-modals";
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
 
@@ -25,6 +25,10 @@ const getStatusColor = (status: string) => {
       return "green";
     case "rejected":
       return "red";
+    case "pending_info":
+      return "orange";
+    case "escalated":
+      return "purple";
     case "archived":
       return "gray";
     case "deleted":
@@ -44,6 +48,10 @@ const getStatusText = (status: string) => {
       return "Approved";
     case "rejected":
       return "Rejected";
+    case "pending_info":
+      return "Pending Info";
+    case "escalated":
+      return "Escalated";
     case "archived":
       return "Archived";
     case "deleted":
@@ -58,12 +66,16 @@ const SignupRequestsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | boolean>(false);
   const [stats, setStats] = useState<{ count: number }>({ count: 0 });
-  
-  // Modal states
-  const [viewModalVisible, setViewModalVisible] = useState(false);
-  const [actionModalVisible, setActionModalVisible] = useState(false);
+
+  // Drawer states
+  const [viewDrawerVisible, setViewDrawerVisible] = useState(false);
+  const [actionDrawerVisible, setActionDrawerVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<IPolicySignUp | null>(null);
   const [currentAction, setCurrentAction] = useState<string | null>(null);
+
+  // File preview modal state (only modal)
+  const [filePreviewVisible, setFilePreviewVisible] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null);
 
   const { user } = useAuth();
 
@@ -98,55 +110,55 @@ const SignupRequestsPage = () => {
   // Action handlers
   const handleView = (record: IPolicySignUp) => {
     setSelectedRecord(record);
-    setViewModalVisible(true);
+    setViewDrawerVisible(true);
   };
 
   const handleAssignConsultant = (record: IPolicySignUp) => {
     setSelectedRecord(record);
     setCurrentAction("assign_consultant");
-    setActionModalVisible(true);
+    setActionDrawerVisible(true);
   };
 
   const handleMarkAsReviewed = (record: IPolicySignUp) => {
     setSelectedRecord(record);
     setCurrentAction("mark_as_reviewed");
-    setActionModalVisible(true);
+    setActionDrawerVisible(true);
   };
 
   const handleApprove = (record: IPolicySignUp) => {
     setSelectedRecord(record);
     setCurrentAction("approve");
-    setActionModalVisible(true);
+    setActionDrawerVisible(true);
   };
 
   const handleReject = (record: IPolicySignUp) => {
     setSelectedRecord(record);
     setCurrentAction("reject");
-    setActionModalVisible(true);
+    setActionDrawerVisible(true);
   };
 
   const handleRequestMoreInfo = (record: IPolicySignUp) => {
     setSelectedRecord(record);
     setCurrentAction("request_more_info");
-    setActionModalVisible(true);
+    setActionDrawerVisible(true);
   };
 
   const handleAddNotes = (record: IPolicySignUp) => {
     setSelectedRecord(record);
     setCurrentAction("add_notes");
-    setActionModalVisible(true);
+    setActionDrawerVisible(true);
   };
 
   const handleEscalate = (record: IPolicySignUp) => {
     setSelectedRecord(record);
     setCurrentAction("escalate");
-    setActionModalVisible(true);
+    setActionDrawerVisible(true);
   };
 
   const handleArchive = (record: IPolicySignUp) => {
     setSelectedRecord(record);
     setCurrentAction("archive");
-    setActionModalVisible(true);
+    setActionDrawerVisible(true);
   };
 
   const handleDelete = async (record: IPolicySignUp) => {
@@ -184,15 +196,67 @@ const SignupRequestsPage = () => {
     message.success("Action completed successfully");
   };
 
-  const closeViewModal = () => {
-    setViewModalVisible(false);
+  const closeViewDrawer = () => {
+    setViewDrawerVisible(false);
     setSelectedRecord(null);
   };
 
-  const closeActionModal = () => {
-    setActionModalVisible(false);
+  const closeActionDrawer = () => {
+    setActionDrawerVisible(false);
     setSelectedRecord(null);
     setCurrentAction(null);
+  };
+
+  // File preview handlers
+  const handleFilePreview = (file: any) => {
+    if (file.cloudinaryUrl) {
+      setPreviewFile({
+        url: file.cloudinaryUrl,
+        name: file.originalName,
+        type: file.type
+      });
+      setFilePreviewVisible(true);
+    }
+  };
+
+  const closeFilePreview = () => {
+    setFilePreviewVisible(false);
+    setPreviewFile(null);
+  };
+
+  // Helper function to get file extension
+  const getFileExtension = (filename: string) => {
+    return filename.split('.').pop()?.toLowerCase() || '';
+  };
+
+  // Helper function to check if file is image
+  const isImageFile = (filename: string) => {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    return imageExtensions.includes(getFileExtension(filename));
+  };
+
+  // Helper function to get file icon
+  const getFileIcon = (filename: string, type: string) => {
+    const ext = getFileExtension(filename);
+
+    if (isImageFile(filename)) {
+      return '🖼️';
+    }
+
+    switch (ext) {
+      case 'pdf':
+        return '📄';
+      case 'doc':
+      case 'docx':
+        return '📝';
+      case 'xls':
+      case 'xlsx':
+        return '📊';
+      case 'txt':
+        return '📄';
+      default:
+        return '📎';
+    }
   };
 
   if (loading) {
@@ -221,26 +285,39 @@ const SignupRequestsPage = () => {
           </Col>
         </Row>
       </PageHeader>
-      
+
       {error && (
         <div style={{ color: "red", marginBottom: "20px" }}>{error}</div>
       )}
-      
+
       <Table
         rowKey="_id"
         bordered
         dataSource={requests}
         columns={[
           {
+            title: "Request ID",
+            dataIndex: "requestId",
+            key: "requestId",
+            width: 150,
+            render: (value) => (
+              <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                {value}
+              </span>
+            ),
+          },
+          {
             title: "Main Member",
             dataIndex: "fullNames",
             key: "fullNames",
             render: (value, record) => (
               <>
-                <p>
+                <p style={{ fontWeight: 'bold' }}>
                   {record.fullNames} {record.surname}
                 </p>
-                <p>{record.identificationNumber}</p>
+                <p style={{ fontSize: '12px', color: '#666' }}>
+                  ID: {record.identificationNumber}
+                </p>
               </>
             ),
           },
@@ -250,7 +327,7 @@ const SignupRequestsPage = () => {
             key: "email",
             render: (value, record) => (
               <>
-                <p>{record.email}</p>
+                <p>{record.email || 'No email'}</p>
                 <p>{record.phone}</p>
               </>
             ),
@@ -261,8 +338,16 @@ const SignupRequestsPage = () => {
             key: "plan",
             render: (value, record) => (
               <>
-                <p>{record.plan}</p>
-                <p>{record.numberOfDependents} Dependents</p>
+                <p style={{ fontWeight: 'bold' }}>
+                  {record.plan?.name || 'Unknown Plan'}
+                </p>
+                <p>
+                  <Badge
+                    count={record.numberOfDependents}
+                    style={{ backgroundColor: '#52c41a' }}
+                  />
+                  {' '}Dependents
+                </p>
               </>
             ),
           },
@@ -276,7 +361,7 @@ const SignupRequestsPage = () => {
               return (
                 <>
                   {addressLines.map((line: string, index: number) => (
-                    <div key={index}>{line}</div>
+                    <div key={index}>{line.trim()}</div>
                   ))}
                 </>
               );
@@ -284,10 +369,12 @@ const SignupRequestsPage = () => {
           },
           {
             title: "Status",
-            dataIndex: "status",
-            key: "status",
+            dataIndex: "currentStatus",
+            key: "currentStatus",
             render: (value, record) => (
-              <Tag color={getStatusColor(value)}>{getStatusText(value)}</Tag>
+              <Tag color={getStatusColor(value || record.status)}>
+                {getStatusText(value || record.status)}
+              </Tag>
             ),
           },
           {
@@ -312,33 +399,272 @@ const SignupRequestsPage = () => {
           },
         ]}
         expandable={{
-          expandedRowRender: (record: any) =>
-            record.message ? (
-              <div className="ml-0 whitespace-pre-wrap p-0 text-gray-700 dark:text-gray-400">
-                💬<strong className="ml-1">Message:</strong> {record.message}
-              </div>
-            ) : (
-              <i className="text-gray-400">No comments provided.</i>
-            ),
-          rowExpandable: (record) => !!record.message,
+          expandedRowRender: (record: IPolicySignUp) => (
+            <div style={{ padding: '16px' }}>
+              {/* Message */}
+              {record.message && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4>💬 Message:</h4>
+                  <div className="whitespace-pre-wrap text-gray-700 dark:text-gray-400">
+                    {record.message}
+                  </div>
+                </div>
+              )}
+
+              {/* Dependents */}
+              {record.dependents && record.dependents.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4>👥 Dependents ({record.dependents.length}):</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '8px' }}>
+                    {record.dependents.map((dependent, index) => (
+                      <div key={dependent.id || index} style={{
+                        border: '1px solid #d9d9d9',
+                        borderRadius: '6px',
+                        padding: '8px',
+                        backgroundColor: '#fafafa'
+                      }}>
+                        <div><strong>{dependent.fullNames} {dependent.surname}</strong></div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                          {dependent.isChild ? 'Child' : 'Adult'}
+                          {dependent.identificationNumber && ` • ID: ${dependent.identificationNumber}`}
+                          {dependent.dateOfBirth && ` • DOB: ${dependent.dateOfBirth}`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Uploaded Files */}
+              {record.uploadedFiles && record.uploadedFiles.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4>📎 Uploaded Files ({record.uploadedFiles.length}):</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+                    {record.uploadedFiles.map((file, index) => (
+                      <div key={index} style={{
+                        border: '1px solid #d9d9d9',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        backgroundColor: '#fafafa',
+                        cursor: file.cloudinaryUrl ? 'pointer' : 'default',
+                        transition: 'all 0.2s ease'
+                      }}
+                        onClick={() => file.cloudinaryUrl && handleFilePreview(file)}
+                        onMouseEnter={(e) => {
+                          if (file.cloudinaryUrl) {
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (file.cloudinaryUrl) {
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }
+                        }}
+                      >
+                        {/* File Thumbnail */}
+                        <div style={{
+                          width: '100%',
+                          aspectRatio: '1 / 1',
+                          backgroundColor: '#fff',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '8px',
+                          border: '1px solid #e8e8e8',
+                          overflow: 'hidden',
+                          position: 'relative'
+                        }}>
+                          {isImageFile(file.originalName) && file.cloudinaryUrl ? (
+                            <Image
+                              src={file.cloudinaryUrl}
+                              alt={file.originalName}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                objectPosition: 'center'
+                              }}
+                              preview={false}
+                            />
+                          ) : (
+                            <div style={{
+                              fontSize: '48px',
+                              color: '#666',
+                              textAlign: 'center',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '100%',
+                              height: '100%'
+                            }}>
+                              {getFileIcon(file.originalName, file.type)}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* File Info */}
+                        <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
+                          {file.originalName}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
+                          {file.type} • {file.personType} • {file.personName}
+                        </div>
+                        {file.cloudinaryUrl && (
+                          <div style={{ fontSize: '11px' }}>
+                            <span style={{ color: '#1890ff', cursor: 'pointer' }}>
+                              👁️ Preview
+                            </span>
+                            {' • '}
+                            <a
+                              href={file.cloudinaryUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: '#1890ff' }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              📥 Download
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Assigned Consultant */}
+              {record.assignedConsultantName && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4>👤 Assigned Consultant:</h4>
+                  <div>{record.assignedConsultantName}</div>
+                  {record.assignedAt && (
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      Assigned on: {new Date(record.assignedAt).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Generated Policy Number */}
+              {record.generatedPolicyNumber && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4>📋 Policy Number:</h4>
+                  <div style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#52c41a' }}>
+                    {record.generatedPolicyNumber}
+                  </div>
+                  {record.policyCreatedAt && (
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      Created on: {new Date(record.policyCreatedAt).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* No additional info message */}
+              {!record.message && (!record.dependents || record.dependents.length === 0) &&
+                (!record.uploadedFiles || record.uploadedFiles.length === 0) &&
+                !record.assignedConsultantName && !record.generatedPolicyNumber && (
+                  <i className="text-gray-400">No additional information available.</i>
+                )}
+            </div>
+          ),
+          rowExpandable: (record: IPolicySignUp) =>
+            !!record.message ||
+            (record.dependents && record.dependents.length > 0) ||
+            (record.uploadedFiles && record.uploadedFiles.length > 0) ||
+            !!record.assignedConsultantName ||
+            !!record.generatedPolicyNumber,
         }}
       />
 
-      {/* View Modal */}
-      <PolicySignupViewModal
-        visible={viewModalVisible}
-        onClose={closeViewModal}
-        record={selectedRecord}
-      />
+      {/* View Drawer */}
+      <Drawer
+        title="Signup Request Details"
+        placement="right"
+        width="60%"
+        onClose={closeViewDrawer}
+        open={viewDrawerVisible}
+        bodyStyle={{ paddingBottom: 80 }}
+      >
+        {selectedRecord && (
+          <PolicySignupViewModal
+            visible={viewDrawerVisible}
+            onClose={closeViewDrawer}
+            record={selectedRecord}
+          />
+        )}
+      </Drawer>
 
-      {/* Action Modals */}
-      <PolicySignupActionModals
-        visible={actionModalVisible}
-        action={currentAction}
-        record={selectedRecord}
-        onClose={closeActionModal}
-        onSuccess={handleActionSuccess}
-      />
+      {/* Action Drawer */}
+      <Drawer
+        title="Action"
+        placement="right"
+        width="40%"
+        onClose={closeActionDrawer}
+        open={actionDrawerVisible}
+        bodyStyle={{ paddingBottom: 80 }}
+      >
+        <PolicySignupActionModals
+          visible={actionDrawerVisible}
+          action={currentAction}
+          record={selectedRecord}
+          onClose={closeActionDrawer}
+          onSuccess={handleActionSuccess}
+        />
+      </Drawer>
+
+      {/* File Preview Modal (only modal) */}
+      <Modal
+        title={`File Preview: ${previewFile?.name}`}
+        open={filePreviewVisible}
+        onCancel={closeFilePreview}
+        footer={[
+          <a
+            key="download"
+            href={previewFile?.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ marginRight: '8px' }}
+          >
+            Download
+          </a>
+        ]}
+        width={800}
+        centered
+      >
+        {previewFile && (
+          <div style={{ textAlign: 'center' }}>
+            {isImageFile(previewFile.name) ? (
+              <Image
+                src={previewFile.url}
+                alt={previewFile.name}
+                style={{ maxWidth: '100%', maxHeight: '500px' }}
+                preview={false}
+              />
+            ) : (
+              <div style={{
+                padding: '40px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '8px',
+                margin: '20px 0'
+              }}>
+                <div style={{ fontSize: '64px', marginBottom: '16px' }}>
+                  {getFileIcon(previewFile.name, previewFile.type)}
+                </div>
+                <div style={{ fontSize: '16px', color: '#666' }}>
+                  {previewFile.name}
+                </div>
+                <div style={{ fontSize: '14px', color: '#999', marginTop: '8px' }}>
+                  Click "Download" to view this file
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

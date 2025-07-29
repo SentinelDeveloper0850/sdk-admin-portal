@@ -1,18 +1,56 @@
 import mongoose, { Schema } from "mongoose";
 
+// Define interfaces for the new data structure
+interface IDependent {
+  id: string;
+  fullNames: string;
+  surname: string;
+  identificationNumber: string;
+  dateOfBirth: string;
+  isChild: boolean;
+}
+
+interface IFileUpload {
+  originalName: string;
+  type: 'id' | 'passport' | 'birth-certificate';
+  personName: string;
+  personType: 'main-member' | 'dependent';
+  cloudinaryUrl?: string;
+  cloudinaryPublicId?: string;
+  tempPath?: string;
+}
+
+interface IPlanInfo {
+  name: string;
+  id: string;
+}
+
 // Define the interface for TypeScript
 export interface IPolicySignUp extends Document {
   _id?: string;
-  fullNames: string
-  surname: string
-  email?: string
-  phone: string
-  address?: string
-  plan: string
-  identificationNumber: string
-  numberOfDependents: number
-  message?: string
-  status?: string
+
+  // Basic applicant information
+  fullNames: string;
+  surname: string;
+  email?: string;
+  phone: string;
+  address?: string;
+  identificationNumber: string;
+  message?: string;
+
+  // Plan information
+  plan: IPlanInfo;
+
+  // Dependents information (new structure)
+  dependents: IDependent[];
+  numberOfDependents: number;
+
+  // File uploads (new structure)
+  uploadedFiles: IFileUpload[];
+
+  // Request tracking
+  requestId: string;
+  status?: string;
   created_by: string;
   created_at: Date;
 
@@ -73,15 +111,53 @@ export interface IPolicySignUp extends Document {
 
 // Define the schema
 const PolicySignUpSchema: Schema = new Schema({
+  // Basic applicant information
   fullNames: { type: String, required: true },
   surname: { type: String, required: true },
   email: { type: String, required: false },
   phone: { type: String, required: true },
   address: { type: String, required: false },
-  plan: { type: String, required: true },
   identificationNumber: { type: String, required: true },
-  numberOfDependents: { type: Number, required: true },
   message: { type: String, required: false },
+
+  // Plan information (updated structure)
+  plan: {
+    name: { type: String, required: true },
+    id: { type: String, required: true }
+  },
+
+  // Dependents information (new detailed structure)
+  dependents: [{
+    id: { type: String, required: true },
+    fullNames: { type: String, required: true },
+    surname: { type: String, required: true },
+    identificationNumber: { type: String, required: false }, // For adults
+    dateOfBirth: { type: String, required: false }, // For children
+    isChild: { type: Boolean, required: true }
+  }],
+  numberOfDependents: { type: Number, required: true },
+
+  // File uploads (new structure)
+  uploadedFiles: [{
+    originalName: { type: String, required: true },
+    type: {
+      type: String,
+      enum: ['id', 'passport', 'birth-certificate'],
+      required: true
+    },
+    personName: { type: String, required: true },
+    personType: {
+      type: String,
+      enum: ['main-member', 'dependent'],
+      required: true
+    },
+    cloudinaryUrl: { type: String, required: false },
+    cloudinaryPublicId: { type: String, required: false },
+    tempPath: { type: String, required: false }
+  }],
+
+  // Request tracking
+  requestId: { type: String, required: true, unique: true },
   status: { type: String, required: false, default: "Submitted" },
   created_by: {
     type: String,
