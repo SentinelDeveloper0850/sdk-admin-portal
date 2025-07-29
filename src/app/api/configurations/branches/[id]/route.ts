@@ -8,79 +8,14 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { 
-      name, 
-      code, 
-      address, 
-      city, 
-      province, 
-      postalCode, 
-      phone, 
-      email, 
-      manager, 
-      maxStaff, 
-      latitude, 
-      longitude, 
-      isActive, 
-      updatedBy 
-    } = body;
-
-    // Validate required fields
-    if (!name || !code || !address || !city || !province || !postalCode || !phone || !email || !manager || !maxStaff || latitude === undefined || longitude === undefined) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: "Missing required fields: name, code, address, city, province, postalCode, phone, email, manager, maxStaff, latitude, longitude",
-          },
-        },
-        { status: 400 }
-      );
-    }
 
     await connectToDatabase();
 
-    // Check if branch with same code already exists (excluding current branch)
-    const existingBranch = await BranchModel.findOne({ 
-      code: code.trim().toUpperCase(),
-      _id: { $ne: params.id }
-    });
-
-    if (existingBranch) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: "Branch with this code already exists",
-          },
-        },
-        { status: 409 }
-      );
-    }
-
     const updatedBranch = await BranchModel.findByIdAndUpdate(
       params.id,
-      {
-        name: name.trim(),
-        code: code.trim().toUpperCase(),
-        address: address.trim(),
-        city: city.trim(),
-        province,
-        postalCode: postalCode.trim(),
-        phone: phone.trim(),
-        email: email.trim().toLowerCase(),
-        manager,
-        maxStaff,
-        latitude,
-        longitude,
-        isActive: isActive !== undefined ? isActive : true,
-        updatedBy,
-        updatedAt: new Date(),
-      },
+      { ...body, updatedAt: new Date() },
       { new: true, runValidators: true }
-    ).populate('manager', 'firstName lastName email')
-     .populate('createdBy', 'firstName lastName')
-     .populate('updatedBy', 'firstName lastName');
+    );
 
     if (!updatedBranch) {
       return NextResponse.json(

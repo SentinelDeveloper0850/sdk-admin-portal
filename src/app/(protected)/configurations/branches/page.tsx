@@ -8,13 +8,11 @@ import {
   Input,
   InputNumber,
   message,
-  Modal,
   Popconfirm,
   Row,
   Select,
   Space,
   Spin,
-  Switch,
   Table,
   Tabs,
   Tag,
@@ -24,17 +22,16 @@ import {
   Building,
   Delete,
   Edit,
-  Save,
   User
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import PageHeader from "@/app/components/page-header";
+import { IUser } from "@/app/models/hr/user.schema";
 import { useAuth } from "@/context/auth-context";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { CopyOutlined, MailOutlined, NumberOutlined, PhoneOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { ERoles } from "../../../../../types/roles.enum";
-import { IUser } from "@/app/models/hr/user.schema";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -70,9 +67,10 @@ const BranchConfigurationsPage = () => {
   const [branches, setBranches] = useState<BranchConfig[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [form] = Form.useForm();
-  const [modalVisible, setModalVisible] = useState(false);
   const [editingBranch, setEditingBranch] = useState<BranchConfig | null>(null);
+  const [originalBranchData, setOriginalBranchData] = useState<Partial<BranchConfig> | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [editDrawerVisible, setEditDrawerVisible] = useState(false);
 
   const { user } = useAuth();
 
@@ -171,6 +169,22 @@ const BranchConfigurationsPage = () => {
 
   const handleEditBranch = (branch: BranchConfig) => {
     setEditingBranch(branch);
+    // Store original data for comparison
+    setOriginalBranchData({
+      name: branch.name,
+      code: branch.code,
+      address: branch.address,
+      city: branch.city,
+      province: branch.province,
+      postalCode: branch.postalCode,
+      phone: branch.phone,
+      email: branch.email,
+      manager: branch.manager,
+      maxStaff: branch.maxStaff,
+      latitude: branch.latitude,
+      longitude: branch.longitude,
+      isActive: branch.isActive
+    });
     form.setFieldsValue({
       name: branch.name,
       code: branch.code,
@@ -186,21 +200,37 @@ const BranchConfigurationsPage = () => {
       longitude: branch.longitude,
       isActive: branch.isActive
     });
-    setModalVisible(true);
+    setEditDrawerVisible(true);
   };
 
   const handleUpdateBranch = async (values: any) => {
-    if (!editingBranch) return;
+    if (!editingBranch || !originalBranchData) return;
 
     try {
       setSaving(true);
+
+      // Compare current values with original values to find dirtied fields
+      const dirtiedFields: any = {};
+
+      Object.keys(values).forEach(key => {
+        if (values[key] !== originalBranchData[key as keyof BranchConfig]) {
+          dirtiedFields[key] = values[key];
+        }
+      });
+
+      // Only proceed if there are actually changes
+      if (Object.keys(dirtiedFields).length === 0) {
+        message.info('No changes detected');
+        return;
+      }
+
       const response = await fetch(`/api/configurations/branches/${editingBranch._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...values,
+          ...dirtiedFields,
           updatedBy: user?._id
         }),
       });
@@ -209,8 +239,9 @@ const BranchConfigurationsPage = () => {
 
       if (data.success) {
         message.success('Branch updated successfully');
-        setModalVisible(false);
+        setEditDrawerVisible(false);
         setEditingBranch(null);
+        setOriginalBranchData(null);
         form.resetFields();
         fetchBranches();
       } else {
@@ -366,6 +397,7 @@ const BranchConfigurationsPage = () => {
         }}
       />
 
+      {/* Add New Branch Drawer */}
       <Drawer
         title="Add New Branch"
         open={drawerVisible}
@@ -517,29 +549,40 @@ const BranchConfigurationsPage = () => {
         </Form>
       </Drawer>
 
-      {/* Branch Edit Modal */}
-      <Modal
+      {/* Edit Branch Drawer */}
+      <Drawer
         title="Edit Branch"
-        open={modalVisible}
-        onCancel={() => {
-          setModalVisible(false);
+        open={editDrawerVisible}
+        onClose={() => {
+          setEditDrawerVisible(false);
           setEditingBranch(null);
+          setOriginalBranchData(null);
           form.resetFields();
         }}
-        footer={null}
-        width={600}
+        destroyOnClose={true}
+        width="60%"
+        footer={<div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <Button onClick={() => {
+            setEditDrawerVisible(false);
+            setEditingBranch(null);
+            setOriginalBranchData(null);
+            form.resetFields();
+          }}>Cancel</Button>
+          <Button type="primary" onClick={() => form.submit()} loading={saving} icon={<SaveOutlined size={16} />}>Update Branch</Button>
+        </div>}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleUpdateBranch}
+          className="grid grid-cols-3 gap-4"
         >
           <Form.Item
             name="name"
             label="Branch Name"
             rules={[{ required: true, message: 'Please enter branch name' }]}
           >
-            <Input placeholder="e.g: Johannesburg Main Branch" />
+            <Input prefix={<Building size={16} className="mr-1" />} placeholder="eg: Daveyton" allowClear />
           </Form.Item>
 
           <Form.Item
@@ -547,19 +590,56 @@ const BranchConfigurationsPage = () => {
             label="Branch Code"
             rules={[{ required: true, message: 'Please enter branch code' }]}
           >
-            <Input placeholder="e.g: JHB001" />
+            <Input prefix={<NumberOutlined size={16} className="mr-1" />} placeholder="eg: DTY001" allowClear />
+          </Form.Item>
+
+          <Form.Item
+            name="manager"
+            label="Branch Manager"
+            rules={[{ required: true, message: 'Please select branch manager' }]}
+          >
+            <Select placeholder="Select branch manager" prefix={<User size={16} className="mr-1 dark:text-white" />} allowClear>
+              {users.map((user, index) => (
+                <Option key={user._id || index} value={user._id}>
+                  {user.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="phone"
+            label="Phone"
+            rules={[{ required: true, message: 'Please enter phone number' }]}
+          >
+            <Input placeholder="+27 11 123 4567" allowClear prefix={<PhoneOutlined className="mr-1" />} suffix={<Button type="link" size="small" icon={<CopyOutlined />} title="Use Head Office Number" onClick={() => {
+              form.setFieldsValue({
+                phone: "+27 11 920 2002"
+              });
+            }} />} />
+          </Form.Item>
+
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: 'Please enter email' },
+            ]}
+          >
+            <Input prefix={<MailOutlined className="mr-1" />} placeholder="branch-name" allowClear suffix={<span className="text-xs text-primary">@somdaka.co.za</span>} />
           </Form.Item>
 
           <Form.Item
             name="address"
             label="Address"
+            className="col-span-3"
             rules={[{ required: true, message: 'Please enter address' }]}
           >
             <TextArea rows={2} placeholder="Enter full address" />
           </Form.Item>
 
-          <Row gutter={8}>
-            <Col span={12}>
+          <Row gutter={16} className="col-span-3">
+            <Col span={8}>
               <Form.Item
                 name="city"
                 label="City"
@@ -568,7 +648,7 @@ const BranchConfigurationsPage = () => {
                 <Input placeholder="e.g: Johannesburg" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="province"
                 label="Province"
@@ -587,10 +667,7 @@ const BranchConfigurationsPage = () => {
                 </Select>
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={8}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="postalCode"
                 label="Postal Code"
@@ -599,102 +676,40 @@ const BranchConfigurationsPage = () => {
                 <Input placeholder="e.g: 2000" />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                name="phone"
-                label="Phone"
-                rules={[{ required: true, message: 'Please enter phone number' }]}
-              >
-                <Input placeholder="e.g: +27 11 123 4567" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={8}>
-            <Col span={12}>
-              <Form.Item
-                name="latitude"
-                label="Latitude"
-                rules={[
-                  { required: true, message: 'Please enter latitude' },
-                  { type: 'number', min: -90, max: 90, message: 'Latitude must be between -90 and 90' }
-                ]}
-              >
-                <InputNumber
-                  placeholder="e.g: -26.2041"
-                  className="w-full"
-                  step={0.000001}
-                  precision={6}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="longitude"
-                label="Longitude"
-                rules={[
-                  { required: true, message: 'Please enter longitude' },
-                  { type: 'number', min: -180, max: 180, message: 'Longitude must be between -180 and 180' }
-                ]}
-              >
-                <InputNumber
-                  placeholder="e.g: 28.0473"
-                  className="w-full"
-                  step={0.000001}
-                  precision={6}
-                />
-              </Form.Item>
-            </Col>
           </Row>
 
           <Form.Item
-            name="email"
-            label="Email"
+            name="latitude"
+            label="Latitude"
             rules={[
-              { required: true, message: 'Please enter email' },
-              { type: 'email', message: 'Please enter a valid email' }
+              { required: true, message: 'Please enter latitude' },
+              { type: 'number', min: -90, max: 90, message: 'Latitude must be between -90 and 90' }
             ]}
           >
-            <Input placeholder="e.g: jhb@company.com" />
+            <InputNumber
+              placeholder="e.g: -26.2041"
+              className="w-full"
+              step={0.000001}
+              precision={6}
+            />
           </Form.Item>
-
           <Form.Item
-            name="manager"
-            label="Branch Manager"
-            rules={[{ required: true, message: 'Please select branch manager' }]}
+            name="longitude"
+            label="Longitude"
+            rules={[
+              { required: true, message: 'Please enter longitude' },
+              { type: 'number', min: -180, max: 180, message: 'Longitude must be between -180 and 180' }
+            ]}
           >
-            <Select placeholder="Select branch manager">
-              {users.map(user => (
-                <Option key={user._id} value={user._id}>
-                  {user.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={saving}
-                icon={<Save size={16} />}
-              >
-                Update Branch
-              </Button>
-              <Button
-                onClick={() => {
-                  setModalVisible(false);
-                  setEditingBranch(null);
-                  form.resetFields();
-                }}
-              >
-                Cancel
-              </Button>
-            </Space>
+            <InputNumber
+              placeholder="e.g: 28.0473"
+              className="w-full"
+              step={0.000001}
+              precision={6}
+            />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
     </div>
   );
 };
