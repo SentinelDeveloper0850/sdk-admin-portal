@@ -170,7 +170,7 @@ export const PolicySignupViewModal = ({
         {/* Requested Information */}
         {record.requestedInfo && record.requestedInfo.length > 0 && (
           <Card title="Requested Information" size="small">
-            <Timeline size="small">
+            <Timeline>
               {record.requestedInfo.map((info, index) => (
                 <Timeline.Item key={index}>
                   <div>
@@ -200,7 +200,7 @@ export const PolicySignupViewModal = ({
         {/* Internal Notes */}
         {record.internalNotes && record.internalNotes.length > 0 && (
           <Card title="Internal Notes" size="small">
-            <Timeline size="small">
+            <Timeline>
               {record.internalNotes.map((note, index) => (
                 <Timeline.Item key={index}>
                   <div>
@@ -221,7 +221,7 @@ export const PolicySignupViewModal = ({
         {/* Status History */}
         {record.statusHistory && record.statusHistory.length > 0 && (
           <Card title="Status History" size="small">
-            <Timeline size="small">
+            <Timeline>
               {record.statusHistory.map((status, index) => (
                 <Timeline.Item key={index}>
                   <div>

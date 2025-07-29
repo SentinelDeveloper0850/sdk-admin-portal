@@ -1,18 +1,19 @@
-import { connectToDatabase } from "@/lib/db";
 import { BranchModel } from "@/app/models/system/branch.schema";
+import { connectToDatabase } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
+    const { id } = await params;
 
     await connectToDatabase();
 
     const updatedBranch = await BranchModel.findByIdAndUpdate(
-      params.id,
+      id,
       { ...body, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
@@ -51,12 +52,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     await connectToDatabase();
 
-    const result = await BranchModel.findByIdAndDelete(params.id);
+    const result = await BranchModel.findByIdAndDelete(id);
 
     if (!result) {
       return NextResponse.json(

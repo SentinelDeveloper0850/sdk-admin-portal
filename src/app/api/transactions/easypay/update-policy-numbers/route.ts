@@ -15,11 +15,11 @@ export async function POST(request: Request) {
 
     const response = await updateTransactionPolicyNumbers(transactions);
 
-    if (response.success) {
+    if (response?.success) {
       return NextResponse.json({
         success: true,
         data: response.data,
-        message: `Successfully updated ${response.data.updatedCount} transactions`
+        message: `Successfully updated ${response?.data?.updatedCount || 0} transactions`
       }, { status: 200 });
     } else {
       return NextResponse.json(

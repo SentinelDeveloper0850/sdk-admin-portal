@@ -1,26 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { PolicySignUpModel } from "@/app/models/scheme/policy-signup-request.schema";
 import { UserModel } from "@/app/models/hr/user.schema";
+import { PolicySignUpModel } from "@/app/models/scheme/policy-signup-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
-    
-    const request = await PolicySignUpModel.findById(params.id);
-    
+
+    const { id } = await params;
+    const request = await PolicySignUpModel.findById(id);
+
     if (!request) {
       return NextResponse.json(
         { success: false, error: "Signup request not found" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json({ success: true, data: request });
   } catch (error: any) {
     console.error("Error fetching signup request:", error);
@@ -33,19 +34,20 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
-    
+
     const body = await request.json();
     const { action, ...actionData } = body;
-    
+    const { id } = await params;
+
     let updateData: any = {
       updated_at: new Date(),
       updated_by: actionData.userId || actionData.assignedBy || actionData.reviewedBy || actionData.approvedBy || actionData.rejectedBy || actionData.requestedBy || actionData.author || actionData.escalatedBy || actionData.archivedBy
     };
-    
+
     switch (action) {
       case "assign_consultant":
         const consultant = await UserModel.findById(actionData.consultantId);
@@ -55,7 +57,7 @@ export async function PATCH(
             { status: 404 }
           );
         }
-        
+
         updateData = {
           ...updateData,
           assignedConsultant: actionData.consultantId,
@@ -71,7 +73,7 @@ export async function PATCH(
           }
         };
         break;
-        
+
       case "mark_as_reviewed":
         updateData = {
           ...updateData,
@@ -86,10 +88,10 @@ export async function PATCH(
           }
         };
         break;
-        
+
       case "approve":
         const generatedPolicyNumber = actionData.policyNumber || `POL-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-        
+
         updateData = {
           ...updateData,
           currentStatus: "approved",
@@ -106,7 +108,7 @@ export async function PATCH(
           }
         };
         break;
-        
+
       case "reject":
         updateData = {
           ...updateData,
@@ -123,7 +125,7 @@ export async function PATCH(
           }
         };
         break;
-        
+
       case "request_more_info":
         updateData = {
           ...updateData,
@@ -144,7 +146,7 @@ export async function PATCH(
           }
         };
         break;
-        
+
       case "add_notes":
         updateData = {
           ...updateData,
@@ -159,7 +161,7 @@ export async function PATCH(
           }
         };
         break;
-        
+
       case "escalate":
         const escalatedUser = await UserModel.findById(actionData.escalatedTo);
         if (!escalatedUser) {
@@ -168,7 +170,7 @@ export async function PATCH(
             { status: 404 }
           );
         }
-        
+
         updateData = {
           ...updateData,
           currentStatus: "escalated",
@@ -186,7 +188,7 @@ export async function PATCH(
           }
         };
         break;
-        
+
       case "archive":
         updateData = {
           ...updateData,
@@ -201,27 +203,27 @@ export async function PATCH(
           }
         };
         break;
-        
+
       default:
         return NextResponse.json(
           { success: false, error: "Invalid action" },
           { status: 400 }
         );
     }
-    
+
     const updatedRequest = await PolicySignUpModel.findByIdAndUpdate(
-      params.id,
+      id,
       updateData,
       { new: true }
     );
-    
+
     if (!updatedRequest) {
       return NextResponse.json(
         { success: false, error: "Signup request not found" },
         { status: 404 }
       );
     }
-    
+
     // If approved, create policy record
     if (action === "approve") {
       try {
@@ -244,7 +246,7 @@ export async function PATCH(
         // Continue even if policy creation fails
       }
     }
-    
+
     return NextResponse.json({ success: true, data: updatedRequest });
   } catch (error: any) {
     console.error("Error updating signup request:", error);
