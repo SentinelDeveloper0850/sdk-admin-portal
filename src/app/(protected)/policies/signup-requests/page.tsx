@@ -587,7 +587,7 @@ const SignupRequestsPage = () => {
         width="60%"
         onClose={closeViewDrawer}
         open={viewDrawerVisible}
-        bodyStyle={{ paddingBottom: 80 }}
+        styles={{ body: { paddingBottom: 80 } }}
       >
         {selectedRecord && (
           <PolicySignupViewModal
@@ -605,7 +605,7 @@ const SignupRequestsPage = () => {
         width="40%"
         onClose={closeActionDrawer}
         open={actionDrawerVisible}
-        bodyStyle={{ paddingBottom: 80 }}
+        styles={{ body: { paddingBottom: 80 } }}
       >
         <PolicySignupActionModals
           visible={actionDrawerVisible}

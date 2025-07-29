@@ -5,7 +5,6 @@ import { Card, Collapse, Descriptions, Image, Modal, Space, Tag, Timeline, Typog
 import { useState } from "react";
 
 const { Text, Title } = Typography;
-const { Panel } = Collapse;
 
 interface PolicySignupViewModalProps {
   visible: boolean;
@@ -13,67 +12,21 @@ interface PolicySignupViewModalProps {
   record: IPolicySignUp | null;
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "submitted":
-      return "blue";
-    case "reviewed":
-      return "orange";
-    case "approved":
-      return "green";
-    case "rejected":
-      return "red";
-    case "pending_info":
-      return "purple";
-    case "escalated":
-      return "volcano";
-    case "archived":
-      return "default";
-    default:
-      return "default";
-  }
-};
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case "submitted":
-      return "Submitted";
-    case "reviewed":
-      return "Reviewed";
-    case "approved":
-      return "Approved";
-    case "rejected":
-      return "Rejected";
-    case "pending_info":
-      return "Pending Info";
-    case "escalated":
-      return "Escalated";
-    case "archived":
-      return "Archived";
-    default:
-      return status;
-  }
-};
-
 export const PolicySignupViewModal = ({
   visible,
   onClose,
   record
 }: PolicySignupViewModalProps) => {
-  // File preview modal state
   const [filePreviewVisible, setFilePreviewVisible] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null);
 
-  // File preview handlers
   const handleFilePreview = (file: any) => {
-    if (file.cloudinaryUrl) {
-      setPreviewFile({
-        url: file.cloudinaryUrl,
-        name: file.originalName,
-        type: file.type
-      });
-      setFilePreviewVisible(true);
-    }
+    setPreviewFile({
+      url: file.cloudinaryUrl,
+      name: file.originalName,
+      type: file.type
+    });
+    setFilePreviewVisible(true);
   };
 
   const closeFilePreview = () => {
@@ -81,18 +34,15 @@ export const PolicySignupViewModal = ({
     setPreviewFile(null);
   };
 
-  // Helper function to get file extension
   const getFileExtension = (filename: string) => {
     return filename.split('.').pop()?.toLowerCase() || '';
   };
 
-  // Helper function to check if file is image
   const isImageFile = (filename: string) => {
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-    return imageExtensions.includes(getFileExtension(filename));
+    const ext = getFileExtension(filename);
+    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext);
   };
 
-  // Helper function to get file icon
   const getFileIcon = (filename: string, type: string) => {
     const ext = getFileExtension(filename);
 
@@ -109,14 +59,449 @@ export const PolicySignupViewModal = ({
       case 'xls':
       case 'xlsx':
         return '📊';
-      case 'txt':
-        return '📄';
       default:
         return '📎';
     }
   };
 
   if (!record || !visible) return null;
+
+  // Prepare collapse items
+  const collapseItems = [
+    {
+      key: 'basic-info',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          📋 Basic Information
+        </span>
+      ),
+      children: (
+        <Descriptions column={2} size="small">
+          <Descriptions.Item label="Request ID">
+            <Tag color="blue">{record.requestId}</Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Status">
+            <Tag color={
+              record.currentStatus === 'approved' ? 'green' :
+                record.currentStatus === 'rejected' ? 'red' :
+                  record.currentStatus === 'escalated' ? 'orange' :
+                    'default'
+            }>
+              {record.currentStatus?.toUpperCase()}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Full Names">
+            {record.fullNames}
+          </Descriptions.Item>
+          <Descriptions.Item label="Surname">
+            {record.surname}
+          </Descriptions.Item>
+          <Descriptions.Item label="Email">
+            {record.email || 'Not provided'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Phone">
+            {record.phone}
+          </Descriptions.Item>
+          <Descriptions.Item label="Address">
+            {record.address || 'Not provided'}
+          </Descriptions.Item>
+          <Descriptions.Item label="ID Number">
+            {record.identificationNumber}
+          </Descriptions.Item>
+          <Descriptions.Item label="Plan">
+            <Tag color="purple">{record.plan?.name || 'Unknown Plan'}</Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Number of Dependents">
+            {record.numberOfDependents}
+          </Descriptions.Item>
+          <Descriptions.Item label="Created At">
+            {new Date(record.created_at).toLocaleString()}
+          </Descriptions.Item>
+        </Descriptions>
+      )
+    }
+  ];
+
+  // Add dependents section if exists
+  if (record.dependents && record.dependents.length > 0) {
+    collapseItems.push({
+      key: 'dependents',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          👥 Dependents ({record.dependents.length})
+        </span>
+      ),
+      children: (
+        <Space direction="vertical" style={{ width: "100%" }}>
+          {record.dependents.map((dependent, index) => (
+            <Card key={index} size="small" title={`Dependent ${index + 1}`}>
+              <Descriptions column={2} size="small">
+                <Descriptions.Item label="Full Names">
+                  {dependent.fullNames}
+                </Descriptions.Item>
+                <Descriptions.Item label="Surname">
+                  {dependent.surname}
+                </Descriptions.Item>
+                <Descriptions.Item label="ID Number">
+                  {dependent.identificationNumber || 'Not provided'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Date of Birth">
+                  {dependent.dateOfBirth || 'Not provided'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Type">
+                  <Tag color={dependent.isChild ? 'green' : 'blue'}>
+                    {dependent.isChild ? 'Child' : 'Adult'}
+                  </Tag>
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          ))}
+        </Space>
+      )
+    });
+  }
+
+  // Add uploaded files section if exists
+  if (record.uploadedFiles && record.uploadedFiles.length > 0) {
+    collapseItems.push({
+      key: 'uploaded-files',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          📎 Uploaded Files ({record.uploadedFiles.length})
+        </span>
+      ),
+      children: (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {record.uploadedFiles.map((file, index) => (
+            <div key={index} style={{
+              border: '1px solid #d9d9d9',
+              borderRadius: '8px',
+              padding: '12px',
+              backgroundColor: '#fafafa',
+              cursor: file.cloudinaryUrl ? 'pointer' : 'default',
+              transition: 'all 0.2s ease'
+            }}
+              onClick={() => file.cloudinaryUrl && handleFilePreview(file)}
+              onMouseEnter={(e) => {
+                if (file.cloudinaryUrl) {
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (file.cloudinaryUrl) {
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }
+              }}
+            >
+              {/* File Thumbnail */}
+              <div style={{
+                width: '100%',
+                aspectRatio: '1 / 1',
+                backgroundColor: '#fff',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '8px',
+                border: '1px solid #e8e8e8',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                {isImageFile(file.originalName) && file.cloudinaryUrl ? (
+                  <Image
+                    src={file.cloudinaryUrl}
+                    alt={file.originalName}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center'
+                    }}
+                    preview={false}
+                  />
+                ) : (
+                  <div style={{
+                    fontSize: '48px',
+                    color: '#666',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%'
+                  }}>
+                    {getFileIcon(file.originalName, file.type)}
+                  </div>
+                )}
+              </div>
+
+              {/* File Info */}
+              <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
+                {file.originalName}
+              </div>
+              <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
+                <span style={{ textTransform: 'capitalize' }}>
+                  {file.personType.replace('-', ' ')}
+                </span>
+                {' • '}
+                <span style={{ textTransform: 'capitalize' }}>
+                  {file.type.replace('-', ' ')}
+                </span>
+              </div>
+              {file.cloudinaryUrl && (
+                <div style={{ fontSize: '11px', color: '#666' }}>
+                  <span style={{ color: '#52c41a' }}>
+                    ✓ Uploaded
+                  </span>
+                  {' • '}
+                  <a
+                    href={file.cloudinaryUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#1890ff' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    📥 Download
+                  </a>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )
+    });
+  }
+
+  // Add assignment section if exists
+  if (record.assignedConsultantName) {
+    collapseItems.push({
+      key: 'assignment',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          👤 Assignment
+        </span>
+      ),
+      children: (
+        <Descriptions column={2} size="small">
+          <Descriptions.Item label="Assigned Consultant">
+            {record.assignedConsultantName}
+          </Descriptions.Item>
+          <Descriptions.Item label="Assigned At">
+            {record.assignedAt ? new Date(record.assignedAt).toLocaleString() : 'Unknown'}
+          </Descriptions.Item>
+        </Descriptions>
+      )
+    });
+  }
+
+  // Add policy information section if exists
+  if (record.generatedPolicyNumber) {
+    collapseItems.push({
+      key: 'policy-info',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          📋 Policy Information
+        </span>
+      ),
+      children: (
+        <Descriptions column={2} size="small">
+          <Descriptions.Item label="Policy Number">
+            <Tag color="green">{record.generatedPolicyNumber}</Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Created At">
+            {record.policyCreatedAt ? new Date(record.policyCreatedAt).toLocaleString() : 'Unknown'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Created By">
+            {record.policyCreatedBy || 'Unknown'}
+          </Descriptions.Item>
+        </Descriptions>
+      )
+    });
+  }
+
+  // Add rejection information section if exists
+  if (record.rejectionReason) {
+    collapseItems.push({
+      key: 'rejection',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          ❌ Rejection Details
+        </span>
+      ),
+      children: (
+        <Descriptions column={1} size="small">
+          <Descriptions.Item label="Reason">
+            <Tag color="red">{record.rejectionReason}</Tag>
+          </Descriptions.Item>
+          {record.rejectionNotes && (
+            <Descriptions.Item label="Notes">
+              <Text>{record.rejectionNotes}</Text>
+            </Descriptions.Item>
+          )}
+        </Descriptions>
+      )
+    });
+  }
+
+  // Add escalation information section if exists
+  if (record.escalatedToName) {
+    collapseItems.push({
+      key: 'escalation',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          ⚠️ Escalation Details
+        </span>
+      ),
+      children: (
+        <Descriptions column={2} size="small">
+          <Descriptions.Item label="Escalated To">
+            {record.escalatedToName}
+          </Descriptions.Item>
+          <Descriptions.Item label="Escalated At">
+            {record.escalatedAt ? new Date(record.escalatedAt).toLocaleString() : 'Unknown'}
+          </Descriptions.Item>
+          {record.escalationReason && (
+            <Descriptions.Item label="Reason" span={2}>
+              <Text>{record.escalationReason}</Text>
+            </Descriptions.Item>
+          )}
+        </Descriptions>
+      )
+    });
+  }
+
+  // Add requested information section if exists
+  if (record.requestedInfo && record.requestedInfo.length > 0) {
+    const timelineItems = record.requestedInfo.map((info, index) => ({
+      key: index,
+      children: (
+        <div>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            {info.field}
+          </div>
+          <div style={{ color: '#666', marginBottom: '4px' }}>
+            {info.description}
+          </div>
+          <div style={{ fontSize: '12px', color: '#999' }}>
+            Requested on {new Date(info.requestedAt).toLocaleDateString()}
+          </div>
+          {info.providedAt && (
+            <div style={{ fontSize: '12px', color: '#52c41a', marginTop: '4px' }}>
+              ✓ Provided on {new Date(info.providedAt).toLocaleDateString()}
+            </div>
+          )}
+        </div>
+      )
+    }));
+
+    collapseItems.push({
+      key: 'requested-info',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          ❓ Requested Information ({record.requestedInfo.length})
+        </span>
+      ),
+      children: (
+        <Timeline items={timelineItems} />
+      )
+    });
+  }
+
+  // Add internal notes section if exists
+  if (record.internalNotes && record.internalNotes.length > 0) {
+    const timelineItems = record.internalNotes.map((note, index) => ({
+      key: index,
+      children: (
+        <div>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            {note.authorName}
+            {note.isPrivate && (
+              <Tag color="orange" style={{ marginLeft: '8px' }}>Private</Tag>
+            )}
+          </div>
+          <div style={{ color: '#666', marginBottom: '4px' }}>
+            {note.text}
+          </div>
+          <div style={{ fontSize: '12px', color: '#999' }}>
+            {new Date(note.createdAt).toLocaleString()}
+          </div>
+        </div>
+      )
+    }));
+
+    collapseItems.push({
+      key: 'internal-notes',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          📝 Internal Notes ({record.internalNotes.length})
+        </span>
+      ),
+      children: (
+        <Timeline items={timelineItems} />
+      )
+    });
+  }
+
+  // Add status history section if exists
+  if (record.statusHistory && record.statusHistory.length > 0) {
+    const timelineItems = record.statusHistory.map((status, index) => ({
+      key: index,
+      children: (
+        <div>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            <Tag color={
+              status.status === 'approved' ? 'green' :
+                status.status === 'rejected' ? 'red' :
+                  status.status === 'escalated' ? 'orange' :
+                    'default'
+            }>
+              {status.status.toUpperCase()}
+            </Tag>
+          </div>
+          <div style={{ color: '#666', marginBottom: '4px' }}>
+            Changed by: {status.changedBy}
+          </div>
+          {status.notes && (
+            <div style={{ color: '#666', marginBottom: '4px' }}>
+              {status.notes}
+            </div>
+          )}
+          <div style={{ fontSize: '12px', color: '#999' }}>
+            {new Date(status.changedAt).toLocaleString()}
+          </div>
+        </div>
+      )
+    }));
+
+    collapseItems.push({
+      key: 'status-history',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          📊 Status History ({record.statusHistory.length})
+        </span>
+      ),
+      children: (
+        <Timeline items={timelineItems} />
+      )
+    });
+  }
+
+  // Add original message section if exists
+  if (record.message) {
+    collapseItems.push({
+      key: 'original-message',
+      label: (
+        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+          💬 Original Message
+        </span>
+      ),
+      children: (
+        <Text>{record.message}</Text>
+      )
+    });
+  }
 
   return (
     <>
@@ -125,418 +510,15 @@ export const PolicySignupViewModal = ({
         bordered
         size="small"
         style={{ width: "100%" }}
-      >
-        {/* Basic Information */}
-        <Panel
-          header={
-            <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-              📋 Basic Information
-            </span>
-          }
-          key="basic-info"
-        >
-          <Descriptions column={2} size="small">
-            <Descriptions.Item label="Request ID">
-              <Text code>{record.requestId}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Status">
-              <Tag color={getStatusColor(record.currentStatus || "submitted")}>
-                {getStatusText(record.currentStatus || "submitted")}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Full Names">
-              {record.fullNames} {record.surname}
-            </Descriptions.Item>
-            <Descriptions.Item label="ID Number">
-              {record.identificationNumber}
-            </Descriptions.Item>
-            <Descriptions.Item label="Email">
-              {record.email || "Not provided"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Phone">
-              {record.phone}
-            </Descriptions.Item>
-            <Descriptions.Item label="Address" span={2}>
-              {record.address || "Not provided"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Plan">
-              {record.plan?.name || record.plan?.id || "Unknown Plan"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Dependents">
-              {record.numberOfDependents}
-            </Descriptions.Item>
-            <Descriptions.Item label="Submitted">
-              {new Date(record.created_at).toLocaleDateString()}
-            </Descriptions.Item>
-          </Descriptions>
-        </Panel>
-
-        {/* Dependents Information */}
-        {record.dependents && record.dependents.length > 0 && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                👥 Dependents ({record.dependents.length})
-              </span>
-            }
-            key="dependents"
-          >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              {record.dependents.map((dependent, index) => (
-                <Card key={dependent.id || index} size="small" style={{ backgroundColor: '#fafafa' }}>
-                  <Descriptions column={2} size="small">
-                    <Descriptions.Item label="Name">
-                      <Text strong>{dependent.fullNames} {dependent.surname}</Text>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Type">
-                      <Tag color={dependent.isChild ? "blue" : "green"}>
-                        {dependent.isChild ? "Child" : "Adult"}
-                      </Tag>
-                    </Descriptions.Item>
-                    {dependent.identificationNumber && (
-                      <Descriptions.Item label="ID Number">
-                        {dependent.identificationNumber}
-                      </Descriptions.Item>
-                    )}
-                    {dependent.dateOfBirth && (
-                      <Descriptions.Item label="Date of Birth">
-                        {dependent.dateOfBirth}
-                      </Descriptions.Item>
-                    )}
-                  </Descriptions>
-                </Card>
-              ))}
-            </Space>
-          </Panel>
-        )}
-
-        {/* Uploaded Files */}
-        {record.uploadedFiles && record.uploadedFiles.length > 0 && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                📎 Uploaded Files ({record.uploadedFiles.length})
-              </span>
-            }
-            key="uploaded-files"
-          >
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-              {record.uploadedFiles.map((file, index) => (
-                <div key={index} style={{
-                  border: '1px solid #d9d9d9',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  backgroundColor: '#fafafa',
-                  cursor: file.cloudinaryUrl ? 'pointer' : 'default',
-                  transition: 'all 0.2s ease'
-                }}
-                  onClick={() => file.cloudinaryUrl && handleFilePreview(file)}
-                  onMouseEnter={(e) => {
-                    if (file.cloudinaryUrl) {
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (file.cloudinaryUrl) {
-                      e.currentTarget.style.boxShadow = 'none';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }
-                  }}
-                >
-                  {/* File Thumbnail */}
-                  <div style={{
-                    width: '100%',
-                    aspectRatio: '1 / 1',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '8px',
-                    border: '1px solid #e8e8e8',
-                    overflow: 'hidden',
-                    position: 'relative'
-                  }}>
-                    {isImageFile(file.originalName) && file.cloudinaryUrl ? (
-                      <Image
-                        src={file.cloudinaryUrl}
-                        alt={file.originalName}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: 'center'
-                        }}
-                        preview={false}
-                      />
-                    ) : (
-                      <div style={{
-                        fontSize: '48px',
-                        color: '#666',
-                        textAlign: 'center',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '100%',
-                        height: '100%'
-                      }}>
-                        {getFileIcon(file.originalName, file.type)}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* File Info */}
-                  <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
-                    {file.originalName}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
-                    {file.type} • {file.personType} • {file.personName}
-                  </div>
-                  {file.cloudinaryUrl && (
-                    <div style={{ fontSize: '11px' }}>
-                      <span style={{ color: '#1890ff', cursor: 'pointer' }}>
-                        👁️ Preview
-                      </span>
-                      {' • '}
-                      <a
-                        href={file.cloudinaryUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#1890ff' }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        📥 Download
-                      </a>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Panel>
-        )}
-
-        {/* Assignment Information */}
-        {record.assignedConsultantName && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                👤 Assignment
-              </span>
-            }
-            key="assignment"
-          >
-            <Descriptions column={2} size="small">
-              <Descriptions.Item label="Assigned Consultant">
-                {record.assignedConsultantName}
-              </Descriptions.Item>
-              <Descriptions.Item label="Assigned Date">
-                {record.assignedAt ? new Date(record.assignedAt).toLocaleDateString() : "N/A"}
-              </Descriptions.Item>
-            </Descriptions>
-          </Panel>
-        )}
-
-        {/* Policy Information (if approved) */}
-        {record.generatedPolicyNumber && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                📋 Policy Information
-              </span>
-            }
-            key="policy-info"
-          >
-            <Descriptions column={2} size="small">
-              <Descriptions.Item label="Policy Number">
-                <Text strong style={{ fontFamily: 'monospace' }}>{record.generatedPolicyNumber}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Created Date">
-                {record.policyCreatedAt ? new Date(record.policyCreatedAt).toLocaleDateString() : "N/A"}
-              </Descriptions.Item>
-            </Descriptions>
-          </Panel>
-        )}
-
-        {/* Rejection Information (if rejected) */}
-        {record.rejectionReason && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                ❌ Rejection Details
-              </span>
-            }
-            key="rejection"
-          >
-            <Descriptions column={1} size="small">
-              <Descriptions.Item label="Reason">
-                {record.rejectionReason}
-              </Descriptions.Item>
-              {record.rejectionNotes && (
-                <Descriptions.Item label="Notes">
-                  {record.rejectionNotes}
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-          </Panel>
-        )}
-
-        {/* Escalation Information (if escalated) */}
-        {record.escalatedToName && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                ⚠️ Escalation Details
-              </span>
-            }
-            key="escalation"
-          >
-            <Descriptions column={2} size="small">
-              <Descriptions.Item label="Escalated To">
-                {record.escalatedToName}
-              </Descriptions.Item>
-              <Descriptions.Item label="Escalated Date">
-                {record.escalatedAt ? new Date(record.escalatedAt).toLocaleDateString() : "N/A"}
-              </Descriptions.Item>
-              {record.escalationReason && (
-                <Descriptions.Item label="Reason" span={2}>
-                  {record.escalationReason}
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-          </Panel>
-        )}
-
-        {/* Requested Information */}
-        {record.requestedInfo && record.requestedInfo.length > 0 && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                ❓ Requested Information ({record.requestedInfo.length})
-              </span>
-            }
-            key="requested-info"
-          >
-            <Timeline>
-              {record.requestedInfo.map((info, index) => (
-                <Timeline.Item key={index}>
-                  <div>
-                    <Text strong>{info.field}</Text>
-                    <br />
-                    <Text type="secondary">{info.description}</Text>
-                    <br />
-                    <Text type="secondary">
-                      Requested: {new Date(info.requestedAt).toLocaleDateString()}
-                    </Text>
-                    {info.providedValue && (
-                      <>
-                        <br />
-                        <Text type="success">
-                          Provided: {info.providedValue}
-                          {info.providedAt && ` (${new Date(info.providedAt).toLocaleDateString()})`}
-                        </Text>
-                      </>
-                    )}
-                  </div>
-                </Timeline.Item>
-              ))}
-            </Timeline>
-          </Panel>
-        )}
-
-        {/* Internal Notes */}
-        {record.internalNotes && record.internalNotes.length > 0 && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                📝 Internal Notes ({record.internalNotes.length})
-              </span>
-            }
-            key="internal-notes"
-          >
-            <Timeline>
-              {record.internalNotes.map((note, index) => (
-                <Timeline.Item key={index}>
-                  <div>
-                    <Text strong>{note.authorName}</Text>
-                    <br />
-                    <Text>{note.text}</Text>
-                    <br />
-                    <Text type="secondary">
-                      {new Date(note.createdAt).toLocaleDateString()}
-                    </Text>
-                  </div>
-                </Timeline.Item>
-              ))}
-            </Timeline>
-          </Panel>
-        )}
-
-        {/* Status History */}
-        {record.statusHistory && record.statusHistory.length > 0 && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                📊 Status History ({record.statusHistory.length})
-              </span>
-            }
-            key="status-history"
-          >
-            <Timeline>
-              {record.statusHistory.map((status, index) => (
-                <Timeline.Item key={index}>
-                  <div>
-                    <Tag color={getStatusColor(status.status)}>
-                      {getStatusText(status.status)}
-                    </Tag>
-                    <br />
-                    <Text type="secondary">
-                      By: {status.changedBy} on {new Date(status.changedAt).toLocaleDateString()}
-                    </Text>
-                    {status.notes && (
-                      <>
-                        <br />
-                        <Text>{status.notes}</Text>
-                      </>
-                    )}
-                  </div>
-                </Timeline.Item>
-              ))}
-            </Timeline>
-          </Panel>
-        )}
-
-        {/* Original Message */}
-        {record.message && (
-          <Panel
-            header={
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                💬 Original Message
-              </span>
-            }
-            key="original-message"
-          >
-            <Text>{record.message}</Text>
-          </Panel>
-        )}
-      </Collapse>
+        items={collapseItems}
+      />
 
       {/* File Preview Modal */}
       <Modal
         title={`File Preview: ${previewFile?.name}`}
         open={filePreviewVisible}
         onCancel={closeFilePreview}
-        footer={[
-          <a
-            key="download"
-            href={previewFile?.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ marginRight: '8px' }}
-          >
-            Download
-          </a>
-        ]}
+        footer={null}
         width={800}
         centered
       >
@@ -546,24 +528,29 @@ export const PolicySignupViewModal = ({
               <Image
                 src={previewFile.url}
                 alt={previewFile.name}
-                style={{ maxWidth: '100%', maxHeight: '500px' }}
+                style={{ maxWidth: '100%', maxHeight: '60vh' }}
                 preview={false}
               />
             ) : (
-              <div style={{
-                padding: '40px',
-                backgroundColor: '#f5f5f5',
-                borderRadius: '8px',
-                margin: '20px 0'
-              }}>
+              <div style={{ padding: '40px' }}>
                 <div style={{ fontSize: '64px', marginBottom: '16px' }}>
                   {getFileIcon(previewFile.name, previewFile.type)}
                 </div>
-                <div style={{ fontSize: '16px', color: '#666' }}>
+                <div style={{ fontSize: '18px', marginBottom: '8px' }}>
                   {previewFile.name}
                 </div>
-                <div style={{ fontSize: '14px', color: '#999', marginTop: '8px' }}>
-                  Click "Download" to view this file
+                <div style={{ color: '#666' }}>
+                  This file type cannot be previewed
+                </div>
+                <div style={{ marginTop: '16px' }}>
+                  <a
+                    href={previewFile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#1890ff' }}
+                  >
+                    📥 Download File
+                  </a>
                 </div>
               </div>
             )}
