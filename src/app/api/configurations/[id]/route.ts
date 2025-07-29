@@ -1,3 +1,4 @@
+import { ConfigurationModel } from "@/app/models/system/configuration.schema";
 import { connectToDatabase } from "@/lib/db";
 import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
@@ -24,15 +25,13 @@ export async function PUT(
       );
     }
 
-    const { db } = await connectToDatabase();
+    await connectToDatabase();
 
     // Check if configuration with same key already exists (excluding current one)
-    const existingConfig = await db
-      .collection("configurations")
-      .findOne({
-        key: key.toUpperCase(),
-        _id: { $ne: new ObjectId(id) }
-      });
+    const existingConfig = await ConfigurationModel.findOne({
+      key: key.toUpperCase(),
+      _id: { $ne: new ObjectId(id) }
+    });
 
     if (existingConfig) {
       return NextResponse.json(
@@ -56,10 +55,7 @@ export async function PUT(
       updatedBy: updatedBy,
     };
 
-    const result = await db.collection("configurations").updateOne(
-      { _id: new ObjectId(id) },
-      { $set: updateData }
-    );
+    const result = await ConfigurationModel.findByIdAndUpdate(id, updateData, { new: true });
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
@@ -103,13 +99,11 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    const { db } = await connectToDatabase();
+    await connectToDatabase();
 
-    const result = await db.collection("configurations").deleteOne({
-      _id: new ObjectId(id),
-    });
+    const result = await ConfigurationModel.findByIdAndDelete(id);
 
-    if (result.deletedCount === 0) {
+    if (!result) {
       return NextResponse.json(
         {
           success: false,
