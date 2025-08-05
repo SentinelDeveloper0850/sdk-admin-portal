@@ -4,6 +4,7 @@ import {
   searchTransactions,
   searchTransactionsByAmount,
   searchTransactionsByDate,
+  searchTransactionsByPolicyNumber,
 } from "@/server/actions/easypay-transactions";
 
 export async function POST(request: Request) {
@@ -19,6 +20,18 @@ export async function POST(request: Request) {
       const pageSize = body.pageSize || 50;
 
       const response = await searchTransactions(searchText, page, pageSize);
+
+      if (response.success) {
+        return NextResponse.json(response.data, { status: 200 });
+      }
+    }
+
+    if (searchType == "policyNumber") {
+      const searchText = body.searchText;
+      const page = body.page || 1;
+      const pageSize = body.pageSize || 50;
+
+      const response = await searchTransactionsByPolicyNumber(searchText, page, pageSize);
 
       if (response.success) {
         return NextResponse.json(response.data, { status: 200 });

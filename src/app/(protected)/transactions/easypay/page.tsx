@@ -76,6 +76,7 @@ export default function EasypayTransactionsPage() {
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
 
   const [search, setSearch] = useState("");
+  const [policyNumberSearch, setPolicyNumberSearch] = useState("");
   const [amountFilterType, setAmountFilterType] = useState("=");
   const [amount, setAmount] = useState<number | string>("");
 
@@ -97,7 +98,7 @@ export default function EasypayTransactionsPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResultsCount, setSearchResultsCount] = useState(0);
   const [currentSearchParams, setCurrentSearchParams] = useState<{
-    type: 'text' | 'amount' | 'date';
+    type: 'text' | 'policyNumber' | 'amount' | 'date';
     value: string;
     amount?: number;
     filterType?: string;
@@ -295,12 +296,54 @@ export default function EasypayTransactionsPage() {
     }
   };
 
+  const searchByPolicyNumber = async (value: string, page = 1, pageSize = pagination.pageSize) => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/transactions/easypay/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          searchText: value,
+          searchType: "policyNumber",
+          page,
+          pageSize
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to search transactions");
+        return;
+      }
+
+      const data = await response.json();
+      setTransactions(data.transactions || data);
+      setIsSearching(true);
+      setSearchResultsCount(data.total || data.length);
+      setCurrentSearchParams({ type: 'policyNumber', value });
+      setPagination({
+        current: page,
+        pageSize: pageSize
+      });
+    } catch (err) {
+      console.log(err);
+      setError("An error occurred while searching transactions.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSearchPagination = async (page: number, pageSize: number) => {
     if (!currentSearchParams) return;
 
     switch (currentSearchParams.type) {
       case 'text':
         await searchTransactions(currentSearchParams.value, page, pageSize);
+        break;
+      case 'policyNumber':
+        await searchByPolicyNumber(currentSearchParams.value, page, pageSize);
         break;
       case 'amount':
         await searchByAmount({
@@ -708,6 +751,29 @@ export default function EasypayTransactionsPage() {
                   className="mb-2 uppercase dark:text-white"
                   style={{ letterSpacing: ".2rem" }}
                 >
+                  Search by Policy Number
+                </p>
+                <Search
+                  allowClear
+                  value={policyNumberSearch}
+                  placeholder="Policy Number..."
+                  onChange={(event: any) => setPolicyNumberSearch(event.target.value)}
+                  onSearch={(value: string) =>
+                    value.length > 0
+                      ? searchByPolicyNumber(value)
+                      : fetchTransactions(1, pagination.pageSize)
+                  }
+                  onClear={() => {
+                    setPolicyNumberSearch("");
+                    fetchTransactions(1, pagination.pageSize);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item style={{ marginBottom: "0" }}>
+                <p
+                  className="mb-2 uppercase dark:text-white"
+                  style={{ letterSpacing: ".2rem" }}
+                >
                   Search for Amount
                 </p>
                 <Space>
@@ -790,6 +856,7 @@ export default function EasypayTransactionsPage() {
                 </span>
                 <span style={{ fontWeight: "600", color: "#ffffff" }}>
                   {currentSearchParams.type === 'text' && `"${currentSearchParams.value}"`}
+                  {currentSearchParams.type === 'policyNumber' && `Policy Number: "${currentSearchParams.value}"`}
                   {currentSearchParams.type === 'amount' && `${currentSearchParams.filterType} ${currentSearchParams.amount}`}
                   {currentSearchParams.type === 'date' && `Date: ${currentSearchParams.date}`}
                 </span>
@@ -804,6 +871,7 @@ export default function EasypayTransactionsPage() {
                   setSearchResultsCount(0);
                   setCurrentSearchParams(null);
                   setSearch("");
+                  setPolicyNumberSearch("");
                   setAmount("");
                   fetchTransactions(1, pagination.pageSize);
                 }}

@@ -180,9 +180,7 @@ export default function PoliciesPage() {
             render: (text) =>
               text ? (
                 <Button
-                  onClick={() =>
-                    setPreviewImage(`data:image/png;base64,${text}`)
-                  }
+                  onClick={() => setPreviewImage(text)}
                 >
                   View
                 </Button>
@@ -196,19 +194,26 @@ export default function PoliciesPage() {
       {/* Modal to preview payment history image */}
       <Modal
         open={!!previewImage}
+        title={<div className="flex justify-between items-center pb-4">
+          <h1>Payment History</h1>
+          <Button key="close" onClick={() => setPreviewImage(null)}>
+            Close
+          </Button>
+        </div>}
         footer={[
-          <Button key="download" onClick={handleDownload}>
-            Download
-          </Button>,
-          // <Button key="email" onClick={handleEmailShare}>
-          //   Share via Email
-          // </Button>,
           <Button key="close" onClick={() => setPreviewImage(null)}>
             Close
           </Button>,
         ]}
+        closable={false}
         onCancel={() => setPreviewImage(null)}
         width="80vw"
+        style={{
+          padding: "20px",
+        }}
+        bodyStyle={{
+          marginTop: "20px",
+        }}
       >
         {previewImage && (
           <img

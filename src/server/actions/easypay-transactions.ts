@@ -244,6 +244,51 @@ export const searchTransactions = async (searchText: string, page = 1, pageSize 
   }
 };
 
+export const searchTransactionsByPolicyNumber = async (searchText: string, page = 1, pageSize = 50) => {
+  try {
+    await connectToDatabase();
+
+    const skip = (page - 1) * pageSize;
+
+    // Count total matching documents - only search policyNumber field
+    const totalCount = await EasypayTransactionModel.countDocuments({
+      policyNumber: { $regex: searchText, $options: "i" }
+    });
+
+    // Get paginated results - only search policyNumber field
+    const transactions = await EasypayTransactionModel.find({
+      policyNumber: { $regex: searchText, $options: "i" }
+    })
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(pageSize);
+
+    return {
+      success: true,
+      data: {
+        transactions,
+        total: totalCount,
+        pagination: {
+          current: page,
+          pageSize: pageSize,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / pageSize)
+        }
+      },
+    };
+  } catch (error: any) {
+    console.error(
+      "Error searching easypay transactions by policy number",
+      error.message
+    );
+    return {
+      success: false,
+      message:
+        "Internal Server Error ~ Error searching easypay transactions by policy number",
+    };
+  }
+};
+
 export const syncPolicyNumbers = async () => {
   try {
     await connectToDatabase();
