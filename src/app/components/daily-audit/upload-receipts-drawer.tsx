@@ -87,8 +87,8 @@ const UploadReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
     }
   };
 
-  const handleManualTotal = (value: number) => {
-    if (ocrResult) {
+  const handleManualTotal = (value: number | null) => {
+    if (ocrResult && value !== null) {
       setOcrResult({
         ...ocrResult,
         confirmedTotal: value,
@@ -298,7 +298,7 @@ const UploadReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
                     value={ocrResult.confirmedTotal}
                     onChange={handleManualTotal}
                     formatter={(value) => `R ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                    parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, ''))}
                     style={{ width: 200 }}
                     precision={2}
                   />
