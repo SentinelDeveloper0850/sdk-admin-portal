@@ -94,6 +94,16 @@ export default function EasypayTransactionsPage() {
     pageSize: 50
   });
 
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResultsCount, setSearchResultsCount] = useState(0);
+  const [currentSearchParams, setCurrentSearchParams] = useState<{
+    type: 'text' | 'amount' | 'date';
+    value: string;
+    amount?: number;
+    filterType?: string;
+    date?: string;
+  } | null>(null);
+
   const { user } = useAuth();
   const { hasRole } = useRole();
   const [notification, contextHolder] = useNotification();
@@ -121,6 +131,9 @@ export default function EasypayTransactionsPage() {
         pageSize: pageSize
       });
       setShowToSync(false);
+      setIsSearching(false);
+      setSearchResultsCount(0);
+      setCurrentSearchParams(null);
     } catch (err) {
       console.log(err);
       setError("An error occurred while fetching transactions.");
@@ -243,7 +256,7 @@ export default function EasypayTransactionsPage() {
     }
   };
 
-  const searchTransactions = async (value: string) => {
+  const searchTransactions = async (value: string, page = 1, pageSize = pagination.pageSize) => {
     setLoading(true);
     try {
       const response = await fetch("/api/transactions/easypay/search", {
@@ -251,7 +264,12 @@ export default function EasypayTransactionsPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ searchText: value, searchType: "text" }),
+        body: JSON.stringify({
+          searchText: value,
+          searchType: "text",
+          page,
+          pageSize
+        }),
       });
 
       if (!response.ok) {
@@ -261,7 +279,14 @@ export default function EasypayTransactionsPage() {
       }
 
       const data = await response.json();
-      setTransactions(data);
+      setTransactions(data.transactions || data);
+      setIsSearching(true);
+      setSearchResultsCount(data.total || data.length);
+      setCurrentSearchParams({ type: 'text', value });
+      setPagination({
+        current: page,
+        pageSize: pageSize
+      });
     } catch (err) {
       console.log(err);
       setError("An error occurred while searching transactions.");
@@ -270,7 +295,29 @@ export default function EasypayTransactionsPage() {
     }
   };
 
-  const searchByAmount = async ({ amount, filterType }: any) => {
+  const handleSearchPagination = async (page: number, pageSize: number) => {
+    if (!currentSearchParams) return;
+
+    switch (currentSearchParams.type) {
+      case 'text':
+        await searchTransactions(currentSearchParams.value, page, pageSize);
+        break;
+      case 'amount':
+        await searchByAmount({
+          amount: currentSearchParams.amount!,
+          filterType: currentSearchParams.filterType!
+        }, page, pageSize);
+        break;
+      case 'date':
+        await searchByDate({
+          date: {} as Dayjs,
+          dateString: currentSearchParams.date!
+        }, page, pageSize);
+        break;
+    }
+  };
+
+  const searchByAmount = async ({ amount, filterType }: any, page = 1, pageSize = pagination.pageSize) => {
     setLoading(true);
     try {
       const response = await fetch("/api/transactions/easypay/search", {
@@ -282,6 +329,8 @@ export default function EasypayTransactionsPage() {
           amount: amount,
           filterType: filterType,
           searchType: "amount",
+          page,
+          pageSize
         }),
       });
 
@@ -292,7 +341,14 @@ export default function EasypayTransactionsPage() {
       }
 
       const data = await response.json();
-      setTransactions(data);
+      setTransactions(data.transactions || data);
+      setIsSearching(true);
+      setSearchResultsCount(data.total || data.length);
+      setCurrentSearchParams({ type: 'amount', value: '', amount, filterType });
+      setPagination({
+        current: page,
+        pageSize: pageSize
+      });
     } catch (err) {
       console.log(err);
       setError("An error occurred while searching transactions.");
@@ -307,7 +363,7 @@ export default function EasypayTransactionsPage() {
   }: {
     date: Dayjs;
     dateString: string | string[];
-  }) => {
+  }, page = 1, pageSize = pagination.pageSize) => {
     try {
       setLoading(true);
       const formattedDate = (dateString as String).replaceAll("-", "/");
@@ -321,6 +377,8 @@ export default function EasypayTransactionsPage() {
           body: JSON.stringify({
             date: formattedDate,
             searchType: "date",
+            page,
+            pageSize
           }),
         });
 
@@ -331,7 +389,14 @@ export default function EasypayTransactionsPage() {
         }
 
         const data = await response.json();
-        setTransactions(data);
+        setTransactions(data.transactions || data);
+        setIsSearching(true);
+        setSearchResultsCount(data.total || data.length);
+        setCurrentSearchParams({ type: 'date', value: '', date: formattedDate });
+        setPagination({
+          current: page,
+          pageSize: pageSize
+        });
       }
     } catch (err) {
       console.log(err);
@@ -609,14 +674,10 @@ export default function EasypayTransactionsPage() {
       </PageHeader>
 
       {!loading ? (
-        <main>
+        <main className="space-y-4">
           <Form
             layout="vertical"
-            className="w-full"
-            style={{
-              borderBottom: "1px solid #ddd",
-              padding: "2rem 1rem 3rem 1rem",
-            }}
+            className="w-full px-0 pb-0 mb-2"
           >
             <Space size={32} wrap className="flex w-full pb-0">
               <Form.Item style={{ marginBottom: "0" }}>
@@ -634,8 +695,12 @@ export default function EasypayTransactionsPage() {
                   onSearch={(value: string) =>
                     value.length > 0
                       ? searchTransactions(value)
-                      : setTransactions([])
+                      : fetchTransactions(1, pagination.pageSize)
                   }
+                  onClear={() => {
+                    setSearch("");
+                    fetchTransactions(1, pagination.pageSize);
+                  }}
                 />
               </Form.Item>
               <Form.Item style={{ marginBottom: "0" }}>
@@ -675,8 +740,12 @@ export default function EasypayTransactionsPage() {
                           amount: amount,
                           filterType: amountFilterType,
                         })
-                        : setTransactions([])
+                        : fetchTransactions(1, pagination.pageSize)
                     }
+                    onClear={() => {
+                      setAmount("");
+                      fetchTransactions(1, pagination.pageSize);
+                    }}
                   />
                 </Space>
               </Form.Item>
@@ -712,6 +781,38 @@ export default function EasypayTransactionsPage() {
             </Space>
           </Form>
 
+          {/* Search Results Description */}
+          {isSearching && currentSearchParams && (
+            <div className="flex justify-between items-center mt-2 p-4 mb-2 bg-[#222222] rounded-md border border-[#333333]">
+              <div>
+                <span className="text-sm" style={{ fontWeight: "400", color: "#CCCCCC" }}>
+                  Search results for:{" "}
+                </span>
+                <span style={{ fontWeight: "600", color: "#ffffff" }}>
+                  {currentSearchParams.type === 'text' && `"${currentSearchParams.value}"`}
+                  {currentSearchParams.type === 'amount' && `${currentSearchParams.filterType} ${currentSearchParams.amount}`}
+                  {currentSearchParams.type === 'date' && `Date: ${currentSearchParams.date}`}
+                </span>
+                <span className="text-sm" style={{ marginLeft: "8px", color: "#CCCCCC" }}>
+                  ({searchResultsCount} results)
+                </span>
+              </div>
+              <Button
+                type="default" className="uppercase text-sm font-semibold !text-red-700 !hover:text-red-500 !border-red-700 !hover:border-red-500"
+                onClick={() => {
+                  setIsSearching(false);
+                  setSearchResultsCount(0);
+                  setCurrentSearchParams(null);
+                  setSearch("");
+                  setAmount("");
+                  fetchTransactions(1, pagination.pageSize);
+                }}
+              >
+                Clear Search
+              </Button>
+            </div>
+          )}
+
           <Table
             rowKey="_id"
             bordered
@@ -721,12 +822,17 @@ export default function EasypayTransactionsPage() {
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: stats.count,
+              total: isSearching ? searchResultsCount : stats.count,
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
               onChange: (page, pageSize) => {
-                fetchTransactions(page, pageSize);
+                if (isSearching) {
+                  // Handle search result pagination
+                  handleSearchPagination(page, pageSize);
+                } else {
+                  fetchTransactions(page, pageSize);
+                }
               }
             }}
             columns={[

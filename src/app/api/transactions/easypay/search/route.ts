@@ -15,8 +15,10 @@ export async function POST(request: Request) {
 
     if (searchType == "text") {
       const searchText = body.searchText;
+      const page = body.page || 1;
+      const pageSize = body.pageSize || 50;
 
-      const response = await searchTransactions(searchText);
+      const response = await searchTransactions(searchText, page, pageSize);
 
       if (response.success) {
         return NextResponse.json(response.data, { status: 200 });
@@ -25,8 +27,10 @@ export async function POST(request: Request) {
 
     if (searchType == "amount") {
       const { amount, filterType } = body;
+      const page = body.page || 1;
+      const pageSize = body.pageSize || 50;
 
-      const response = await searchTransactionsByAmount(amount, filterType);
+      const response = await searchTransactionsByAmount(amount, filterType, page, pageSize);
 
       if (response.success) {
         return NextResponse.json(response.data, { status: 200 });
@@ -35,8 +39,10 @@ export async function POST(request: Request) {
 
     if (searchType == "date") {
       const { date } = body;
+      const page = body.page || 1;
+      const pageSize = body.pageSize || 50;
 
-      const response = await searchTransactionsByDate(date);
+      const response = await searchTransactionsByDate(date, page, pageSize);
 
       if (response.success) {
         return NextResponse.json(response.data, { status: 200 });

@@ -9,7 +9,7 @@ import {
   PhoneOutlined,
   PlusOutlined,
   StopOutlined,
-  UserOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import { Avatar, Button } from "@nextui-org/react";
 import {
@@ -91,28 +91,61 @@ const UsersPage = () => {
     }
   };
 
-  const deactivateUser = async (id: string) => {
+  const toggleUserStatus = async (id: string, currentStatus: string) => {
     try {
+      const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+      const action = currentStatus === "Active" ? "deactivate" : "activate";
+
+      const confirmed = await sweetAlert({
+        title: `Are you sure?`,
+        text: `This will ${action} the user's account.`,
+        icon: "warning",
+        buttons: ["Cancel", `Yes, ${action} it!`],
+        dangerMode: action === "deactivate",
+      });
+
+      if (!confirmed) return;
+
       setLoading(true);
       const response = await fetch(`/api/users`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id, status: "Inactive" }),
+        body: JSON.stringify({ id, status: newStatus }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.message || "Failed to deactivate user");
+        sweetAlert({
+          title: `Failed to ${action} user!`,
+          text: errorData.message || `Failed to ${action} user`,
+          icon: "error",
+        });
         return;
       }
 
       const data = await response.json();
-      setUsers(data.users);
+
+      // Update the user in the local state
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user._id === id ? { ...user, status: newStatus } : user
+        )
+      );
+
+      sweetAlert({
+        title: `User ${action}d successfully!`,
+        icon: "success",
+        timer: 2000,
+      });
     } catch (err) {
       console.log(err);
-      setError("An error occurred while attempting to deactivate the user.");
+      sweetAlert({
+        title: "Error",
+        text: `An error occurred while attempting to execute the action.`,
+        icon: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -232,6 +265,63 @@ const UsersPage = () => {
         text: error?.response?.data?.message,
         icon: "error",
       });
+    }
+  };
+
+  const resetPassword = async (id: string, userName: string) => {
+    try {
+      const confirmed = await sweetAlert({
+        title: "Reset Password",
+        text: `Are you sure you want to reset the password for ${userName}? A new temporary password will be generated and sent to their email.`,
+        icon: "warning",
+        buttons: ["Cancel", "Yes, reset it!"],
+        dangerMode: false,
+      });
+
+      if (!confirmed) return;
+
+      setLoading(true);
+
+      const response = await fetch(`/api/users/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        sweetAlert({
+          title: "Failed to reset password!",
+          text: data.message,
+          icon: "error",
+        });
+        return;
+      }
+
+      if (data.warning) {
+        sweetAlert({
+          title: "Password Reset Successful",
+          text: `${data.message}. ${data.warning}`,
+          icon: "warning",
+        });
+      } else {
+        sweetAlert({
+          title: "Password Reset Successful",
+          text: data.message,
+          icon: "success",
+          timer: 3000,
+        });
+      }
+    } catch (err) {
+      console.error("Reset password error:", err);
+      sweetAlert({
+        title: "Error resetting password",
+        text: "Please try again later.",
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -385,12 +475,19 @@ const UsersPage = () => {
                         setEditDrawerOpen(true);
                       }
                     },
-                    ...(record.status === "Active" ? [{
-                      key: "deactivate",
-                      icon: <StopOutlined />,
-                      label: "Deactivate",
-                      onClick: () => deactivateUser(record._id)
+                    // Only show reset password for non-admin users
+                    ...(!record.roles?.includes('admin') ? [{
+                      key: "reset-password",
+                      icon: <UserOutlined />,
+                      label: "Reset Password",
+                      onClick: () => resetPassword(record._id, record.name)
                     }] : []),
+                    {
+                      key: "toggle-status",
+                      icon: <StopOutlined />,
+                      label: record.status === "Active" ? "Deactivate" : "Activate",
+                      onClick: () => toggleUserStatus(record._id, record.status)
+                    },
                     {
                       key: "delete",
                       icon: <DeleteOutlined />,

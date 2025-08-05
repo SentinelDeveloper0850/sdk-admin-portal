@@ -191,17 +191,45 @@ export const fetchToSync = async (pageSize: number = 50, page: number = 1) => {
   }
 };
 
-export const searchTransactions = async (searchText: string) => {
+export const searchTransactions = async (searchText: string, page = 1, pageSize = 50) => {
   try {
     await connectToDatabase();
 
+    const skip = (page - 1) * pageSize;
+
+    // Count total matching documents
+    const totalCount = await EasypayTransactionModel.countDocuments({
+      $or: [
+        { easypayNumber: { $regex: searchText, $options: "i" } },
+        { policyNumber: { $regex: searchText, $options: "i" } },
+        { uuid: { $regex: searchText, $options: "i" } }
+      ],
+    });
+
+    // Get paginated results
     const transactions = await EasypayTransactionModel.find({
-      $or: [{ easypayNumber: { $regex: searchText, $options: "i" } }],
-    }).sort({ date: -1 });
+      $or: [
+        { easypayNumber: { $regex: searchText, $options: "i" } },
+        { policyNumber: { $regex: searchText, $options: "i" } },
+        { uuid: { $regex: searchText, $options: "i" } }
+      ],
+    })
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(pageSize);
 
     return {
       success: true,
-      data: transactions,
+      data: {
+        transactions,
+        total: totalCount,
+        pagination: {
+          current: page,
+          pageSize: pageSize,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / pageSize)
+        }
+      },
     };
   } catch (error: any) {
     console.error(
@@ -280,11 +308,30 @@ export const syncPolicyNumbers = async () => {
 
 export const searchTransactionsByAmount = async (
   amount: number,
-  filter: string
+  filter: string,
+  page = 1,
+  pageSize = 50
 ) => {
   try {
     await connectToDatabase();
 
+    const skip = (page - 1) * pageSize;
+
+    // Count total matching documents
+    const totalCount = await EasypayTransactionModel.countDocuments({
+      $or: [
+        {
+          amount:
+            filter === ">"
+              ? { $gt: amount }
+              : filter === "<"
+                ? { $lt: amount }
+                : { $eq: amount },
+        },
+      ],
+    });
+
+    // Get paginated results
     const transactions = await EasypayTransactionModel.find({
       $or: [
         {
@@ -296,11 +343,23 @@ export const searchTransactionsByAmount = async (
                 : { $eq: amount },
         },
       ],
-    }).sort({ amount: filter === "<" ? "desc" : "asc" });
+    })
+      .sort({ amount: filter === "<" ? "desc" : "asc" })
+      .skip(skip)
+      .limit(pageSize);
 
     return {
       success: true,
-      data: transactions,
+      data: {
+        transactions,
+        total: totalCount,
+        pagination: {
+          current: page,
+          pageSize: pageSize,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / pageSize)
+        }
+      },
     };
   } catch (error: any) {
     console.error(
@@ -316,16 +375,36 @@ export const searchTransactionsByAmount = async (
 };
 
 export const searchTransactionsByDate = async (
-  date: string
+  date: string,
+  page = 1,
+  pageSize = 50
 ) => {
   try {
     await connectToDatabase();
 
-    const transactions = await EasypayTransactionModel.find({ date });
+    const skip = (page - 1) * pageSize;
+
+    // Count total matching documents
+    const totalCount = await EasypayTransactionModel.countDocuments({ date });
+
+    // Get paginated results
+    const transactions = await EasypayTransactionModel.find({ date })
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(pageSize);
 
     return {
       success: true,
-      data: transactions,
+      data: {
+        transactions,
+        total: totalCount,
+        pagination: {
+          current: page,
+          pageSize: pageSize,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / pageSize)
+        }
+      },
     };
   } catch (error: any) {
     console.error(
