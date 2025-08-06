@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import {
+  CloseOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
@@ -28,6 +29,7 @@ import {
 import Search from "antd/es/input/Search";
 
 import PageHeader from "@/app/components/page-header";
+import PolicyCancellationDrawer from "@/app/components/policies/policy-cancellation-drawer";
 import PolicyDetailsDrawer from "@/app/components/policies/policy-details-drawer";
 import sweetAlert from "sweetalert";
 
@@ -60,6 +62,8 @@ export default function PoliciesPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
   const [editingPolicy, setEditingPolicy] = useState<IPolicy | null>(null);
+  const [cancellationDrawerOpen, setCancellationDrawerOpen] = useState(false);
+  const [selectedPolicyForCancellation, setSelectedPolicyForCancellation] = useState<IPolicy | null>(null);
 
   // Pagination and filtering state
   const [currentPage, setCurrentPage] = useState(1);
@@ -478,6 +482,15 @@ export default function PoliciesPage() {
                       label: "Edit Policy",
                       onClick: () => editPolicy(record),
                     },
+                    {
+                      key: "request-cancellation",
+                      icon: <CloseOutlined />,
+                      label: "Request Cancellation",
+                      onClick: () => {
+                        setSelectedPolicyForCancellation(record);
+                        setCancellationDrawerOpen(true);
+                      },
+                    },
                     ...(record.paymentHistoryFile ? [{
                       key: "payment-history",
                       icon: <EyeOutlined />,
@@ -539,6 +552,17 @@ export default function PoliciesPage() {
         open={!!selectedPolicyId}
         onClose={() => setSelectedPolicyId(null)}
         policyId={selectedPolicyId}
+      />
+
+      <PolicyCancellationDrawer
+        open={cancellationDrawerOpen}
+        onClose={() => {
+          setCancellationDrawerOpen(false);
+          setSelectedPolicyForCancellation(null);
+        }}
+        policyId={selectedPolicyForCancellation?._id || null}
+        policyNumber={selectedPolicyForCancellation?.policyNumber}
+        memberName={selectedPolicyForCancellation?.fullName || selectedPolicyForCancellation?.fullname}
       />
     </div>
   );
