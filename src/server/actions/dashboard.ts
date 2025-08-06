@@ -87,9 +87,10 @@ export const getDashboardData = async () => {
       role: { $nin: ["admin", "super_admin"] } // Exclude users with admin roles
     }).select('_id name email avatarUrl status roles role').lean();
 
-    // Get yesterday's daily activity reports
+    // Get yesterday's daily activity reports - using DD/MM/YYYY format
+    const yesterdayFormattedDDMMYYYY = yesterday.toLocaleDateString('en-GB'); // This gives DD/MM/YYYY format
     const yesterdaysDailyActivities = await DailyActivityModel.find({
-      date: yesterdayFormatted
+      date: yesterdayFormattedDDMMYYYY
     }).select('userId userName').lean();
 
     // Create a set of user IDs who have submitted yesterday's report
