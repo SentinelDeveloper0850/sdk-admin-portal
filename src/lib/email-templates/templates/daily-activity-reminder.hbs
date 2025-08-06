@@ -1,0 +1,69 @@
+<h2>Daily Activity Report Reminder</h2>
+
+<p>Hello {{name}},</p>
+
+{{#if isFirstReminder}}
+  <div class="alert alert-warning">
+    <h3>📋 Daily Activity Report Due</h3>
+    <p>This is a friendly reminder to submit your daily activity report for
+      <strong>{{date}}</strong>.</p>
+  </div>
+{{else}}
+  <div class="alert alert-danger">
+    <h3>⚠️ URGENT: Daily Activity Report Overdue</h3>
+    <p>Your daily activity report for
+      <strong>{{date}}</strong>
+      is overdue and requires immediate attention.</p>
+  </div>
+{{/if}}
+
+<div class="info-box">
+  <h3>Report Details</h3>
+  <table class="info-table">
+    <tr>
+      <td>Date:</td>
+      <td>{{date}}</td>
+    </tr>
+    <tr>
+      <td>Cutoff Time:</td>
+      <td>{{cutoffTime}}</td>
+    </tr>
+    {{#if branch}}
+      <tr>
+        <td>Branch:</td>
+        <td>{{branch}}</td>
+      </tr>
+    {{/if}}
+    <tr>
+      <td>Reminder Type:</td>
+      <td>{{#if isFirstReminder}}First Reminder{{else}}Final Reminder{{/if}}</td>
+    </tr>
+  </table>
+</div>
+
+<div class="alert alert-info">
+  <h4>How to Submit Your Report</h4>
+  <ol>
+    <li>Log into the SDK Admin Portal</li>
+    <li>Navigate to "Daily Activity" in the sidebar</li>
+    <li>Click "Submit Report" for today's date</li>
+    <li>Fill in your activities and submit</li>
+  </ol>
+</div>
+
+{{#if isFirstReminder}}
+  <p><strong>Note:</strong>
+    This is your first reminder. If you don't submit your report by the cutoff
+    time, you will receive a final reminder.</p>
+{{else}}
+  <div class="alert alert-danger">
+    <p><strong>⚠️ This is your final reminder. Please submit your report
+        immediately to avoid compliance issues.</strong></p>
+  </div>
+{{/if}}
+
+<p>If you have any questions or need assistance, please contact your supervisor
+  or the system administrator.</p>
+
+<p>Best regards,<br />
+  <strong>SDK Admin Portal Team</strong></p>

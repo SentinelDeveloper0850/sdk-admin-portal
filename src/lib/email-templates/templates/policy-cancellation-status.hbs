@@ -1,0 +1,50 @@
+<h2>Cancellation Request {{status}}</h2>
+
+{{#ifEquals status "approved"}}
+  <div class="alert alert-success">
+    <h3>✅ Cancellation Request Approved</h3>
+    <p>Your policy cancellation request has been approved and will be processed
+      accordingly.</p>
+  </div>
+{{else}}
+  <div class="alert alert-danger">
+    <h3>❌ Cancellation Request Rejected</h3>
+    <p>Your policy cancellation request has been rejected. Please contact us for
+      more information.</p>
+  </div>
+{{/ifEquals}}
+
+<div class="info-box">
+  <h3>Request Details</h3>
+  <table class="info-table">
+    <tr>
+      <td>Policy Number:</td>
+      <td>{{policyNumber}}</td>
+    </tr>
+    <tr>
+      <td>Member Name:</td>
+      <td>{{memberName}}</td>
+    </tr>
+    <tr>
+      <td>Effective Date:</td>
+      <td>{{effectiveDate}}</td>
+    </tr>
+    <tr>
+      <td>Request ID:</td>
+      <td>{{requestId}}</td>
+    </tr>
+  </table>
+</div>
+
+{{#if reviewNotes}}
+  <div class="alert alert-info">
+    <h4>Review Notes:</h4>
+    <p>{{reviewNotes}}</p>
+  </div>
+{{/if}}
+
+<p>If you have any questions about this decision, please contact our support
+  team.</p>
+
+<p>Best regards,<br />
+  <strong>SDK Admin Portal Team</strong></p>

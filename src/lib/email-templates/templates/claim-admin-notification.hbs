@@ -1,0 +1,60 @@
+<h2>New Claim Submitted - Review Required</h2>
+
+<p>Hello {{adminName}},</p>
+
+<p>A new claim has been submitted and requires your review.</p>
+
+<div class="info-box">
+    <h3>Claim Details</h3>
+    <table class="info-table">
+        <tr>
+            <td>Claim Number:</td>
+            <td><strong>{{claimNumber}}</strong></td>
+        </tr>
+        <tr>
+            <td>Claimant Name:</td>
+            <td>{{claimantName}}</td>
+        </tr>
+        <tr>
+            <td>Claim Type:</td>
+            <td>{{claimType}}</td>
+        </tr>
+        {{#if claimAmount}}
+        <tr>
+            <td>Claim Amount:</td>
+            <td>{{formatCurrency claimAmount}}</td>
+        </tr>
+        {{/if}}
+        <tr>
+            <td>Submitted Date:</td>
+            <td>{{formatDateTime submittedAt}}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="alert alert-warning">
+    <h4>Action Required</h4>
+    <p>Please review this claim and take appropriate action:</p>
+    <ul>
+        <li>Review submitted documents and information</li>
+        <li>Verify claim validity and coverage</li>
+        <li>Approve or reject the claim</li>
+        <li>Request additional information if needed</li>
+    </ul>
+</div>
+
+<div class="alert alert-info">
+    <h4>How to Process</h4>
+    <ol>
+        <li>Log into the SDK Admin Portal</li>
+        <li>Navigate to "Claims" section</li>
+        <li>Find the claim with number: {{claimNumber}}</li>
+        <li>Review all submitted documents and information</li>
+        <li>Update claim status and add notes as needed</li>
+    </ol>
+</div>
+
+<p>Please process this claim within 48 hours to maintain good customer service.</p>
+
+<p>Best regards,<br>
+<strong>SDK Admin Portal Claims Team</strong></p> 

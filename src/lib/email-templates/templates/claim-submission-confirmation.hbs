@@ -1,0 +1,85 @@
+<h2>Claim Submission Confirmation</h2>
+
+<p>Hello {{claimantName}},</p>
+
+<p>Thank you for submitting your claim. We have received your claim and it is
+  currently being processed.</p>
+
+<div class="info-box">
+  <h3>Claim Details</h3>
+  <table class="info-table">
+    <tr>
+      <td>Claim Number:</td>
+      <td><strong>{{claimNumber}}</strong></td>
+    </tr>
+    <tr>
+      <td>Policy Number:</td>
+      <td>{{policyNumber}}</td>
+    </tr>
+    <tr>
+      <td>Claim Type:</td>
+      <td>{{claimType}}</td>
+    </tr>
+    <tr>
+      <td>Scheme Type:</td>
+      <td>{{schemeType}}</td>
+    </tr>
+    {{#if claimAmount}}
+      <tr>
+        <td>Claim Amount:</td>
+        <td>{{formatCurrency claimAmount}}</td>
+      </tr>
+    {{/if}}
+    <tr>
+      <td>Reason:</td>
+      <td>{{reason}}</td>
+    </tr>
+    <tr>
+      <td>Submitted Date:</td>
+      <td>{{formatDateTime submittedAt}}</td>
+    </tr>
+    <tr>
+      <td>Status:</td>
+      <td><span class="badge badge-info">{{status}}</span></td>
+    </tr>
+  </table>
+</div>
+
+{{#if societyName}}
+  <div class="info-box">
+    <h3>Society Information</h3>
+    <table class="info-table">
+      <tr>
+        <td>Society Name:</td>
+        <td>{{societyName}}</td>
+      </tr>
+    </table>
+  </div>
+{{/if}}
+
+<div class="alert alert-info">
+  <h4>What Happens Next?</h4>
+  <ol>
+    <li>Our claims team will review your submission within 24-48 hours</li>
+    <li>We may contact you if additional documentation is required</li>
+    <li>You will receive status updates via email</li>
+    <li>Once approved, processing will begin according to your claim type</li>
+  </ol>
+</div>
+
+{{#if documents}}
+  <div class="alert alert-success">
+    <h4>Documents Received</h4>
+    <ul>
+      {{#each documents}}
+        <li>{{name}}</li>
+      {{/each}}
+    </ul>
+  </div>
+{{/if}}
+
+<p>If you have any questions about your claim or need to provide additional
+  information, please contact our claims department.</p>
+
+<p>Best regards,<br />
+  <strong>SDK Admin Portal Claims Team</strong></p>

@@ -1,0 +1,57 @@
+<h2>Policy Signup Request Confirmation</h2>
+
+<p>Hello {{applicantName}},</p>
+
+<p>Thank you for submitting your policy signup request. We have received your
+  application and it is currently under review.</p>
+
+<div class="info-box">
+  <h3>Application Details</h3>
+  <table class="info-table">
+    <tr>
+      <td>Request ID:</td>
+      <td>{{requestId}}</td>
+    </tr>
+    <tr>
+      <td>Plan Name:</td>
+      <td>{{planName}}</td>
+    </tr>
+    <tr>
+      <td>Number of Dependents:</td>
+      <td>{{numberOfDependents}}</td>
+    </tr>
+    <tr>
+      <td>Submitted Date:</td>
+      <td>{{formatDate submittedAt}}</td>
+    </tr>
+    <tr>
+      <td>Status:</td>
+      <td><span class="badge badge-info">{{status}}</span></td>
+    </tr>
+  </table>
+</div>
+
+<div class="alert alert-info">
+  <h4>What Happens Next?</h4>
+  <ol>
+    <li>Our team will review your application within 2-3 business days</li>
+    <li>We may contact you if additional information is required</li>
+    <li>You will receive an email notification once your application has been
+      processed</li>
+    <li>If approved, your policy will be created and you'll receive your policy
+      number</li>
+  </ol>
+</div>
+
+{{#if message}}
+  <div class="alert alert-warning">
+    <h4>Additional Message</h4>
+    <p>{{message}}</p>
+  </div>
+{{/if}}
+
+<p>If you have any questions about your application or need to provide
+  additional information, please contact our support team.</p>
+
+<p>Best regards,<br />
+  <strong>SDK Admin Portal Team</strong></p>

@@ -1,17 +1,24 @@
 import UsersModel from "@/app/models/hr/user.schema";
+import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
+import { sendUserInvitationEmail } from "@/lib/email";
 import { generateTemporaryPassword } from "@/utils/generators/password";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  await connectToDatabase();
-  const users = await UsersModel.find({ deletedAt: null, status: { $ne: "Deleted" } }).sort({ createdAt: -1 });
+  try {
+    await connectToDatabase();
 
-  if (!users) {
-    return NextResponse.json({ message: "Users not found" }, { status: 404 });
+    const users = await UsersModel.find({ deletedAt: { $exists: false } }).sort({ createdAt: -1 });
+
+    return NextResponse.json(users, { status: 200 });
+  } catch (error: any) {
+    console.error("Error fetching users:", error.message);
+    return NextResponse.json(
+      { message: "Error fetching users" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ users }, { status: 200 });
 }
 
 export async function PUT(request: Request) {
@@ -76,6 +83,21 @@ export async function POST(request: Request) {
         existingUser.password = generateTemporaryPassword();
         await existingUser.save();
 
+        // Send invitation email for reactivated user
+        try {
+          await sendUserInvitationEmail({
+            to: existingUser.email,
+            name: existingUser.name,
+            email: existingUser.email,
+            temporaryPassword: existingUser.password,
+            role: existingUser.role || "member",
+            status: existingUser.status,
+          });
+        } catch (emailError) {
+          console.error("Failed to send invitation email:", emailError);
+          // Don't fail the request if email fails
+        }
+
         return NextResponse.json(
           { message: "User reactivated successfully", user: existingUser },
           { status: 200 }
@@ -104,8 +126,31 @@ export async function POST(request: Request) {
     });
     await user.save();
 
+    // Send invitation email
+    try {
+      await sendUserInvitationEmail({
+        to: user.email,
+        name: user.name,
+        email: user.email,
+        temporaryPassword: temporaryPassword,
+        role: user.role || "member",
+        status: user.status,
+      });
+    } catch (emailError) {
+      console.error("Failed to send invitation email:", emailError);
+      // Don't fail the request if email fails, but log it
+      return NextResponse.json(
+        { 
+          message: "User created successfully but failed to send invitation email",
+          warning: "Please contact the user directly with their login credentials",
+          user 
+        },
+        { status: 201 }
+      );
+    }
+
     return NextResponse.json(
-      { message: "User created successfully", user },
+      { message: "User created successfully and invitation email sent", user },
       { status: 201 }
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

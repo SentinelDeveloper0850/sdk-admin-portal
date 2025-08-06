@@ -1,0 +1,65 @@
+<h2>Claim Status Update - {{claimNumber}}</h2>
+
+<p>Hello {{claimantName}},</p>
+
+<p>Your claim status has been updated. Here are the details:</p>
+
+<div class="info-box">
+    <h3>Claim Information</h3>
+    <table class="info-table">
+        <tr>
+            <td>Claim Number:</td>
+            <td><strong>{{claimNumber}}</strong></td>
+        </tr>
+        <tr>
+            <td>Policy Number:</td>
+            <td>{{policyNumber}}</td>
+        </tr>
+        <tr>
+            <td>New Status:</td>
+            <td><span class="badge badge-{{statusColor}}">{{status}}</span></td>
+        </tr>
+        <tr>
+            <td>Updated By:</td>
+            <td>{{updatedBy}}</td>
+        </tr>
+        <tr>
+            <td>Update Date:</td>
+            <td>{{formatDateTime updatedAt}}</td>
+        </tr>
+    </table>
+</div>
+
+{{#if notes}}
+<div class="alert alert-info">
+    <h4>Update Notes</h4>
+    <p>{{notes}}</p>
+</div>
+{{/if}}
+
+{{#ifEquals status "approved"}}
+<div class="alert alert-success">
+    <h4>✅ Claim Approved</h4>
+    <p>Your claim has been approved and is being processed. You will receive further communication regarding payment or service arrangements.</p>
+</div>
+{{else ifEquals status "rejected"}}
+<div class="alert alert-danger">
+    <h4>❌ Claim Rejected</h4>
+    <p>Your claim has been rejected. Please contact our claims department for more information about the rejection reason.</p>
+</div>
+{{else ifEquals status "in_review"}}
+<div class="alert alert-warning">
+    <h4>🔍 Claim Under Review</h4>
+    <p>Your claim is currently under review by our claims team. We will contact you if additional information is required.</p>
+</div>
+{{else}}
+<div class="alert alert-info">
+    <h4>Status Update</h4>
+    <p>Your claim status has been updated to: <strong>{{status}}</strong></p>
+</div>
+{{/ifEquals}}
+
+<p>If you have any questions about this status update, please contact our claims department.</p>
+
+<p>Best regards,<br>
+<strong>SDK Admin Portal Claims Team</strong></p> 
