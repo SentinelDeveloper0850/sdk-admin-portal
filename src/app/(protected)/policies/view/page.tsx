@@ -245,7 +245,7 @@ export default function PoliciesPage() {
   if (loading) {
     return (
       <Loading
-        type="skeleton"
+        type="fullscreen"
         message="Loading policies..."
         error={error as string}
         retry={fetchPolicies}
