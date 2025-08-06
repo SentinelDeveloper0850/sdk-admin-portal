@@ -2,23 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 
-import { Card } from "@nextui-org/react";
+import { Avatar, Badge, Button, Card } from "@nextui-org/react";
 import {
+  AlertCircle,
   BadgeCheck,
+  CheckCircle,
   ChurchIcon,
-  GroupIcon,
+  RefreshCw,
   ScrollText,
   ShieldCheck,
   Users,
+  XCircle
 } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import PageHeader from "@/app/components/page-header";
 import { CardContent } from "@/app/components/ui/card";
@@ -29,6 +24,38 @@ interface DashboardStats {
   eftTransactionCount: number;
   easypayTransactionCount: number;
   policyCount: number;
+}
+
+interface DailyActivityCompliance {
+  compliantUsers: Array<{
+    _id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+    status: string;
+    roles?: string[];
+  }>;
+  nonCompliantUsers: Array<{
+    _id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+    status: string;
+    roles?: string[];
+  }>;
+  complianceRate: number;
+  totalUsers: number;
+  compliantCount: number;
+  nonCompliantCount: number;
+}
+
+interface DashboardData {
+  userCount: number;
+  prepaidSocietyCount: number;
+  eftTransactionCount: number;
+  easypayTransactionCount: number;
+  policyCount: number;
+  dailyActivityCompliance: DailyActivityCompliance;
 }
 
 const chartData = [
@@ -55,56 +82,77 @@ const formatNumber = (num: number) =>
 
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dashboard");
+      const json = await res.json();
+      if (json.success) {
+        setStats(json.data);
+        setDashboardData(json.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch("/api/dashboard");
-        const json = await res.json();
-        if (json.success) {
-          setStats(json.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      }
-    };
-
     fetchStats();
   }, []);
 
   const cardStats = stats
     ? [
-        {
-          label: "EFT Transactions",
-          value: stats.eftTransactionCount,
-          icon: <BadgeCheck className="h-5 w-5" />,
-        },
-        {
-          label: "EasyPay Transactions",
-          value: stats.easypayTransactionCount,
-          icon: <ScrollText className="h-5 w-5" />,
-        },
-        {
-          label: "Prepaid Societies (Easipol)",
-          value: stats.prepaidSocietyCount,
-          icon: <ChurchIcon className="h-5 w-5" />,
-        },
-        {
-          label: "Policies (Easipol)",
-          value: stats.policyCount,
-          icon: <ShieldCheck className="h-5 w-5" />,
-        },
-        {
-          label: "Registered Users",
-          value: stats.userCount,
-          icon: <Users className="h-5 w-5" />,
-        },
-      ]
+      {
+        label: "EFT Transactions",
+        value: stats.eftTransactionCount,
+        icon: <BadgeCheck className="h-5 w-5" />,
+      },
+      {
+        label: "EasyPay Transactions",
+        value: stats.easypayTransactionCount,
+        icon: <ScrollText className="h-5 w-5" />,
+      },
+      {
+        label: "Prepaid Societies (Easipol)",
+        value: stats.prepaidSocietyCount,
+        icon: <ChurchIcon className="h-5 w-5" />,
+      },
+      {
+        label: "Policies (Easipol)",
+        value: stats.policyCount,
+        icon: <ShieldCheck className="h-5 w-5" />,
+      },
+      {
+        label: "Registered Users",
+        value: stats.userCount,
+        icon: <Users className="h-5 w-5" />,
+      },
+    ]
     : [];
 
   return (
     <div className="space-y-6 p-6">
-      <PageHeader title="Dashboard Overview" />
+      <PageHeader
+        title="Dashboard Overview"
+        actions={[
+          <Button
+            key="refresh"
+            color="primary"
+            variant="flat"
+            size="sm"
+            isLoading={loading}
+            onPress={fetchStats}
+            startContent={<RefreshCw className="h-4 w-4" />}
+          >
+            Refresh
+          </Button>
+        ]}
+      />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {cardStats.map((item, idx) => (
@@ -124,6 +172,190 @@ const DashboardPage: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      {/* Daily Activity Compliance Section */}
+      {dashboardData?.dailyActivityCompliance && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">
+                Daily Activity Compliance
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Based on yesterday's reports (cutoff: 18:00 daily) • Excludes admins and inactive users
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Badge
+                content={dashboardData.dailyActivityCompliance.compliantCount}
+                color="success"
+                className="text-white"
+              >
+                <div className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900 rounded-full">
+                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                    Compliant
+                  </span>
+                </div>
+              </Badge>
+              <Badge
+                content={dashboardData.dailyActivityCompliance.nonCompliantCount}
+                color="danger"
+                className="text-white"
+              >
+                <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900 rounded-full">
+                  <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <span className="text-sm font-medium text-red-700 dark:text-red-300">
+                    Non-Compliant
+                  </span>
+                </div>
+              </Badge>
+              {dashboardData.dailyActivityCompliance.nonCompliantCount > 0 && (
+                <Button
+                  color="warning"
+                  size="sm"
+                  variant="flat"
+                  className="text-white"
+                  onClick={() => {
+                    // TODO: Implement reminder functionality
+                    alert(`Sending reminders to ${dashboardData.dailyActivityCompliance.nonCompliantCount} non-compliant users`);
+                  }}
+                >
+                  Send Reminders
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Compliant Users */}
+            <Card className="bg-muted border-border border dark:border-[#333]">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Compliant Users ({dashboardData.dailyActivityCompliance.compliantCount})
+                  </h3>
+                </div>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {dashboardData.dailyActivityCompliance.compliantUsers.length > 0 ? (
+                    dashboardData.dailyActivityCompliance.compliantUsers.map((user) => (
+                      <div key={user._id} className="flex items-center gap-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <Avatar
+                          src={user.avatarUrl || ""}
+                          size="sm"
+                          name={user.name}
+                          className="flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        <Badge
+                          size="sm"
+                          color="success"
+                          variant="flat"
+                          className="flex-shrink-0"
+                        >
+                          {user.status}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                      <p>No compliant users yet</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Non-Compliant Users */}
+            <Card className="bg-muted border-border border dark:border-[#333]">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Non-Compliant Users ({dashboardData.dailyActivityCompliance.nonCompliantCount})
+                  </h3>
+                </div>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {dashboardData.dailyActivityCompliance.nonCompliantUsers.length > 0 ? (
+                    dashboardData.dailyActivityCompliance.nonCompliantUsers.map((user) => (
+                      <div key={user._id} className="flex items-center gap-3 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                        <Avatar
+                          src={user.avatarUrl || ""}
+                          size="sm"
+                          name={user.name}
+                          className="flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        <Badge
+                          size="sm"
+                          color="danger"
+                          variant="flat"
+                          className="flex-shrink-0"
+                        >
+                          {user.status}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                      <p>All users are compliant!</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Compliance Rate */}
+          <Card className="bg-muted border-border border dark:border-[#333]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Overall Compliance Rate
+                  </h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-foreground">
+                    {dashboardData.dailyActivityCompliance.complianceRate.toFixed(1)}%
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {dashboardData.dailyActivityCompliance.compliantCount} of {dashboardData.dailyActivityCompliance.totalUsers} users
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${dashboardData.dailyActivityCompliance.complianceRate}%` }}
+                ></div>
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                Checking compliance for: {new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString()} (cutoff: 18:00) •
+                Last updated: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="col-span-2">

@@ -29,6 +29,14 @@ export const getDashboardData = async () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Get today's date in YYYY-MM-DD format for daily activity compliance
+    const todayFormatted = today.toISOString().split('T')[0];
+
+    // Get yesterday's date for compliance checking (since cutoff is 18:00 daily)
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayFormatted = yesterday.toISOString().split('T')[0];
+
     // Execute all basic counts concurrently for better performance
     const [
       prepaidSocietyCount,
@@ -71,6 +79,25 @@ export const getDashboardData = async () => {
         status: "pending"
       }),
     ]);
+
+    // Get all active users (excluding admins and inactive users) for daily activity compliance
+    const allUsers = await UserModel.find({
+      status: "Active", // Only active users
+      deletedAt: { $exists: false },
+      role: { $nin: ["admin", "super_admin"] } // Exclude users with admin roles
+    }).select('_id name email avatarUrl status roles role').lean();
+
+    // Get yesterday's daily activity reports
+    const yesterdaysDailyActivities = await DailyActivityModel.find({
+      date: yesterdayFormatted
+    }).select('userId userName').lean();
+
+    // Create a set of user IDs who have submitted yesterday's report
+    const compliantUserIds = new Set(yesterdaysDailyActivities.map(activity => activity.userId.toString()));
+
+    // Separate users into compliant and non-compliant
+    const compliantUsers = allUsers.filter((user: any) => user.role !== "admin" && user.role !== "super_admin" && user.status !== "Inactive").filter((user: any) => compliantUserIds.has(user._id.toString()));
+    const nonCompliantUsers = allUsers.filter((user: any) => user.role !== "admin" && user.role !== "super_admin" && user.status !== "Inactive").filter((user: any) => !compliantUserIds.has(user._id.toString()));
 
     // Execute recent activity queries concurrently
     const [recentDailyActivities, recentClaims, recentSignupRequests] = await Promise.all([
@@ -150,6 +177,30 @@ export const getDashboardData = async () => {
           claims: pendingClaims,
           signupRequests: pendingSignupRequests,
           cancellationRequests: pendingCancellationRequests,
+        },
+
+        // Daily activity compliance
+        dailyActivityCompliance: {
+          compliantUsers: compliantUsers.map(user => ({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            avatarUrl: user.avatarUrl,
+            status: user.status,
+            roles: user.roles
+          })),
+          nonCompliantUsers: nonCompliantUsers.map(user => ({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            avatarUrl: user.avatarUrl,
+            status: user.status,
+            roles: user.roles
+          })),
+          complianceRate: allUsers.length > 0 ? (compliantUsers.length / allUsers.length) * 100 : 0,
+          totalUsers: allUsers.length,
+          compliantCount: compliantUsers.length,
+          nonCompliantCount: nonCompliantUsers.length
         },
 
         // Recent activity
