@@ -4,6 +4,7 @@ import { DailyActivityModel } from "@/app/models/hr/daily-activity.schema";
 import { UserModel } from "@/app/models/hr/user.schema";
 import { DailyActivityReminderConfigModel } from "@/app/models/system/daily-activity-reminder.schema";
 import { connectToDatabase } from "@/lib/db";
+import { createDailyActivityReminderNotification, getDiscordWebhookUrl, sendDiscordNotification } from "@/lib/discord";
 import { sendDailyActivityReminderEmail } from "@/lib/email";
 import dayjs from "dayjs";
 
@@ -13,6 +14,7 @@ export interface ReminderResult {
   remindersSent: number;
   errors: string[];
   nextRunAt?: Date;
+  discordNotificationSent?: boolean;
 }
 
 export interface ReminderConfig {
@@ -276,6 +278,35 @@ export const processDailyActivityReminders = async (): Promise<ReminderResult> =
     const isFirstReminder = shouldSendFirst;
     const result = await sendReminders(config, recipients, todayStr, isFirstReminder);
 
+    // Send Discord notification
+    let discordNotificationSent = false;
+    const webhookUrl = getDiscordWebhookUrl();
+    if (webhookUrl && result.sent > 0) {
+      try {
+        const discordPayload = createDailyActivityReminderNotification(
+          result.sent,
+          recipients.length - result.sent, // non-compliant count
+          recipients.length, // total users
+          ((result.sent / recipients.length) * 100), // compliance rate
+          "System" // triggered by system
+        );
+
+        const discordResult = await sendDiscordNotification(
+          webhookUrl,
+          discordPayload,
+          "daily-activity-reminders" // rate limit key
+        );
+
+        discordNotificationSent = discordResult.success;
+
+        if (!discordResult.success) {
+          console.warn("Failed to send Discord notification:", discordResult.error);
+        }
+      } catch (error) {
+        console.error("Error sending Discord notification:", error);
+      }
+    }
+
     // Update configuration with last run time and count
     const configDoc = await DailyActivityReminderConfigModel.findOne().sort({ createdAt: -1 });
     if (configDoc) {
@@ -291,6 +322,7 @@ export const processDailyActivityReminders = async (): Promise<ReminderResult> =
       remindersSent: result.sent,
       errors: result.errors,
       nextRunAt: configDoc?.nextRunAt,
+      discordNotificationSent,
     };
 
   } catch (error) {
@@ -299,7 +331,7 @@ export const processDailyActivityReminders = async (): Promise<ReminderResult> =
       success: false,
       message: "Failed to process reminders",
       remindersSent: 0,
-      errors: [error.toString()],
+      errors: [error instanceof Error ? error.message : String(error)],
     };
   }
 };

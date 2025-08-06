@@ -10,6 +10,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { AuthProvider } from "@/context/auth-context";
 
 import useSystemTheme from "../hooks/use-system-theme";
+import { Toaster } from "./ui/toaster";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -33,7 +34,10 @@ export default function Providers({ children }: { children: ReactNode }) {
           navigate={router.push}
           className="flex h-full w-full flex-col"
         >
-          <NextThemesProvider attribute="class">{children}</NextThemesProvider>
+          <NextThemesProvider attribute="class">
+            {children}
+            <Toaster />
+          </NextThemesProvider>
         </NextUIProvider>
       </ConfigProvider>
     </AuthProvider>

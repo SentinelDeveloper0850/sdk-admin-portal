@@ -1,4 +1,5 @@
 import { getUserFromRequest } from "@/lib/auth";
+import { createDailyActivityReminderNotification, getDiscordWebhookUrl, sendDiscordNotification } from "@/lib/discord";
 import { getReminderConfig, getReminderStats, processDailyActivityReminders, saveReminderConfig } from "@/server/actions/daily-activity-reminders";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -91,19 +92,49 @@ export async function POST(request: NextRequest) {
       // Manually trigger reminder processing
       const result = await processDailyActivityReminders();
 
+      // Send Discord notification for manual trigger
+      let discordNotificationSent = false;
+      const webhookUrl = getDiscordWebhookUrl();
+      if (webhookUrl && result.success && result.remindersSent > 0) {
+        try {
+          const discordPayload = createDailyActivityReminderNotification(
+            result.remindersSent,
+            result.remindersSent, // For manual trigger, we don't have exact non-compliant count
+            result.remindersSent, // For manual trigger, we don't have exact total count
+            0, // Compliance rate not available for manual trigger
+            user.name || user.email || "Admin User" // triggered by user
+          );
+
+          const discordResult = await sendDiscordNotification(
+            webhookUrl,
+            discordPayload,
+            "daily-activity-reminders-manual" // separate rate limit key for manual triggers
+          );
+
+          discordNotificationSent = discordResult.success;
+
+          if (!discordResult.success) {
+            console.warn("Failed to send Discord notification for manual trigger:", discordResult.error);
+          }
+        } catch (error) {
+          console.error("Error sending Discord notification for manual trigger:", error);
+        }
+      }
+
       return NextResponse.json({
         success: result.success,
         message: result.message,
         data: {
           remindersSent: result.remindersSent,
           errors: result.errors,
-          nextRunAt: result.nextRunAt
+          nextRunAt: result.nextRunAt,
+          discordNotificationSent
         }
       });
     } else if (action === "save") {
       // Save reminder configuration
       const { config } = body;
-      const result = await saveReminderConfig(config, user._id.toString());
+      const result = await saveReminderConfig(config, user?._id as string);
 
       return NextResponse.json({
         success: result.success,
