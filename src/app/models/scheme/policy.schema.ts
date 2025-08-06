@@ -17,6 +17,7 @@ export interface IPolicy extends Document {
   physicalAddress?: string;
   postalAddress?: string;
   cellNumber?: string;
+  cellphoneNumber?: string;
   emailAddress?: string;
   usualPremium?: number;
   currency?: string;
@@ -67,6 +68,7 @@ const PolicySchema: Schema = new Schema({
   physicalAddress: { type: String, default: "" },
   postalAddress: { type: String, default: "" },
   cellNumber: { type: String },
+  cellphoneNumber: { type: String },
   emailAddress: { type: String },
   usualPremium: { type: Number },
   currency: { type: String },

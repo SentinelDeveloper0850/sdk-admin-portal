@@ -13,7 +13,7 @@ export const sendPasswordResetEmail = async (data: PasswordResetEmailData) => {
     const { to, name, newPassword } = data;
 
     const result = await resend.emails.send({
-      from: 'SDK Admin Portal <noreply@sdkadminportal.com>',
+      from: 'SDK Admin Portal <info@somdaka.co.za>',
       to: [to],
       subject: 'Your Password Has Been Reset - SDK Admin Portal',
       html: `
