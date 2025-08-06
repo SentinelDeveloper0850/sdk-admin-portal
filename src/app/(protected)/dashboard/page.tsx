@@ -216,9 +216,27 @@ const DashboardPage: React.FC = () => {
                   size="sm"
                   variant="flat"
                   className="text-white"
-                  onClick={() => {
-                    // TODO: Implement reminder functionality
-                    alert(`Sending reminders to ${dashboardData.dailyActivityCompliance.nonCompliantCount} non-compliant users`);
+                  onClick={async () => {
+                    try {
+                      const response = await fetch("/api/daily-activity-reminders", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "trigger" }),
+                      });
+
+                      const data = await response.json();
+
+                      if (data.success) {
+                        alert(`Successfully sent ${data.data.remindersSent} reminders`);
+                        // Refresh dashboard data
+                        fetchStats();
+                      } else {
+                        alert(`Failed to send reminders: ${data.message}`);
+                      }
+                    } catch (error) {
+                      console.error("Error sending reminders:", error);
+                      alert("Failed to send reminders");
+                    }
                   }}
                 >
                   Send Reminders

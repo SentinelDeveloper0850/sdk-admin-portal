@@ -173,6 +173,13 @@ const SideNavBar = () => {
           url: "/configurations/branches",
           allowedRoles: [ERoles.Admin],
         },
+        {
+          id: "daily-activity-reminders-config",
+          name: "Daily Activity Reminders",
+          icon: <Settings size={18} />,
+          url: "/configurations/daily-activity-reminders",
+          allowedRoles: [ERoles.Admin],
+        },
       ],
     },
   ];
