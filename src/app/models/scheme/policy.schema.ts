@@ -49,6 +49,7 @@ export interface IPolicy extends Document {
   excludeEscalation?: boolean;
   whatsappNumber?: string;
   paymentHistoryFile?: string;
+  cancellationStatus?: "none" | "pending_review" | "approved" | "rejected";
 }
 
 // Define the schema
@@ -100,6 +101,11 @@ const PolicySchema: Schema = new Schema({
   excludeEscalation: { type: Boolean },
   whatsappNumber: { type: String },
   paymentHistoryFile: { type: String },
+  cancellationStatus: {
+    type: String,
+    enum: ["none", "pending_review", "approved", "rejected"],
+    default: "none"
+  },
 });
 
 // Export the model

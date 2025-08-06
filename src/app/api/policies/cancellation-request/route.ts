@@ -1,3 +1,4 @@
+import UserModel from "@/app/models/hr/user.schema";
 import PolicyCancellationRequest from "@/app/models/scheme/policy-cancellation-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { getUserFromRequest } from "@/lib/auth";
@@ -94,6 +95,12 @@ export async function POST(request: NextRequest) {
 
     await cancellationRequest.save();
 
+    // Update policy cancellation status to "pending_review"
+    await PolicyModel.findByIdAndUpdate(policyId, {
+      cancellationStatus: "pending_review",
+      updatedAt: new Date()
+    });
+
     // Send confirmation email
     try {
       await sendCancellationRequestEmail({
@@ -150,6 +157,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const policyId = searchParams.get("policyId");
+    const policyNumber = searchParams.get("policyNumber");
+    const memberName = searchParams.get("memberName");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
@@ -158,12 +167,12 @@ export async function GET(request: NextRequest) {
     const query: any = {};
     if (status) query.status = status;
     if (policyId) query.policyId = policyId;
+    if (policyNumber) query.policyNumber = { $regex: policyNumber, $options: "i" };
+    if (memberName) query.memberName = { $regex: memberName, $options: "i" };
 
     // Get cancellation requests with pagination
     const [requests, total] = await Promise.all([
       PolicyCancellationRequest.find(query)
-        .populate("submittedBy", "name email")
-        .populate("reviewedBy", "name email")
         .sort({ submittedAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -171,10 +180,24 @@ export async function GET(request: NextRequest) {
       PolicyCancellationRequest.countDocuments(query)
     ]);
 
+    // Manually fetch user details and attach them
+    const requestsWithUsers = await Promise.all(
+      requests.map(async (request: any) => {
+        const submittedBy = request.submittedBy ? await UserModel.findById(request.submittedBy).select('name email').lean() : null;
+        const reviewedBy = request.reviewedBy ? await UserModel.findById(request.reviewedBy).select('name email').lean() : null;
+
+        return {
+          ...request,
+          submittedBy: submittedBy || { name: 'Unknown User', email: 'unknown@example.com' },
+          reviewedBy: reviewedBy || null
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
       data: {
-        requests,
+        requests: requestsWithUsers,
         pagination: {
           page,
           limit,

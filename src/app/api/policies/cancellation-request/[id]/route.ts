@@ -1,5 +1,6 @@
+import UserModel from "@/app/models/hr/user.schema";
 import PolicyCancellationRequest from "@/app/models/scheme/policy-cancellation-request.schema";
-import Policy from "@/app/models/scheme/policy.schema";
+import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { sendCancellationStatusEmail } from "@/lib/email";
@@ -23,10 +24,7 @@ export async function GET(
     await connectToDatabase();
 
     // Get cancellation request by ID
-    const cancellationRequest = await PolicyCancellationRequest.findById(params.id)
-      .populate("submittedBy", "name email")
-      .populate("reviewedBy", "name email")
-      .populate("policyId", "policyNumber memberID fullname status");
+    const cancellationRequest = await PolicyCancellationRequest.findById(params.id).lean();
 
     if (!cancellationRequest) {
       return NextResponse.json(
@@ -35,9 +33,19 @@ export async function GET(
       );
     }
 
+    // Manually fetch user details and attach them
+    const submittedBy = (cancellationRequest as any).submittedBy ? await UserModel.findById((cancellationRequest as any).submittedBy).select('name email').lean() : null;
+    const reviewedBy = (cancellationRequest as any).reviewedBy ? await UserModel.findById((cancellationRequest as any).reviewedBy).select('name email').lean() : null;
+
+    const cancellationRequestWithUsers = {
+      ...cancellationRequest,
+      submittedBy: submittedBy || { name: 'Unknown User', email: 'unknown@example.com' },
+      reviewedBy: reviewedBy || null
+    };
+
     return NextResponse.json({
       success: true,
-      data: cancellationRequest
+      data: cancellationRequestWithUsers
     });
 
   } catch (error) {
@@ -79,8 +87,7 @@ export async function PATCH(
     }
 
     // Get cancellation request
-    const cancellationRequest = await PolicyCancellationRequest.findById(params.id)
-      .populate("submittedBy", "name email");
+    const cancellationRequest = await PolicyCancellationRequest.findById(params.id);
 
     if (!cancellationRequest) {
       return NextResponse.json(
@@ -101,19 +108,28 @@ export async function PATCH(
     if (action === "approve") {
       await cancellationRequest.approve(user._id, reviewNotes);
 
-      // Update policy status to cancelled
-      await Policy.findByIdAndUpdate(cancellationRequest.policyId, {
-        status: "cancelled",
+      // Update policy cancellation status to approved
+      await PolicyModel.findByIdAndUpdate(cancellationRequest.policyId, {
+        cancellationStatus: "approved",
         updatedAt: new Date()
       });
     } else if (action === "reject") {
       await cancellationRequest.reject(user._id, reviewNotes);
+
+      // Update policy cancellation status to rejected
+      await PolicyModel.findByIdAndUpdate(cancellationRequest.policyId, {
+        cancellationStatus: "rejected",
+        updatedAt: new Date()
+      });
     }
+
+    // Get user details for email
+    const submittedByUser = await UserModel.findById(cancellationRequest.submittedBy).select('email').lean();
 
     // Send status update email
     try {
       await sendCancellationStatusEmail({
-        to: cancellationRequest.submittedBy.email,
+        to: submittedByUser?.email || "unknown@example.com",
         policyNumber: cancellationRequest.policyNumber,
         memberName: cancellationRequest.memberName,
         status: action === "approve" ? "approved" : "rejected",
@@ -185,6 +201,12 @@ export async function DELETE(
 
     // Delete the request
     await PolicyCancellationRequest.findByIdAndDelete(params.id);
+
+    // Reset policy cancellation status to none since cancellation request is deleted
+    await PolicyModel.findByIdAndUpdate(cancellationRequest.policyId, {
+      cancellationStatus: "none",
+      updatedAt: new Date()
+    });
 
     return NextResponse.json({
       success: true,

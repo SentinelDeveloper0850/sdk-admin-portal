@@ -21,7 +21,6 @@ import {
   Row,
   Select,
   Space,
-  Spin,
   Statistic,
   Table,
   Tag
@@ -31,6 +30,7 @@ import Search from "antd/es/input/Search";
 import PageHeader from "@/app/components/page-header";
 import PolicyCancellationDrawer from "@/app/components/policies/policy-cancellation-drawer";
 import PolicyDetailsDrawer from "@/app/components/policies/policy-details-drawer";
+import Loading from "@/app/components/ui/loading";
 import sweetAlert from "sweetalert";
 
 interface IPolicy {
@@ -52,6 +52,7 @@ interface IPolicy {
   homeTelephone?: string;
   physicalAddress?: string;
   postalAddress?: string;
+  cancellationStatus?: "none" | "pending_review" | "approved" | "rejected";
 }
 
 export default function PoliciesPage() {
@@ -85,6 +86,7 @@ export default function PoliciesPage() {
   const fetchPolicies = async () => {
     try {
       setLoading(true);
+      setError(false);
 
       // Build query parameters
       const params = new URLSearchParams({
@@ -94,11 +96,11 @@ export default function PoliciesPage() {
         sortOrder,
       });
 
-      // Add filters
-      if (filters.status) params.append("status", filters.status);
-      if (filters.productName) params.append("productName", filters.productName);
-      if (filters.branchName) params.append("branchName", filters.branchName);
-      if (filters.searchText) params.append("searchText", filters.searchText);
+      // Add filters - only add non-empty values
+      if (filters.status && filters.status.trim()) params.append("status", filters.status.trim());
+      if (filters.productName && filters.productName.trim()) params.append("productName", filters.productName.trim());
+      if (filters.branchName && filters.branchName.trim()) params.append("branchName", filters.branchName.trim());
+      if (filters.searchText && filters.searchText.trim()) params.append("searchText", filters.searchText.trim());
 
       const response = await fetch(`/api/policies?${params.toString()}`);
       if (!response.ok) {
@@ -108,10 +110,10 @@ export default function PoliciesPage() {
       }
 
       const data = await response.json();
-      setPolicies(data.policies);
-      setStats({ count: data.count, totalPages: data.totalPages });
+      setPolicies(data.policies || []);
+      setStats({ count: data.count || 0, totalPages: data.totalPages || 0 });
     } catch (err) {
-      console.log(err);
+      console.error("Error fetching policies:", err);
       setError("An error occurred while fetching policies.");
     } finally {
       setLoading(false);
@@ -123,21 +125,32 @@ export default function PoliciesPage() {
       const response = await fetch("/api/policies/filter-options");
       if (response.ok) {
         const data = await response.json();
-        setFilterOptions(data);
+        setFilterOptions({
+          statuses: data.statuses || [],
+          products: data.products || [],
+          branches: data.branches || [],
+        });
+      } else {
+        console.error("Failed to fetch filter options:", response.status);
       }
     } catch (err) {
-      console.log("Error fetching filter options:", err);
+      console.error("Error fetching filter options:", err);
     }
   };
 
   const handleSearch = (value: string) => {
-    setFilters(prev => ({ ...prev, searchText: value }));
+    setFilters(prev => ({ ...prev, searchText: value || "" }));
     setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters(prev => ({ ...prev, [key]: value || "" }));
     setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ status: "", productName: "", branchName: "", searchText: "" });
+    setCurrentPage(1);
   };
 
   const handleSort = (column: string, order: "asc" | "desc") => {
@@ -231,12 +244,12 @@ export default function PoliciesPage() {
 
   if (loading) {
     return (
-      <div
-        className="h-[80vh]"
-        style={{ padding: "20px", textAlign: "center" }}
-      >
-        <Spin size="large" />
-      </div>
+      <Loading
+        type="skeleton"
+        message="Loading policies..."
+        error={error as string}
+        retry={fetchPolicies}
+      />
     );
   }
 
@@ -258,6 +271,36 @@ export default function PoliciesPage() {
       {error && (
         <div style={{ color: "red", marginBottom: "20px" }}>{error}</div>
       )}
+
+      {/* Search Results Indicator */}
+      {(filters.status || filters.productName || filters.branchName || filters.searchText) && (
+        <div style={{
+          backgroundColor: "#f0f9ff",
+          border: "1px solid #0ea5e9",
+          borderRadius: "6px",
+          padding: "12px 16px",
+          marginBottom: "16px",
+          color: "#0c4a6e"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <strong>Search Results:</strong> Showing policies matching your filters
+              {filters.status && <span style={{ marginLeft: "8px" }}>• Status: {filters.status}</span>}
+              {filters.productName && <span style={{ marginLeft: "8px" }}>• Product: {filters.productName}</span>}
+              {filters.branchName && <span style={{ marginLeft: "8px" }}>• Branch: {filters.branchName}</span>}
+              {filters.searchText && <span style={{ marginLeft: "8px" }}>• Search: "{filters.searchText}"</span>}
+              <span style={{ marginLeft: "8px" }}>• {policies.length} results</span>
+            </div>
+            <Button
+              type="link"
+              onClick={handleClearFilters}
+              style={{ padding: "0", color: "#0ea5e9", fontWeight: "600" }}
+            >
+              CLEAR SEARCH
+            </Button>
+          </div>
+        </div>
+      )}
       <Form layout="vertical" style={{ width: "100%" }}>
         <Row gutter={16}>
           <Col span={6}>
@@ -266,6 +309,9 @@ export default function PoliciesPage() {
                 allowClear
                 placeholder="Search by Policy Number, Member ID, Name, ID Number, or Phone..."
                 onSearch={handleSearch}
+                onClear={() => handleSearch("")}
+                value={filters.searchText}
+                onChange={(e) => setFilters(prev => ({ ...prev, searchText: e.target.value }))}
               />
             </Form.Item>
           </Col>
@@ -276,6 +322,7 @@ export default function PoliciesPage() {
                 placeholder="All Statuses"
                 value={filters.status || undefined}
                 onChange={(value: string) => handleFilterChange("status", value)}
+                loading={!filterOptions.statuses.length}
               >
                 {filterOptions.statuses.map((status: string) => (
                   <Select.Option key={status} value={status}>
@@ -292,6 +339,7 @@ export default function PoliciesPage() {
                 placeholder="All Products"
                 value={filters.productName || undefined}
                 onChange={(value) => handleFilterChange("productName", value)}
+                loading={!filterOptions.products.length}
               >
                 {filterOptions.products.map((product: string) => (
                   <Select.Option key={product} value={product}>
@@ -308,6 +356,7 @@ export default function PoliciesPage() {
                 placeholder="All Branches"
                 value={filters.branchName || undefined}
                 onChange={(value) => handleFilterChange("branchName", value)}
+                loading={!filterOptions.branches.length}
               >
                 {filterOptions.branches.map((branch: string) => (
                   <Select.Option key={branch} value={branch}>
@@ -320,10 +369,10 @@ export default function PoliciesPage() {
           <Col span={6}>
             <Form.Item label="Actions">
               <Space>
-                <Button onClick={() => {
-                  setFilters({ status: "", productName: "", branchName: "", searchText: "" });
-                  setCurrentPage(1);
-                }}>
+                <Button
+                  onClick={handleClearFilters}
+                  disabled={!filters.status && !filters.productName && !filters.branchName && !filters.searchText}
+                >
                   Clear Filters
                 </Button>
               </Space>
@@ -351,6 +400,7 @@ export default function PoliciesPage() {
             `${range[0]}-${range[1]} of ${total} policies`,
           onChange: handlePageChange,
           onShowSizeChange: handlePageChange,
+          position: ['bottomCenter'],
         }}
         columns={[
           {
@@ -464,6 +514,50 @@ export default function PoliciesPage() {
             sorter: (a, b) => (a.status || "").localeCompare(b.status || ""),
           },
           {
+            title: "Cancellation Status",
+            dataIndex: "cancellationStatus",
+            key: "cancellationStatus",
+            render: (cancellationStatus: string) => {
+              // Only render if there's a meaningful cancellation status
+              if (!cancellationStatus || cancellationStatus === "none") {
+                return null;
+              }
+
+              const getCancellationStatusColor = (status: string) => {
+                switch (status) {
+                  case "pending_review":
+                    return "orange";
+                  case "approved":
+                    return "red";
+                  case "rejected":
+                    return "green";
+                  default:
+                    return "default";
+                }
+              };
+
+              const getCancellationStatusText = (status: string) => {
+                switch (status) {
+                  case "pending_review":
+                    return "Pending Review";
+                  case "approved":
+                    return "Cancellation Approved";
+                  case "rejected":
+                    return "Cancellation Rejected";
+                  default:
+                    return "Unknown";
+                }
+              };
+
+              return (
+                <Tag color={getCancellationStatusColor(cancellationStatus)}>
+                  {getCancellationStatusText(cancellationStatus)}
+                </Tag>
+              );
+            },
+            sorter: (a, b) => (a.cancellationStatus || "").localeCompare(b.cancellationStatus || ""),
+          },
+          {
             title: "Actions",
             key: "actions",
             render: (_: any, record: IPolicy) => (
@@ -482,7 +576,7 @@ export default function PoliciesPage() {
                       label: "Edit Policy",
                       onClick: () => editPolicy(record),
                     },
-                    {
+                    ...(record.cancellationStatus === "none" || !record.cancellationStatus ? [{
                       key: "request-cancellation",
                       icon: <CloseOutlined />,
                       label: "Request Cancellation",
@@ -490,7 +584,7 @@ export default function PoliciesPage() {
                         setSelectedPolicyForCancellation(record);
                         setCancellationDrawerOpen(true);
                       },
-                    },
+                    }] : []),
                     ...(record.paymentHistoryFile ? [{
                       key: "payment-history",
                       icon: <EyeOutlined />,

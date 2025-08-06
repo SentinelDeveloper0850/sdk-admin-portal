@@ -88,6 +88,13 @@ const SideNavBar = () => {
           url: "/policies/signup-requests",
           allowedRoles: [ERoles.Admin, ERoles.SchemeConsultantOnline],
         },
+        {
+          id: "cancellation-requests",
+          name: "Cancellation Requests",
+          icon: <FileText size={18} />,
+          url: "/policies/cancellation-requests",
+          allowedRoles: [ERoles.Admin],
+        },
       ],
     },
     {
