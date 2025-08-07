@@ -24,6 +24,7 @@ import { logout } from "@/utils/auth";
 import { useAuth } from "@/context/auth-context";
 
 import { ThemeSwitcher } from "./theme-switcher";
+import Presence from "@/components/presence";
 
 export default function AppBarOnline() {
   const router = useRouter();
@@ -60,6 +61,9 @@ export default function AppBarOnline() {
       </NavbarContent>
 
       <NavbarContent justify="end">
+        <NavbarItem className="hidden md:flex">
+          <Presence />
+        </NavbarItem>
         <NavbarItem className="hidden md:flex">
           <ThemeSwitcher />
         </NavbarItem>
