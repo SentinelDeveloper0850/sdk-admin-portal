@@ -215,7 +215,7 @@ export default function DailyActivityPage() {
       return acc;
     }, {} as Record<string, number>);
 
-    const mostActiveBranch = Object.entries(branchCounts).sort(([, a], [, b]) => b - a)[0]?.[0] || "None";
+    const mostActiveBranch = Object.entries(branchCounts).sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || "None";
 
     // Calculate compliance rate (this would need to be fetched from dashboard API in a real implementation)
     const expectedUsers = 10; // This should come from the dashboard API

@@ -8,9 +8,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     // Authenticate user using custom JWT
     const user = await getUserFromRequest(request);
     if (!user) {
@@ -24,7 +26,7 @@ export async function GET(
     await connectToDatabase();
 
     // Get cancellation request by ID
-    const cancellationRequest = await PolicyCancellationRequest.findById(params.id).lean();
+    const cancellationRequest = await PolicyCancellationRequest.findById(id).lean();
 
     if (!cancellationRequest) {
       return NextResponse.json(
@@ -59,9 +61,11 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     // Authenticate user using custom JWT
     const user = await getUserFromRequest(request);
     if (!user) {
@@ -87,7 +91,7 @@ export async function PATCH(
     }
 
     // Get cancellation request
-    const cancellationRequest = await PolicyCancellationRequest.findById(params.id);
+    const cancellationRequest = await PolicyCancellationRequest.findById(id);
 
     if (!cancellationRequest) {
       return NextResponse.json(
@@ -166,9 +170,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     // Authenticate user using custom JWT
     const user = await getUserFromRequest(request);
     if (!user) {
@@ -182,7 +188,7 @@ export async function DELETE(
     await connectToDatabase();
 
     // Get cancellation request
-    const cancellationRequest = await PolicyCancellationRequest.findById(params.id);
+    const cancellationRequest = await PolicyCancellationRequest.findById(id);
 
     if (!cancellationRequest) {
       return NextResponse.json(
@@ -200,7 +206,7 @@ export async function DELETE(
     }
 
     // Delete the request
-    await PolicyCancellationRequest.findByIdAndDelete(params.id);
+    await PolicyCancellationRequest.findByIdAndDelete(id);
 
     // Reset policy cancellation status to none since cancellation request is deleted
     await PolicyModel.findByIdAndUpdate(cancellationRequest.policyId, {

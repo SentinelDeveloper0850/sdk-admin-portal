@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-
+import { fetchAllPolicies } from "@/server/actions/policies";
 
 export async function POST(request: Request) {
   try {

@@ -30,13 +30,13 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in daily activity reminders cron:", error);
     return NextResponse.json(
       {
         success: false,
         message: "Internal server error",
-        error: error.toString(),
+        error: error?.toString() || "Unknown error",
         timestamp: new Date().toISOString(),
       },
       { status: 500 }

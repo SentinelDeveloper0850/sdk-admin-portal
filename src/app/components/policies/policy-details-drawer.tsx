@@ -117,7 +117,7 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
                 <div className="mb-4">
                   <h3 className="font-semibold">Premium Amount</h3>
                   <p className="text-lg font-semibold text-green-600">
-                    {formatToMoneyWithCurrency(policy.usualPremium, policy.currency || "ZAR")}
+                    {formatToMoneyWithCurrency(policy.usualPremium)}
                   </p>
                 </div>
               )}
@@ -139,7 +139,7 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
               <Card title="Payment History" size="small">
                 <Button
                   type="primary"
-                  onClick={() => setPreviewImage(policy.paymentHistoryFile)}
+                  onClick={() => setPreviewImage(policy.paymentHistoryFile || null)}
                   block
                 >
                   View Payment History
