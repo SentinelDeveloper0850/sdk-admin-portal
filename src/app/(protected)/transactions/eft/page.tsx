@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { ReloadOutlined } from "@ant-design/icons";
 import {
   Alert,
   Button,
@@ -18,12 +19,10 @@ import {
   notification,
 } from "antd";
 import Search from "antd/es/input/Search";
-import Papa from "papaparse";
 
 import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
 
-import { BankStatementExcelImporter } from "@/app/components/import-tools/bank-statement-xlsx-importer";
-import { TransactionHistoryCsvImporter } from "@/app/components/import-tools/transaction-history-csv-importer";
+// BankStatementExcelImporter moved to EFT Importer page
 import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
 import { useAuth } from "@/context/auth-context";
@@ -54,6 +53,7 @@ export default function EftTransactionsPage() {
   const [transactions, setTransactions] = useState<IEftTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const [stats, setStats] = useState<{ count: number }>({ count: 0 });
 
@@ -68,9 +68,9 @@ export default function EftTransactionsPage() {
 
   const { hasRole } = useRole();
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (showLoader: boolean = true) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       const response = await fetch("/api/transactions/eft");
       if (!response.ok) {
         const errorData = await response.json();
@@ -85,7 +85,16 @@ export default function EftTransactionsPage() {
       console.log(err);
       setError("An error occurred while fetching transactions.");
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchTransactions(false);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -166,131 +175,7 @@ export default function EftTransactionsPage() {
     fetchTransactions();
   }, []);
 
-  const fileChangeHandler = async (event: any) => {
-    parseFiles(event.target.files);
-  };
-
-  const parseFiles = (files: any) => {
-    const importBatch: any[] = [];
-
-    let statementMonth: any = null;
-    let uuid: any = null;
-
-    Promise.all(
-      [...files].map(
-        (file) =>
-          new Promise((resolve, reject) =>
-            Papa.parse(file, {
-              skipEmptyLines: true,
-              complete: function (results: any) {
-                const data = results.data;
-
-                const labelsToIgnore = [
-                  "ACCOUNT TRANSACTION HISTORY",
-                  "Name:",
-                  "Account:",
-                  "Balance:",
-                  "Date",
-                ];
-
-                const records: any[] = data.filter(
-                  (item: any[]) => !labelsToIgnore.includes(item[0])
-                );
-
-                const statementDate = records[0][0];
-                const _uuid = statementDate;
-
-                const _transactions: any[] = [];
-
-                records.map((item) => {
-                  if (!item[1].trim().includes("-")) {
-                    const _amountString = item[1] as string;
-                    const _amount = _amountString
-                      .replace(",", "")
-                      .replace(",", "");
-                    _transactions.push({
-                      date: item[0],
-                      amount: _amount.trim(),
-                      description: item[3],
-                      uuid: _uuid,
-                    });
-                  }
-                });
-
-                const _numberOfTransactions = _transactions.length;
-
-                let payload = {
-                  statementMonth: _uuid,
-                  transactions: _transactions,
-                  uuid: _uuid,
-                  importData: {
-                    uuid: _uuid,
-                    date: statementDate,
-                    numberOfTransactions: _numberOfTransactions,
-                    createdBy: user?.name ?? "--",
-                    created_at: new Date(),
-                  },
-                };
-
-                if (_transactions) {
-                  resolve(payload);
-                }
-              }, // Resolve each promise
-              error: reject,
-            })
-          )
-      )
-    )
-      .then((results: any[]) => {
-        results.forEach((result, index) => {
-          importBatch.push(result);
-        });
-        console.log("importBatch[0]", importBatch[0]);
-        console.log("results[0]", results[0]);
-        bulkCreateTransactions({
-          ...results[0],
-          source: "Transaction History",
-        }); // now since .then() excutes after all promises are resolved, filesData contains all the parsed files.
-      })
-      .catch((err) => console.error("Something went wrong:", err));
-  };
-
-  const bulkCreateTransactions = async (payload: any) => {
-    try {
-      const response = await fetch("/api/transactions/eft", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-        .then((response) => {
-          console.log("response", response);
-          if (response.status !== 200) {
-            setError(
-              "Internal Server Error - Something went wrong while attempting to bulk create transactions"
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          setError("An error occurred while bulk creating transactions.");
-        });
-
-      // console.log("response", response);
-
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   setError(errorData.message || "Failed to bulk create transactions");
-      //   return;
-      // }
-
-      console.log("bulkCreateTransactions response", response);
-    } catch (err) {
-      console.log("Caught error on bulkCreateTransactions", err);
-      setError("An error occurred while bulk creating transactions.");
-    }
-  };
+  // CSV import moved to EFT Importer page; CSV tools removed from this page
 
   if (loading) {
     return (
@@ -309,6 +194,7 @@ export default function EftTransactionsPage() {
         title="EFT Transactions"
         actions={[
           <Space>
+            <Button onClick={handleRefresh} loading={refreshing} icon={<ReloadOutlined />}>Refresh</Button>
             <Button
               onClick={async () => {
                 await fetchImportHistory();
@@ -339,12 +225,7 @@ export default function EftTransactionsPage() {
           >
             {hasRole(ERoles.Admin) && (
               <Space>
-                <BankStatementExcelImporter />
-                <TransactionHistoryCsvImporter
-                  handleChange={fileChangeHandler}
-                  allowMultiple
-                  label="Import Transaction History (CSV)"
-                />
+                {/* XLSX importer now available in EFT Importer page */}
               </Space>
             )}
           </Col>

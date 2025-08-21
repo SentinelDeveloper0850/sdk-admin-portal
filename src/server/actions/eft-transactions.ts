@@ -341,3 +341,43 @@ export const importFromTransactionHistory = async (payload: any) => {
     };
   }
 };
+
+export const reverseImport = async (uuid: string) => {
+  try {
+    await connectToDatabase();
+
+    if (!uuid || typeof uuid !== "string") {
+      return { success: false, message: "Invalid import uuid" };
+    }
+
+    // Delete transactions first
+    const txnResult = await EftTransactionModel.deleteMany({ uuid });
+    // Delete import metadata
+    const importResult = await IEftImportDataModel.deleteOne({ uuid });
+
+    const deletedTransactions = txnResult?.deletedCount || 0;
+    const deletedImport = importResult?.deletedCount || 0;
+
+    if (deletedTransactions === 0 && deletedImport === 0) {
+      return {
+        success: false,
+        message: "No records found for the provided uuid",
+        deletedTransactions,
+        deletedImport,
+      };
+    }
+
+    return {
+      success: true,
+      message: `Reversed import. Deleted ${deletedTransactions} transaction(s).`,
+      deletedTransactions,
+      deletedImport,
+    };
+  } catch (error: any) {
+    console.error("Error reversing eft import:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error reversing eft import",
+    };
+  }
+};

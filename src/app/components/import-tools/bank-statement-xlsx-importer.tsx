@@ -1,26 +1,15 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
-import { CloseCircleFilled } from "@ant-design/icons";
-import { DatePicker, Space, notification } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
+import { Button, DatePicker, Space, Upload, notification } from "antd";
 import * as XLSX from "xlsx";
 
 export const BankStatementExcelImporter = () => {
-  const fileRef = useRef() as React.MutableRefObject<HTMLInputElement>;
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [fileName, setFileName] = useState(null);
   const [statementMonth, setStatementMonth] = useState<any>(undefined);
 
-  const acceptableFileTypes = ["xlsx", "xls"];
-
-  const isAcceptableFile = (name: string) => {
-    let extension = name.split(".").pop()?.toLowerCase();
-
-    if (extension) return acceptableFileTypes.includes(extension);
-
-    return false;
-  };
+  const acceptableFileTypes = [".xlsx", ".xls"];
 
   const bulkCreateTransactions = async (payload: {
     statementMonth: any;
@@ -74,33 +63,29 @@ export const BankStatementExcelImporter = () => {
     bulkCreateTransactions(payload);
   };
 
-  const handleFile = async (event: any) => {
-    console.log("🚀 ~ handleFile ~ event:", event);
-    const _file = event.target.files[0];
-    console.log("🚀 ~ handleFile ~ _file:", _file);
-
-    if (!_file) return;
-
-    if (!isAcceptableFile(_file.name)) {
-      notification.error({
-        message: "Invalid File Type",
-        description: "Please upload xlsx or xls files only",
-      });
-      return;
+  const handleBeforeUpload = async (file: File) => {
+    try {
+      if (!acceptableFileTypes.includes(`.${file.name.split('.').pop()?.toLowerCase()}`)) {
+        notification.error({
+          message: "Invalid File Type",
+          description: "Please upload xlsx or xls files only",
+        });
+        return Upload.LIST_IGNORE;
+      }
+      setLoading(true);
+      const data = await file.arrayBuffer();
+      parseExcelData(data);
+      notification.success({ message: "Bank statement parsed. Importing…" });
+    } catch (e) {
+      notification.error({ message: "Failed to read file" });
+    } finally {
+      setLoading(false);
     }
-
-    setFileName(_file.name);
-
-    const data = await _file.arrayBuffer();
-    console.log("🚀 ~ handleFile ~ data:", data);
-
-    parseExcelData(data);
+    return false; // prevent default upload
   };
 
   const handleRemoveFile = () => {
     setStatementMonth(undefined);
-    setFileName(null);
-    fileRef.current.value = "";
   };
 
   const onMonthChange = (_date: any, dateString: string | string[]) => {
@@ -112,50 +97,22 @@ export const BankStatementExcelImporter = () => {
   };
 
   return (
-    <div>
-      {fileName && (
-        <label
-          style={{
-            color: "#999",
-            textTransform: "uppercase",
-            letterSpacing: "0.15rem",
-          }}
-        >
-          File Name: <span style={{}}>{fileName}</span>{" "}
-          <CloseCircleFilled
-            onClick={handleRemoveFile}
-            style={{ color: "#ff4d4f", cursor: "pointer" }}
-          />
-        </label>
-      )}
-      {!fileName && (
-        <label
-          style={{
-            color: "#999",
-            textTransform: "uppercase",
-            letterSpacing: "0.15rem",
-          }}
-        >
+    <Space>
+      <DatePicker
+        placeholder="Statement Month"
+        onChange={onMonthChange}
+        picker="month"
+      />
+      <Upload
+        accept={acceptableFileTypes.join(',')}
+        showUploadList={false}
+        beforeUpload={handleBeforeUpload}
+        disabled={statementMonth === undefined || loading}
+      >
+        <Button icon={<UploadOutlined />} loading={loading} disabled={statementMonth === undefined}>
           Import Bank Statement (XLSX)
-        </label>
-      )}
-      <Space style={{ display: "flex", justifyContent: "flex-end" }}>
-        <DatePicker
-          placeholder="Statement Month"
-          onChange={onMonthChange}
-          picker="month"
-        />
-        <input
-          type="file"
-          name="file"
-          multiple={false}
-          accept="xlsx, xls"
-          ref={fileRef}
-          disabled={statementMonth === undefined}
-          onChange={handleFile}
-          style={{ display: "block", margin: "10px 0" }}
-        />
-      </Space>
-    </div>
+        </Button>
+      </Upload>
+    </Space>
   );
 };

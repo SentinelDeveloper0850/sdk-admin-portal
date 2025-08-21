@@ -9,6 +9,13 @@ export interface IEftImportData extends Document {
   numberOfTransactions: number;
   createdBy: string;
   created_at: Date;
+  // Enhanced fields for better import tracking (optional)
+  contentHash?: string;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  importType?: string;
 }
 
 // Define the schema
@@ -22,10 +29,16 @@ const IEftImportDataSchema: Schema = new Schema({
     type: Date,
     default: Date.now(),
   },
+  // Enhanced fields (optional for backward compatibility)
+  contentHash: { type: String, required: false },
+  dateRange: {
+    start: { type: String, required: false },
+    end: { type: String, required: false }
+  },
+  importType: { type: String, required: false }
 });
 
 // Check if the model is already compiled
-// export const IEftImportDataModel = mongoose.models['eftImportData'] || mongoose.model<IEftImportData>("eftImportData", IEftImportDataSchema);
 export const IEftImportDataModel =
   mongoose.models["eft-import-data"] ||
   mongoose.model<IEftImportData>("eft-import-data", IEftImportDataSchema);
