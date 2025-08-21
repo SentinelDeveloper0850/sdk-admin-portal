@@ -1,7 +1,9 @@
+import { getUserFromRequest } from "@/lib/auth";
+import { createAuditLog } from "@/server/actions/audit";
 import { updateTransactionPolicyNumbers } from "@/server/actions/easypay-transactions";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const payload = await request.json();
     const { transactions } = payload;
@@ -14,6 +16,38 @@ export async function POST(request: Request) {
     }
 
     const response = await updateTransactionPolicyNumbers(transactions);
+
+    // Audit log
+    try {
+      const user = await getUserFromRequest(request);
+      const ipHeader = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
+      const ip = (ipHeader ? ipHeader.split(",")[0].trim() : null) as string | null;
+      const userAgent = request.headers.get("user-agent") || null;
+
+      await createAuditLog({
+        action: "easypay.update-policy-numbers",
+        resourceType: "easypay-transaction",
+        performedBy: user
+          ? {
+            id: user._id?.toString?.(),
+            name: (user as any).name,
+            email: (user as any).email,
+            role: (user as any).role,
+          }
+          : {},
+        ip,
+        userAgent,
+        details: {
+          attempted: Array.isArray(transactions) ? transactions.length : undefined,
+          updatedCount: (response as any)?.data?.updatedCount,
+        },
+        outcome: response?.success ? "success" : "failure",
+        severity: "medium",
+        tags: ["bulk-update"],
+      });
+    } catch (e) {
+      console.error("Failed to write audit log for Easypay update-policy-numbers:", (e as any)?.message);
+    }
 
     if (response?.success) {
       return NextResponse.json({

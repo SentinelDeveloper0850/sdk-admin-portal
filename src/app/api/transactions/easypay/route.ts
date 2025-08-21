@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { getUserFromRequest } from "@/lib/auth";
+import { createAuditLog } from "@/server/actions/audit";
 import {
   fetchAll,
   importTransactions,
@@ -27,12 +29,47 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // Parse the request body
     const payload = await request.json();
 
     const response = await importTransactions(payload);
+
+    // Audit log
+    try {
+      const user = await getUserFromRequest(request);
+      const ipHeader = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
+      const ip = (ipHeader ? ipHeader.split(",")[0].trim() : null) as string | null;
+      const userAgent = request.headers.get("user-agent") || null;
+
+      await createAuditLog({
+        action: "easypay.import",
+        resourceType: "easypay-import",
+        resourceId: payload?.uuid,
+        performedBy: user
+          ? {
+            id: user._id?.toString?.(),
+            name: (user as any).name,
+            email: (user as any).email,
+            role: (user as any).role,
+          }
+          : {},
+        ip,
+        userAgent,
+        details: {
+          transactionsCount: Array.isArray(payload?.transactions)
+            ? payload.transactions.length
+            : undefined,
+          statementMonth: payload?.statementMonth,
+        },
+        outcome: response?.success ? "success" : "failure",
+        severity: "high",
+        tags: ["import"],
+      });
+    } catch (e) {
+      console.error("Failed to write audit log for Easypay import:", (e as any)?.message);
+    }
 
     if (response.success) {
       return NextResponse.json(response, { status: 200 });
