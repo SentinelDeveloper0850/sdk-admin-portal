@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import jwt from "jsonwebtoken";
@@ -10,22 +11,24 @@ if (!process.env.JWT_SECRET) {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_ISSUER = "sdk-admin-portal";
+const JWT_AUDIENCE = "sdk-admin-portal-web";
 
-export async function GET(request: Request) {
-  const authHeader = request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+export async function GET() {
+  const token = (await cookies()).get("auth-token")?.value;
 
   if (!token) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // Verify the token
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    }) as { userId: string };
 
     await connectToDatabase();
 
-    // Fetch user details from the database
     const user = await UsersModel.findById(decoded.userId).select("-password");
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });

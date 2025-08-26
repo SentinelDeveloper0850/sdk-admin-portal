@@ -52,10 +52,6 @@ const ForgotPasswordPage = () => {
       }
 
       const data = response.data;
-
-      // Store token in cookies or local storage
-      document.cookie = `auth-token=${data.token}; path=/`;
-
       // Update user in context
       setUser(data.user);
 

@@ -1,3 +1,5 @@
+import { createSystemNotification, getDiscordWebhookUrl, sendDiscordNotification } from "@/lib/discord";
+import { sendPolicySignupConfirmationEmail } from "@/lib/email";
 import mongoose, { Schema } from "mongoose";
 
 // Define interfaces for the new data structure
@@ -107,6 +109,9 @@ export interface IPolicySignUp extends Document {
   // Timestamps
   updated_at?: Date;
   updated_by?: string;
+
+  // Methods
+  sendCreationNotifications?: () => Promise<void>;
 }
 
 // Define the schema
@@ -225,6 +230,68 @@ const PolicySignUpSchema: Schema = new Schema({
   // Timestamps
   updated_at: { type: Date, default: Date.now },
   updated_by: { type: String, required: false }
+});
+
+// Instance method: send notifications on creation
+PolicySignUpSchema.methods.sendCreationNotifications = async function (): Promise<void> {
+  try {
+    const doc = this as any as IPolicySignUp & { _id: string };
+
+    // Send applicant confirmation email if email provided
+    if (doc.email) {
+      await sendPolicySignupConfirmationEmail({
+        to: doc.email,
+        applicantName: `${doc.fullNames} ${doc.surname}`.trim(),
+        requestId: doc.requestId,
+        planName: (doc as any).plan?.name || (doc as any).plan,
+        numberOfDependents: doc.numberOfDependents || (Array.isArray(doc.dependents) ? doc.dependents.length : 0),
+        submittedAt: doc.created_at || new Date(),
+        status: doc.currentStatus || "submitted",
+        message: doc.message,
+      });
+    }
+
+    // Send Discord notification to team channel
+    const webhookUrl = getDiscordWebhookUrl();
+    if (webhookUrl) {
+      const fields = [
+        { name: "Applicant", value: `${doc.fullNames} ${doc.surname}`.trim(), inline: true },
+        { name: "Request ID", value: doc.requestId, inline: true },
+        { name: "Plan", value: ((doc as any).plan?.name || (doc as any).plan || "-") as string, inline: true },
+        { name: "Dependents", value: `${doc.numberOfDependents || (Array.isArray(doc.dependents) ? doc.dependents.length : 0)}`, inline: true },
+        { name: "Phone", value: doc.phone || "-", inline: true },
+        { name: "Email", value: doc.email || "-", inline: true },
+      ];
+
+      const payload = createSystemNotification(
+        "📝 New Policy Signup Request",
+        "A new policy signup request has been submitted.",
+        "success",
+        fields as any
+      );
+
+      await sendDiscordNotification(webhookUrl, payload, "policy-signup-create");
+    }
+  } catch (error) {
+    console.error("Error sending policy signup creation notifications:", error);
+  }
+};
+
+// Track if document is new across hooks
+PolicySignUpSchema.pre("save", function (next) {
+  (this as any)._wasNew = this.isNew;
+  next();
+});
+
+// Post-save hook to trigger notifications only on creation
+PolicySignUpSchema.post("save", async function (doc) {
+  try {
+    if ((this as any)._wasNew && typeof (doc as any).sendCreationNotifications === "function") {
+      await (doc as any).sendCreationNotifications();
+    }
+  } catch (err) {
+    console.error("Post-save notification hook failed:", err);
+  }
 });
 
 export const PolicySignUpModel =

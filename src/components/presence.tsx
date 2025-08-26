@@ -54,14 +54,7 @@ export default function Presence() {
 
     try {
       console.log('Fetching all users...');
-      const response = await fetch('/api/users/badges', {
-        headers: {
-          'Authorization': `Bearer ${document.cookie
-            .split("; ")
-            .find((row) => row.startsWith("auth-token="))
-            ?.split("=")[1]}`
-        }
-      });
+      const response = await fetch('/api/users/badges');
 
       if (!response.ok) {
         console.warn('Failed to fetch users:', response.status);

@@ -20,7 +20,17 @@ export async function POST(request: Request) {
     }
 
     const result = await loginUser(email, password);
-    return NextResponse.json(result, { status: 200 });
+
+    // Return user and set HttpOnly cookie; do not expose token to client
+    const response = NextResponse.json({ user: result.user }, { status: 200 });
+    response.cookies.set("auth-token", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 8,
+    });
+    return response;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Login error:", error.message);

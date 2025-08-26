@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined in the environment variables.");
 }
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+const JWT_ISSUER = "sdk-admin-portal";
+const JWT_AUDIENCE = "sdk-admin-portal-web";
 
 export async function middleware(request: NextRequest) {
   const protectedRoutes = [
@@ -31,7 +33,10 @@ export async function middleware(request: NextRequest) {
     }
 
     try {
-      await jwtVerify(token, JWT_SECRET);
+      await jwtVerify(token, JWT_SECRET, {
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE,
+      });
       return NextResponse.next(); // Token valid, proceed
     } catch (err) {
       console.error("JWT verification failed:", err);

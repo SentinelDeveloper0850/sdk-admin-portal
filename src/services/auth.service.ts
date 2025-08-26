@@ -5,7 +5,12 @@ import UsersModel from "@/app/models/hr/user.schema";
 
 // JWT secret and expiration
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = "1d";
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is not defined in the environment variables.");
+}
+const JWT_EXPIRES_IN = "8h";
+const JWT_ISSUER = "sdk-admin-portal";
+const JWT_AUDIENCE = "sdk-admin-portal-web";
 
 export const loginUser = async (email: string, password: string) => {
   // Find the user by email
@@ -29,36 +34,37 @@ export const loginUser = async (email: string, password: string) => {
     );
   }
 
-  if (JWT_SECRET) {
-    // Generate a JWT token
-    const token = jwt.sign(
-      { userId: user._id, role: user.role, roles: user.roles },
-      JWT_SECRET,
-      {
-        expiresIn: JWT_EXPIRES_IN,
-      }
-    );
+  const userId = (user as { _id: { toString(): string } })._id.toString();
 
-    return {
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
-        preferences: user.preferences,
-        address: user.address,
-        phone: user.phone,
-        role: user.role,
-        roles: user.roles,
-        status: user.status,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      },
-    };
-  } else {
-    throw new Error("JWT secret is not set");
-  }
+  // Generate a JWT token
+  const token = jwt.sign(
+    { userId, role: user.role, roles: user.roles },
+    JWT_SECRET,
+    {
+      expiresIn: JWT_EXPIRES_IN,
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+      subject: userId,
+    }
+  );
+
+  return {
+    token,
+    user: {
+      id: userId,
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      preferences: user.preferences,
+      address: user.address,
+      phone: user.phone,
+      role: user.role,
+      roles: user.roles,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    },
+  };
 };
 
 export const sendPasswordResetLink = async (email: string) => {

@@ -66,7 +66,7 @@ const UsersPage = () => {
 
       const data = await response.json();
 
-      const updatedUsers = data.users.map((v: any) => {
+      const updatedUsers = data.map((v: any) => {
         const firstRole = v.roles[0] ?? null;
         const isAdmin = v.role === "admin";
 

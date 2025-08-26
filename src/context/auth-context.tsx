@@ -29,28 +29,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   const fetchUserDetails = async () => {
-    const token = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("auth-token="))
-      ?.split("=")[1];
-
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     try {
-      const response = await axios.get("/api/auth/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get("/api/auth/user");
       setUser(response.data.user);
     } catch (error: any) {
       console.error("Error fetching user details:", error);
       if (error.response?.status === 401) {
-        document.cookie =
-          "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
         setUser(null);
         router.push("/auth/signin");
       }
