@@ -43,6 +43,10 @@ export const PolicySignupViewModal = ({
     return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext);
   };
 
+  const isPdfFile = (filename: string) => {
+    return getFileExtension(filename) === 'pdf';
+  };
+
   const getFileIcon = (filename: string, type: string) => {
     const ext = getFileExtension(filename);
 
@@ -530,6 +534,12 @@ export const PolicySignupViewModal = ({
                 alt={previewFile.name}
                 style={{ maxWidth: '100%', maxHeight: '60vh' }}
                 preview={false}
+              />
+            ) : isPdfFile(previewFile.name) ? (
+              <iframe
+                src={`${previewFile.url}#toolbar=1&navpanes=0`}
+                style={{ width: '100%', height: '70vh', border: 'none' }}
+                title={previewFile.name}
               />
             ) : (
               <div style={{ padding: '40px' }}>
