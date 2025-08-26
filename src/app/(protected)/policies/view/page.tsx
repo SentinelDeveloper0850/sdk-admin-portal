@@ -10,6 +10,7 @@ import {
   MailOutlined,
   MoreOutlined,
   PhoneOutlined,
+  SearchOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import {
@@ -17,6 +18,7 @@ import {
   Col,
   Dropdown,
   Form,
+  Input,
   Modal,
   Row,
   Select,
@@ -25,7 +27,6 @@ import {
   Table,
   Tag
 } from "antd";
-import Search from "antd/es/input/Search";
 
 import PageHeader from "@/app/components/page-header";
 import PolicyCancellationDrawer from "@/app/components/policies/policy-cancellation-drawer";
@@ -57,7 +58,8 @@ interface IPolicy {
 
 export default function PoliciesPage() {
   const [policies, setPolicies] = useState<IPolicy[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [bootstrapping, setBootstrapping] = useState<boolean>(true);
+  const [tableLoading, setTableLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
   const [stats, setStats] = useState<{ count: number; totalPages: number }>({ count: 0, totalPages: 0 });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -65,6 +67,8 @@ export default function PoliciesPage() {
   const [editingPolicy, setEditingPolicy] = useState<IPolicy | null>(null);
   const [cancellationDrawerOpen, setCancellationDrawerOpen] = useState(false);
   const [selectedPolicyForCancellation, setSelectedPolicyForCancellation] = useState<IPolicy | null>(null);
+  const [filterOptionsLoading, setFilterOptionsLoading] = useState<boolean>(true);
+  const [searchInput, setSearchInput] = useState("");
 
   // Pagination and filtering state
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,7 +89,7 @@ export default function PoliciesPage() {
 
   const fetchPolicies = async () => {
     try {
-      setLoading(true);
+      setTableLoading(true);
       setError(false);
 
       // Build query parameters
@@ -116,12 +120,14 @@ export default function PoliciesPage() {
       console.error("Error fetching policies:", err);
       setError("An error occurred while fetching policies.");
     } finally {
-      setLoading(false);
+      setTableLoading(false);
+      if (bootstrapping) setBootstrapping(false);
     }
   };
 
   const fetchFilterOptions = async () => {
     try {
+      setFilterOptionsLoading(true);
       const response = await fetch("/api/policies/filter-options");
       if (response.ok) {
         const data = await response.json();
@@ -135,10 +141,13 @@ export default function PoliciesPage() {
       }
     } catch (err) {
       console.error("Error fetching filter options:", err);
+    } finally {
+      setFilterOptionsLoading(false);
     }
   };
 
   const handleSearch = (value: string) => {
+    setSearchInput(value || "");
     setFilters(prev => ({ ...prev, searchText: value || "" }));
     setCurrentPage(1); // Reset to first page when searching
   };
@@ -242,7 +251,7 @@ export default function PoliciesPage() {
     console.log("Edit policy:", policy);
   };
 
-  if (loading) {
+  if (bootstrapping) {
     return (
       <Loading
         type="fullscreen"
@@ -305,24 +314,30 @@ export default function PoliciesPage() {
         <Row gutter={16}>
           <Col span={6}>
             <Form.Item label="Search">
-              <Search
+              <Input
                 allowClear
                 placeholder="Search by Policy Number, Member ID, Name, ID Number, or Phone..."
-                onSearch={handleSearch}
-                onClear={() => handleSearch("")}
-                value={filters.searchText}
-                onChange={(e) => setFilters(prev => ({ ...prev, searchText: e.target.value }))}
+                value={searchInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchInput(val);
+                  if (val === "") {
+                    handleSearch("");
+                  }
+                }}
+                onPressEnter={() => handleSearch(searchInput)}
+                addonAfter={<SearchOutlined style={{ cursor: "pointer" }} onClick={() => handleSearch(searchInput)} />}
               />
             </Form.Item>
           </Col>
-          <Col span={4}>
+          {/* <Col span={4}>
             <Form.Item label="Status">
               <Select
                 allowClear
                 placeholder="All Statuses"
                 value={filters.status || undefined}
                 onChange={(value: string) => handleFilterChange("status", value)}
-                loading={!filterOptions.statuses.length}
+                loading={filterOptionsLoading}
               >
                 {filterOptions.statuses.map((status: string) => (
                   <Select.Option key={status} value={status}>
@@ -331,15 +346,15 @@ export default function PoliciesPage() {
                 ))}
               </Select>
             </Form.Item>
-          </Col>
-          <Col span={4}>
+          </Col> */}
+          <Col span={6}>
             <Form.Item label="Product">
               <Select
                 allowClear
                 placeholder="All Products"
                 value={filters.productName || undefined}
                 onChange={(value) => handleFilterChange("productName", value)}
-                loading={!filterOptions.products.length}
+                loading={filterOptionsLoading}
               >
                 {filterOptions.products.map((product: string) => (
                   <Select.Option key={product} value={product}>
@@ -349,14 +364,14 @@ export default function PoliciesPage() {
               </Select>
             </Form.Item>
           </Col>
-          <Col span={4}>
+          {/* <Col span={4}>
             <Form.Item label="Branch">
               <Select
                 allowClear
                 placeholder="All Branches"
                 value={filters.branchName || undefined}
                 onChange={(value) => handleFilterChange("branchName", value)}
-                loading={!filterOptions.branches.length}
+                loading={filterOptionsLoading}
               >
                 {filterOptions.branches.map((branch: string) => (
                   <Select.Option key={branch} value={branch}>
@@ -365,7 +380,7 @@ export default function PoliciesPage() {
                 ))}
               </Select>
             </Form.Item>
-          </Col>
+          </Col> */}
           <Col span={6}>
             <Form.Item label="Actions">
               <Space>
@@ -384,6 +399,7 @@ export default function PoliciesPage() {
         rowKey="_id"
         bordered
         dataSource={policies}
+        loading={tableLoading}
         rowClassName="cursor-pointer hover:bg-gray-50"
         onChange={(pagination, filters, sorter: any) => {
           if (sorter && sorter.field) {
