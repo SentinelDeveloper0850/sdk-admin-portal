@@ -9,10 +9,25 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const requestId = searchParams.get('requestId');
 
     if (id) {
       // Get specific signup request
       const request = await PolicySignUpModel.findById(id);
+
+      if (!request) {
+        return NextResponse.json(
+          { success: false, error: "Signup request not found" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({ success: true, data: request });
+    }
+
+    if (requestId) {
+      // Get specific signup request by business requestId
+      const request = await PolicySignUpModel.findOne({ requestId });
 
       if (!request) {
         return NextResponse.json(
