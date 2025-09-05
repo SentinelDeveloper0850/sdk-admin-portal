@@ -20,6 +20,7 @@ export interface IUser extends Document {
     theme?: "light" | "dark" | "system";
     notifications?: boolean;
   };
+  lastSeenAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -58,6 +59,8 @@ const userSchema: Schema<IUser> = new Schema(
     mustChangePassword: { type: Boolean, default: false, required: false },
     avatarUrl: { type: String, default: "" },
     preferences: { type: preferencesSchema, default: () => ({}) },
+    // Presence timestamp updated via heartbeat API
+    lastSeenAt: { type: Date, required: false, default: null },
     employee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Employee',

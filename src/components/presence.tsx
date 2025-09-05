@@ -4,279 +4,95 @@ import { Avatar, Badge, Chip } from '@nextui-org/react';
 import { Drawer, List, Space, Tag, Typography } from 'antd';
 import { Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
 
 import { useAuth } from '@/context/auth-context';
 
 const { Text } = Typography;
 
-// Interface for online user data from server (simplified)
+// Online user from presence API
 interface OnlineUserFromServer {
-  id: string;        // userId from token
-  role?: string;     // role from token
-  roles?: string[];  // roles from token
-}
-
-// Interface for cached user data (simplified)
-interface CachedUser {
-  id: string;
-  name: string;
-  avatarUrl?: string;
-}
-
-// Interface for display user data (enriched with cached user info)
-interface OnlineUserDisplay {
   id: string;
   name: string;
   avatarUrl?: string;
   role?: string;
   roles?: string[];
+  lastSeenAt?: string | Date;
 }
 
 export default function Presence() {
-  const [online, setOnline] = useState<OnlineUserDisplay[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [online, setOnline] = useState<OnlineUserFromServer[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { user } = useAuth();
-  const socketRef = useRef<Socket | null>(null);
-  const connectionAttemptRef = useRef<boolean>(false);
-  const userCacheRef = useRef<Map<string, CachedUser>>(new Map());
-  const usersFetchedRef = useRef<boolean>(false);
+  const heartbeatIntervalRef = useRef<number | null>(null);
+  const fetchIntervalRef = useRef<number | null>(null);
 
-  // Function to fetch all users at once
-  const fetchAllUsers = async (): Promise<void> => {
-    if (usersFetchedRef.current) {
-      console.log('Users already fetched, using cache');
-      return;
-    }
+  const currentUserId = user?._id?.toString?.();
+  const otherOnline = currentUserId ? online.filter(u => u.id !== currentUserId) : online;
 
+  // Heartbeat: POST to /api/presence to update user's lastSeenAt
+  const sendHeartbeat = async () => {
+    if (!user) return;
     try {
-      console.log('Fetching all users...');
-      const response = await fetch('/api/users/badges');
-
-      if (!response.ok) {
-        console.warn('Failed to fetch users:', response.status);
-        return;
-      }
-
-      const users = await response.json();
-
-      // Populate cache with all users
-      users.forEach((userData: any) => {
-        userCacheRef.current.set(userData._id, {
-          id: userData._id,
-          name: userData.name,
-          avatarUrl: userData.avatarUrl,
-        });
-      });
-
-      console.log(`Cached ${users.length} users`);
-      usersFetchedRef.current = true;
-    } catch (error) {
-      console.error('Error fetching users:', error);
+      await fetch('/api/presence', { method: 'POST' });
+      setLastError(null);
+    } catch (error: any) {
+      console.error('Heartbeat failed:', error);
+      setLastError('Heartbeat failed');
     }
   };
 
-  // Function to get user details from cache
-  const getUserDetails = (userId: string): CachedUser => {
-    // Check cache first
-    if (userCacheRef.current.has(userId)) {
-      return userCacheRef.current.get(userId)!;
+  // Fetch online list
+  const fetchOnline = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/presence');
+      if (!res.ok) throw new Error(`Failed to fetch presence (${res.status})`);
+      const data = await res.json();
+      setOnline(Array.isArray(data.online) ? data.online : []);
+      setLastError(null);
+    } catch (error: any) {
+      console.error('Fetch online failed:', error);
+      setLastError(error.message || 'Failed to fetch online users');
+    } finally {
+      setIsSyncing(false);
     }
-
-    // Return fallback data if not in cache
-    const fallbackUser: CachedUser = {
-      id: userId,
-      name: `User ${userId.slice(-4)}`,
-      avatarUrl: undefined,
-    };
-
-    userCacheRef.current.set(userId, fallbackUser);
-    return fallbackUser;
-  };
-
-  // Function to convert server users to display format
-  const convertToDisplayUsers = (serverUsers: OnlineUserFromServer[]): OnlineUserDisplay[] => {
-    return serverUsers.map(serverUser => {
-      const cachedUser = getUserDetails(serverUser.id);
-
-      return {
-        id: serverUser.id,
-        name: cachedUser.name,
-        avatarUrl: cachedUser.avatarUrl,
-        role: serverUser.role,
-        roles: serverUser.roles,
-      };
-    });
-  };
-
-  const connectToSocket = () => {
-    // Prevent multiple simultaneous connection attempts
-    if (connectionAttemptRef.current || isConnecting) {
-      console.log('Connection attempt already in progress, skipping...');
-      return;
-    }
-
-    // Get JWT token from cookies
-    const getAuthToken = () => {
-      return document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("auth-token="))
-        ?.split("=")[1];
-    };
-
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn('No auth token found for socket connection');
-      setConnectionError('No authentication token');
-      return;
-    }
-
-    if (!user) {
-      // User is not logged in, don't attempt connection
-      setIsConnected(false);
-      setConnectionError(null);
-      return;
-    }
-
-    // If already connected, don't reconnect
-    if (socketRef.current?.connected) {
-      console.log('Socket already connected, skipping reconnection');
-      return;
-    }
-
-    connectionAttemptRef.current = true;
-
-    // Disconnect existing socket if any
-    if (socketRef.current) {
-      console.log('Disconnecting existing socket...');
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-
-    // User is logged in, attempt to connect
-    setIsConnecting(true);
-    setConnectionError(null);
-
-    console.log('Attempting to connect to socket server...');
-
-    // Connect to socket server with JWT authentication and enhanced configuration
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
-      auth: {
-        token: token,
-      },
-      // Enhanced WebSocket configuration for better stability
-      transports: ['websocket', 'polling'], // Support both WebSocket and polling
-      timeout: 10000, // 10 second connection timeout
-      forceNew: false, // Reuse existing connection if possible
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-    });
-
-    socketRef.current = socket;
-
-    socket.on('connect', async () => {
-      console.log('Connected to socket server with ID:', socket.id);
-      console.log('User ID:', user._id, 'connected via socket:', socket.id);
-      setIsConnected(true);
-      setIsConnecting(false);
-      setConnectionError(null);
-      connectionAttemptRef.current = false;
-
-      // Fetch all users when first connecting
-      await fetchAllUsers();
-
-      // Request current online users
-      socket.emit('getOnlineUsers');
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('Disconnected from socket server. Reason:', reason);
-      console.log('User ID:', user._id, 'disconnected from socket:', socket.id);
-      console.log('Disconnect details:', {
-        reason,
-        socketId: socket.id,
-        userId: user._id,
-        timestamp: new Date().toISOString()
-      });
-      setIsConnected(false);
-      setIsConnecting(false);
-      connectionAttemptRef.current = false;
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      console.error('Connection error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack,
-        timestamp: new Date().toISOString()
-      });
-      setIsConnected(false);
-      setIsConnecting(false);
-      setConnectionError(error.message || 'Connection failed');
-      connectionAttemptRef.current = false;
-    });
-
-    socket.on('reconnect', async (attemptNumber) => {
-      console.log('Reconnected to socket server after', attemptNumber, 'attempts');
-      console.log('User ID:', user._id, 'reconnected via socket:', socket.id);
-      setIsConnected(true);
-      setIsConnecting(false);
-      setConnectionError(null);
-
-      // Fetch users again if cache is empty
-      await fetchAllUsers();
-
-      // Request updated online users after reconnection
-      socket.emit('getOnlineUsers');
-    });
-
-    socket.on('reconnect_error', (error) => {
-      console.error('Socket reconnection error:', error);
-      setConnectionError('Reconnection failed');
-    });
-
-    socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log('Attempting to reconnect... (attempt', attemptNumber, ')');
-    });
-
-    socket.on('onlineUsers', (users: OnlineUserFromServer[]) => {
-      console.log('Received online users from server:', users);
-      console.log('Total online users:', users.length);
-
-      // Convert server data to display format with caching
-      const displayUsers = convertToDisplayUsers(users);
-      setOnline(displayUsers);
-    });
-
-    // Log transport changes
-    socket.on('upgrade', () => {
-      console.log('Transport upgraded to:', socket.io.engine.transport.name);
-    });
-
-    socket.on('upgradeError', (error) => {
-      console.error('Transport upgrade error:', error);
-    });
   };
 
   useEffect(() => {
-    connectToSocket();
+    // Start polling only when logged in
+    if (!user) {
+      setOnline([]);
+      if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
+      if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+      return;
+    }
+
+    // Initial ping and fetch
+    sendHeartbeat();
+    fetchOnline();
+
+    // Heartbeat every 30s
+    heartbeatIntervalRef.current = window.setInterval(sendHeartbeat, 30_000);
+    // Refresh list every 15s
+    fetchIntervalRef.current = window.setInterval(fetchOnline, 15_000);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        // Refresh quickly when tab becomes visible
+        sendHeartbeat();
+        fetchOnline();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
-      console.log('Cleaning up socket connection...');
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-      connectionAttemptRef.current = false;
+      if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
+      if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [user]); // Reconnect when user changes
+  }, [user]);
 
   // Function to get user initials for avatar
   const getUserInitials = (name: string) => {
@@ -288,41 +104,33 @@ export default function Presence() {
       .slice(0, 3);
   };
 
-  // Determine connection status for display
+  // Determine sync status for display
   const getConnectionStatus = () => {
-    if (isConnecting) return 'Connecting...';
-    if (connectionError) return 'Connection Error';
-    if (isConnected) return 'Connected';
     if (!user) return 'Not Logged In';
-    return 'Disconnected';
+    if (isSyncing) return 'Syncing...';
+    if (lastError) return 'Error';
+    return 'Online';
   };
 
   const getConnectionColor = () => {
-    if (isConnecting) return 'warning';
-    if (connectionError || !user) return 'danger';
-    if (isConnected) return 'success';
-    return 'danger';
+    if (!user) return 'danger';
+    if (isSyncing) return 'warning';
+    if (lastError) return 'danger';
+    return 'success';
   };
 
-  // Handle chip click - reconnect if disconnected
+  // Handle chip click - open drawer
   const handleChipClick = () => {
-    if (!isConnected && !isConnecting && user) {
-      // Attempt to reconnect
-      console.log('Manual reconnection attempt...');
-      connectToSocket();
-    } else {
-      // Open drawer
-      setIsDrawerOpen(true);
-    }
+    setIsDrawerOpen(true);
   };
 
   return (
     <>
       <div className="flex items-center gap-2">
         <Badge
-          content={online.length}
+          content={otherOnline.length}
           color={getConnectionColor()}
-          isInvisible={online.length === 0}
+          isInvisible={otherOnline.length === 0}
         >
           <Chip
             variant="flat"
@@ -340,14 +148,14 @@ export default function Presence() {
       <Drawer
         title={
           <Space>
-            <span>Online Users ({online.length})</span>
+            <span>Online Users ({otherOnline.length})</span>
             <Tag color={getConnectionColor()}>
               {getConnectionStatus()}
             </Tag>
           </Space>
         }
         placement="right"
-        width="30%"
+        width="60%"
         onClose={() => setIsDrawerOpen(false)}
         open={isDrawerOpen}
         styles={{
@@ -358,25 +166,25 @@ export default function Presence() {
         <div className="h-full flex flex-col">
           {/* User List */}
           <div className="flex-1 overflow-y-auto">
-            {connectionError ? (
+            {lastError ? (
               <div className="flex h-full items-center justify-center text-red-500 p-4">
                 <div className="text-center">
-                  <Text type="danger">Connection Error: {connectionError}</Text>
+                  <Text type="danger">Error: {lastError}</Text>
                   <br />
                   <Text type="secondary" className="text-sm">
-                    Click the button above to retry connection
+                    We will retry automatically
                   </Text>
                 </div>
               </div>
-            ) : online.length === 0 ? (
+            ) : otherOnline.length === 0 ? (
               <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-400 p-4">
                 <Text type="secondary">
-                  {isConnecting ? 'Connecting...' : 'No users currently online'}
+                  {isSyncing ? 'Syncing...' : 'No other users online'}
                 </Text>
               </div>
             ) : (
               <List
-                dataSource={online}
+                dataSource={otherOnline}
                 renderItem={(user) => (
                   <List.Item key={user.id} className="px-0">
                     <div className="mx-2 w-full flex items-center gap-3 p-2 text-white bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -402,29 +210,15 @@ export default function Presence() {
           <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800">
             <Space direction="vertical" size="small" className="w-full">
               <Space>
-                <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' :
-                  isConnecting ? 'bg-yellow-500' :
-                    'bg-red-500'
-                  }`}></div>
+                <div className={`h-2 w-2 rounded-full ${(!user || lastError) ? 'bg-red-500' : isSyncing ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
                 <Text type="secondary" className="text-sm">
                   Status: {getConnectionStatus()}
                 </Text>
               </Space>
-              {socketRef.current && (
+              {user && (
                 <div className="space-y-1">
                   <Text type="secondary" className="text-xs">
-                    Socket ID: {socketRef.current.id}
-                  </Text>
-                  <Text type="secondary" className="text-xs">
-                    Transport: {socketRef.current.io.engine.transport.name}
-                  </Text>
-                  {user && (
-                    <Text type="secondary" className="text-xs">
-                      User ID: {user._id?.toString()}
-                    </Text>
-                  )}
-                  <Text type="secondary" className="text-xs">
-                    Cached Users: {userCacheRef.current.size}
+                    User ID: {user._id?.toString()}
                   </Text>
                 </div>
               )}
