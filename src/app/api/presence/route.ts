@@ -5,7 +5,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
 // Consider someone "online" if their last heartbeat was within this window
-const ONLINE_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+const ONLINE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 export async function GET() {
   try {
@@ -17,15 +17,13 @@ export async function GET() {
       lastSeenAt: { $gte: since },
       deletedAt: { $exists: false },
     })
-      .select("_id name avatarUrl roles role lastSeenAt")
+      .select("_id name avatarUrl lastSeenAt")
       .lean();
 
     const result = users.map((u) => ({
       id: u._id?.toString?.() ?? "",
       name: u.name,
       avatarUrl: u.avatarUrl,
-      role: u.role,
-      roles: Array.isArray(u.roles) ? u.roles : undefined,
       lastSeenAt: u.lastSeenAt,
     }));
 

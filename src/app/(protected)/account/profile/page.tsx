@@ -13,7 +13,7 @@ import {
   Input,
   Spinner,
 } from "@nextui-org/react";
-import { Drawer, Tag, message } from "antd";
+import { Drawer, Tag, App } from "antd";
 import dayjs from "dayjs";
 
 import PageHeader from "@/app/components/page-header";
@@ -24,6 +24,7 @@ import Image from "next/image";
 const MAX_FILE_SIZE_MB = 2;
 
 const ProfilePage: React.FC = () => {
+  const { message } = App.useApp();
   const { user, setUser } = useAuth();
   const avatarUrl = user?.avatarUrl || "/default-avatar.png";
 
