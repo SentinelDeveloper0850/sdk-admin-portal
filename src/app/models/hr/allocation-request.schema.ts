@@ -25,6 +25,12 @@ export interface IAllocationRequest {
   rejectedAt?: Date;
   rejectionReason?: string;
 
+  cancelledBy?: string;
+  cancelledAt?: Date;
+
+  submittedBy?: string;
+  submittedAt?: Date;
+
   comments?: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -53,9 +59,17 @@ const AllocationRequestSchema = new Schema(
     },
 
     requestedBy: { type: Types.ObjectId, ref: 'users', required: true },
-    approvedBy: { type: Types.ObjectId, ref: 'User' },
+    approvedBy: { type: Types.ObjectId, ref: 'users' },
     approvedAt: { type: Date },
     rejectionReason: { type: String },
+    rejectedBy: { type: Types.ObjectId, ref: 'users' },
+    rejectedAt: { type: Date },
+    cancelledBy: { type: Types.ObjectId, ref: 'users' },
+    cancelledAt: { type: Date },
+    submittedBy: { type: Types.ObjectId, ref: 'users' },
+    submittedAt: { type: Date },
+    allocatedBy: { type: Types.ObjectId, ref: 'users' },
+    allocatedAt: { type: Date },
   },
   { timestamps: true }
 );

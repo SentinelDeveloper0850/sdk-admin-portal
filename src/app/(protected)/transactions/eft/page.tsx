@@ -197,6 +197,7 @@ export default function EftTransactionsPage() {
     try {
       setAllocationRequestLoading(true);
 
+      await allocationRequestForm.validateFields();
       const data = allocationRequestForm.getFieldsValue();
 
       if (!selectedTransaction) {
@@ -584,7 +585,7 @@ export default function EftTransactionsPage() {
           />
         )}
         <Form layout="vertical" form={allocationRequestForm}>
-          <Form.Item label="Policy Number" name="policyNumber">
+          <Form.Item label="Policy Number" name="policyNumber" rules={[{ required: true, message: "Policy number is required" }]}>
             <Input />
           </Form.Item>
           <Form.Item label="Notes" name="notes">

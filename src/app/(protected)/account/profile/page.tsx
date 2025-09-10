@@ -13,12 +13,13 @@ import {
   Input,
   Spinner,
 } from "@nextui-org/react";
-import { Drawer, Tag, App } from "antd";
+import { App, Drawer, Tag } from "antd";
 import dayjs from "dayjs";
 
 import PageHeader from "@/app/components/page-header";
 import { ThemeSwitcher } from "@/app/components/theme-switcher";
 import { useAuth } from "@/context/auth-context";
+import { roleLabels } from "@/utils/helpers/roles";
 import Image from "next/image";
 
 const MAX_FILE_SIZE_MB = 2;
@@ -142,6 +143,20 @@ const ProfilePage: React.FC = () => {
                 {user?.role?.toUpperCase() ?? "No Role"}
               </Tag>
             </div>
+            {user?.roles && user.roles.length > 0 && (
+              <div className="flex justify-between text-gray-400">
+                <span>Additional Roles</span>
+                <span className="flex flex-wrap justify-end gap-1">
+                  {user.roles
+                    .filter((r) => r !== user.role)
+                    .map((r) => (
+                      <Tag key={r} color="blue" className="mr-0 text-xs italic">
+                        {roleLabels[r] || r.replace(/_/g, " ")}
+                      </Tag>
+                    ))}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-gray-400">
               <span>Status</span>
               <span
@@ -258,6 +273,8 @@ const ProfilePage: React.FC = () => {
               <Image
                 src={avatar}
                 alt="Uploaded Avatar"
+                width={80}
+                height={80}
                 className="mx-auto mt-4 h-20 w-20 rounded-full object-cover"
               />
             )}

@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { } from "@/server/actions/eft-transactions";
 
+import { EAllocationRequestStatus } from "@/app/enums/hr/allocation-request-status.enum";
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 import { EftTransactionModel } from "@/app/models/scheme/eft-transaction.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { connectToDatabase } from "@/lib/db";
-import { EAllocationRequestStatus } from "@/app/enums/hr/allocation-request-status.enum";
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,8 +47,11 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
 
-    // Prevent same transaction from having multiple allocation requests
-    const existingAllocation = await AllocationRequestModel.findOne({ transactionId, status: EAllocationRequestStatus.PENDING || EAllocationRequestStatus.APPROVED });
+    // Prevent duplicates unless previous request was REJECTED or CANCELLED
+    const existingAllocation = await AllocationRequestModel.findOne({
+      transactionId,
+      status: { $nin: [EAllocationRequestStatus.REJECTED, EAllocationRequestStatus.CANCELLED] },
+    });
     if (existingAllocation) {
       return NextResponse.json({
         success: false,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { ExclamationCircleOutlined, MoreOutlined, QuestionCircleOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Alert, Button, DatePicker, Descriptions, Drawer, Dropdown, Form, Input, Popconfirm, Select, Space, Spin, Table, Tabs, Tag, message } from "antd";
+import { Alert, Button, DatePicker, Descriptions, Drawer, Dropdown, Form, Input, Popconfirm, Space, Spin, Table, Tabs, Tag, message } from "antd";
 
 import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
@@ -19,6 +19,10 @@ interface AllocationRequestItem {
   requestedBy?: { name?: string; email?: string } | string;
   createdAt: string;
   updatedAt: string;
+  rejectionReason?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  cancelledAt?: string;
 }
 
 interface EftTransactionDetail {
@@ -34,15 +38,16 @@ export default function AllocationRequestsPage() {
   const { hasRole } = useRole();
 
   const allowed = hasRole([
-    "admin",
     "eft_reviewer",
     "eft_allocator",
   ]);
+  const isAllocator = hasRole(["eft_allocator"]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<AllocationRequestItem[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [filters, setFilters] = useState<{ status?: string; start?: string; end?: string; requester?: string }>({});
 
   const [rejecting, setRejecting] = useState<AllocationRequestItem | null>(null);
@@ -50,6 +55,8 @@ export default function AllocationRequestsPage() {
   const [reviewing, setReviewing] = useState<AllocationRequestItem | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewDetail, setReviewDetail] = useState<{ item: AllocationRequestItem; transaction: EftTransactionDetail } | null>(null);
+
+  const isReviewer = hasRole(["eft_reviewer", "admin"]);
 
   const fetchData = async (status?: string) => {
     try {
@@ -117,6 +124,52 @@ export default function AllocationRequestsPage() {
         title="EFT Allocation Requests"
         actions={[
           <Space>
+            {(filters.status === 'APPROVED') && (
+              <Button
+                type="primary"
+                disabled={!selectedRowKeys.length}
+                onClick={async () => {
+                  const res = await fetch('/api/transactions/eft/allocation-requests/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: selectedRowKeys }),
+                  });
+                  if (res.ok) {
+                    message.success('Submitted for allocation');
+                    setSelectedRowKeys([]);
+                    handleRefresh();
+                  } else {
+                    const data = await res.json().catch(() => ({}));
+                    message.error(data.message || 'Failed to submit');
+                  }
+                }}
+              >
+                Submit for Allocation
+              </Button>
+            )}
+            {(filters.status === 'SUBMITTED') && (
+              <Button
+                type="primary"
+                disabled={!selectedRowKeys.length}
+                onClick={async () => {
+                  const res = await fetch('/api/transactions/eft/allocation-requests/allocate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: selectedRowKeys }),
+                  });
+                  if (res.ok) {
+                    setSelectedRowKeys([]);
+                    handleRefresh();
+                    message.success('Allocated');
+                  } else {
+                    const data = await res.json().catch(() => ({}));
+                    message.error(data.message || 'Failed to allocate');
+                  }
+                }}
+              >
+                Allocate
+              </Button>
+            )}
             <Button icon={<ReloadOutlined />} loading={refreshing} onClick={handleRefresh}>
               Refresh
             </Button>
@@ -125,16 +178,19 @@ export default function AllocationRequestsPage() {
       />
 
       <Tabs
-        defaultActiveKey={filters.status || 'PENDING'}
-        activeKey={filters.status || 'PENDING'}
+        defaultActiveKey={filters.status || (isAllocator ? 'SUBMITTED' : 'PENDING')}
+        activeKey={filters.status || (isAllocator ? 'SUBMITTED' : 'PENDING')}
         onChange={handleTabChange}
-        items={[
+        items={(isAllocator ? [
+          { key: 'SUBMITTED', label: 'Submitted for Allocation' },
+          { key: 'ALLOCATED', label: 'Allocated' },
+        ] : [
           { key: 'PENDING', label: 'Pending Review' },
           { key: 'REJECTED', label: 'Rejected' },
           { key: 'APPROVED', label: 'Approved' },
           { key: 'SUBMITTED', label: 'Submitted for Allocation' },
           { key: 'ALLOCATED', label: 'Allocated' },
-        ]}
+        ])}
       />
 
       <Space wrap style={{ marginBottom: 16 }}>
@@ -179,6 +235,12 @@ export default function AllocationRequestsPage() {
       <Table
         rowKey="_id"
         bordered
+        rowSelection={(filters.status === 'APPROVED' || (isAllocator && filters.status === 'SUBMITTED')) ? {
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
+          preserveSelectedRowKeys: true,
+          getCheckboxProps: (record: AllocationRequestItem) => ({ disabled: !((!isAllocator && record.status === 'APPROVED') || (isAllocator && record.status === 'SUBMITTED')) }),
+        } : undefined}
         dataSource={items}
         columns={[
           {
@@ -212,7 +274,7 @@ export default function AllocationRequestsPage() {
             render: (notes: string[]) => (notes && notes.length ? notes.join("; ") : "—"),
           },
           {
-            title: "Evidence Count",
+            title: "Supporting Documents",
             key: "evidence",
             render: (_: any, record: AllocationRequestItem) => record.evidence?.length || 0,
           },
@@ -245,7 +307,13 @@ export default function AllocationRequestsPage() {
                         }
                         setReviewLoading(false);
                       }
-                    }
+                    },
+                    ...(record.status === 'APPROVED' && isReviewer ? [{
+                      key: 'reject-approved',
+                      label: 'Reject',
+                      danger: true,
+                      onClick: () => { rejectForm.resetFields(); setRejecting(record); }
+                    }] : [])
                   ]
                 }}
                 trigger={["click"]}
@@ -276,7 +344,7 @@ export default function AllocationRequestsPage() {
         }
         footer={
           <Space>
-            {reviewDetail?.item?.status === "PENDING" && (
+            {(reviewDetail?.item?.status === "PENDING") && (
               <>
                 <Popconfirm
                   title="Are you sure you want to approve this request?"
@@ -290,14 +358,17 @@ export default function AllocationRequestsPage() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ status: "APPROVED" }),
                     });
-                    if (res.ok) { message.success("Approved"); setReviewing(null); setReviewDetail(null); fetchData(); } else { message.error("Failed to approve"); }
+                    if (res.ok) { message.success("Approved"); setReviewing(null); setReviewDetail(null); handleRefresh(); } else { message.error("Failed to approve"); }
                   }}
                 >
                   <Button className="bg-green-500 hover:!bg-green-600 text-white hover:!text-white hover:!border-green-600 w-28">Approve</Button>
                 </Popconfirm>
               </>
             )}
-            {reviewDetail?.item?.status === "PENDING" && (
+            {(reviewDetail?.item?.status === "PENDING") && (
+              <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail!.item); }}>Reject</Button>
+            )}
+            {(reviewDetail?.item?.status === "APPROVED" && isReviewer) && (
               <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail!.item); }}>Reject</Button>
             )}
           </Space>
@@ -310,12 +381,14 @@ export default function AllocationRequestsPage() {
         )}
         {!reviewLoading && reviewDetail && (
           <div>
-            <Alert
-              type="info"
-              showIcon
-              message="If approved, this request will be submitted for allocation on ASSIT."
-              style={{ marginBottom: 16 }}
-            />
+            {reviewDetail.item.status === 'PENDING' && (
+              <Alert
+                type="info"
+                showIcon
+                message="If approved, this request will be submitted for allocation on ASSIT."
+                style={{ marginBottom: 16 }}
+              />
+            )}
 
             <h3 className="mb-2 text-md font-semibold">Transaction Information</h3>
             <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
@@ -332,6 +405,33 @@ export default function AllocationRequestsPage() {
               <Descriptions.Item label="Requested On">{new Date(reviewDetail.item.createdAt).toLocaleString()}</Descriptions.Item>
               <Descriptions.Item label="Status"><Tag color={reviewDetail.item.status === 'PENDING' ? 'gold' : reviewDetail.item.status === 'APPROVED' ? 'green' : reviewDetail.item.status === 'REJECTED' ? 'red' : 'blue'}>{reviewDetail.item.status}</Tag></Descriptions.Item>
               <Descriptions.Item label="Requested By">{(reviewDetail.item as any).requestedBy?.name || (reviewDetail.item as any).requestedBy?.email || '—'}</Descriptions.Item>
+              {reviewDetail.item.status === 'SUBMITTED' && (
+                <>
+                  <Descriptions.Item label="Submitted By">{(reviewDetail.item as any).submittedBy?.name || (reviewDetail.item as any).submittedBy?.email || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Submitted At">{(reviewDetail.item as any).submittedAt ? new Date((reviewDetail.item as any).submittedAt).toLocaleString() : '—'}</Descriptions.Item>
+                </>
+              )}
+              {reviewDetail.item.status === 'APPROVED' && (
+                <>
+                  <Descriptions.Item label="Approved By">{(reviewDetail.item as any).approvedBy?.name || (reviewDetail.item as any).approvedBy?.email || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Approved At">{reviewDetail.item.approvedAt ? new Date((reviewDetail.item as any).approvedAt).toLocaleString() : '—'}</Descriptions.Item>
+                </>
+              )}
+              {reviewDetail.item.status === 'REJECTED' && (
+                <>
+                  <Descriptions.Item label="Rejected By">{(reviewDetail.item as any).rejectedBy?.name || (reviewDetail.item as any).rejectedBy?.email || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Rejected At">{(reviewDetail.item as any).rejectedAt ? new Date((reviewDetail.item as any).rejectedAt).toLocaleString() : '—'}</Descriptions.Item>
+                </>
+              )}
+              {reviewDetail.item.status === 'CANCELLED' && (
+                <>
+                  <Descriptions.Item label="Cancelled By">{(reviewDetail.item as any).cancelledBy?.name || (reviewDetail.item as any).cancelledBy?.email || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Cancelled At">{(reviewDetail.item as any).cancelledAt ? new Date((reviewDetail.item as any).cancelledAt).toLocaleString() : '—'}</Descriptions.Item>
+                </>
+              )}
+              {reviewDetail.item.status === 'REJECTED' && reviewDetail.item.rejectionReason && (
+                <Descriptions.Item label="Rejection Reason" span={2}>{reviewDetail.item.rejectionReason}</Descriptions.Item>
+              )}
               <Descriptions.Item label="Notes">{reviewDetail.item.notes?.length ? reviewDetail.item.notes.join("; ") : "—"}</Descriptions.Item>
             </Descriptions>
 
@@ -374,7 +474,7 @@ export default function AllocationRequestsPage() {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ status: "REJECTED", rejectionReason: values.rejectionReason }),
                 });
-                if (res.ok) { message.success("Rejected"); setRejecting(null); fetchData(); } else { message.error("Failed to reject"); }
+                if (res.ok) { message.success("Rejected"); setRejecting(null); handleRefresh(); } else { message.error("Failed to reject"); }
               }}
             >
               Submit

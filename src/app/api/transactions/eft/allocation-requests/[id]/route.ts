@@ -32,7 +32,33 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const update: any = { status };
     if (rejectionReason) update.rejectionReason = rejectionReason;
-    if (status === "APPROVED") update.approvedBy = user._id;
+    if (status === "APPROVED") {
+      update.approvedBy = user._id;
+      update.approvedAt = new Date();
+      update.rejectedBy = undefined;
+      update.rejectedAt = undefined;
+      update.cancelledBy = undefined;
+      update.cancelledAt = undefined;
+    }
+    if (status === "REJECTED") {
+      if (!rejectionReason || String(rejectionReason).trim().length === 0) {
+        return NextResponse.json({ message: "Rejection reason is required" }, { status: 400 });
+      }
+      update.rejectedBy = user._id;
+      update.rejectedAt = new Date();
+      update.approvedBy = undefined;
+      update.approvedAt = undefined;
+      update.cancelledBy = undefined;
+      update.cancelledAt = undefined;
+    }
+    if (status === "CANCELLED") {
+      update.cancelledBy = user._id;
+      update.cancelledAt = new Date();
+      update.approvedBy = undefined;
+      update.approvedAt = undefined;
+      update.rejectedBy = undefined;
+      update.rejectedAt = undefined;
+    }
 
     const result = await AllocationRequestModel.findByIdAndUpdate(id, update, { new: true });
     if (!result) {
@@ -68,7 +94,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const requestDoc = await AllocationRequestModel
       .findById(id)
-      .populate({ path: 'requestedBy', model: 'users', select: 'name email' });
+      .populate({ path: 'requestedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+      .populate({ path: 'approvedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+      .populate({ path: 'submittedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+      .populate({ path: 'rejectedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+      .populate({ path: 'cancelledBy', model: 'users', select: 'name email', options: { strictPopulate: false } });
     if (!requestDoc) {
       return NextResponse.json({ message: "Allocation request not found" }, { status: 404 });
     }

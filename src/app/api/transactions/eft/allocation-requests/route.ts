@@ -63,10 +63,22 @@ export async function GET(request: NextRequest) {
         evidence: 1,
         status: 1,
         requestedBy: 1,
+        submittedBy: 1,
+        submittedAt: 1,
+        approvedBy: 1,
+        approvedAt: 1,
+        rejectedBy: 1,
+        rejectedAt: 1,
+        cancelledBy: 1,
+        cancelledAt: 1,
         createdAt: 1,
         updatedAt: 1,
       })
-        .populate({ path: 'requestedBy', model: 'users', select: 'name email' })
+        .populate({ path: 'requestedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+        .populate({ path: 'approvedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+        .populate({ path: 'submittedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+        .populate({ path: 'rejectedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+        .populate({ path: 'cancelledBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),

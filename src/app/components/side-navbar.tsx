@@ -59,7 +59,7 @@ const SideNavBar = () => {
           name: "Allocation Requests",
           icon: <Banknote size={18} />,
           url: "/transactions/eft/allocation-requests",
-          allowedRoles: [ERoles.Admin, ERoles.EFTReviewer, ERoles.EFTAllocator],
+          allowedRoles: [ERoles.EFTReviewer, ERoles.EFTAllocator],
         },
       ],
     },
