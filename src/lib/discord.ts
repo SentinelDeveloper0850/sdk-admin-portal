@@ -9,6 +9,7 @@ interface DiscordEmbed {
   title?: string;
   description?: string;
   color?: number;
+  url?: string;
   fields?: DiscordField[];
   timestamp?: string;
   footer?: DiscordFooter;
@@ -50,11 +51,25 @@ export const sendDiscordNotification = async (
   rateLimitKey?: string
 ): Promise<DiscordNotificationResult> => {
   try {
+    // If no webhook URL provided, fall back to environment config similar to discord-v2
+    let resolvedWebhookUrl = webhookUrl;
+    if (!resolvedWebhookUrl) {
+      resolvedWebhookUrl = getDiscordWebhookUrl() || '';
+    }
+
+    if (!resolvedWebhookUrl) {
+      return {
+        success: false,
+        message: 'Discord webhook URL is not configured',
+        error: 'WEBHOOK_URL_MISSING'
+      };
+    }
+
     // Check rate limiting if a key is provided
     if (rateLimitKey) {
       const now = Date.now();
       const rateLimit = rateLimitStore.get(rateLimitKey);
-      
+
       if (rateLimit) {
         if (now < rateLimit.resetTime) {
           if (rateLimit.count >= 5) { // Max 5 messages per window
@@ -75,7 +90,7 @@ export const sendDiscordNotification = async (
       }
     }
 
-    const response = await fetch(webhookUrl, {
+    const response = await fetch(resolvedWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -85,7 +100,12 @@ export const sendDiscordNotification = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Discord API error: ${response.status} - ${errorText}`);
+      console.error('Failed to send Discord message:', response.status, errorText);
+      return {
+        success: false,
+        message: 'Failed to send Discord notification',
+        error: `HTTP ${response.status}`
+      };
     }
 
     return {
@@ -202,7 +222,8 @@ export const createSystemNotification = (
  * Get the Discord webhook URL from environment variables
  */
 export const getDiscordWebhookUrl = (): string | null => {
-  return process.env.DISCORD_GENERAL_WEBHOOK || null;
+  // Prefer the working variable used in discord-v2, but support the legacy name
+  return process.env.DISCORD_WEBHOOK_URL || process.env.DISCORD_GENERAL_WEBHOOK || null;
 };
 
 /**
