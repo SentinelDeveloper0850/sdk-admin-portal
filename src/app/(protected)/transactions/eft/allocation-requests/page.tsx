@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { ExclamationCircleOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Alert, Button, Space, Spin, Table, Tag } from "antd";
+import { ExclamationCircleOutlined, MoreOutlined, QuestionCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { Alert, Button, DatePicker, Descriptions, Drawer, Dropdown, Form, Input, Popconfirm, Select, Space, Spin, Table, Tabs, Tag, message } from "antd";
 
 import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
@@ -16,9 +16,18 @@ interface AllocationRequestItem {
   notes: string[];
   evidence: string[];
   status: string;
-  requestedBy?: string;
+  requestedBy?: { name?: string; email?: string } | string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface EftTransactionDetail {
+  _id: string;
+  uuid: string;
+  description: string;
+  additionalInformation: string;
+  amount: number;
+  date: string;
 }
 
 export default function AllocationRequestsPage() {
@@ -34,11 +43,23 @@ export default function AllocationRequestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<AllocationRequestItem[]>([]);
+  const [filters, setFilters] = useState<{ status?: string; start?: string; end?: string; requester?: string }>({});
 
-  const fetchData = async () => {
+  const [rejecting, setRejecting] = useState<AllocationRequestItem | null>(null);
+  const [rejectForm] = Form.useForm();
+  const [reviewing, setReviewing] = useState<AllocationRequestItem | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewDetail, setReviewDetail] = useState<{ item: AllocationRequestItem; transaction: EftTransactionDetail } | null>(null);
+
+  const fetchData = async (status?: string) => {
     try {
       setLoading(true);
-      const res = await fetch("/api/transactions/eft/allocation-requests");
+      const params = new URLSearchParams();
+      if (status) params.set("status", status);
+      if (filters.start) params.set("start", filters.start);
+      if (filters.end) params.set("end", filters.end);
+      if (filters.requester) params.set("requester", filters.requester);
+      const res = await fetch(`/api/transactions/eft/allocation-requests?${params.toString()}`);
       if (!res.ok) {
         const data = await res.json();
         setError(data.message || "Failed to load allocation requests");
@@ -55,12 +76,12 @@ export default function AllocationRequestsPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(filters.status || 'PENDING');
     setRefreshing(false);
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(filters.status || 'PENDING');
   }, []);
 
   if (!allowed) {
@@ -85,6 +106,11 @@ export default function AllocationRequestsPage() {
     );
   }
 
+  const handleTabChange = (key: string) => {
+    setFilters((f) => ({ ...f, status: key }));
+    fetchData(key);
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
@@ -97,6 +123,47 @@ export default function AllocationRequestsPage() {
           </Space>,
         ]}
       />
+
+      <Tabs
+        defaultActiveKey={filters.status || 'PENDING'}
+        activeKey={filters.status || 'PENDING'}
+        onChange={handleTabChange}
+        items={[
+          { key: 'PENDING', label: 'Pending Review' },
+          { key: 'REJECTED', label: 'Rejected' },
+          { key: 'APPROVED', label: 'Approved' },
+          { key: 'SUBMITTED', label: 'Submitted for Allocation' },
+          { key: 'ALLOCATED', label: 'Allocated' },
+        ]}
+      />
+
+      <Space wrap style={{ marginBottom: 16 }}>
+        <Input
+          allowClear
+          placeholder="Filter by requester (name or email)"
+          style={{ width: 260 }}
+          value={filters.requester}
+          onChange={(e) => setFilters((f) => ({ ...f, requester: e.target.value }))}
+        />
+        <DatePicker.RangePicker
+          onChange={(range) => {
+            setFilters((f) => ({
+              ...f,
+              start: range?.[0]?.startOf("day").toISOString(),
+              end: range?.[1]?.endOf("day").toISOString(),
+            }));
+          }}
+        />
+        <Button onClick={() => fetchData(filters.status || 'PENDING')}>Apply</Button>
+        <Button
+          onClick={() => {
+            setFilters({});
+            fetchData(filters.status || 'PENDING');
+          }}
+        >
+          Reset
+        </Button>
+      </Space>
 
       {error && (
         <Alert
@@ -126,6 +193,17 @@ export default function AllocationRequestsPage() {
             title: "Policy Number",
             dataIndex: "policyNumber",
             key: "policyNumber",
+            sorter: (a: any, b: any) => String(a.policyNumber).localeCompare(String(b.policyNumber)),
+          },
+          {
+            title: "Requested By",
+            key: "requestedBy",
+            render: (_: any, r: AllocationRequestItem) => {
+              const rb = r.requestedBy as any;
+              if (!rb) return "—";
+              if (typeof rb === 'string') return rb;
+              return rb.name || rb.email || "—";
+            },
           },
           {
             title: "Notes",
@@ -144,8 +222,172 @@ export default function AllocationRequestsPage() {
             key: "status",
             render: (s: string) => <Tag color={s === "PENDING" ? "gold" : s === "APPROVED" ? "green" : s === "REJECTED" ? "red" : "blue"}>{s}</Tag>,
           },
+          {
+            title: "Actions",
+            key: "actions",
+            render: (_: any, record: AllocationRequestItem) => (
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: 'review',
+                      label: record.status === 'PENDING' ? 'Review' : 'View Details',
+                      onClick: async () => {
+                        setReviewing(record);
+                        setReviewLoading(true);
+                        const res = await fetch(`/api/transactions/eft/allocation-requests/${record._id}`);
+                        if (res.ok) {
+                          const data = await res.json();
+                          setReviewDetail(data);
+                        } else {
+                          message.error('Failed to load details');
+                          setReviewing(null);
+                        }
+                        setReviewLoading(false);
+                      }
+                    }
+                  ]
+                }}
+                trigger={["click"]}
+              >
+                <Button icon={<MoreOutlined />} />
+              </Dropdown>
+            ),
+          },
         ]}
       />
+
+      <Drawer
+        title={
+          <div>
+            <h3 className="mb-0 text-md font-semibold">{reviewDetail?.item?.status === 'PENDING' ? 'Review Allocation Request' : 'View Allocation Request'}</h3>
+            <p className="mb-0 text-sm text-gray-500 font-normal">{reviewDetail?.item?.status === 'PENDING' ? 'Review details and submit to the Finance Department for allocation on ASSIT.' : `This request is ${(reviewDetail?.item?.status || '').toLowerCase()}. You can only view the details.`}</p>
+          </div>
+        }
+        placement="right"
+        width="60%"
+        open={!!reviewing}
+        onClose={() => { setReviewing(null); setReviewDetail(null); }}
+        closable={false}
+        extra={
+          <Space>
+            <Button onClick={() => { setReviewing(null); setReviewDetail(null); }}>Close</Button>
+          </Space>
+        }
+        footer={
+          <Space>
+            {reviewDetail?.item?.status === "PENDING" && (
+              <>
+                <Popconfirm
+                  title="Are you sure you want to approve this request?"
+                  okText="Yes, approve"
+                  okButtonProps={{ className: "bg-green-500 hover:!bg-green-600 text-white hover:!text-white hover:!border-green-600" }}
+                  cancelText="No"
+                  icon={<QuestionCircleOutlined />}
+                  onConfirm={async () => {
+                    const res = await fetch(`/api/transactions/eft/allocation-requests/${reviewDetail?.item?._id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ status: "APPROVED" }),
+                    });
+                    if (res.ok) { message.success("Approved"); setReviewing(null); setReviewDetail(null); fetchData(); } else { message.error("Failed to approve"); }
+                  }}
+                >
+                  <Button className="bg-green-500 hover:!bg-green-600 text-white hover:!text-white hover:!border-green-600 w-28">Approve</Button>
+                </Popconfirm>
+              </>
+            )}
+            {reviewDetail?.item?.status === "PENDING" && (
+              <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail!.item); }}>Reject</Button>
+            )}
+          </Space>
+        }
+      >
+        {reviewLoading && (
+          <div className="flex h-[40vh] items-center justify-center p-5 text-center">
+            <Spin />
+          </div>
+        )}
+        {!reviewLoading && reviewDetail && (
+          <div>
+            <Alert
+              type="info"
+              showIcon
+              message="If approved, this request will be submitted for allocation on ASSIT."
+              style={{ marginBottom: 16 }}
+            />
+
+            <h3 className="mb-2 text-md font-semibold">Transaction Information</h3>
+            <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
+              <Descriptions.Item label="Date">{new Date(reviewDetail.transaction.date).toLocaleString()}</Descriptions.Item>
+              <Descriptions.Item label="File ID">{reviewDetail.transaction.uuid}</Descriptions.Item>
+              <Descriptions.Item label="Description">{reviewDetail.transaction.description}</Descriptions.Item>
+              <Descriptions.Item label="Amount">{Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR', currencyDisplay: 'narrowSymbol' }).format(reviewDetail.transaction.amount)}</Descriptions.Item>
+              <Descriptions.Item label="Additional Info">{reviewDetail.transaction.additionalInformation}</Descriptions.Item>
+            </Descriptions>
+
+            <h3 className="mb-2 text-md font-semibold">Request Information</h3>
+            <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
+              <Descriptions.Item label="Policy Number">{reviewDetail.item.policyNumber}</Descriptions.Item>
+              <Descriptions.Item label="Requested On">{new Date(reviewDetail.item.createdAt).toLocaleString()}</Descriptions.Item>
+              <Descriptions.Item label="Status"><Tag color={reviewDetail.item.status === 'PENDING' ? 'gold' : reviewDetail.item.status === 'APPROVED' ? 'green' : reviewDetail.item.status === 'REJECTED' ? 'red' : 'blue'}>{reviewDetail.item.status}</Tag></Descriptions.Item>
+              <Descriptions.Item label="Requested By">{(reviewDetail.item as any).requestedBy?.name || (reviewDetail.item as any).requestedBy?.email || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Notes">{reviewDetail.item.notes?.length ? reviewDetail.item.notes.join("; ") : "—"}</Descriptions.Item>
+            </Descriptions>
+
+            {reviewDetail.item.evidence?.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-md font-semibold">Supporting Documents</h3>
+                <ul className="list-disc pl-5">
+                  {reviewDetail.item.evidence.map((url, idx) => (
+                    <li key={idx}><a href={url} target="_blank" rel="noreferrer" className="text-blue-600">View document {idx + 1}</a></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </Drawer>
+
+      <Drawer
+        title={
+          <div>
+            <h3 className="mb-0 text-md font-semibold">Reject Allocation Request</h3>
+            <p className="mb-0 text-sm text-gray-500 font-normal">Reject this request and provide a reason for rejection.</p>
+          </div>
+        }
+        placement="right"
+        width="40%"
+        open={!!rejecting}
+        onClose={() => setRejecting(null)}
+        closable={false}
+        footer={
+          <Space>
+            <Button onClick={() => setRejecting(null)}>Cancel</Button>
+            <Button
+              type="primary"
+              danger
+              onClick={async () => {
+                const values = rejectForm.getFieldsValue();
+                const res = await fetch(`/api/transactions/eft/allocation-requests/${rejecting?._id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: "REJECTED", rejectionReason: values.rejectionReason }),
+                });
+                if (res.ok) { message.success("Rejected"); setRejecting(null); fetchData(); } else { message.error("Failed to reject"); }
+              }}
+            >
+              Submit
+            </Button>
+          </Space>
+        }
+      >
+        <Form layout="vertical" form={rejectForm}>
+          <Form.Item label="Reason" name="rejectionReason" required>
+            <Input.TextArea rows={4} placeholder="Provide reason for rejection" />
+          </Form.Item>
+        </Form>
+      </Drawer>
     </div>
   );
 }

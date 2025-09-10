@@ -4,6 +4,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
+import UserModel from "@/app/models/hr/user.schema";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,9 +30,33 @@ export async function GET(request: NextRequest) {
     const page = Number(searchParams.get("page") || 1);
     const limit = Math.min(Number(searchParams.get("limit") || 20), 100);
     const skip = (page - 1) * limit;
+    const status = searchParams.get("status");
+    const start = searchParams.get("start");
+    const end = searchParams.get("end");
+    const requester = searchParams.get("requester"); // name/email text filter
+
+    const query: Record<string, any> = {};
+    if (status) query.status = status;
+    if (start || end) {
+      query.createdAt = {};
+      if (start) query.createdAt.$gte = new Date(start);
+      if (end) query.createdAt.$lte = new Date(end);
+    }
+
+    if (requester) {
+      // Find users whose name/email matches; then filter by their ids
+      const rx = new RegExp(requester, "i");
+      const users = await UserModel.find({ $or: [{ name: rx }, { email: rx }] }, { _id: 1 });
+      const ids = users.map((u) => u._id);
+      // If no matches, make sure query returns empty
+      query.requestedBy = ids.length ? { $in: ids } : null;
+      if (query.requestedBy === null) {
+        return NextResponse.json({ items: [], pagination: { page, limit, total: 0 } });
+      }
+    }
 
     const [items, total] = await Promise.all([
-      AllocationRequestModel.find({}, {
+      AllocationRequestModel.find(query, {
         transactionId: 1,
         policyNumber: 1,
         notes: 1,
@@ -41,10 +66,11 @@ export async function GET(request: NextRequest) {
         createdAt: 1,
         updatedAt: 1,
       })
+        .populate({ path: 'requestedBy', model: 'users', select: 'name email' })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
-      AllocationRequestModel.countDocuments({}),
+      AllocationRequestModel.countDocuments(query),
     ]);
 
     return NextResponse.json({

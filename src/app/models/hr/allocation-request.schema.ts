@@ -52,7 +52,7 @@ const AllocationRequestSchema = new Schema(
       default: EAllocationRequestStatus.PENDING,
     },
 
-    requestedBy: { type: Types.ObjectId, ref: 'User', required: true },
+    requestedBy: { type: Types.ObjectId, ref: 'users', required: true },
     approvedBy: { type: Types.ObjectId, ref: 'User' },
     approvedAt: { type: Date },
     rejectionReason: { type: String },
