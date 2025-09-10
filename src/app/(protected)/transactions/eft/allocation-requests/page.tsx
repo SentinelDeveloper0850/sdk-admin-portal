@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { ExclamationCircleOutlined, MoreOutlined, QuestionCircleOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Alert, Button, DatePicker, Descriptions, Drawer, Dropdown, Form, Input, Popconfirm, Space, Spin, Table, Tabs, Tag, message } from "antd";
+import { Alert, Button, DatePicker, Descriptions, Drawer, Dropdown, Form, Input, Popconfirm, Space, Spin, Table, Tabs, Tag } from "antd";
+import sweetAlert from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
@@ -135,12 +136,12 @@ export default function AllocationRequestsPage() {
                     body: JSON.stringify({ ids: selectedRowKeys }),
                   });
                   if (res.ok) {
-                    message.success('Submitted for allocation');
+                    sweetAlert({ icon: 'success', title: 'Submitted for allocation', timer: 1500 });
                     setSelectedRowKeys([]);
                     handleRefresh();
                   } else {
                     const data = await res.json().catch(() => ({}));
-                    message.error(data.message || 'Failed to submit');
+                    sweetAlert({ icon: 'error', title: data.message || 'Failed to submit' });
                   }
                 }}
               >
@@ -160,14 +161,14 @@ export default function AllocationRequestsPage() {
                   if (res.ok) {
                     setSelectedRowKeys([]);
                     handleRefresh();
-                    message.success('Allocated');
+                    sweetAlert({ icon: 'success', title: 'Marked as Allocated', timer: 1500 });
                   } else {
                     const data = await res.json().catch(() => ({}));
-                    message.error(data.message || 'Failed to allocate');
+                    sweetAlert({ icon: 'error', title: data.message || 'Failed to allocate' });
                   }
                 }}
               >
-                Allocate
+                Mark as Allocated
               </Button>
             )}
             <Button icon={<ReloadOutlined />} loading={refreshing} onClick={handleRefresh}>
@@ -302,7 +303,7 @@ export default function AllocationRequestsPage() {
                           const data = await res.json();
                           setReviewDetail(data);
                         } else {
-                          message.error('Failed to load details');
+                          sweetAlert({ icon: 'error', title: 'Failed to load details' });
                           setReviewing(null);
                         }
                         setReviewLoading(false);
@@ -358,7 +359,7 @@ export default function AllocationRequestsPage() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ status: "APPROVED" }),
                     });
-                    if (res.ok) { message.success("Approved"); setReviewing(null); setReviewDetail(null); handleRefresh(); } else { message.error("Failed to approve"); }
+                    if (res.ok) { sweetAlert({ icon: 'success', title: 'Approved', timer: 1500 }); setReviewing(null); setReviewDetail(null); handleRefresh(); } else { sweetAlert({ icon: 'error', title: 'Failed to approve' }); }
                   }}
                 >
                   <Button className="bg-green-500 hover:!bg-green-600 text-white hover:!text-white hover:!border-green-600 w-28">Approve</Button>
@@ -474,7 +475,7 @@ export default function AllocationRequestsPage() {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ status: "REJECTED", rejectionReason: values.rejectionReason }),
                 });
-                if (res.ok) { message.success("Rejected"); setRejecting(null); handleRefresh(); } else { message.error("Failed to reject"); }
+                if (res.ok) { sweetAlert({ icon: 'success', title: 'Rejected', timer: 1500 }); setRejecting(null); handleRefresh(); } else { sweetAlert({ icon: 'error', title: 'Failed to reject' }); }
               }}
             >
               Submit

@@ -155,7 +155,6 @@ export default function Presence() {
           </Space>
         }
         placement="right"
-        width="60%"
         onClose={() => setIsDrawerOpen(false)}
         open={isDrawerOpen}
         styles={{
@@ -169,18 +168,18 @@ export default function Presence() {
             {lastError ? (
               <div className="flex h-full items-center justify-center text-red-500 p-4">
                 <div className="text-center">
-                  <Text type="danger">Error: {lastError}</Text>
+                  <p>Error: {lastError}</p>
                   <br />
-                  <Text type="secondary" className="text-sm">
+                  <p className="text-sm">
                     We will retry automatically
-                  </Text>
+                  </p>
                 </div>
               </div>
             ) : otherOnline.length === 0 ? (
               <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-400 p-4">
-                <Text type="secondary">
+                <p className="text-sm">
                   {isSyncing ? 'Syncing...' : 'No other users online'}
-                </Text>
+                </p>
               </div>
             ) : (
               <List
@@ -195,7 +194,7 @@ export default function Presence() {
                         className="flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-base font-medium text-foreground truncate">
+                        <p className="text-base font-normal text-gray-900 dark:text-white truncate">
                           {user.name}
                         </p>
                       </div>
@@ -207,19 +206,19 @@ export default function Presence() {
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             <Space direction="vertical" size="small" className="w-full">
               <Space>
                 <div className={`h-2 w-2 rounded-full ${(!user || lastError) ? 'bg-red-500' : isSyncing ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
-                <Text type="secondary" className="text-sm">
+                <p className="text-sm">
                   Status: {getConnectionStatus()}
-                </Text>
+                </p>
               </Space>
               {user && (
                 <div className="space-y-1">
-                  <Text type="secondary" className="text-xs">
+                  <p className="text-xs">
                     User ID: {user._id?.toString()}
-                  </Text>
+                  </p>
                 </div>
               )}
             </Space>
