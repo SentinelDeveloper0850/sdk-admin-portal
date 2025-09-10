@@ -1,0 +1,6 @@
+export enum EAllocationRequestStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  CANCELLED = "CANCELLED"
+}
