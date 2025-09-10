@@ -10,6 +10,8 @@ export enum ERoles {
   HRManager = "hr_manager",
   FinanceOfficer = "finance_officer",
   Cashier = "cashier",
+  EFTReviewer = "eft_reviewer",
+  EFTAllocator = "eft_allocator",
 
   // Funeral Operations
   FuneralCoordinator = "funeral_coordinator",

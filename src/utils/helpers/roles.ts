@@ -10,6 +10,8 @@ export const roleLabels: Record<string, string> = {
   hr_manager: "HR Manager",
   finance_officer: "Finance Officer",
   cashier: "Cashier",
+  eft_reviewer: "EFT Reviewer",
+  eft_allocator: "EFT Allocator",
 
   // Funeral Ops
   funeral_coordinator: "Funeral Coordinator",
@@ -46,6 +48,8 @@ export const groupedRoles = [
       { key: "hr_manager", label: "HR Manager", description: "Manages employees, leave and contracts" },
       { key: "finance_officer", label: "Finance Officer", description: "Handles payments and reconciliation" },
       { key: "cashier", label: "Cashier", description: "Captures payments and issues receipts" },
+      { key: "eft_reviewer", label: "EFT Reviewer", description: "Reviews EFT imports and transactions" },
+      { key: "eft_allocator", label: "EFT Allocator", description: "Allocates EFT transactions to policies" },
     ],
   },
   {
@@ -82,6 +86,8 @@ export const additionalRoles = [
   "hr_manager", // Handles leave, employees, contracts
   "finance_officer", // Handles payments, reports, reconciliations
   "cashier", // Captures payments, issues receipts
+  "eft_reviewer", // Reviews EFT imports and transactions
+  "eft_allocator", // Allocates EFT transactions to policies
 
   // Funeral Ops
   "funeral_coordinator", // Oversees funeral arrangements and logistics

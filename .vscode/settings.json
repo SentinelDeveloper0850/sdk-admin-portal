@@ -14,6 +14,7 @@
     "**/components/**/index.tsx": "${dirname} - Component"
   },
   "cSpell.words": [
+    "ASSIT",
     "Easypay",
     "Gauteng",
     "Mpumalanga",
