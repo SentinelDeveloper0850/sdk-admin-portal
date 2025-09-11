@@ -449,6 +449,14 @@ const UsersPage = () => {
               new Date(a.date).getTime() - new Date(b.date).getTime(),
           },
           {
+            title: "Last Seen",
+            dataIndex: "lastSeenAt",
+            key: "lastSeenAt",
+            render: (value: string) => (
+              <span>{getDate(value)} {getTime(value)}</span>
+            ),
+          },
+          {
             title: "Actions",
             key: "actions",
             render: (_: any, record: any) => (
