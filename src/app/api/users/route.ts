@@ -1,15 +1,22 @@
 import UsersModel from "@/app/models/hr/user.schema";
-import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { sendUserInvitationEmail } from "@/lib/email";
 import { generateTemporaryPassword } from "@/utils/generators/password";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
 
-    const users = await UsersModel.find({ deletedAt: { $exists: false } }).sort({ createdAt: -1 });
+    const url = new URL(request.url);
+    const deleted = url.searchParams.get("deleted");
+    const onlyDeleted = deleted === "true";
+
+    const query = onlyDeleted
+      ? { deletedAt: { $exists: true } }
+      : { deletedAt: { $exists: false } };
+
+    const users = await UsersModel.find(query).sort({ createdAt: -1 });
 
     return NextResponse.json(users, { status: 200 });
   } catch (error: any) {
@@ -140,10 +147,10 @@ export async function POST(request: Request) {
       console.error("Failed to send invitation email:", emailError);
       // Don't fail the request if email fails, but log it
       return NextResponse.json(
-        { 
+        {
           message: "User created successfully but failed to send invitation email",
           warning: "Please contact the user directly with their login credentials",
-          user 
+          user
         },
         { status: 201 }
       );

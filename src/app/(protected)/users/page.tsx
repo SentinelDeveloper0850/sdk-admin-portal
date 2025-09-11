@@ -11,7 +11,7 @@ import {
   StopOutlined,
   UserOutlined
 } from "@ant-design/icons";
-import { Avatar, Button } from "@nextui-org/react";
+import { Avatar, Button, Switch } from "@nextui-org/react";
 import {
   Button as AntButton,
   Col,
@@ -25,10 +25,12 @@ import {
   Tag
 } from "antd";
 import axios from "axios";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { AiOutlineUserAdd } from "react-icons/ai";
 import sweetAlert from "sweetalert";
 
-import { capitalizeFirstLetter, getDate, getTime } from "@/utils/formatters";
+import { capitalizeFirstLetter } from "@/utils/formatters";
 import { roleLabels } from "@/utils/helpers/roles";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
@@ -40,6 +42,7 @@ import { useAuth } from "@/context/auth-context";
 import { ERoles } from "../../../../types/roles.enum";
 
 const UsersPage = () => {
+  dayjs.extend(relativeTime);
   const [users, setUsers] = useState<any[]>([]);
 
   const [loading, setLoading] = useState<boolean>(true);
@@ -53,11 +56,12 @@ const UsersPage = () => {
 
   const [form] = Form.useForm();
   const { user } = useAuth();
+  const [showDeleted, setShowDeleted] = useState<boolean>(false);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/users");
+      const response = await fetch(`/api/users${showDeleted ? "?deleted=true" : ""}`);
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch users");
@@ -153,7 +157,7 @@ const UsersPage = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [showDeleted]);
 
   const handleSubmitForm = () => {
     form.submit();
@@ -379,9 +383,17 @@ const UsersPage = () => {
         title="Manage Users"
         subtitle="Create, update, and delete Users from your system"
         actions={[
-          <Button size="sm" onClick={() => setCreateDrawerOpen(true)}>
-            <PlusOutlined /> New User
-          </Button>,
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Show Deleted</span>
+              <Switch size="sm" isSelected={showDeleted} onValueChange={setShowDeleted} />
+            </div>
+            {!showDeleted && (
+              <Button size="sm" onClick={() => setCreateDrawerOpen(true)}>
+                <PlusOutlined /> New User
+              </Button>
+            )}
+          </div>,
         ]}
       />
 
@@ -395,7 +407,7 @@ const UsersPage = () => {
             title: "Full Names",
             dataIndex: "name",
             key: "name",
-            sorter: (a, b) => a.name.localeCompare(b.name),
+            sorter: (a: any, b: any) => a.name.localeCompare(b.name),
             render: (name, user) => {
               return (
                 <div className="flex items-center gap-4">
@@ -414,7 +426,7 @@ const UsersPage = () => {
             title: "Email",
             dataIndex: "email",
             key: "email",
-            sorter: (a, b) => a.email.localeCompare(b.email),
+            sorter: (a: any, b: any) => a.email.localeCompare(b.email),
           },
           {
             title: "Roles",
@@ -425,37 +437,52 @@ const UsersPage = () => {
                 {capitalizeFirstLetter(value)}
               </Tag>
             ),
-            sorter: (a, b) => a.role.localeCompare(b.role),
+            sorter: (a: any, b: any) => a.role.localeCompare(b.role),
           },
+          ...(!showDeleted
+            ? [
+              {
+                title: "Status",
+                dataIndex: "status",
+                key: "status",
+                render: (value: string) => (
+                  <Tag color={value == "Active" ? "green" : "red"}>{value}</Tag>
+                ),
+                sorter: (a: any, b: any) => a.status.localeCompare(b.status),
+              },
+            ]
+            : [
+              {
+                title: "Deleted",
+                dataIndex: "deletedAt",
+                key: "deletedAt",
+                render: (value: string) => (
+                  <span>{value ? dayjs(value).fromNow() : "-"}</span>
+                ),
+              },
+            ]),
           {
-            title: "Status",
-            dataIndex: "status",
-            key: "status",
-            render: (value: string) => (
-              <Tag color={value == "Active" ? "green" : "red"}>{value}</Tag>
-            ),
-            sorter: (a, b) => a.status.localeCompare(b.role),
-          },
-          {
-            title: "Date Created",
+            title: "Created",
             dataIndex: "createdAt",
             key: "createdAt",
             render: (value: string) => (
-              <span>
-                {getDate(value)} {getTime(value)}
-              </span>
+              <span>{value ? dayjs(value).fromNow() : "-"}</span>
             ),
-            sorter: (a, b) =>
-              new Date(a.date).getTime() - new Date(b.date).getTime(),
+            sorter: (a: any, b: any) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
           },
-          {
-            title: "Last Seen",
-            dataIndex: "lastSeenAt",
-            key: "lastSeenAt",
-            render: (value: string) => (
-              <span>{getDate(value)} {getTime(value)}</span>
-            ),
-          },
+          ...(!showDeleted
+            ? [
+              {
+                title: "Last Seen",
+                dataIndex: "lastSeenAt",
+                key: "lastSeenAt",
+                render: (value: string) => (
+                  <span>{value ? dayjs(value).fromNow() : "-"}</span>
+                ),
+              },
+            ]
+            : []),
           {
             title: "Actions",
             key: "actions",
@@ -463,46 +490,85 @@ const UsersPage = () => {
               <Dropdown
                 menu={{
                   items: [
-                    {
-                      key: "edit",
-                      icon: <UserOutlined />,
-                      label: "Edit",
-                      onClick: () => {
-                        form.setFieldsValue({
-                          firstNames: record.name
-                            .split(" ")
-                            .slice(0, -1)
-                            .join(" "),
-                          lastname: record.name.split(" ").slice(-1).join(" "),
-                          email: record.email,
-                          phone: record.phone,
-                          role: record.role,
-                          roles: record.roles,
-                        });
-                        setEditingUser(record);
-                        setEditDrawerOpen(true);
-                      }
-                    },
-                    // Only show reset password for non-admin users
-                    ...(!record.roles?.includes('admin') ? [{
-                      key: "reset-password",
-                      icon: <UserOutlined />,
-                      label: "Reset Password",
-                      onClick: () => resetPassword(record._id, record.name)
-                    }] : []),
-                    {
-                      key: "toggle-status",
-                      icon: <StopOutlined />,
-                      label: record.status === "Active" ? "Deactivate" : "Activate",
-                      onClick: () => toggleUserStatus(record._id, record.status)
-                    },
-                    {
-                      key: "delete",
-                      icon: <DeleteOutlined />,
-                      label: "Delete",
-                      danger: true,
-                      onClick: () => deleteUser(record._id)
-                    }
+                    ...(!showDeleted
+                      ? [
+                        {
+                          key: "edit",
+                          icon: <UserOutlined />,
+                          label: "Edit",
+                          onClick: () => {
+                            form.setFieldsValue({
+                              firstNames: record.name
+                                .split(" ")
+                                .slice(0, -1)
+                                .join(" "),
+                              lastname: record.name.split(" ").slice(-1).join(" "),
+                              email: record.email,
+                              phone: record.phone,
+                              role: record.role,
+                              roles: record.roles,
+                            });
+                            setEditingUser(record);
+                            setEditDrawerOpen(true);
+                          }
+                        },
+                        // Only show reset password for non-admin users
+                        ...(!record.roles?.includes('admin') ? [{
+                          key: "reset-password",
+                          icon: <UserOutlined />,
+                          label: "Reset Password",
+                          onClick: () => resetPassword(record._id, record.name)
+                        }] : []),
+                        {
+                          key: "toggle-status",
+                          icon: <StopOutlined />,
+                          label: record.status === "Active" ? "Deactivate" : "Activate",
+                          onClick: () => toggleUserStatus(record._id, record.status)
+                        },
+                        {
+                          key: "delete",
+                          icon: <DeleteOutlined />,
+                          label: "Delete",
+                          danger: true,
+                          onClick: () => deleteUser(record._id)
+                        }
+                      ]
+                      : [
+                        {
+                          key: "reactivate",
+                          icon: <UserOutlined />,
+                          label: "Reactivate",
+                          onClick: async () => {
+                            try {
+                              const confirmed = await sweetAlert({
+                                title: "Reactivate user?",
+                                text: "This will restore the user's access.",
+                                icon: "warning",
+                                buttons: ["Cancel", "Yes, reactivate"],
+                              });
+                              if (!confirmed) return;
+
+                              setLoading(true);
+                              const res = await fetch(`/api/users/reactivate`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ id: record._id }),
+                              });
+                              const data = await res.json();
+                              if (!res.ok) {
+                                sweetAlert({ title: "Failed", text: data.message, icon: "error" });
+                                return;
+                              }
+                              sweetAlert({ title: "User reactivated", icon: "success", timer: 2000 });
+                              setUsers((prev) => prev.filter((u) => u._id !== record._id));
+                            } catch (e) {
+                              sweetAlert({ title: "Error", text: "Could not reactivate user", icon: "error" });
+                            } finally {
+                              setLoading(false);
+                            }
+                          }
+                        }
+                      ]),
                   ]
                 }}
                 trigger={["click"]}
