@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, UploadOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined } from "@ant-design/icons";
 import { Button, Card, Col, Row, Space, Spin, Table, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 
@@ -12,7 +12,9 @@ import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { ERoles } from "../../../../types/roles.enum";
 
 import AuditReviewDrawer from "@/app/components/daily-audit/audit-review-drawer";
-import UploadReceiptsDrawer from "@/app/components/daily-audit/upload-receipts-drawer";
+import FuneralReceiptsDrawer from "@/app/components/daily-audit/funeral-receipts-drawer";
+import PolicyReceiptsDrawer from "@/app/components/daily-audit/policy-receipts-drawer";
+import SalesReceiptsDrawer from "@/app/components/daily-audit/sales-receipts-drawer";
 import WeeklySummaryDrawer from "@/app/components/daily-audit/weekly-summary-drawer";
 
 const { Title, Text } = Typography;
@@ -52,9 +54,14 @@ const DailyAuditPage = () => {
   const [audits, setAudits] = useState<DailyAudit[]>([]);
   const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [uploadDrawerOpen, setUploadDrawerOpen] = useState(false);
+
+  const [policyDrawerOpen, setPolicyDrawerOpen] = useState(false);
+  const [funeralDrawerOpen, setFuneralDrawerOpen] = useState(false);
+  const [salesDrawerOpen, setSalesDrawerOpen] = useState(false);
+
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
   const [summaryDrawerOpen, setSummaryDrawerOpen] = useState(false);
+
   const [selectedAudit, setSelectedAudit] = useState<DailyAudit | null>(null);
   const [selectedWeek, setSelectedWeek] = useState(dayjs().format('YYYY-MM-DD'));
 
@@ -92,8 +99,10 @@ const DailyAuditPage = () => {
   };
 
   useEffect(() => {
-    fetchAudits();
-    fetchWeeklySummary(selectedWeek);
+    if (user && selectedWeek) {
+      fetchAudits();
+      fetchWeeklySummary(selectedWeek);
+    }
   }, [user, selectedWeek]);
 
   const getStatusColor = (status: string) => {
@@ -276,15 +285,15 @@ const DailyAuditPage = () => {
         subtitle="Monitor and manage daily receipt submissions and reconciliations"
         actions={[
           <Space key="actions">
-            {user?.role !== "admin" && (
-              <Button
-                type="primary"
-                icon={<UploadOutlined />}
-                onClick={() => setUploadDrawerOpen(true)}
-              >
-                Upload Receipts
-              </Button>
-            )}
+            <Button onClick={() => setPolicyDrawerOpen(true)}>
+              Policy Receipts
+            </Button>
+            <Button onClick={() => setFuneralDrawerOpen(true)}>
+              Funeral Receipts
+            </Button>
+            <Button onClick={() => setSalesDrawerOpen(true)}>
+              Sales Receipts
+            </Button>
             <Button
               onClick={() => setSummaryDrawerOpen(true)}
             >
@@ -319,7 +328,7 @@ const DailyAuditPage = () => {
           <div>
             <Title level={5}>Daily Submission Deadline</Title>
             <Text className="text-gray-500">
-              All receipts must be submitted by 8:00 PM daily
+              All receipts must be submitted by 6:00 PM daily
             </Text>
           </div>
           <div className="text-right">
@@ -364,13 +373,26 @@ const DailyAuditPage = () => {
         )}
       </Card>
 
-      {/* Upload Receipts Drawer */}
-      <UploadReceiptsDrawer
-        open={uploadDrawerOpen}
-        onClose={() => setUploadDrawerOpen(false)}
+      {/* Policy Receipts Drawer */}
+      <PolicyReceiptsDrawer
+        open={policyDrawerOpen}
+        onClose={() => setPolicyDrawerOpen(false)}
         onSubmitted={fetchAudits}
       />
 
+      {/* Funeral Receipts Drawer */}
+      <FuneralReceiptsDrawer
+        open={funeralDrawerOpen}
+        onClose={() => setFuneralDrawerOpen(false)}
+        onSubmitted={fetchAudits}
+      />
+
+      {/* Sales Receipts Drawer */}
+      <SalesReceiptsDrawer
+        open={salesDrawerOpen}
+        onClose={() => setSalesDrawerOpen(false)}
+        onSubmitted={fetchAudits}
+      />
       {/* Audit Review Drawer */}
       <AuditReviewDrawer
         open={reviewDrawerOpen}

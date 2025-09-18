@@ -24,7 +24,7 @@ interface OCRResult {
   isConfirmed: boolean;
 }
 
-const UploadReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
+const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
   const { user } = useAuth();
   const [form] = Form.useForm();
   const [uploading, setUploading] = useState(false);
@@ -170,7 +170,7 @@ const UploadReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
 
   return (
     <Drawer
-      title="Upload Daily Receipts"
+      title="Submit Funeral Receipts"
       placement="right"
       width="60%"
       open={open}
@@ -367,4 +367,4 @@ const UploadReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
   );
 };
 
-export default UploadReceiptsDrawer; 
+export default FuneralReceiptsDrawer; 
