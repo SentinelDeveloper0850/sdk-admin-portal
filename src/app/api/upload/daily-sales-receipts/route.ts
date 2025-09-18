@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const uploadResult = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          folder: `daily-audit/policy-receipts/${submissionIdentifier}`,
+          folder: `daily-audit/sales-receipts/${submissionIdentifier}`,
         },
         (err, result) => {
           if (err) {
@@ -54,17 +54,19 @@ export async function POST(request: NextRequest) {
       stream.end(buffer);
     });
 
-    console.log("🚀 ~ POST ~ policy uploadResult:", uploadResult)
+    console.log("🚀 ~ POST ~ sales uploadResult:", uploadResult)
 
     return NextResponse.json({
       success: true,
       url: (uploadResult as any).secure_url,
     });
   } catch (err) {
-    console.error("Policy receipt upload failed:", err);
+    console.error("Sales receipt upload failed:", err);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }
     );
   }
 }
+
+

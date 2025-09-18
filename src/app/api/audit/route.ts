@@ -1,87 +1,74 @@
+import { DailyAuditModel } from "@/app/models/hr/daily-audit.schema";
+import { getUserFromRequest } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-
-
-// Mock data for development - replace with actual database queries
-const mockAudits = [
-  {
-    _id: "1",
-    date: "2024-01-15",
-    employeeId: "emp1",
-    employeeName: "John Dube",
-    batchReceiptTotal: 15000,
-    systemBalance: 15000,
-    discrepancy: 0,
-    status: "Balanced",
-    submissionStatus: "Submitted",
-    riskLevel: "low",
-    submittedAt: "2024-01-15T19:30:00Z",
-    reviewedBy: null,
-    reviewedAt: null,
-    isResolved: false,
-    notes: null,
-    resolutionNotes: null,
-    attachments: ["https://example.com/receipt1.jpg"],
-  },
-  {
-    _id: "2",
-    date: "2024-01-15",
-    employeeId: "emp2",
-    employeeName: "Sarah Johnson",
-    batchReceiptTotal: 12000,
-    systemBalance: 11500,
-    discrepancy: 500,
-    status: "Over",
-    submissionStatus: "Submitted Late",
-    riskLevel: "medium",
-    submittedAt: "2024-01-15T20:45:00Z",
-    reviewedBy: null,
-    reviewedAt: null,
-    isResolved: false,
-    notes: null,
-    resolutionNotes: null,
-    attachments: ["https://example.com/receipt2.jpg"],
-  },
-  {
-    _id: "3",
-    date: "2024-01-15",
-    employeeId: "emp3",
-    employeeName: "Mike Smith",
-    batchReceiptTotal: 8000,
-    systemBalance: 8500,
-    discrepancy: -500,
-    status: "Short",
-    submissionStatus: "Submitted",
-    riskLevel: "medium",
-    submittedAt: "2024-01-15T18:15:00Z",
-    reviewedBy: null,
-    reviewedAt: null,
-    isResolved: false,
-    notes: null,
-    resolutionNotes: null,
-    attachments: ["https://example.com/receipt3.jpg"],
-  },
-];
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    await connectToDatabase();
+
     const { searchParams } = new URL(request.url);
-    const employeeId = searchParams.get("employeeId");
-    const date = searchParams.get("date");
+    const employeeIdParam = searchParams.get("employeeId");
+    const dateParam = searchParams.get("date"); // YYYY-MM-DD
 
-    // Filter audits based on query parameters
-    let filteredAudits = mockAudits;
+    const query: any = {};
 
-    if (employeeId) {
-      filteredAudits = filteredAudits.filter(audit => audit.employeeId === employeeId);
+    // Non-admins can only see their own
+    const isAdmin = (user as any)?.role === "admin" || (user as any)?.role === "Admin";
+    if (isAdmin) {
+      if (employeeIdParam) {
+        query.userId = employeeIdParam;
+      }
+    } else {
+      query.userId = (user as any)._id;
     }
 
-    if (date) {
-      filteredAudits = filteredAudits.filter(audit => audit.date === date);
+    if (dateParam) {
+      const start = new Date(dateParam);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 1);
+      query.date = { $gte: start, $lt: end };
     }
+
+    const docs = await DailyAuditModel.find(query).sort({ createdAt: -1 }).lean();
+
+    // Map DB docs to UI shape expected by table
+    const audits = docs.map((doc: any) => {
+      const latestSubmission = Array.isArray(doc.submissions) && doc.submissions.length > 0
+        ? doc.submissions[doc.submissions.length - 1]
+        : null;
+
+      return {
+        _id: String(doc._id),
+        date: new Date(doc.date).toISOString().slice(0, 10),
+        employeeId: doc.userId,
+        employeeName: doc.userId, // Replace with actual name lookup if needed
+        batchReceiptTotal: doc.totalAmount ?? null,
+        systemBalance: null,
+        discrepancy: 0,
+        status: doc.status || "Submitted",
+        submissionStatus: doc.isLateSubmission ? "Submitted Late" : "Submitted",
+        riskLevel: "low",
+        submittedAt: latestSubmission?.submittedAt ?? doc.createdAt,
+        reviewedBy: null,
+        reviewedAt: null,
+        isResolved: false,
+        notes: (doc.reviewNotes && doc.reviewNotes[0]) || null,
+        attachments: latestSubmission?.files || [],
+      };
+    });
 
     return NextResponse.json({
       success: true,
-      audits: filteredAudits,
+      audits,
     });
   } catch (error) {
     console.error("Error fetching audits:", error);
