@@ -31,6 +31,9 @@ export interface IAllocationRequest {
   submittedBy?: string;
   submittedAt?: Date;
 
+  markedAsDuplicateBy?: string;
+  markedAsDuplicateAt?: Date;
+
   comments?: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -70,6 +73,8 @@ const AllocationRequestSchema = new Schema(
     submittedAt: { type: Date },
     allocatedBy: { type: Types.ObjectId, ref: 'users' },
     allocatedAt: { type: Date },
+    markedAsDuplicateBy: { type: Types.ObjectId, ref: 'users' },
+    markedAsDuplicateAt: { type: Date },
   },
   { timestamps: true }
 );
