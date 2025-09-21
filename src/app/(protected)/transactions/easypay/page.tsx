@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 
-import { EyeOutlined } from "@ant-design/icons";
+import { EyeOutlined, InboxOutlined, MoreOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
 import {
+  Alert,
   Button,
   Col,
   DatePicker,
+  Descriptions,
   Drawer,
+  Dropdown,
   Form,
+  Input,
   List,
   Row,
   Select,
@@ -16,6 +20,7 @@ import {
   Spin,
   Statistic,
   Table,
+  Upload,
 } from "antd";
 import Search from "antd/es/input/Search";
 import { Dayjs } from "dayjs";
@@ -105,9 +110,30 @@ export default function EasypayTransactionsPage() {
     date?: string;
   } | null>(null);
 
+  // Allocation request states
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [showAllocationRequestDrawer, setShowAllocationRequestDrawer] = useState(false);
+  const [allocationRequestForm] = Form.useForm();
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [allocationRequestError, setAllocationRequestError] = useState<string | null>(null);
+  const [allocationRequestSuccess, setAllocationRequestSuccess] = useState<string | null>(null);
+  const [evidenceFileList, setEvidenceFileList] = useState<any[]>([]);
+  const [allocationRequestLoading, setAllocationRequestLoading] = useState(false);
+
   const { user } = useAuth();
   const { hasRole } = useRole();
   const [notification, contextHolder] = useNotification();
+
+  const uploadEvidenceProps = {
+    beforeUpload: async (file: any) => {
+      console.log("file", file);
+      setEvidenceFileList([...evidenceFileList, file]);
+    },
+    fileList: evidenceFileList,
+    onChange: ({ fileList }: any) => setEvidenceFileList(fileList),
+    accept: ".jpg,.jpeg,.png,.pdf",
+    maxCount: 10,
+  };
 
   const fetchTransactions = async (page = 1, pageSize = 50) => {
     try {
@@ -613,6 +639,66 @@ export default function EasypayTransactionsPage() {
     saveAs(blob, "easypay-transactions.csv");
   };
 
+  const resetAllocationRequest = () => {
+    setEvidenceFileList([]);
+    setAllocationRequestError(null);
+    setAllocationRequestSuccess(null);
+    allocationRequestForm.resetFields();
+    setSelectedTransaction(null);
+  };
+
+  const requestAllocation = async () => {
+    try {
+      setAllocationRequestLoading(true);
+
+      await allocationRequestForm.validateFields();
+      const data = allocationRequestForm.getFieldsValue();
+
+      if (!selectedTransaction) {
+        setAllocationRequestError("No transaction selected");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("transactionId", selectedTransaction._id);
+      formData.append("policyNumber", data.policyNumber);
+      formData.append("notes", data.notes || []);
+
+      if (evidenceFileList.length > 0) {
+        evidenceFileList.forEach((file: any) => {
+          const blob = (file && (file.originFileObj || file)) as File;
+          if (blob) {
+            formData.append("evidence", blob, (blob as any).name || "evidence");
+          }
+        });
+      }
+
+      // Append simple fields last
+      formData.append("policyNumber", data.policyNumber);
+      formData.append("notes", data.notes || "");
+
+      const response = await fetch(`/api/transactions/easypay/request-allocation`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setAllocationRequestError(errorData.message || "Failed to request allocation");
+        return;
+      }
+
+      setAllocationRequestSuccess("Allocation requested successfully");
+      resetAllocationRequest();
+      setShowAllocationRequestDrawer(false);
+    } catch (err) {
+      console.log(err);
+      setAllocationRequestError("An error occurred while requesting allocation");
+    } finally {
+      setAllocationRequestLoading(false);
+    }
+  };
+
   if (error) {
     return (
       <div style={{ padding: "20px", textAlign: "center" }}>
@@ -652,6 +738,16 @@ export default function EasypayTransactionsPage() {
             {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
               <Button onClick={exportToCSV} disabled={!transactions.length}>
                 Export CSV
+              </Button>
+            )}
+            {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                disabled={!selectedRowKeys.length}
+                onClick={() => setShowAllocationRequestDrawer(true)}
+              >
+                Request Allocation ({selectedRowKeys.length})
               </Button>
             )}
           </Space>,
@@ -887,6 +983,11 @@ export default function EasypayTransactionsPage() {
             loading={loading}
             dataSource={transactions}
             rowClassName="cursor-pointer hover:bg-gray-100"
+            rowSelection={hasRole([ERoles.Admin, ERoles.FinanceOfficer]) ? {
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+              preserveSelectedRowKeys: true,
+            } : undefined}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
@@ -930,6 +1031,30 @@ export default function EasypayTransactionsPage() {
                 key: "amount",
                 render: (value: number) => formatToMoneyWithCurrency(value),
                 sorter: (a, b) => a.amount - b.amount,
+              },
+              {
+                title: "Actions",
+                key: "actions",
+                render: (_: any, record: any) => (
+                  <Dropdown
+                    menu={{
+                      items: [
+                        {
+                          key: "request-allocation",
+                          icon: <InboxOutlined />,
+                          label: "Request Allocation",
+                          onClick: () => {
+                            setSelectedTransaction(record);
+                            setShowAllocationRequestDrawer(true);
+                          }
+                        },
+                      ]
+                    }}
+                    trigger={["click"]}
+                  >
+                    <Button icon={<MoreOutlined />} />
+                  </Dropdown>
+                ),
               },
             ]}
           />
@@ -1107,6 +1232,89 @@ export default function EasypayTransactionsPage() {
             />
           </div>
         )}
+      </Drawer>
+
+      {/* Allocation Request Drawer */}
+      <Drawer
+        title={
+          <div>
+            <h3 className="mb-0 text-md font-semibold">Allocation Request</h3>
+            <p className="mb-0 text-sm text-gray-500 font-normal">Request allocation of the selected transaction on ASSIT</p>
+          </div>
+        }
+        placement="right"
+        closable={false}
+        width="60%"
+        onClose={() => {
+          setShowAllocationRequestDrawer(false);
+          setSelectedTransaction(null);
+          setAllocationRequestError(null);
+          setAllocationRequestSuccess(null);
+          allocationRequestForm.resetFields();
+        }}
+        open={showAllocationRequestDrawer}
+        footer={
+          <Space>
+            <Button onClick={() => setShowAllocationRequestDrawer(false)}>Cancel</Button>
+            <Button onClick={requestAllocation} loading={allocationRequestLoading} type="primary">Submit Request</Button>
+          </Space>
+        }
+      >
+        <Alert
+          showIcon
+          type="info"
+          message="Please note that the allocation request will be reviewed. If approved, it will be submitted for allocation on ASSIT."
+          style={{ marginBottom: 16 }}
+        />
+        <h3 className="mb-4 text-md font-semibold">Transaction Information</h3>
+        {selectedTransaction && (
+          <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
+            <Descriptions.Item label="Date">{new Date(selectedTransaction.date).toLocaleString()}</Descriptions.Item>
+            <Descriptions.Item label="File ID">{selectedTransaction.uuid}</Descriptions.Item>
+            <Descriptions.Item label="Easypay Number">{(selectedTransaction as any).easypayNumber || selectedTransaction.uuid}</Descriptions.Item>
+            <Descriptions.Item label="Amount">{formatToMoneyWithCurrency(selectedTransaction.amount)}</Descriptions.Item>
+            {(selectedTransaction as any).policyNumber && (
+              <Descriptions.Item label="Policy Number">{(selectedTransaction as any).policyNumber}</Descriptions.Item>
+            )}
+          </Descriptions>
+        )}
+        {allocationRequestError && (
+          <Alert
+            showIcon
+            type="error"
+            message={allocationRequestError}
+            closable
+            style={{ marginBottom: 16 }}
+            onClose={() => setAllocationRequestError(null)}
+          />
+        )}
+        {allocationRequestSuccess && (
+          <Alert
+            showIcon
+            type="success"
+            message={allocationRequestSuccess}
+            closable
+            style={{ marginBottom: 16 }}
+            onClose={() => setAllocationRequestSuccess(null)}
+          />
+        )}
+        <Form layout="vertical" form={allocationRequestForm}>
+          <Form.Item label="Policy Number" name="policyNumber" rules={[{ required: true, message: "Policy number is required" }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Notes" name="notes">
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item label="Supporting Documents" name="evidence">
+            <Upload.Dragger {...uploadEvidenceProps}>
+              <p className="ant-upload-drag-icon">
+                <UploadOutlined className="h-6 w-6" />
+              </p>
+              <p className="ant-upload-text">Click or drag supporting documents to upload</p>
+              <p className="ant-upload-hint">Support for JPG, PNG, PDF files. Max file size: 10MB</p>
+            </Upload.Dragger>
+          </Form.Item>
+        </Form>
       </Drawer>
     </div>
   );

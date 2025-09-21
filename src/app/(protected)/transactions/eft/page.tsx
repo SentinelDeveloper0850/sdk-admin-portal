@@ -267,13 +267,11 @@ export default function EftTransactionsPage() {
     setShowAllocationRequestDrawer(true);
   };
 
-  const handleFileUpload = async (file: any) => {
-    console.log("file", file);
-    setEvidenceFileList([...evidenceFileList, file]);
-  };
-
   const uploadEvidenceProps = {
-    beforeUpload: handleFileUpload,
+    beforeUpload: async (file: any) => {
+      console.log("file", file);
+      setEvidenceFileList([...evidenceFileList, file]);
+    },
     fileList: evidenceFileList,
     onChange: ({ fileList }: any) => setEvidenceFileList(fileList),
     accept: ".jpg,.jpeg,.png,.pdf",

@@ -68,6 +68,21 @@ const SideNavBar = () => {
       name: "Easypay Transactions",
       icon: <Banknote size={18} />,
       url: "/transactions/easypay",
+      children: [
+        {
+          id: "view-easypay-transactions",
+          name: "View",
+          icon: <Banknote size={18} />,
+          url: "/transactions/easypay",
+        },
+        {
+          id: "easypay-allocation-requests",
+          name: "Allocation Requests",
+          icon: <Banknote size={18} />,
+          url: "/transactions/easypay/allocation-requests",
+          allowedRoles: [ERoles.EFTReviewer, ERoles.EFTAllocator],
+        },
+      ],
     },
     {
       id: 4,
