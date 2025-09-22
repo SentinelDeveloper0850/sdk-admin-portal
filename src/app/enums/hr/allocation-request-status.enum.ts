@@ -5,4 +5,5 @@ export enum EAllocationRequestStatus {
   CANCELLED = "CANCELLED",
   SUBMITTED = "SUBMITTED",
   ALLOCATED = "ALLOCATED",
+  DUPLICATE = "DUPLICATE",
 }
