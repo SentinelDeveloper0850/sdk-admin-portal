@@ -11,6 +11,7 @@ export interface ISubmissionData {
   notes: string;
   submittedAt: string;
   userId: string;
+  type: string;
 }
 
 export async function submitAuditData(data: ISubmissionData) {

@@ -5,6 +5,7 @@ export interface IDailyAuditSubmission {
   submittedAmount: number;
   notes: string;
   submittedAt: string;
+  type: string; // funeral_receipts, policy_receipts, sales_receipts
 }
 
 export interface IDailyAudit {
@@ -18,6 +19,8 @@ export interface IDailyAudit {
   isLateSubmission: boolean;
   comments: string[];
   userId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const dailyAuditSchema = new Schema({
@@ -47,6 +50,7 @@ const dailyAuditSchema = new Schema({
       submittedAmount: { type: Number, required: true, min: [0, "Submitted amount cannot be negative"], },
       notes: { type: String, required: false, trim: true },
       submittedAt: { type: Date, default: Date.now },
+      type: { type: String, enum: ['funeral_receipts', 'policy_receipts', 'sales_receipts'], required: true },
     })],
     required: true,
   },

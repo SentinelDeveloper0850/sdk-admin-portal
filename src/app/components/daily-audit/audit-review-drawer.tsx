@@ -7,35 +7,16 @@ import { Alert, Button, Descriptions, Divider, Drawer, Form, Image, Input, Selec
 import dayjs from "dayjs";
 
 import { useAuth } from "@/context/auth-context";
+import { IDailyAudit } from "@/app/models/hr/daily-audit.schema";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-interface DailyAudit {
-  _id: string;
-  date: string;
-  employeeId: string;
-  employeeName: string;
-  batchReceiptTotal: number;
-  systemBalance: number;
-  discrepancy: number;
-  status: string;
-  submissionStatus: string;
-  riskLevel: string;
-  submittedAt: string;
-  reviewedBy?: string;
-  reviewedAt?: string;
-  isResolved: boolean;
-  notes?: string;
-  resolutionNotes?: string;
-  attachments: string[];
-}
-
 interface Props {
   open: boolean;
   onClose: () => void;
-  audit: DailyAudit | null;
+  audit: IDailyAudit | null;
   onUpdated: () => void;
 }
 
@@ -167,8 +148,8 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
   if (!audit) return null;
 
   const isDiscrepancy = audit.status === "Short" || audit.status === "Over";
-  const isHighRisk = audit.riskLevel === "high";
-  const isLateSubmission = audit.submissionStatus.includes("Late");
+  // const isHighRisk = audit.riskLevel === "high";
+  // const isLateSubmission = audit.submissionStatus.includes("Late");
 
   return (
     <Drawer
@@ -188,7 +169,7 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
           >
             Add Notes
           </Button>
-          {isDiscrepancy && !audit.isResolved && (
+          {/* {isDiscrepancy && !audit.isResolved && (
             <Button
               type="primary"
               onClick={handleResolve}
@@ -196,33 +177,33 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
             >
               Mark as Resolved
             </Button>
-          )}
+          )} */}
         </Space>
       }
     >
       <div className="space-y-6">
         {/* Risk Level Alert */}
-        {isHighRisk && (
+        {/* {isHighRisk && (
           <Alert
             message="High Risk Discrepancy"
             description="This audit has a high-risk discrepancy that requires immediate attention."
             type="error"
             showIcon
           />
-        )}
+        )} */}
 
         {/* Late Submission Alert */}
-        {isLateSubmission && (
+        {/* {isLateSubmission && (
           <Alert
             message="Late Submission"
             description="This submission was made after the daily cutoff time."
             type="warning"
             showIcon
           />
-        )}
+        )} */}
 
         {/* Audit Information */}
-        <div className="space-y-4">
+        {/* <div className="space-y-4">
           <Title level={4}>Audit Information</Title>
 
           <Descriptions bordered column={2}>
@@ -257,17 +238,17 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
               </div>
             </Descriptions.Item>
           </Descriptions>
-        </div>
+        </div> */}
 
         {/* Financial Details */}
-        <div className="space-y-4">
+        {/* <div className="space-y-4">
           <Title level={4}>Financial Details</Title>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center p-4 border rounded-lg">
               <Text className="text-gray-500">Receipt Total</Text>
               <div className="text-xl font-semibold">
-                {audit.batchReceiptTotal ? formatCurrency(audit.batchReceiptTotal) : "--"}
+                {audit.totalAmount ? formatCurrency(audit.totalAmount) : "--"}
               </div>
             </div>
             <div className="text-center p-4 border rounded-lg">
@@ -285,10 +266,10 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Receipt Attachments */}
-        {audit.attachments && audit.attachments.length > 0 && (
+        {/* {audit.attachments && audit.attachments.length > 0 && (
           <div className="space-y-4">
             <Title level={4}>Receipt Attachments</Title>
 
@@ -308,10 +289,10 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Resolution Status */}
-        {audit.isResolved && (
+        {/* {audit.isResolved && (
           <div className="space-y-4">
             <Title level={4}>Resolution Details</Title>
 
@@ -329,10 +310,10 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
               </div>
             )}
           </div>
-        )}
+        )} */}
 
         {/* Review Notes */}
-        {audit.notes && (
+        {/* {audit.notes && (
           <div className="space-y-4">
             <Title level={4}>Review Notes</Title>
 
@@ -340,12 +321,12 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
               <div className="whitespace-pre-wrap">{audit.notes}</div>
             </div>
           </div>
-        )}
+        )} */}
 
         <Divider />
 
         {/* Add Notes Form */}
-        <div className="space-y-4">
+        {/* <div className="space-y-4">
           <Title level={4}>Add Review Notes</Title>
 
           <Form form={form} layout="vertical">
@@ -372,7 +353,7 @@ const AuditReviewDrawer: React.FC<Props> = ({ open, onClose, audit, onUpdated })
               </Form.Item>
             )}
           </Form>
-        </div>
+        </div> */}
       </div>
     </Drawer>
   );
