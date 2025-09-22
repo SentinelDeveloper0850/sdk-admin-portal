@@ -1,12 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import {
   Avatar,
-  Divider,
   Dropdown,
   DropdownItem,
   DropdownMenu,
@@ -15,20 +14,23 @@ import {
   NavbarBrand,
   NavbarContent,
   NavbarItem,
+  NavbarMenu,
+  NavbarMenuToggle
 } from "@nextui-org/react";
 import { Tag } from "antd";
-import { ImUser } from "react-icons/im";
 
 import { logout } from "@/utils/auth";
 
 import { useAuth } from "@/context/auth-context";
 
-import { ThemeSwitcher } from "./theme-switcher";
 import Presence from "@/components/presence";
+import SideNavBar from "./side-navbar";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export default function AppBarOnline() {
   const router = useRouter();
   const { user } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout(); // Clear the token
@@ -41,8 +43,13 @@ export default function AppBarOnline() {
     <Navbar
       maxWidth="full"
       className="shadow-sm dark:bg-[#2e2e2e] dark:text-[#f1f1f1]"
+      onMenuOpenChange={(isOpen) => setIsMenuOpen(isOpen)}
     >
       <NavbarContent justify="start">
+        <NavbarMenuToggle
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          className="md:hidden"
+        />
         <NavbarBrand>
           <Image
             src="/logo.png"
@@ -102,6 +109,15 @@ export default function AppBarOnline() {
           </Dropdown>
         </NavbarItem>
       </NavbarContent>
+
+      <NavbarMenu>
+        <div className="px-2 py-4">
+          <div className="mb-4">
+            <ThemeSwitcher showLabel />
+          </div>
+          <SideNavBar />
+        </div>
+      </NavbarMenu>
     </Navbar>
   );
 }

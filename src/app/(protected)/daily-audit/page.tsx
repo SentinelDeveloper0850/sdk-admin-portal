@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, UploadOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined } from "@ant-design/icons";
 import { Button, Card, Col, Row, Space, Spin, Table, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 
@@ -12,29 +12,14 @@ import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { ERoles } from "../../../../types/roles.enum";
 
 import AuditReviewDrawer from "@/app/components/daily-audit/audit-review-drawer";
-import UploadReceiptsDrawer from "@/app/components/daily-audit/upload-receipts-drawer";
+import FuneralReceiptsDrawer from "@/app/components/daily-audit/funeral-receipts-drawer";
+import PolicyReceiptsDrawer from "@/app/components/daily-audit/policy-receipts-drawer";
+import SalesReceiptsDrawer from "@/app/components/daily-audit/sales-receipts-drawer";
 import WeeklySummaryDrawer from "@/app/components/daily-audit/weekly-summary-drawer";
+import { IDailyAudit, IDailyAuditSubmission } from "@/app/models/hr/daily-audit.schema";
+import { roleLabels } from "@/utils/helpers/roles";
 
 const { Title, Text } = Typography;
-
-interface DailyAudit {
-  _id: string;
-  date: string;
-  employeeId: string;
-  employeeName: string;
-  batchReceiptTotal: number;
-  systemBalance: number;
-  discrepancy: number;
-  status: string;
-  submissionStatus: string;
-  riskLevel: string;
-  submittedAt: string;
-  reviewedBy?: string;
-  reviewedAt?: string;
-  isResolved: boolean;
-  notes?: string;
-  attachments: string[];
-}
 
 interface WeeklySummary {
   totalStaffAudited: number;
@@ -49,23 +34,25 @@ interface WeeklySummary {
 
 const DailyAuditPage = () => {
   const { user } = useAuth();
-  const [audits, setAudits] = useState<DailyAudit[]>([]);
+  const [audits, setAudits] = useState<IDailyAudit[]>([]);
   const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [uploadDrawerOpen, setUploadDrawerOpen] = useState(false);
+
+  const [policyDrawerOpen, setPolicyDrawerOpen] = useState(false);
+  const [funeralDrawerOpen, setFuneralDrawerOpen] = useState(false);
+  const [salesDrawerOpen, setSalesDrawerOpen] = useState(false);
+
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
   const [summaryDrawerOpen, setSummaryDrawerOpen] = useState(false);
-  const [selectedAudit, setSelectedAudit] = useState<DailyAudit | null>(null);
+
+  const [selectedAudit, setSelectedAudit] = useState<IDailyAudit | null>(null);
   const [selectedWeek, setSelectedWeek] = useState(dayjs().format('YYYY-MM-DD'));
 
-  const fetchAudits = async () => {
+  const fetchDailyAudits = async () => {
     setLoading(true);
     try {
-      const url = user?.role === "admin"
-        ? "/api/audit"
-        : `/api/audit?employeeId=${user?._id}`;
 
-      const res = await fetch(url);
+      const res = await fetch("/api/daily-audit");
       const json = await res.json();
 
       if (json.success) {
@@ -78,22 +65,24 @@ const DailyAuditPage = () => {
     }
   };
 
-  const fetchWeeklySummary = async (week: string) => {
-    try {
-      const res = await fetch(`/api/audit/summary?week=${week}`);
-      const json = await res.json();
+  // const fetchWeeklySummary = async (week: string) => {
+  //   try {
+  //     const res = await fetch(`/api/daily-audit/summary?week=${week}`);
+  //     const json = await res.json();
 
-      if (json.success) {
-        setWeeklySummary(json.summary);
-      }
-    } catch (error) {
-      console.error("Failed to fetch weekly summary:", error);
-    }
-  };
+  //     if (json.success) {
+  //       setWeeklySummary(json.summary);
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to fetch weekly summary:", error);
+  //   }
+  // };
 
   useEffect(() => {
-    fetchAudits();
-    fetchWeeklySummary(selectedWeek);
+    if (user && selectedWeek) {
+      fetchDailyAudits();
+      // fetchWeeklySummary(selectedWeek);
+    }
   }, [user, selectedWeek]);
 
   const getStatusColor = (status: string) => {
@@ -153,7 +142,7 @@ const DailyAuditPage = () => {
       title: "Employee",
       dataIndex: "employeeName",
       key: "employeeName",
-      render: (text: string, record: DailyAudit) => (
+      render: (text: string, record: IDailyAudit) => (
         <div>
           <div className="font-medium">{text}</div>
           <div className="text-xs text-gray-500">{dayjs(record.date).format('DD MMM YYYY')}</div>
@@ -161,10 +150,10 @@ const DailyAuditPage = () => {
       ),
     },
     {
-      title: "Receipt Total",
-      dataIndex: "batchReceiptTotal",
-      key: "batchReceiptTotal",
-      render: (amount: number) => amount ? formatCurrency(amount) : "--",
+      title: "Total Amount",
+      dataIndex: "totalAmount",
+      key: "totalAmount",
+      render: (totalAmount: number) => totalAmount ? formatCurrency(totalAmount) : "--",
     },
     {
       title: "System Balance",
@@ -174,14 +163,14 @@ const DailyAuditPage = () => {
     },
     {
       title: "Discrepancy",
-      dataIndex: "discrepancy",
-      key: "discrepancy",
-      render: (amount: number, record: DailyAudit) => {
-        if (!record.batchReceiptTotal || !record.systemBalance) return "--";
+      dataIndex: "totalAmount",
+      key: "totalAmount",
+      render: (amount: number, record: IDailyAudit) => {
+        if (!record.totalAmount) return "--";
         const color = amount === 0 ? "green" : amount > 0 ? "orange" : "red";
         return (
           <Tag color={color}>
-            {amount > 0 ? "+" : ""}{formatCurrency(amount)}
+            {amount > 0 ? "+" : ""}{formatCurrency(amount) || "--"}
           </Tag>
         );
       },
@@ -197,20 +186,19 @@ const DailyAuditPage = () => {
       ),
     },
     {
-      title: "Submission",
-      dataIndex: "submissionStatus",
-      key: "submissionStatus",
-      render: (status: string, record: DailyAudit) => (
-        <div>
-          <Tag color={getSubmissionStatusColor(status)}>
-            {status}
-          </Tag>
-          {record.submittedAt && (
-            <div className="text-xs text-gray-500 mt-1">
-              {dayjs(record.submittedAt).format('HH:mm')}
-            </div>
-          )}
-        </div>
+      title: "Submissions",
+      dataIndex: "submissions",
+      key: "submissions",
+      render: (submissions: IDailyAuditSubmission[]) => (<Tag>{submissions.length} Submitted</Tag>),
+    },
+    {
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+      render: (type: string) => (
+        <Tag color={type === "policy_receipts" ? "blue" : type === "funeral_receipts" ? "red" : "green"}>
+          {type?.toUpperCase()}
+        </Tag>
       ),
     },
     {
@@ -218,15 +206,15 @@ const DailyAuditPage = () => {
       dataIndex: "riskLevel",
       key: "riskLevel",
       render: (riskLevel: string) => (
-        <Tag color={getRiskLevelColor(riskLevel)}>
-          {riskLevel.toUpperCase()}
+        <Tag color={getRiskLevelColor(riskLevel || "")}>
+          {riskLevel?.toUpperCase()}
         </Tag>
       ),
     },
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: DailyAudit) => (
+      render: (_: any, record: IDailyAudit) => (
         <Space>
           <Button
             size="small"
@@ -263,7 +251,7 @@ const DailyAuditPage = () => {
     },
     {
       title: "Late Submissions",
-      value: audits.filter(a => a.submissionStatus.includes("Late")).length,
+      value: 0,
       icon: <ClockCircleOutlined />,
       color: "orange",
     },
@@ -276,15 +264,15 @@ const DailyAuditPage = () => {
         subtitle="Monitor and manage daily receipt submissions and reconciliations"
         actions={[
           <Space key="actions">
-            {user?.role !== "admin" && (
-              <Button
-                type="primary"
-                icon={<UploadOutlined />}
-                onClick={() => setUploadDrawerOpen(true)}
-              >
-                Upload Receipts
-              </Button>
-            )}
+            <Button onClick={() => setPolicyDrawerOpen(true)}>
+              Policy Receipts
+            </Button>
+            <Button onClick={() => setFuneralDrawerOpen(true)}>
+              Funeral Receipts
+            </Button>
+            <Button onClick={() => setSalesDrawerOpen(true)}>
+              Sales Receipts
+            </Button>
             <Button
               onClick={() => setSummaryDrawerOpen(true)}
             >
@@ -319,7 +307,7 @@ const DailyAuditPage = () => {
           <div>
             <Title level={5}>Daily Submission Deadline</Title>
             <Text className="text-gray-500">
-              All receipts must be submitted by 8:00 PM daily
+              All receipts must be submitted by 6:00 PM daily
             </Text>
           </div>
           <div className="text-right">
@@ -347,6 +335,30 @@ const DailyAuditPage = () => {
           <Table
             dataSource={audits}
             columns={columns}
+            expandable={{
+              expandedRowRender: (record: any) =>
+                record.submissions ? (
+                  <div className="ml-0 gap-1 whitespace-pre-wrap p-0 text-gray-700">
+                    <h1 className="text-sm font-bold mb-2">Submissions:</h1>
+                    <div>
+                      {record.submissions.map((submission: IDailyAuditSubmission, index: number) => (
+                        <div className="grid grid-cols-4 gap-2" key={index}>
+                          <div><Tag color={submission.type === "policy_receipts" ? "blue" : submission.type === "funeral_receipts" ? "red" : "green"}>
+                            {submission.type.toUpperCase()}</Tag></div>
+                          <div>{formatCurrency(submission.submittedAmount)}</div>
+                          <div>{dayjs(submission.submittedAt).format('DD MMM YYYY')}</div>
+                          <div>{submission.notes}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <i className="text-gray-400">No submissions assigned.</i>
+                ),
+              rowExpandable: (record) =>
+                !!record.submissions &&
+                record.submissions.length > 0
+            }}
             rowKey="_id"
             pagination={{
               pageSize: 10,
@@ -364,13 +376,26 @@ const DailyAuditPage = () => {
         )}
       </Card>
 
-      {/* Upload Receipts Drawer */}
-      <UploadReceiptsDrawer
-        open={uploadDrawerOpen}
-        onClose={() => setUploadDrawerOpen(false)}
-        onSubmitted={fetchAudits}
+      {/* Policy Receipts Drawer */}
+      <PolicyReceiptsDrawer
+        open={policyDrawerOpen}
+        onClose={() => setPolicyDrawerOpen(false)}
+        onSubmitted={fetchDailyAudits}
       />
 
+      {/* Funeral Receipts Drawer */}
+      <FuneralReceiptsDrawer
+        open={funeralDrawerOpen}
+        onClose={() => setFuneralDrawerOpen(false)}
+        onSubmitted={fetchDailyAudits}
+      />
+
+      {/* Sales Receipts Drawer */}
+      <SalesReceiptsDrawer
+        open={salesDrawerOpen}
+        onClose={() => setSalesDrawerOpen(false)}
+        onSubmitted={fetchDailyAudits}
+      />
       {/* Audit Review Drawer */}
       <AuditReviewDrawer
         open={reviewDrawerOpen}
@@ -379,7 +404,7 @@ const DailyAuditPage = () => {
           setSelectedAudit(null);
         }}
         audit={selectedAudit}
-        onUpdated={fetchAudits}
+        onUpdated={fetchDailyAudits}
       />
 
       {/* Weekly Summary Drawer */}

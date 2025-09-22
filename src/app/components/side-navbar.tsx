@@ -153,7 +153,7 @@ const SideNavBar = () => {
       name: "Daily Audit",
       icon: <ClipboardCheck size={18} />,
       url: "/daily-audit",
-      allowedRoles: [ERoles.Admin],
+      allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
     },
     {
       id: 9,
