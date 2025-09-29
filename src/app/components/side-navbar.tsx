@@ -55,7 +55,7 @@ const SideNavBar = () => {
           allowedRoles: [ERoles.Admin],
         },
         {
-          id: "allocation-requests",
+          id: "eft-allocation-requests",
           name: "Allocation Requests",
           icon: <Banknote size={18} />,
           url: "/transactions/eft/allocation-requests",
@@ -76,7 +76,7 @@ const SideNavBar = () => {
           url: "/transactions/easypay",
         },
         {
-          id: "allocation-requests",
+          id: "easypay-allocation-requests",
           name: "Allocation Requests",
           icon: <Banknote size={18} />,
           url: "/transactions/easypay/allocation-requests",

@@ -10,11 +10,12 @@ import sweetAlert from "sweetalert";
 import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
 
-
 interface AllocationRequestItem {
   _id: string;
   transactionId: string;
   policyNumber: string;
+  easypayNumber: string;
+  type: string;
   notes: string[];
   evidence: string[];
   status: string;
@@ -27,11 +28,10 @@ interface AllocationRequestItem {
   cancelledAt?: string;
 }
 
-interface EftTransactionDetail {
+interface EasypayTransactionDetail {
   _id: string;
   uuid: string;
-  description: string;
-  additionalInformation: string;
+  easypayNumber: string;
   amount: number;
   date: string;
 }
@@ -40,10 +40,10 @@ export default function AllocationRequestsPage() {
   const { hasRole } = useRole();
 
   const allowed = hasRole([
-    "eft_reviewer",
-    "eft_allocator",
+    "easypay_reviewer",
+    "easypay_allocator",
   ]);
-  const isAllocator = hasRole(["eft_allocator"]);
+  const isAllocator = hasRole(["easypay_allocator"]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export default function AllocationRequestsPage() {
   const [rejectForm] = Form.useForm();
   const [reviewing, setReviewing] = useState<AllocationRequestItem | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewDetail, setReviewDetail] = useState<{ item: AllocationRequestItem; transaction: EftTransactionDetail } | null>(null);
+  const [reviewDetail, setReviewDetail] = useState<{ item: AllocationRequestItem; transaction: EasypayTransactionDetail } | null>(null);
 
   const [scanDuplicatesOpen, setScanDuplicatesOpen] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -64,7 +64,7 @@ export default function AllocationRequestsPage() {
   const [comparisonResults, setComparisonResults] = useState<any[]>([]);
   const [scanning, setScanning] = useState(false);
 
-  const isReviewer = hasRole(["eft_reviewer", "admin"]);
+  const isReviewer = hasRole(["easypay_reviewer", "admin"]);
 
   // Utility function to format transaction date (MM/DD/YYYY) to YYYY/MM/DD format
   const formatTransactionDateToCSVFormat = (transactionDateStr: string): string => {
@@ -126,7 +126,7 @@ export default function AllocationRequestsPage() {
       if (filters.start) params.set("start", filters.start);
       if (filters.end) params.set("end", filters.end);
       if (filters.requester) params.set("requester", filters.requester);
-      const res = await fetch(`/api/transactions/eft/allocation-requests?${params.toString()}`);
+      const res = await fetch(`/api/transactions/easypay/allocation-requests?${params.toString()}`);
       if (!res.ok) {
         const data = await res.json();
         setError(data.message || "Failed to load allocation requests");
@@ -223,7 +223,7 @@ export default function AllocationRequestsPage() {
       const requestsWithTransactions = [];
 
       for (const item of selectedItems) {
-        const res = await fetch(`/api/transactions/eft/allocation-requests/${item._id}`);
+        const res = await fetch(`/api/transactions/easypay/allocation-requests/${item._id}`);
         if (res.ok) {
           const data = await res.json();
           requestsWithTransactions.push({
@@ -276,7 +276,7 @@ export default function AllocationRequestsPage() {
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
-        title="EFT Allocation Requests"
+        title="Easypay Allocation Requests"
         actions={[
           <Space>
             {(filters.status === 'APPROVED') && (
@@ -284,7 +284,7 @@ export default function AllocationRequestsPage() {
                 type="primary"
                 disabled={!selectedRowKeys.length}
                 onClick={async () => {
-                  const res = await fetch('/api/transactions/eft/allocation-requests/submit', {
+                  const res = await fetch('/api/transactions/easypay/allocation-requests/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ids: selectedRowKeys }),
@@ -440,7 +440,7 @@ export default function AllocationRequestsPage() {
                       onClick: async () => {
                         setReviewing(record);
                         setReviewLoading(true);
-                        const res = await fetch(`/api/transactions/eft/allocation-requests/${record._id}`);
+                        const res = await fetch(`/api/transactions/easypay/allocation-requests/${record._id}`);
                         if (res.ok) {
                           const data = await res.json();
                           setReviewDetail(data);
@@ -496,7 +496,7 @@ export default function AllocationRequestsPage() {
                   cancelText="No"
                   icon={<QuestionCircleOutlined />}
                   onConfirm={async () => {
-                    const res = await fetch(`/api/transactions/eft/allocation-requests/${reviewDetail?.item?._id}`, {
+                    const res = await fetch(`/api/transactions/easypay/allocation-requests/${reviewDetail?.item?._id}`, {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ status: "APPROVED" }),
@@ -537,9 +537,8 @@ export default function AllocationRequestsPage() {
             <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
               <Descriptions.Item label="Date">{new Date(reviewDetail.transaction.date).toLocaleString()}</Descriptions.Item>
               <Descriptions.Item label="File ID">{reviewDetail.transaction.uuid}</Descriptions.Item>
-              <Descriptions.Item label="Description">{reviewDetail.transaction.description}</Descriptions.Item>
+              <Descriptions.Item label="Easypay Number">{reviewDetail.transaction.easypayNumber}</Descriptions.Item>
               <Descriptions.Item label="Amount">{Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR', currencyDisplay: 'narrowSymbol' }).format(reviewDetail.transaction.amount)}</Descriptions.Item>
-              <Descriptions.Item label="Additional Info">{reviewDetail.transaction.additionalInformation}</Descriptions.Item>
             </Descriptions>
 
             <h3 className="mb-2 text-md font-semibold">Request Information</h3>
@@ -612,7 +611,7 @@ export default function AllocationRequestsPage() {
               danger
               onClick={async () => {
                 const values = rejectForm.getFieldsValue();
-                const res = await fetch(`/api/transactions/eft/allocation-requests/${rejecting?._id}`, {
+                const res = await fetch(`/api/transactions/easypay/allocation-requests/${rejecting?._id}`, {
                   method: "PATCH",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ status: "REJECTED", rejectionReason: values.rejectionReason }),
@@ -717,7 +716,7 @@ export default function AllocationRequestsPage() {
                               onClick={() => {
                                 const readyRequests = comparisonResults.filter(r => !r.isDuplicate);
                                 const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
-                                const filename = `eft_allocation_requests_${timestamp}.csv`;
+                                const filename = `easypay_allocation_requests_${timestamp}.csv`;
                                 generateAndDownloadCSV(readyRequests, filename);
                                 message.success(`Downloaded ${readyRequests.length} requests as ${filename}`);
                               }}
@@ -731,7 +730,7 @@ export default function AllocationRequestsPage() {
                                 const readyRequests = comparisonResults.filter(r => !r.isDuplicate);
                                 const requestIds = readyRequests.map(r => r.request._id);
 
-                                const res = await fetch('/api/transactions/eft/allocation-requests/allocate', {
+                                const res = await fetch('/api/transactions/easypay/allocation-requests/allocate', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ ids: requestIds }),
@@ -763,70 +762,20 @@ export default function AllocationRequestsPage() {
                               key: 'policyNumber',
                             },
                             {
+                              title: 'Easypay Number',
+                              dataIndex: ['request', 'easypayNumber'],
+                              key: 'easypayNumber',
+                            },
+                            {
                               title: 'Transaction Date',
                               dataIndex: ['transaction', 'date'],
                               key: 'transactionDate',
-                              render: (date: string) => (
-                                <div>
-                                  <div>{date} (MM/DD/YYYY)</div>
-                                  <div className="text-xs text-gray-500">
-                                    <code className="bg-gray-100 px-1 rounded">{comparisonResults.find(r => r.transaction.date === date)?.csvFormattedTransactionDate}</code>
-                                  </div>
-                                </div>
-                              ),
                             },
                             {
                               title: 'Amount',
                               dataIndex: ['transaction', 'amount'],
                               key: 'amount',
                               render: (amount: number) => Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR' }).format(amount),
-                            },
-                            {
-                              title: 'Description',
-                              dataIndex: ['transaction', 'description'],
-                              key: 'description',
-                              ellipsis: true,
-                            },
-                            {
-                              title: 'Actions',
-                              key: 'actions',
-                              render: (_, record, index) => (
-                                <Space>
-                                  <Button
-                                    size="small"
-                                    icon={<UploadOutlined />}
-                                    onClick={() => {
-                                      const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
-                                      const filename = `eft_allocation_request_${record.request.policyNumber}_${timestamp}.csv`;
-                                      generateAndDownloadCSV([record], filename);
-                                      message.success(`Downloaded request for policy ${record.request.policyNumber}`);
-                                    }}
-                                  >
-                                    Download
-                                  </Button>
-                                  <Button
-                                    size="small"
-                                    type="primary"
-                                    onClick={async () => {
-                                      const res = await fetch('/api/transactions/eft/allocation-requests/allocate', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ ids: [record.request._id] }),
-                                      });
-
-                                      if (res.ok) {
-                                        handleRefresh();
-                                        message.success(`Marked policy ${record.request.policyNumber} as allocated`);
-                                      } else {
-                                        const data = await res.json().catch(() => ({}));
-                                        message.error(data.message || 'Failed to allocate');
-                                      }
-                                    }}
-                                  >
-                                    Mark as Allocated
-                                  </Button>
-                                </Space>
-                              ),
                             },
                           ]}
                         />
@@ -851,7 +800,7 @@ export default function AllocationRequestsPage() {
                               const requestIds = duplicateRequests.map(r => r.request._id);
 
                               try {
-                                const res = await fetch('/api/transactions/eft/allocation-requests/mark-duplicates', {
+                                const res = await fetch('/api/transactions/easypay/allocation-requests/mark-duplicates', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ ids: requestIds }),
@@ -889,14 +838,6 @@ export default function AllocationRequestsPage() {
                               title: 'Transaction Date',
                               dataIndex: ['transaction', 'date'],
                               key: 'transactionDate',
-                              render: (date: string) => (
-                                <div>
-                                  <div>{date} (MM/DD/YYYY)</div>
-                                  <div className="text-xs text-gray-500">
-                                    <code className="bg-gray-100 px-1 rounded">{comparisonResults.find(r => r.transaction.date === date)?.csvFormattedTransactionDate}</code>
-                                  </div>
-                                </div>
-                              ),
                             },
                             {
                               title: 'Amount',
@@ -927,7 +868,7 @@ export default function AllocationRequestsPage() {
                                   danger
                                   onClick={async () => {
                                     try {
-                                      const res = await fetch('/api/transactions/eft/allocation-requests/mark-duplicates', {
+                                      const res = await fetch('/api/transactions/easypay/allocation-requests/mark-duplicates', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ ids: [record.request._id] }),

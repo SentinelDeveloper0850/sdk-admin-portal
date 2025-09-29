@@ -35,7 +35,9 @@ export async function GET(request: NextRequest) {
     const end = searchParams.get("end");
     const requester = searchParams.get("requester"); // name/email text filter
 
-    const query: Record<string, any> = {};
+    const query: Record<string, any> = {
+      type: "Easypay",
+    };
     if (status) query.status = status;
     if (start || end) {
       query.createdAt = {};
