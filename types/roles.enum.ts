@@ -12,6 +12,8 @@ export enum ERoles {
   Cashier = "cashier",
   EFTReviewer = "eft_reviewer",
   EFTAllocator = "eft_allocator",
+  EasypayReviewer = "easypay_reviewer",
+  EasypayAllocator = "easypay_allocator",
 
   // Funeral Operations
   FuneralCoordinator = "funeral_coordinator",

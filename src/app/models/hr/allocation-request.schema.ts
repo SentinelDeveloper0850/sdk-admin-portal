@@ -5,9 +5,13 @@ export interface IAllocationRequest {
   _id?: string;
   transactionId: string;
   policyNumber: string;
+  easypayNumber?: string;
+
   notes: string[];
   evidence: string[];
   status: EAllocationRequestStatus;
+
+  type?: "EFT" | "Easypay";
 
   requestedBy?: string;
   requestedAt?: Date;
@@ -52,6 +56,11 @@ const AllocationRequestSchema = new Schema(
       required: true,
     },
 
+    easypayNumber: {
+      type: String,
+      required: false,
+    },
+
     notes: { type: [String], required: true },
     evidence: { type: [String], required: true },
 
@@ -59,6 +68,12 @@ const AllocationRequestSchema = new Schema(
       type: String,
       enum: EAllocationRequestStatus,
       default: EAllocationRequestStatus.PENDING,
+    },
+
+    type: {
+      type: String,
+      enum: ["EFT", "Easypay"],
+      default: "EFT",
     },
 
     requestedBy: { type: Types.ObjectId, ref: 'users', required: true },

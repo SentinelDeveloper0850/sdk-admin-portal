@@ -68,6 +68,18 @@ const groupedRoles = [
         description: "Allocates EFT transactions to policies on ASSIT",
         icon: <DollarSign size={16} />,
       },
+      {
+        key: "easypay_reviewer",
+        label: "Easypay Reviewer",
+        description: "Reviews Easypay imports and transactions",
+        icon: <DollarSign size={16} />,
+      },
+      {
+        key: "easypay_allocator",
+        label: "Easypay Allocator",
+        description: "Allocates Easypay transactions to policies on ASSIT",
+        icon: <DollarSign size={16} />,
+      },
     ],
   },
   {

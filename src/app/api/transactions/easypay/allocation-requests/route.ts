@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
       AllocationRequestModel.find(query, {
         transactionId: 1,
         policyNumber: 1,
+        easypayNumber: 1,
         type: 1,
         notes: 1,
         evidence: 1,

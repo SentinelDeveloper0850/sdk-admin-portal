@@ -33,7 +33,5 @@ export async function connectToDatabase() {
       console.log("🧭 ~ Error connecting to database: ", error);
       throw error;
     }
-  } else {
-    console.log("🧭 ~ Database is already connected");
   }
 }
