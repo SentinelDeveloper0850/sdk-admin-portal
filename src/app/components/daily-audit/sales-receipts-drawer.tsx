@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 import { UploadOutlined } from "@ant-design/icons";
-import { Alert, App, Button, DatePicker, Drawer, Form, Input, InputNumber, Space, Typography, Upload } from "antd";
+import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, message, Space, Typography, Upload } from "antd";
 import dayjs from "dayjs";
 
 // import { useAuth } from "@/context/auth-context";
@@ -20,7 +20,7 @@ interface Props {
 // OCR removed for now
 
 const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
-  const { message } = App.useApp();
+  // const { user } = useAuth();
   const [form] = Form.useForm();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -69,7 +69,6 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =>
         submittedAmount: values.submittedAmount || 0,
         notes: values.notes || "",
         submittedAt: new Date().toISOString(),
-        type: "sales_receipts",
       };
 
       const res = await fetch("/api/daily-audit/sales-receipts", {

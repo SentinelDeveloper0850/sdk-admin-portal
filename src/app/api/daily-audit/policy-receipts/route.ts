@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     // Handle JSON submission
     const body = await request.json();
 
-    const { submissionIdSuffix, files, date, submittedAmount, notes, submittedAt, type } = body;
+    const { submissionIdSuffix, files, date, submittedAmount, notes, submittedAt } = body;
 
     // Get user from auth-token in request cookie
     const user = await getUserFromRequest(request);
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
-    if (!date || !submittedAmount || !submissionIdSuffix || !files || !type) {
+    if (!date || !submittedAmount || !submissionIdSuffix || !files) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const submissionIdentifier = `${user._id}-${submissionIdSuffix}`;
 
-    const { success, message } = await submitAuditData({ submissionIdentifier, files, date, submittedAmount, notes, submittedAt, userId: user._id as unknown as string, type });
+    const { success, message } = await submitAuditData({ submissionIdentifier, files, date, submittedAmount, notes, submittedAt, userId: user._id as unknown as string });
 
     if (!success) {
       return NextResponse.json(
