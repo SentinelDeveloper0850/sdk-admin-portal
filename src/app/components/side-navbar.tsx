@@ -168,28 +168,28 @@ const SideNavBar = () => {
       url: "/users",
       allowedRoles: [ERoles.Admin, ERoles.HRManager],
     },
-    {
-      id: 11,
-      name: "News & Announcements",
-      icon: <FileText size={18} />,
-      url: "/news",
-      children: [
-        {
-          id: "news-create",
-          name: "Create",
-          icon: <FileText size={18} />,
-          url: "/news/create",
-          allowedRoles: [ERoles.Admin],
-        },
-        {
-          id: "news-edit",
-          name: "Edit (by slug)",
-          icon: <FileText size={18} />,
-          url: "/news/sample-slug/edit",
-          allowedRoles: [ERoles.Admin],
-        },
-      ],
-    },
+    // {
+    //   id: 11,
+    //   name: "News & Announcements",
+    //   icon: <FileText size={18} />,
+    //   url: "/news",
+    //   children: [
+    //     {
+    //       id: "news-create",
+    //       name: "Create",
+    //       icon: <FileText size={18} />,
+    //       url: "/news/create",
+    //       allowedRoles: [ERoles.Admin],
+    //     },
+    //     {
+    //       id: "news-edit",
+    //       name: "Edit (by slug)",
+    //       icon: <FileText size={18} />,
+    //       url: "/news/sample-slug/edit",
+    //       allowedRoles: [ERoles.Admin],
+    //     },
+    //   ],
+    // },
     {
       id: 12,
       name: "Configurations",
