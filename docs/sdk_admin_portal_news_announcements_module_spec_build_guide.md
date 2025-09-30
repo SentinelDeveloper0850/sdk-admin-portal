@@ -424,7 +424,7 @@ const announcementSchema = z.object({
 
 ---
 
-## 16) Rollout Plan
+## 16) Feature Phases
 
 1. **MVP**: List/Detail, Admin create/publish, Pinned, Tags, Read tracking.
 2. **Phase 2**: Acknowledgements, Scheduling, Cross‑posting webhooks.
