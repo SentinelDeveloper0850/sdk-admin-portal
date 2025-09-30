@@ -1,5 +1,6 @@
 "use client";
 
+import DOMPurify from "dompurify";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import useSWR from "swr";
@@ -45,9 +46,41 @@ export default function NewsDetailPage({ params }: { params: { slug: string } })
         </button>
       </div>
 
-      <article className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
-        {doc.bodyMd}
-      </article>
+      {doc.bodyHtml ? (
+        <article
+          className="prose dark:prose-invert max-w-none"
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(doc.bodyHtml, {
+              ALLOWED_TAGS: [
+                "p",
+                "br",
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6",
+                "strong",
+                "em",
+                "u",
+                "s",
+                "a",
+                "ul",
+                "ol",
+                "li",
+                "blockquote",
+                "pre",
+                "code",
+                "hr",
+                "span",
+              ],
+              ALLOWED_ATTR: ["href", "target", "rel", "class"],
+            }) as string,
+          }}
+        />
+      ) : (
+        <article className="prose dark:prose-invert max-w-none whitespace-pre-wrap">{doc.bodyMd}</article>
+      )}
     </div>
   );
 }

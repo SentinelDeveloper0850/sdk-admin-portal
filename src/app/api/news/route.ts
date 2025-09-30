@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { title, bodyMd, category, tags, isPinned, requiresAck, version, publishAt, pushDiscord, pushWhatsapp, pushEmail } = body ?? {};
+  const { title, bodyMd, bodyHtml, category, tags, isPinned, requiresAck, version, publishAt, pushDiscord, pushWhatsapp, pushEmail } = body ?? {};
 
   if (!title || !bodyMd || !category) {
     return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
     slug,
     bodyMd,
     category,
+    bodyHtml: typeof bodyHtml === "string" ? bodyHtml : undefined,
     tags: Array.isArray(tags) ? tags : [],
     isPinned: !!isPinned,
     requiresAck: !!requiresAck,

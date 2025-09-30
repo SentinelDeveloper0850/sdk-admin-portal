@@ -5,7 +5,7 @@ import { AnnouncementModel, AnnouncementReadModel } from "@/app/models/system/an
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
   const user = await getUserFromRequest(req);
 
@@ -13,7 +13,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  const idOrSlug = params.id;
+  const { id } = await params;
+  const idOrSlug = id;
   const isObjectId = Types.ObjectId.isValid(idOrSlug);
   const isAdmin = (user as any).role === "admin";
 
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ id: String(_id), ...doc, hasRead });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
   const user = await getUserFromRequest(req);
 
@@ -59,6 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     "title",
     "slug",
     "bodyMd",
+    "bodyHtml",
     "category",
     "tags",
     "isPinned",
@@ -74,7 +76,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (key in body) update[key] = body[key];
   }
 
-  const updated = await AnnouncementModel.findByIdAndUpdate(params.id, update, { new: true });
+  const { id } = await params;
+  const updated = await AnnouncementModel.findByIdAndUpdate(id, update, { new: true });
   if (!updated) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
   return NextResponse.json({ id: String(updated._id) });

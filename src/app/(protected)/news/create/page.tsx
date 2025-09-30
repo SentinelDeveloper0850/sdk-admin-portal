@@ -1,13 +1,14 @@
 "use client";
 
+import DOMPurify from "dompurify";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeSanitize from "rehype-sanitize";
-import remarkGfm from "remark-gfm";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { ERoles } from "../../../../../types/roles.enum";
+
+const RichTextEditor = dynamic(() => import("@/app/components/editor/RichTextEditor"), { ssr: false });
 
 function CreateAnnouncementInner() {
   const router = useRouter();
@@ -18,6 +19,7 @@ function CreateAnnouncementInner() {
   const [isPinned, setIsPinned] = useState(false);
   const [requiresAck, setRequiresAck] = useState(false);
   const [bodyMd, setBodyMd] = useState("");
+  const [bodyHtml, setBodyHtml] = useState("");
   const [saving, setSaving] = useState(false);
 
   const tagsString = useMemo(() => tags.join(","), [tags]);
@@ -27,7 +29,7 @@ function CreateAnnouncementInner() {
     const res = await fetch("/api/news", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, bodyMd, category, version, tags, isPinned, requiresAck }),
+      body: JSON.stringify({ title, bodyMd, bodyHtml, category, version, tags, isPinned, requiresAck }),
     });
     if (!res.ok) {
       setSaving(false);
@@ -35,7 +37,7 @@ function CreateAnnouncementInner() {
     }
     const json = await res.json();
     router.push(`/news/${json.slug}`);
-  }, [title, bodyMd, category, version, tags, isPinned, requiresAck, router]);
+  }, [title, bodyMd, bodyHtml, category, version, tags, isPinned, requiresAck, router]);
 
   return (
     <div className="p-4 space-y-4">
@@ -82,11 +84,13 @@ function CreateAnnouncementInner() {
           Requires Acknowledgement
         </label>
 
-        <textarea
-          className="rounded border px-3 py-2 h-60 font-mono"
-          placeholder="Write Markdown here..."
-          value={bodyMd}
-          onChange={(e) => setBodyMd(e.target.value)}
+        <RichTextEditor
+          valueHtml={bodyHtml}
+          placeholder="Write announcement…"
+          onChange={(html, md) => {
+            setBodyHtml(html);
+            setBodyMd(md);
+          }}
         />
       </div>
 
@@ -98,9 +102,37 @@ function CreateAnnouncementInner() {
 
       <div className="pt-4">
         <h2 className="text-sm font-semibold mb-2">Preview</h2>
-        <article className="prose dark:prose-invert max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{bodyMd}</ReactMarkdown>
-        </article>
+        <article
+          className="prose dark:prose-invert max-w-none"
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(bodyHtml, {
+              ALLOWED_TAGS: [
+                "p",
+                "br",
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6",
+                "strong",
+                "em",
+                "u",
+                "s",
+                "a",
+                "ul",
+                "ol",
+                "li",
+                "blockquote",
+                "pre",
+                "code",
+                "hr",
+                "span",
+              ],
+              ALLOWED_ATTR: ["href", "target", "rel", "class"],
+            }) as string,
+          }}
+        />
       </div>
     </div>
   );

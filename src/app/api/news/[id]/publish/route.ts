@@ -4,7 +4,7 @@ import { AnnouncementModel } from "@/app/models/system/announcement.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
   const user = await getUserFromRequest(req);
 
@@ -17,8 +17,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const now = new Date();
+  const { id } = await params;
   const updated = await AnnouncementModel.findByIdAndUpdate(
-    params.id,
+    id,
     { status: "PUBLISHED", publishedAt: now },
     { new: true }
   );
