@@ -117,18 +117,18 @@ export function formatCurrency(amount: number, currency: string = "ZAR"): string
  * @returns Color string for Ant Design components
  */
 export function getStatusColor(status: string): string {
-  switch (status) {
-    case "Balanced":
+  switch (status.toLowerCase()) {
+    case "balanced":
       return "green";
-    case "Short":
+    case "short":
       return "red";
-    case "Over":
+    case "over":
       return "orange";
-    case "Awaiting System Balance":
+    case "awaiting system balance":
       return "blue";
-    case "Missing Batch Receipt":
+    case "missing batch receipt":
       return "red";
-    case "Nothing to Submit":
+    case "nothing to submit":
       return "default";
     default:
       return "default";
@@ -141,7 +141,7 @@ export function getStatusColor(status: string): string {
  * @returns Color string for Ant Design components
  */
 export function getRiskLevelColor(riskLevel: string): string {
-  switch (riskLevel) {
+  switch (riskLevel.toLowerCase()) {
     case "high":
       return "red";
     case "medium":
@@ -159,16 +159,16 @@ export function getRiskLevelColor(riskLevel: string): string {
  * @returns Color string for Ant Design components
  */
 export function getSubmissionStatusColor(status: string): string {
-  switch (status) {
-    case "Submitted":
+  switch (status.toLowerCase()) {
+    case "submitted":
       return "green";
-    case "Submitted Late (Grace Period)":
+    case "submitted late (grace period)":
       return "orange";
-    case "Submitted Late":
+    case "submitted late":
       return "red";
-    case "Not Submitted":
+    case "not submitted":
       return "red";
-    case "Nothing to Submit":
+    case "nothing to submit":
       return "default";
     default:
       return "default";

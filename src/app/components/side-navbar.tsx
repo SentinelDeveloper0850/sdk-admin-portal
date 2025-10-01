@@ -22,6 +22,7 @@ import { HiOutlineDocumentCurrencyDollar } from "react-icons/hi2";
 
 import { ERoles } from "../../../types/roles.enum";
 import { useRole } from "../hooks/use-role";
+import { IconPigMoney } from "@tabler/icons-react";
 
 const SideNavBar = () => {
   const pathname = usePathname();
@@ -40,6 +41,7 @@ const SideNavBar = () => {
       name: "EFT Transactions",
       icon: <Banknote size={18} />,
       url: "/transactions/eft",
+      group: "Finance",
       children: [
         {
           id: "view-eft-transactions",
@@ -68,6 +70,7 @@ const SideNavBar = () => {
       name: "Easypay Transactions",
       icon: <Banknote size={18} />,
       url: "/transactions/easypay",
+      group: "Finance",
       children: [
         {
           id: "view-easypay-transactions",
@@ -89,12 +92,14 @@ const SideNavBar = () => {
       name: "Policies",
       icon: <FileText size={18} />,
       url: "/policies",
+      group: "Scheme",
       children: [
         {
           id: "view-policies",
           name: "View Policies",
           icon: <Banknote size={18} />,
           url: "/policies/view",
+          allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
         },
         {
           id: "policy-reconciliation",
@@ -121,10 +126,35 @@ const SideNavBar = () => {
     },
     {
       id: 5,
+      name: "Societies",
+      icon: <Users size={18} />,
+      url: "/societies",
+      group: "Scheme",
+      allowedRoles: [ERoles.Admin, ERoles.SocietyConsultant],
+      children: [
+        {
+          id: "prepaid-societies",
+          name: "Prepaid",
+          icon: <Users size={18} />,
+          url: "/prepaid-societies",
+          allowedRoles: [ERoles.Admin, ERoles.SocietyConsultant],
+        },
+        {
+          id: "scheme-societies",
+          name: "Scheme",
+          icon: <Users size={18} />,
+          url: "/societies/scheme",
+          allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
+        },
+      ],
+    },
+    {
+      id: 6,
       name: "Reports",
       icon: <BarChart3 size={18} />,
       url: "/reports",
       allowedRoles: [ERoles.Admin],
+      group: "Management",
       children: [
         {
           id: "report-policies",
@@ -136,30 +166,44 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 6,
-      name: "Prepaid Societies",
-      icon: <Users size={18} />,
-      url: "/prepaid-societies",
-      allowedRoles: [ERoles.Admin, ERoles.SocietyConsultant],
-    },
-    {
       id: 7,
       name: "Daily Activity",
       icon: <ListOrdered size={18} />,
       url: "/daily-activity",
+      allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
+      group: "Risk",
     },
     {
       id: 8,
-      name: "Daily Audit",
-      icon: <ClipboardCheck size={18} />,
-      url: "/daily-audit",
+      name: "Cash-Up",
+      icon: <IconPigMoney size={18} />,
+      url: "/cash-up",
       allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
+      group: "Risk",
+      children: [
+        {
+          id: "cash-up-dashboard",
+          name: "Dashboard",
+          icon: <LayoutDashboard size={18} />,
+          url: "/cash-up/dashboard",
+          allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
+        },
+        {
+          id: "cash-up-review",
+          name: "Review",
+          icon: <FileText size={18} />,
+          url: "/cash-up/review",
+          allowedRoles: [ERoles.Admin],
+        },
+      ],
     },
     {
       id: 9,
       name: "Claims",
       icon: <HiOutlineDocumentCurrencyDollar size={18} />,
       url: "/claims",
+      allowedRoles: [ERoles.Admin, ERoles.ClaimsOfficer],
+      group: "Risk",
     },
     {
       id: 10,
@@ -167,6 +211,7 @@ const SideNavBar = () => {
       icon: <Shield size={18} />,
       url: "/users",
       allowedRoles: [ERoles.Admin, ERoles.HRManager],
+      group: "Management",
     },
     // {
     //   id: 11,
@@ -196,6 +241,7 @@ const SideNavBar = () => {
       icon: <Settings size={18} />,
       url: "/configurations",
       allowedRoles: [ERoles.Admin],
+      group: "Management",
       children: [
         {
           id: "system-config",
@@ -290,7 +336,7 @@ const SideNavBar = () => {
                 >
                   {item.icon}
                   {!collapsed && (
-                    <p className="text-sm font-normal uppercase tracking-wider">
+                    <p className="text-xs font-normal uppercase tracking-wider">
                       {item.name}
                     </p>
                   )}
@@ -322,7 +368,7 @@ const SideNavBar = () => {
             <div className={`${baseClass} ${borderClass}`}>
               {item.icon}
               {!collapsed && (
-                <p className="text-sm font-normal uppercase tracking-wider">
+                <p className="text-xs font-normal uppercase tracking-wider">
                   {item.name}
                 </p>
               )}
