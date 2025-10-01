@@ -518,3 +518,7 @@ a:hover {
 .dark .ant-select-selection-placeholder {
   color: #cccccc !important;
 }
+
+.ant-input-outlined.ant-input-status-error:not(.ant-input-disabled) {
+    background: unset !important;
+}
