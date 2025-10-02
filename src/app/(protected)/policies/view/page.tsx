@@ -10,6 +10,7 @@ import {
   MailOutlined,
   MoreOutlined,
   PhoneOutlined,
+  PrinterOutlined,
   SearchOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -31,10 +32,11 @@ import {
 import PageHeader from "@/app/components/page-header";
 import PolicyCancellationDrawer from "@/app/components/policies/policy-cancellation-drawer";
 import PolicyDetailsDrawer from "@/app/components/policies/policy-details-drawer";
+import PolicyPrintCardDrawer from "@/app/components/policies/policy-print-card-drawer";
 import Loading from "@/app/components/ui/loading";
 import sweetAlert from "sweetalert";
 
-interface IPolicy {
+export interface IMemberPolicy {
   _id: string;
   memberID: string;
   policyNumber: string;
@@ -47,6 +49,7 @@ interface IPolicy {
   status?: string;
   paymentHistoryFile?: string;
   easypayNumber?: string;
+  payAtNumber?: string;
   memberId?: string;
   fullName?: string;
   whatsappNumber?: string;
@@ -57,18 +60,20 @@ interface IPolicy {
 }
 
 export default function PoliciesPage() {
-  const [policies, setPolicies] = useState<IPolicy[]>([]);
+  const [policies, setPolicies] = useState<IMemberPolicy[]>([]);
   const [bootstrapping, setBootstrapping] = useState<boolean>(true);
   const [tableLoading, setTableLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
   const [stats, setStats] = useState<{ count: number; totalPages: number }>({ count: 0, totalPages: 0 });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
-  const [editingPolicy, setEditingPolicy] = useState<IPolicy | null>(null);
+  const [editingPolicy, setEditingPolicy] = useState<IMemberPolicy | null>(null);
   const [cancellationDrawerOpen, setCancellationDrawerOpen] = useState(false);
-  const [selectedPolicyForCancellation, setSelectedPolicyForCancellation] = useState<IPolicy | null>(null);
+  const [selectedPolicyForCancellation, setSelectedPolicyForCancellation] = useState<IMemberPolicy | null>(null);
   const [filterOptionsLoading, setFilterOptionsLoading] = useState<boolean>(true);
   const [searchInput, setSearchInput] = useState("");
+  const [printCardModalOpen, setPrintCardModalOpen] = useState(false);
+  const [selectedPolicyForPrintCard, setSelectedPolicyForPrintCard] = useState<IMemberPolicy | null>(null);
 
   // Pagination and filtering state
   const [currentPage, setCurrentPage] = useState(1);
@@ -245,10 +250,15 @@ export default function PoliciesPage() {
     }
   };
 
-  const editPolicy = (policy: IPolicy) => {
+  const editPolicy = (policy: IMemberPolicy) => {
     setEditingPolicy(policy);
     // You can implement edit functionality here
     console.log("Edit policy:", policy);
+  };
+
+  const printCard = (policy: IMemberPolicy) => {
+    setSelectedPolicyForPrintCard(policy);
+    setPrintCardModalOpen(true);
   };
 
   if (bootstrapping) {
@@ -420,7 +430,7 @@ export default function PoliciesPage() {
         }}
         columns={[
           {
-            title: "Policy Number",
+            title: "Policy #",
             dataIndex: "policyNumber",
             key: "policyNumber",
             sorter: true,
@@ -430,17 +440,29 @@ export default function PoliciesPage() {
             ),
           },
           {
-            title: "Member ID",
-            dataIndex: "memberId",
-            key: "memberId",
-            sorter: (a, b) => a.memberId?.localeCompare(b.memberId || "") || 0,
+            title: "Pay@ #",
+            dataIndex: "payAtNumber",
+            key: "payAtNumber",
+            sorter: (a, b) => a.payAtNumber?.localeCompare(b.payAtNumber || "") || 0,
           },
+          {
+            title: "Easypay #",
+            dataIndex: "easypayNumber",
+            key: "easypayNumber",
+            sorter: (a, b) => a.easypayNumber?.localeCompare(b.easypayNumber || "") || 0,
+          },
+          // {
+          //   title: "Easipol Member ID",
+          //   dataIndex: "memberId",
+          //   key: "memberId",
+          //   sorter: (a, b) => a.memberId?.localeCompare(b.memberId || "") || 0,
+          // },
           {
             title: "Main Member",
             dataIndex: "fullName",
             key: "fullName",
             sorter: (a, b) => a.fullName?.localeCompare(b.fullName || "") || 0,
-            render: (fullName: string, record: IPolicy) => (
+            render: (fullName: string, record: IMemberPolicy) => (
               <div className="flex items-center gap-2">
                 <UserOutlined className="text-gray-400" />
                 <span>{fullName || record.fullname || "N/A"}</span>
@@ -450,7 +472,7 @@ export default function PoliciesPage() {
           {
             title: "Contact",
             key: "contact",
-            render: (_, record: IPolicy) => {
+            render: (_, record: IMemberPolicy) => {
               const contactMethods = [];
               if (record.cellphoneNumber) contactMethods.push(record.cellphoneNumber);
               if (record.cellNumber) contactMethods.push(record.cellNumber);
@@ -576,7 +598,7 @@ export default function PoliciesPage() {
           {
             title: "Actions",
             key: "actions",
-            render: (_: any, record: IPolicy) => (
+            render: (_: any, record: IMemberPolicy) => (
               <Dropdown
                 menu={{
                   items: [
@@ -607,6 +629,12 @@ export default function PoliciesPage() {
                       label: "Payment History",
                       onClick: () => setPreviewImage(record.paymentHistoryFile || null),
                     }] : []),
+                    {
+                      key: "print-card",
+                      icon: <PrinterOutlined />,
+                      label: "Print Card",
+                      onClick: () => printCard(record),
+                    },
                     {
                       key: "delete",
                       icon: <DeleteOutlined />,
@@ -674,6 +702,17 @@ export default function PoliciesPage() {
         policyNumber={selectedPolicyForCancellation?.policyNumber}
         memberName={selectedPolicyForCancellation?.fullName || selectedPolicyForCancellation?.fullname}
       />
-    </div>
+
+      {selectedPolicyForPrintCard && (
+        <PolicyPrintCardDrawer
+          open={printCardModalOpen}
+          onClose={() => {
+            setPrintCardModalOpen(false);
+            setSelectedPolicyForPrintCard(null);
+          }}
+          policy={selectedPolicyForPrintCard}
+        />
+      )}
+    </div >
   );
 }
