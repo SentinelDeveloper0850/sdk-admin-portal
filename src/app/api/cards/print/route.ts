@@ -1,8 +1,11 @@
+// app/api/cards/print/route.ts
 export const runtime = "nodejs";
 
-import bwipjs from "bwip-js";
 import { NextRequest, NextResponse } from "next/server";
-import PDFDocument from "pdfkit";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import bwipjs from "bwip-js";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const mmToPt = (mm: number) => (mm / 25.4) * 72;
 const CARD_W_MM = 85.6;
@@ -11,72 +14,132 @@ const CARD_H_MM = 53.98;
 export async function POST(req: NextRequest) {
     const { policyNumber, payAtNumber, fullName } = await req.json();
 
+    // 1) Make barcode PNG buffer
     const barcodePng: Buffer = await bwipjs.toBuffer({
         bcid: "code128",
         text: String(payAtNumber ?? ""),
         scale: 3,
-        height: 12,
+        height: 12,          // mm visual bar height (we’ll scale in PDF)
         includetext: false,
         backgroundcolor: "FFFFFF",
         barcolor: "000000",
-        paddingwidth: 12,
+        paddingwidth: 12,    // quiet zones
         paddingheight: 6,
     });
 
+    // 2) Create PDF
+    const pdf = await PDFDocument.create();
     const widthPt = mmToPt(CARD_W_MM);
     const heightPt = mmToPt(CARD_H_MM);
+    const page = pdf.addPage([widthPt, heightPt]);
 
-    const stream = new ReadableStream({
-        start(controller) {
-            const doc = new PDFDocument({
-                size: [widthPt, heightPt],
-                margins: { top: 0, bottom: 0, left: 0, right: 0 },
-            });
-            doc.on("data", (c) => controller.enqueue(c));
-            doc.on("end", () => controller.close());
+    // 3) Embed fonts (use built-in first; swap to Montserrat if you want)
+    const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
-            const pad = mmToPt(2);
-            const stripH = mmToPt(5);
+    // If you prefer your Montserrat TTFs in /public/fonts:
+    // const montPath = path.join(process.cwd(), "public", "fonts", "Montserrat-Regular.ttf");
+    // const montBoldPath = path.join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf");
+    // const [montBytes, montBoldBytes] = await Promise.all([fs.readFile(montPath), fs.readFile(montBoldPath)]);
+    // const fontRegular = await pdf.embedFont(montBytes);
+    // const fontBold    = await pdf.embedFont(montBoldBytes);
 
-            // header strip
-            doc.rect(0, 0, widthPt, stripH).fill("#f4b000");
+    // Optional logo (/public/logo.png)
+    let logoImg;
+    try {
+        const logoPath = path.join(process.cwd(), "public", "logo.png");
+        const logoBytes = await fs.readFile(logoPath);
+        logoImg = await pdf.embedPng(logoBytes);
+    } catch { /* ignore if not present */ }
 
-            // brand text
-            doc.fillColor("#000").fontSize(9).text("Somdaka Funerals", pad, mmToPt(1.2), {
-                width: widthPt - pad * 2,
-                align: "left",
-            });
+    // Embed barcode PNG
+    const barcodeImg = await pdf.embedPng(barcodePng);
 
-            // middle (policy/member)
-            const midTop = stripH + mmToPt(3.5);
-            const sideW = (widthPt - pad * 2) / 2;
+    // 4) Layout constants
+    const pad = mmToPt(2);
+    const stripH = mmToPt(5);
 
-            doc.fontSize(7).fillColor("#6b7280").text("Policy", pad, midTop);
-            doc.fontSize(12).fillColor("#000").text(String(policyNumber ?? ""), pad, midTop + mmToPt(3));
+    // Colors
+    const brandYellow = rgb(0.956, 0.690, 0.000); // #f4b000
+    const gray = rgb(0.42, 0.45, 0.50);    // labels
 
-            doc.fontSize(7).fillColor("#6b7280").text("Member", pad + sideW, midTop, {
-                width: sideW - pad,
-                align: "right",
-            });
-            doc.fontSize(10).fillColor("#000").text(String(fullName ?? ""), pad + sideW, midTop + mmToPt(3), {
-                width: sideW - pad,
-                align: "right",
-            });
-
-            // footer (barcode + digits)
-            const barcodeW = widthPt - pad * 2;
-            const barcodeY = heightPt - pad - mmToPt(13);
-            doc.image(barcodePng, pad, barcodeY, { width: barcodeW, align: "center" });
-            doc.fontSize(10).fillColor("#000").text(String(payAtNumber ?? ""), pad, barcodeY + mmToPt(10.5), {
-                width: barcodeW,
-                align: "center",
-            });
-
-            doc.end();
-        },
+    // ===== HEADER STRIP =====
+    page.drawRectangle({
+        x: 0, y: heightPt - stripH,
+        width: widthPt, height: stripH,
+        color: brandYellow,
     });
 
-    return new NextResponse(stream as any, {
+    // Brand row (inside strip)
+    const headerY = heightPt - stripH + mmToPt(1.4);
+    page.drawText("Somdaka Funerals", {
+        x: pad, y: headerY,
+        size: 9, font: fontRegular, color: rgb(0, 0, 0),
+    });
+
+    if (logoImg) {
+        const logoW = mmToPt(6.5);
+        const logoH = (logoW / logoImg.width) * logoImg.height;
+        page.drawImage(logoImg, {
+            x: widthPt - pad - logoW,
+            y: heightPt - stripH + (stripH - logoH) / 2,
+            width: logoW,
+            height: logoH,
+        });
+    }
+
+    // ===== MIDDLE (policy + member) =====
+    const midTop = heightPt - stripH - mmToPt(3.5);
+    const sideW = (widthPt - pad * 2) / 2;
+
+    // Policy (left)
+    page.drawText("Policy", { x: pad, y: midTop, size: 7, font: fontRegular, color: gray });
+    page.drawText(String(policyNumber ?? ""), {
+        x: pad, y: midTop - mmToPt(3),
+        size: 12, font: fontBold, color: rgb(0, 0, 0),
+    });
+
+    // Member (right)
+    const rightX = pad + sideW;
+    page.drawText("Member", {
+        x: rightX, y: midTop,
+        size: 7, font: fontRegular, color: gray,
+    });
+    const memberText = String(fullName ?? "");
+    const memberWidth = fontRegular.widthOfTextAtSize(memberText, 10);
+    const rightBoxW = sideW - pad;
+    const memberX = rightX + Math.max(0, rightBoxW - memberWidth);
+    page.drawText(memberText, {
+        x: memberX, y: midTop - mmToPt(3),
+        size: 10, font: fontRegular, color: rgb(0, 0, 0),
+    });
+
+    // ===== FOOTER (barcode + Pay@) =====
+    const barcodeW = widthPt - pad * 2;
+    const barcodeH = mmToPt(12);                 // visual bar height
+    const barcodeY = pad + mmToPt(6);            // leave room for digits
+
+    page.drawImage(barcodeImg, {
+        x: pad,
+        y: barcodeY,
+        width: barcodeW,
+        height: barcodeH,
+    });
+
+    const digits = String(payAtNumber ?? "");
+    const digitsSize = 10;
+    const digitsWidth = fontBold.widthOfTextAtSize(digits, digitsSize);
+    page.drawText(digits, {
+        x: (widthPt - digitsWidth) / 2,
+        y: barcodeY - mmToPt(2.5),
+        size: digitsSize,
+        font: fontBold,
+        color: rgb(0, 0, 0),
+    });
+
+    // 5) Return PDF
+    const bytes = await pdf.save();
+    return new NextResponse(Buffer.from(bytes), {
         headers: {
             "Content-Type": "application/pdf",
             "Content-Disposition": `inline; filename="card-${policyNumber || "member"}.pdf"`,
