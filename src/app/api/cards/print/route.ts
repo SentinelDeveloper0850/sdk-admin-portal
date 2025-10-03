@@ -71,29 +71,30 @@ export async function POST(req: NextRequest) {
     });
 
     // Brand row (inside strip)
-    const headerY = heightPt - stripH + mmToPt(1.4);
+    const headerY = heightPt - stripH - mmToPt(8.5);
     page.drawText("Somdaka Funerals", {
         x: pad, y: headerY,
-        size: 9, font: fontRegular, color: rgb(0, 0, 0),
+        size: 12, font: fontRegular, color: rgb(0, 0, 0),
     });
 
     if (logoImg) {
-        const logoW = mmToPt(6.5);
-        const logoH = (logoW / logoImg.width) * logoImg.height;
+        const logoW = mmToPt(10.0);
+        const logoH = mmToPt(10.0);
+        // const logoH = (logoW / logoImg.width) * logoImg.height;
         page.drawImage(logoImg, {
             x: widthPt - pad - logoW,
-            y: heightPt - stripH + (stripH - logoH) / 2,
+            y: heightPt - stripH - mmToPt(12.5),
             width: logoW,
             height: logoH,
         });
     }
 
     // ===== MIDDLE (policy + member) =====
-    const midTop = heightPt - stripH - mmToPt(3.5);
+    const midTop = heightPt - stripH - mmToPt(24.0);
     const sideW = (widthPt - pad * 2) / 2;
 
     // Policy (left)
-    page.drawText("Policy", { x: pad, y: midTop, size: 7, font: fontRegular, color: gray });
+    page.drawText("Policy", { x: pad, y: midTop + mmToPt(2.5), size: 7, font: fontRegular, color: gray });
     page.drawText(String(policyNumber ?? ""), {
         x: pad, y: midTop - mmToPt(3),
         size: 12, font: fontBold, color: rgb(0, 0, 0),
@@ -101,22 +102,23 @@ export async function POST(req: NextRequest) {
 
     // Member (right)
     const rightX = pad + sideW;
+    const rightBoxW = sideW - pad;
+
     page.drawText("Member", {
-        x: rightX, y: midTop,
+        x: rightX + Math.max(0, rightBoxW - fontRegular.widthOfTextAtSize("Member", 7)), y: midTop + mmToPt(2.5),
         size: 7, font: fontRegular, color: gray,
     });
     const memberText = String(fullName ?? "");
-    const memberWidth = fontRegular.widthOfTextAtSize(memberText, 10);
-    const rightBoxW = sideW - pad;
+    const memberWidth = fontBold.widthOfTextAtSize(memberText, 10);
     const memberX = rightX + Math.max(0, rightBoxW - memberWidth);
     page.drawText(memberText, {
         x: memberX, y: midTop - mmToPt(3),
-        size: 10, font: fontRegular, color: rgb(0, 0, 0),
+        size: 10, font: fontBold, color: rgb(0, 0, 0),
     });
 
     // ===== FOOTER (barcode + Pay@) =====
     const barcodeW = widthPt - pad * 2;
-    const barcodeH = mmToPt(12);                 // visual bar height
+    const barcodeH = mmToPt(8);                 // visual bar height
     const barcodeY = pad + mmToPt(6);            // leave room for digits
 
     page.drawImage(barcodeImg, {
