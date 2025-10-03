@@ -136,7 +136,7 @@ const SideNavBar = () => {
           id: "prepaid-societies",
           name: "Prepaid",
           icon: <Users size={18} />,
-          url: "/prepaid-societies",
+          url: "/societies/prepaid",
           allowedRoles: [ERoles.Admin, ERoles.SocietyConsultant],
         },
         {
