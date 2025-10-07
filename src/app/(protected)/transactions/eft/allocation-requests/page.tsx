@@ -88,8 +88,8 @@ export default function AllocationRequestsPage() {
     // Convert requests to CSV rows
     const csvRows = requests.map(request => {
       const membershipNo = request.policyNumber;
-      const depositAmount = request.transaction.amount;
-      const depositDate = request.transaction.date;
+      const depositAmount = request.transaction?.amount;
+      const depositDate = request.transaction?.date;
 
       return [membershipNo, depositAmount, depositDate];
     });
@@ -506,11 +506,11 @@ export default function AllocationRequestsPage() {
 
             <h3 className="mb-2 text-md font-semibold">Transaction Information</h3>
             <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
-              <Descriptions.Item label="Date">{new Date(reviewDetail.transaction.date).toLocaleString()}</Descriptions.Item>
-              <Descriptions.Item label="File ID">{reviewDetail.transaction.uuid}</Descriptions.Item>
-              <Descriptions.Item label="Description">{reviewDetail.transaction.description}</Descriptions.Item>
-              <Descriptions.Item label="Amount">{Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR', currencyDisplay: 'narrowSymbol' }).format(reviewDetail.transaction.amount)}</Descriptions.Item>
-              <Descriptions.Item label="Additional Info">{reviewDetail.transaction.additionalInformation}</Descriptions.Item>
+              <Descriptions.Item label="Date">{new Date(reviewDetail.transaction?.date).toLocaleString()}</Descriptions.Item>
+              <Descriptions.Item label="File ID">{reviewDetail.transaction?.uuid}</Descriptions.Item>
+              <Descriptions.Item label="Description">{reviewDetail.transaction?.description}</Descriptions.Item>
+              <Descriptions.Item label="Amount">{Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR', currencyDisplay: 'narrowSymbol' }).format(reviewDetail.transaction?.amount)}</Descriptions.Item>
+              <Descriptions.Item label="Additional Info">{reviewDetail.transaction?.additionalInformation}</Descriptions.Item>
             </Descriptions>
 
             <h3 className="mb-2 text-md font-semibold">Request Information</h3>
@@ -734,7 +734,7 @@ export default function AllocationRequestsPage() {
                             title: 'Transaction Date',
                             dataIndex: 'transaction',
                             key: 'transaction',
-                            render: (transaction: IEftTransaction) => dayjs(transaction.date).format('DD/MM/YYYY'),
+                            render: (transaction: IEftTransaction) => dayjs(transaction?.date).format('DD/MM/YYYY'),
                           },
                           {
                             title: 'Amount',
@@ -844,7 +844,7 @@ export default function AllocationRequestsPage() {
                             title: 'Transaction Date',
                             dataIndex: 'transaction',
                             key: 'transaction',
-                            render: (transaction: IEftTransaction) => dayjs(transaction.date).format('DD/MM/YYYY'),
+                            render: (transaction: IEftTransaction) => dayjs(transaction?.date).format('DD/MM/YYYY'),
                           },
                           {
                             title: 'Amount',
