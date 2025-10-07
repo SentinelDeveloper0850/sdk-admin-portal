@@ -41,7 +41,9 @@ export default function AllocationRequestsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<AllocationRequestItem[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [filters, setFilters] = useState<{ status?: string; start?: string; end?: string; requester?: string }>({});
+  const [filters, setFilters] = useState<{ status?: string; start?: string; end?: string; requester?: string }>({
+    status: hasRole(["eft_allocator"]) ? "SUBMITTED" : "PENDING",
+  });
 
   const [rejecting, setRejecting] = useState<AllocationRequestItem | null>(null);
   const [rejectForm] = Form.useForm();
@@ -138,12 +140,12 @@ export default function AllocationRequestsPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchData(filters.status || 'PENDING');
+    await fetchData(filters.status || (isAllocator ? "SUBMITTED" : "PENDING"));
     setRefreshing(false);
   };
 
   useEffect(() => {
-    fetchData(filters.status || 'PENDING');
+    fetchData(filters.status || (isAllocator ? "SUBMITTED" : "PENDING"));
   }, []);
 
   if (!allowed) {
