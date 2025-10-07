@@ -8,8 +8,8 @@ export interface IEftTransaction extends Document {
   source: string;
   additionalInformation: string;
   description: string;
-  amount: string;
-  created_at: string;
+  amount: number;
+  created_at: Date;
 }
 
 // Define the schema
@@ -28,5 +28,6 @@ const EftTransactionSchema: Schema = new Schema({
 
 // Check if the model is already compiled
 export const EftTransactionModel =
-  mongoose.models["eft-transactions"] ||
-  mongoose.model<IEftTransaction>("eft-transactions", EftTransactionSchema);
+  mongoose.models.EftTransaction || mongoose.model<IEftTransaction>("EftTransaction", EftTransactionSchema, "eft-transactions");
+
+export default EftTransactionModel;

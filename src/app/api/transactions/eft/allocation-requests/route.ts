@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db";
 
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 import UserModel from "@/app/models/hr/user.schema";
+import { QueryOptions } from "mongoose";
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,34 +56,32 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const projection = {
+      transactionId: 1,
+      transactionModel: 1,
+      type: 1,
+      policyNumber: 1,
+      easypayNumber: 1,
+      notes: 1,
+      evidence: 1,
+      status: 1,
+      createdAt: 1,
+      updatedAt: 1,
+    };
+
+    const options: QueryOptions = {
+      lean: true, sort: { createdAt: -1 }, skip, limit, strictPopulate: false
+    };
+
     const [items, total] = await Promise.all([
-      AllocationRequestModel.find(query, {
-        transactionId: 1,
-        policyNumber: 1,
-        type: 1,
-        notes: 1,
-        evidence: 1,
-        status: 1,
-        requestedBy: 1,
-        submittedBy: 1,
-        submittedAt: 1,
-        approvedBy: 1,
-        approvedAt: 1,
-        rejectedBy: 1,
-        rejectedAt: 1,
-        cancelledBy: 1,
-        cancelledAt: 1,
-        createdAt: 1,
-        updatedAt: 1,
-      })
+      AllocationRequestModel.find(query, projection, options)
+        .populate({ path: "transaction", options: { strictPopulate: false } }) // gets EFT or Easypay
         .populate({ path: 'requestedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .populate({ path: 'approvedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .populate({ path: 'submittedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .populate({ path: 'rejectedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .populate({ path: 'cancelledBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
+        .lean(),
       AllocationRequestModel.countDocuments(query),
     ]);
 

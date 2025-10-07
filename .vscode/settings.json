@@ -24,6 +24,7 @@
     "Popconfirm",
     "Swal",
     "sweetalert",
-    "tabler"
+    "tabler",
+    "virtuals"
   ]
 }

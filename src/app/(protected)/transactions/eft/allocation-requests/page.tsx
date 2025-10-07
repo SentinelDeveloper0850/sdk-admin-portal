@@ -9,22 +9,13 @@ import sweetAlert from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
+import { IAllocationRequest } from "@/app/models/hr/allocation-request.schema";
+import { IEftTransaction } from "@/app/models/scheme/eft-transaction.schema";
 
 
-interface AllocationRequestItem {
+interface AllocationRequestItem extends IAllocationRequest {
   _id: string;
-  transactionId: string;
-  policyNumber: string;
-  notes: string[];
-  evidence: string[];
-  status: string;
-  requestedBy?: { name?: string; email?: string } | string;
-  createdAt: string;
-  updatedAt: string;
-  rejectionReason?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
-  cancelledAt?: string;
+  transaction: IEftTransaction;
 }
 
 interface EftTransactionDetail {
@@ -61,7 +52,11 @@ export default function AllocationRequestsPage() {
   const [scanDuplicatesOpen, setScanDuplicatesOpen] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<any[]>([]);
-  const [comparisonResults, setComparisonResults] = useState<any[]>([]);
+  const [comparisonResults, setComparisonResults] = useState<{
+    failedRequests: AllocationRequestItem[];
+    duplicateRequests: AllocationRequestItem[];
+    importRequests: AllocationRequestItem[];
+  }>();
   const [scanning, setScanning] = useState(false);
 
   const isReviewer = hasRole(["eft_reviewer", "admin"]);
@@ -90,9 +85,9 @@ export default function AllocationRequestsPage() {
 
     // Convert requests to CSV rows
     const csvRows = requests.map(request => {
-      const membershipNo = request.request.policyNumber;
+      const membershipNo = request.policyNumber;
       const depositAmount = request.transaction.amount;
-      const depositDate = request.csvFormattedTransactionDate || formatTransactionDateToCSVFormat(request.transaction.date);
+      const depositDate = request.transaction.date;
 
       return [membershipNo, depositAmount, depositDate];
     });
@@ -219,52 +214,26 @@ export default function AllocationRequestsPage() {
     setScanning(true);
     try {
       // Get selected allocation requests with their transaction details
-      const selectedItems = items.filter(item => selectedRowKeys.includes(item._id));
-      const requestsWithTransactions = [];
+      const allocationRequests = items.filter(item => selectedRowKeys.includes(item._id));
+      const scanResults = await fetch(`/api/transactions/scan/duplicates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ allocationRequests, receiptsFromASSIT: csvData }),
+      });
 
-      for (const item of selectedItems) {
-        const res = await fetch(`/api/transactions/eft/allocation-requests/${item._id}`);
-        if (res.ok) {
-          const data = await res.json();
-          requestsWithTransactions.push({
-            request: data.item,
-            transaction: data.transaction
-          });
-        }
+      if (scanResults.ok) {
+        const data = await scanResults.json();
+        const { failedRequests, duplicateRequests, importRequests, stats } = data;
+        const duplicateCount = stats.duplicateRequests;
+        const totalScanned = stats.totalRequests;
+
+        setComparisonResults(data);
+
+        message.success(`Scan completed. Found ${duplicateCount} potential duplicates out of ${totalScanned} requests scanned.`);
+      } else {
+        message.error('Failed to perform duplicate scan');
       }
 
-      // Perform comparison
-      const results = [];
-      for (const { request, transaction } of requestsWithTransactions) {
-        let csvFormattedTransactionDate = transaction.date;
-        console.log("Transaction Date Before Formatting (formatting skipped for testing): ", transaction.date);
-
-        // Find matching CSV records based on composite key
-        const matches = csvData.filter(csvRow => {
-          const effectiveDate = csvRow['Effective Date'] || csvRow['effective_date'] || csvRow['EffectiveDate'];
-          const membershipId = csvRow['MembershipID'] || csvRow['membership_id'] || csvRow['Membership ID'];
-
-          if (!effectiveDate || !membershipId) return false;
-
-          // Direct comparison: CSV Effective Date (YYYY/MM/DD) vs Formatted Transaction Date (YYYY/MM/DD)
-          return effectiveDate === csvFormattedTransactionDate &&
-            membershipId.toString().trim() === request.policyNumber.toString().trim();
-        });
-
-        results.push({
-          request,
-          transaction,
-          isDuplicate: matches.length > 0,
-          csvMatches: matches,
-          matchCount: matches.length,
-          csvFormattedTransactionDate
-        });
-      }
-
-      setComparisonResults(results);
-      const duplicateCount = results.filter(r => r.isDuplicate).length;
-      const totalScanned = results.length;
-      message.success(`Scan completed. Found ${duplicateCount} potential duplicates out of ${totalScanned} requests scanned.`);
     } catch (error) {
       message.error('Failed to perform duplicate scan');
       console.error('Duplicate scan error:', error);
@@ -646,7 +615,7 @@ export default function AllocationRequestsPage() {
           setScanDuplicatesOpen(false);
           setCsvFile(null);
           setCsvData([]);
-          setComparisonResults([]);
+          setComparisonResults({ failedRequests: [], duplicateRequests: [], importRequests: [] });
         }}
         closable={false}
         footer={
@@ -654,7 +623,7 @@ export default function AllocationRequestsPage() {
             <Button onClick={() => setScanDuplicatesOpen(false)}>Close</Button>
             {csvData.length > 0 && (
               <Button
-                type="primary"
+                type="primary" className="text-black"
                 icon={<FileSearchOutlined />}
                 loading={scanning}
                 onClick={performDuplicateScan}
@@ -695,296 +664,258 @@ export default function AllocationRequestsPage() {
             </div>
           )}
 
-          {comparisonResults.length > 0 && (
-            <div>
-              <h4 className="mb-3 text-sm font-semibold">Scan Results</h4>
-              <Tabs
-                defaultActiveKey="ready"
-                items={[
-                  {
-                    key: 'ready',
-                    label: `Ready for Download (${comparisonResults.filter(r => !r.isDuplicate).length})`,
-                    children: (
-                      <div>
-                        <div className="mb-4 flex justify-between items-center">
-                          <p className="text-sm text-gray-600">
-                            {comparisonResults.filter(r => !r.isDuplicate).length} requests ready for download
-                          </p>
-                          <Space>
-                            <Button
-                              icon={<UploadOutlined />}
-                              disabled={comparisonResults.filter(r => !r.isDuplicate).length === 0}
-                              onClick={() => {
-                                const readyRequests = comparisonResults.filter(r => !r.isDuplicate);
-                                const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
-                                const filename = `eft_allocation_requests_${timestamp}.csv`;
-                                generateAndDownloadCSV(readyRequests, filename);
-                                message.success(`Downloaded ${readyRequests.length} requests as ${filename}`);
-                              }}
-                            >
-                              Download All
-                            </Button>
-                            <Button
-                              type="primary"
-                              disabled={comparisonResults.filter(r => !r.isDuplicate).length === 0}
-                              onClick={async () => {
-                                const readyRequests = comparisonResults.filter(r => !r.isDuplicate);
-                                const requestIds = readyRequests.map(r => r.request._id);
-
-                                const res = await fetch('/api/transactions/eft/allocation-requests/allocate', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ ids: requestIds }),
-                                });
-
-                                if (res.ok) {
-                                  setSelectedRowKeys([]);
-                                  handleRefresh();
-                                  setScanDuplicatesOpen(false);
-                                  sweetAlert({ icon: 'success', title: `Marked ${requestIds.length} requests as Allocated`, timer: 1500 });
-                                } else {
-                                  const data = await res.json().catch(() => ({}));
-                                  sweetAlert({ icon: 'error', title: data.message || 'Failed to allocate' });
-                                }
-                              }}
-                            >
-                              Mark as Allocated
-                            </Button>
-                          </Space>
-                        </div>
-                        <Table
-                          rowKey={(record, index) => `${record.request._id}-${index}`}
-                          dataSource={comparisonResults.filter(r => !r.isDuplicate)}
-                          pagination={{ pageSize: 10, showSizeChanger: true }}
-                          columns={[
-                            {
-                              title: 'Policy Number',
-                              dataIndex: ['request', 'policyNumber'],
-                              key: 'policyNumber',
-                            },
-                            {
-                              title: 'Transaction Date',
-                              dataIndex: ['transaction', 'date'],
-                              key: 'transactionDate',
-                              render: (date: string) => (
-                                <div>
-                                  <div>{date} (MM/DD/YYYY)</div>
-                                  <div className="text-xs text-gray-500">
-                                    <code className="bg-gray-100 px-1 rounded">{comparisonResults.find(r => r.transaction.date === date)?.csvFormattedTransactionDate}</code>
-                                  </div>
-                                </div>
-                              ),
-                            },
-                            {
-                              title: 'Amount',
-                              dataIndex: ['transaction', 'amount'],
-                              key: 'amount',
-                              render: (amount: number) => Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR' }).format(amount),
-                            },
-                            {
-                              title: 'Description',
-                              dataIndex: ['transaction', 'description'],
-                              key: 'description',
-                              ellipsis: true,
-                            },
-                            {
-                              title: 'Actions',
-                              key: 'actions',
-                              render: (_, record, index) => (
-                                <Space>
-                                  <Button
-                                    size="small"
-                                    icon={<UploadOutlined />}
-                                    onClick={() => {
-                                      const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
-                                      const filename = `eft_allocation_request_${record.request.policyNumber}_${timestamp}.csv`;
-                                      generateAndDownloadCSV([record], filename);
-                                      message.success(`Downloaded request for policy ${record.request.policyNumber}`);
-                                    }}
-                                  >
-                                    Download
-                                  </Button>
-                                  <Button
-                                    size="small"
-                                    type="primary"
-                                    onClick={async () => {
-                                      const res = await fetch('/api/transactions/eft/allocation-requests/allocate', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ ids: [record.request._id] }),
-                                      });
-
-                                      if (res.ok) {
-                                        handleRefresh();
-                                        message.success(`Marked policy ${record.request.policyNumber} as allocated`);
-                                      } else {
-                                        const data = await res.json().catch(() => ({}));
-                                        message.error(data.message || 'Failed to allocate');
-                                      }
-                                    }}
-                                  >
-                                    Mark as Allocated
-                                  </Button>
-                                </Space>
-                              ),
-                            },
-                          ]}
-                        />
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'duplicates',
-                    label: `Potential Duplicates (${comparisonResults.filter(r => r.isDuplicate).length})`,
-                    children: (
-                      <div>
-                        <div className="mb-4 flex justify-between items-center">
-                          <p className="text-sm text-gray-600">
-                            {comparisonResults.filter(r => r.isDuplicate).length} potential duplicates found
-                          </p>
+          {csvData.length > 0 && comparisonResults && <div>
+            <h4 className="mb-3 text-sm font-semibold">Scan Results</h4>
+            <Tabs
+              defaultActiveKey="ready"
+              items={[
+                {
+                  key: 'ready',
+                  label: `Ready for Download (${comparisonResults.importRequests.length})`,
+                  children: (
+                    <div>
+                      <div className="mb-4 flex justify-between items-center">
+                        <p className="text-sm text-gray-600">
+                          {comparisonResults.importRequests.length} requests ready for download
+                        </p>
+                        <Space>
+                          <Button
+                            icon={<UploadOutlined />}
+                            disabled={comparisonResults.importRequests.length === 0}
+                            onClick={() => {
+                              const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
+                              const filename = `eft_allocation_requests_${timestamp}.csv`;
+                              generateAndDownloadCSV(comparisonResults.importRequests, filename);
+                              message.success(`Downloaded ${comparisonResults.importRequests.length} requests as ${filename}`);
+                            }}
+                          >
+                            Download All
+                          </Button>
                           <Button
                             type="primary"
-                            danger
-                            disabled={comparisonResults.filter(r => r.isDuplicate).length === 0}
+                            disabled={comparisonResults.importRequests.length === 0}
                             onClick={async () => {
-                              const duplicateRequests = comparisonResults.filter(r => r.isDuplicate);
-                              const requestIds = duplicateRequests.map(r => r.request._id);
+                              const requestIds = comparisonResults.importRequests.map((r) => r._id);
 
-                              try {
-                                const res = await fetch('/api/transactions/eft/allocation-requests/mark-duplicates', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ ids: requestIds }),
-                                });
+                              const res = await fetch('/api/transactions/eft/allocation-requests/allocate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ids: requestIds }),
+                              });
 
-                                if (res.ok) {
-                                  setSelectedRowKeys([]);
-                                  handleRefresh();
-                                  setScanDuplicatesOpen(false);
-                                  sweetAlert({ icon: 'success', title: `Marked ${requestIds.length} requests as duplicates`, timer: 1500 });
-                                } else {
-                                  const data = await res.json().catch(() => ({}));
-                                  sweetAlert({ icon: 'error', title: data.message || 'Failed to mark as duplicates' });
-                                }
-                              } catch (error) {
-                                console.error('Error marking duplicates:', error);
-                                sweetAlert({ icon: 'error', title: 'Failed to mark as duplicates' });
+                              if (res.ok) {
+                                setSelectedRowKeys([]);
+                                handleRefresh();
+                                setScanDuplicatesOpen(false);
+                                sweetAlert({ icon: 'success', title: `Marked ${requestIds.length} requests as Allocated`, timer: 1500 });
+                              } else {
+                                const data = await res.json().catch(() => ({}));
+                                sweetAlert({ icon: 'error', title: data.message || 'Failed to allocate' });
                               }
                             }}
                           >
-                            Mark All as Duplicates
+                            Mark as Allocated
                           </Button>
-                        </div>
-                        <Table
-                          rowKey={(record, index) => `${record.request._id}-${index}`}
-                          dataSource={comparisonResults.filter(r => r.isDuplicate)}
-                          pagination={{ pageSize: 10, showSizeChanger: true }}
-                          columns={[
-                            {
-                              title: 'Policy Number',
-                              dataIndex: ['request', 'policyNumber'],
-                              key: 'policyNumber',
-                            },
-                            {
-                              title: 'Transaction Date',
-                              dataIndex: ['transaction', 'date'],
-                              key: 'transactionDate',
-                              render: (date: string) => (
-                                <div>
-                                  <div>{date} (MM/DD/YYYY)</div>
-                                  <div className="text-xs text-gray-500">
-                                    <code className="bg-gray-100 px-1 rounded">{comparisonResults.find(r => r.transaction.date === date)?.csvFormattedTransactionDate}</code>
-                                  </div>
-                                </div>
-                              ),
-                            },
-                            {
-                              title: 'Amount',
-                              dataIndex: ['transaction', 'amount'],
-                              key: 'amount',
-                              render: (amount: number) => Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR' }).format(amount),
-                            },
-                            {
-                              title: 'Description',
-                              dataIndex: ['transaction', 'description'],
-                              key: 'description',
-                              ellipsis: true,
-                            },
-                            {
-                              title: 'CSV Matches',
-                              dataIndex: 'matchCount',
-                              key: 'matchCount',
-                              render: (count: number) => (
-                                <Tag color="red">{count} match{count !== 1 ? 'es' : ''}</Tag>
-                              ),
-                            },
-                            {
-                              title: 'Actions',
-                              key: 'actions',
-                              render: (_, record) => (
+                        </Space>
+                      </div>
+                      <Table
+                        rowKey={(record, index) => `${record._id}-${index}`}
+                        dataSource={comparisonResults.importRequests}
+                        pagination={{ pageSize: 10, showSizeChanger: true }}
+                        columns={[
+                          {
+                            title: 'Policy Number',
+                            dataIndex: 'policyNumber',
+                            key: 'policyNumber',
+                          },
+                          {
+                            title: 'Transaction Date',
+                            dataIndex: 'transaction',
+                            key: 'transaction',
+                            render: (transaction: IEftTransaction) => dayjs(transaction.date).format('DD/MM/YYYY'),
+                          },
+                          {
+                            title: 'Amount',
+                            dataIndex: 'transaction',
+                            key: 'amount',
+                            render: (amount: number, record: AllocationRequestItem) => Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(record.transaction?.amount),
+                          },
+                          {
+                            title: 'Actions',
+                            key: 'actions',
+                            render: (_, record, index) => (
+                              <Space>
                                 <Button
                                   size="small"
-                                  danger
+                                  icon={<UploadOutlined />}
+                                  onClick={() => {
+                                    const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
+                                    const filename = `eft_allocation_request_${record.policyNumber}_${timestamp}.csv`;
+                                    generateAndDownloadCSV([record], filename);
+                                    message.success(`Downloaded request for policy ${record.policyNumber}`);
+                                  }}
+                                >
+                                  Download
+                                </Button>
+                                <Button
+                                  size="small"
+                                  type="primary"
                                   onClick={async () => {
-                                    try {
-                                      const res = await fetch('/api/transactions/eft/allocation-requests/mark-duplicates', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ ids: [record.request._id] }),
-                                      });
+                                    const res = await fetch('/api/transactions/eft/allocation-requests/allocate', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ ids: [record._id] }),
+                                    });
 
-                                      if (res.ok) {
-                                        handleRefresh();
-                                        message.success(`Marked policy ${record.request.policyNumber} as duplicate`);
-                                      } else {
-                                        const data = await res.json().catch(() => ({}));
-                                        message.error(data.message || 'Failed to mark as duplicate');
-                                      }
-                                    } catch (error) {
-                                      console.error('Error marking duplicate:', error);
-                                      message.error('Failed to mark as duplicate');
+                                    if (res.ok) {
+                                      handleRefresh();
+                                      message.success(`Marked policy ${record.policyNumber} as allocated`);
+                                    } else {
+                                      const data = await res.json().catch(() => ({}));
+                                      message.error(data.message || 'Failed to allocate');
                                     }
                                   }}
                                 >
-                                  Mark as Duplicate
+                                  Mark as Allocated
                                 </Button>
-                              ),
-                            },
-                          ]}
-                          expandable={{
-                            expandedRowRender: (record) => (
-                              <div className="p-4 bg-red-50 border border-red-200 rounded">
-                                <h6 className="font-medium text-red-800 mb-2">Matching CSV Records:</h6>
-                                <div className="space-y-2">
-                                  {record.csvMatches.map((match: any, matchIndex: number) => {
-                                    const effectiveDate = match['Effective Date'] || match['effective_date'] || match['EffectiveDate'];
-                                    const membershipId = match['MembershipID'] || match['membership_id'] || match['Membership ID'];
-
-                                    return (
-                                      <div key={matchIndex} className="bg-white p-2 rounded border text-xs">
-                                        <p><strong>Effective Date:</strong> {effectiveDate} (YYYY/MM/DD)</p>
-                                        <p><strong>MembershipID:</strong> {membershipId}</p>
-                                        {Object.keys(match).filter(key =>
-                                          !['Effective Date', 'effective_date', 'EffectiveDate', 'MembershipID', 'membership_id', 'Membership ID'].includes(key)
-                                        ).map(key => (
-                                          <p key={key}><strong>{key}:</strong> {match[key]}</p>
-                                        ))}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
+                              </Space>
                             ),
-                            rowExpandable: (record) => record.csvMatches && record.csvMatches.length > 0,
+                          },
+                        ]}
+                      />
+                    </div>
+                  ),
+                },
+                {
+                  key: 'duplicates',
+                  label: `Potential Duplicates (${comparisonResults.duplicateRequests.length})`,
+                  children: (
+                    <div>
+                      <div className="mb-4 flex justify-between items-center">
+                        <p className="text-sm text-gray-600">
+                          {comparisonResults.duplicateRequests.length} potential duplicates found
+                        </p>
+                        <Button
+                          type="primary"
+                          danger
+                          disabled={comparisonResults.duplicateRequests.length === 0}
+                          onClick={async () => {
+                            const duplicateRequests = comparisonResults.duplicateRequests;
+                            const requestIds = duplicateRequests.map(r => r._id);
+
+                            try {
+                              const res = await fetch('/api/transactions/eft/allocation-requests/mark-duplicates', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ids: requestIds }),
+                              });
+
+                              if (res.ok) {
+                                setSelectedRowKeys([]);
+                                handleRefresh();
+                                setScanDuplicatesOpen(false);
+                                sweetAlert({ icon: 'success', title: `Marked ${requestIds.length} requests as duplicates`, timer: 1500 });
+                              } else {
+                                const data = await res.json().catch(() => ({}));
+                                sweetAlert({ icon: 'error', title: data.message || 'Failed to mark as duplicates' });
+                              }
+                            } catch (error) {
+                              console.error('Error marking duplicates:', error);
+                              sweetAlert({ icon: 'error', title: 'Failed to mark as duplicates' });
+                            }
                           }}
-                        />
+                        >
+                          Mark All as Duplicates
+                        </Button>
                       </div>
-                    ),
-                  },
-                ]}
-              />
-            </div>
-          )}
+                      <Table
+                        rowKey={(record, index) => `${record._id}-${index}`}
+                        dataSource={comparisonResults.duplicateRequests}
+                        pagination={{ pageSize: 10, showSizeChanger: true }}
+                        columns={[
+                          {
+                            title: 'Policy Number',
+                            dataIndex: 'policyNumber',
+                            key: 'policyNumber',
+                          },
+                          {
+                            title: 'Transaction Date',
+                            dataIndex: 'transaction',
+                            key: 'transaction',
+                            render: (transaction: IEftTransaction) => dayjs(transaction.date).format('DD/MM/YYYY'),
+                          },
+                          {
+                            title: 'Amount',
+                            dataIndex: 'transaction',
+                            key: 'amount',
+                            render: (amount: number, record: AllocationRequestItem) => Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(record.transaction?.amount),
+                          },
+                          {
+                            title: 'Actions',
+                            key: 'actions',
+                            render: (_, record) => (
+                              <Button
+                                size="small"
+                                danger
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch('/api/transactions/eft/allocation-requests/mark-duplicates', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ ids: [record._id] }),
+                                    });
+
+                                    if (res.ok) {
+                                      handleRefresh();
+                                      message.success(`Marked policy ${record.policyNumber} as duplicate`);
+                                    } else {
+                                      const data = await res.json().catch(() => ({}));
+                                      message.error(data.message || 'Failed to mark as duplicate');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error marking duplicate:', error);
+                                    message.error('Failed to mark as duplicate');
+                                  }
+                                }}
+                              >
+                                Mark as Duplicate
+                              </Button>
+                            ),
+                          },
+                        ]}
+                      // expandable={{
+                      //   expandedRowRender: (record) => (
+                      //     <div className="p-4 bg-red-50 border border-red-200 rounded">
+                      //       <h6 className="font-medium text-red-800 mb-2">Matching CSV Records:</h6>
+                      //       <div className="space-y-2">
+                      //         {record.csvMatches.map((match: any, matchIndex: number) => {
+                      //           const effectiveDate = match['Effective Date'] || match['effective_date'] || match['EffectiveDate'];
+                      //           const membershipId = match['MembershipID'] || match['membership_id'] || match['Membership ID'];
+
+                      //           return (
+                      //             <div key={matchIndex} className="bg-white p-2 rounded border text-xs">
+                      //               <p><strong>Effective Date:</strong> {effectiveDate} (YYYY/MM/DD)</p>
+                      //               <p><strong>MembershipID:</strong> {membershipId}</p>
+                      //               {Object.keys(match).filter(key =>
+                      //                 !['Effective Date', 'effective_date', 'EffectiveDate', 'MembershipID', 'membership_id', 'Membership ID'].includes(key)
+                      //               ).map(key => (
+                      //                 <p key={key}><strong>{key}:</strong> {match[key]}</p>
+                      //               ))}
+                      //             </div>
+                      //           );
+                      //         })}
+                      //       </div>
+                      //     </div>
+                      //   ),
+                      //   rowExpandable: (record) => record.csvMatches && record.csvMatches.length > 0,
+                      // }}
+                      />
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </div>}
         </div>
       </Drawer>
     </div>

@@ -7,8 +7,8 @@ export interface IEasypayTransaction extends Document {
   date: string;
   easypayNumber: string;
   policyNumber?: string;
-  amount: string;
-  created_at: string;
+  amount: number;
+  created_at: Date;
 }
 
 // Define the schema
@@ -26,8 +26,7 @@ const EasypayTransactionSchema: Schema = new Schema({
 
 // Check if the model is already compiled
 export const EasypayTransactionModel =
-  mongoose.models["easypay-transactions"] ||
-  mongoose.model<IEasypayTransaction>(
-    "easypay-transactions",
-    EasypayTransactionSchema
+  mongoose.models.EasypayTransaction || mongoose.model<IEasypayTransaction>("EasypayTransaction", EasypayTransactionSchema, "easypay-transactions"
   );
+
+export default EasypayTransactionModel;

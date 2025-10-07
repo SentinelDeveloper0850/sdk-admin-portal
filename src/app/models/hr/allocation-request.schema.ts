@@ -1,16 +1,22 @@
 import { EAllocationRequestStatus } from '@/app/enums/hr/allocation-request-status.enum';
+import { IEasypayTransaction } from '@/app/models/scheme/easypay-transaction.schema';
+import { IEftTransaction } from '@/app/models/scheme/eft-transaction.schema';
 import mongoose, { Schema, Types } from 'mongoose';
 
 export interface IAllocationRequest {
   _id?: string;
-  transactionId: string;
+
+  // 🔑 This must be model names
+  transactionModel: "EftTransaction" | "EasypayTransaction";
+  transactionId: Types.ObjectId;
+  transaction?: unknown | IEftTransaction | IEasypayTransaction;
+
   policyNumber: string;
   easypayNumber?: string;
 
   notes: string[];
   evidence: string[];
   status: EAllocationRequestStatus;
-
   type?: "EFT" | "Easypay";
 
   requestedBy?: string;
@@ -39,16 +45,32 @@ export interface IAllocationRequest {
   markedAsDuplicateAt?: Date;
 
   comments?: string[];
+
   createdAt: Date;
   updatedAt: Date;
 }
 
 const AllocationRequestSchema = new Schema(
   {
+    // 👇 tells mongoose which collection this ObjectId belongs to
+    transactionModel: {
+      type: String,
+      required: true,
+      enum: ['EftTransaction', 'EasypayTransaction'],
+    },
+
+    // 👇 one id that can point to either model above
     transactionId: {
       type: Types.ObjectId,
-      ref: 'Transaction',
-      required: true
+      required: true,
+      refPath: 'transactionModel',
+      index: true,
+    },
+
+    type: {
+      type: String,
+      enum: ["EFT", "Easypay"],
+      default: "EFT",
     },
 
     policyNumber: {
@@ -70,12 +92,6 @@ const AllocationRequestSchema = new Schema(
       default: EAllocationRequestStatus.PENDING,
     },
 
-    type: {
-      type: String,
-      enum: ["EFT", "Easypay"],
-      default: "EFT",
-    },
-
     requestedBy: { type: Types.ObjectId, ref: 'users', required: true },
     approvedBy: { type: Types.ObjectId, ref: 'users' },
     approvedAt: { type: Date },
@@ -91,11 +107,33 @@ const AllocationRequestSchema = new Schema(
     markedAsDuplicateBy: { type: Types.ObjectId, ref: 'users' },
     markedAsDuplicateAt: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true,
+    toJSON: { virtuals: true },  
+    toObject: { virtuals: true },
+   }
 );
 
+// One nice polymorphic virtual called `transaction`
+AllocationRequestSchema.virtual("transaction", {
+  refPath: "transactionModel",   // <- uses the model name
+  localField: "transactionId",
+  foreignField: "_id",
+  justOne: true,
+});
+
+// (Optional) keep `type` and `transactionModel` in sync
+AllocationRequestSchema.pre("validate", function (next) {
+  const model = this.get("transactionModel");
+  const type = this.get("type");
+  if ((type === "EFT" && model !== "EftTransaction") ||
+    (type === "Easypay" && model !== "EasypayTransaction")) {
+    return next(new Error("type does not match transactionModel"));
+  }
+  next();
+});
+
 export const AllocationRequestModel =
-  mongoose.models["allocation-request"] ||
-  mongoose.model<IAllocationRequest>("allocation-request", AllocationRequestSchema);
+  mongoose.models.AllocationRequest ||
+  mongoose.model<IAllocationRequest>("AllocationRequest", AllocationRequestSchema, "allocation-requests");
 
 export default AllocationRequestModel;
