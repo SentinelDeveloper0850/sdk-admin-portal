@@ -9,7 +9,8 @@ import {
   PhoneOutlined,
   PlusOutlined,
   StopOutlined,
-  UserOutlined
+  UserOutlined,
+  ReloadOutlined
 } from "@ant-design/icons";
 import { Avatar, Button, Switch } from "@nextui-org/react";
 import {
@@ -388,10 +389,13 @@ const UsersPage = () => {
               <span className="text-sm">Show Deleted</span>
               <Switch size="sm" isSelected={showDeleted} onValueChange={setShowDeleted} />
             </div>
+            <AntButton icon={<ReloadOutlined />} loading={loading} onClick={fetchUsers}>
+              Refresh
+            </AntButton>
             {!showDeleted && (
-              <Button size="sm" onClick={() => setCreateDrawerOpen(true)}>
+              <AntButton onClick={() => setCreateDrawerOpen(true)}>
                 <PlusOutlined /> New User
-              </Button>
+              </AntButton>
             )}
           </div>,
         ]}

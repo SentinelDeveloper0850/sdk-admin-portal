@@ -12,6 +12,8 @@ export const roleLabels: Record<string, string> = {
   cashier: "Cashier",
   eft_reviewer: "EFT Reviewer",
   eft_allocator: "EFT Allocator",
+  easypay_reviewer: "Easypay Reviewer",
+  easypay_allocator: "Easypay Allocator",
 
   // Funeral Ops
   funeral_coordinator: "Funeral Coordinator",
@@ -50,6 +52,8 @@ export const groupedRoles = [
       { key: "cashier", label: "Cashier", description: "Captures payments and issues receipts" },
       { key: "eft_reviewer", label: "EFT Reviewer", description: "Reviews EFT imports and transactions" },
       { key: "eft_allocator", label: "EFT Allocator", description: "Allocates EFT transactions to policies" },
+      { key: "easypay_reviewer", label: "Easypay Reviewer", description: "Reviews Easypay imports and transactions" },
+      { key: "easypay_allocator", label: "Easypay Allocator", description: "Allocates Easypay transactions to policies" },
     ],
   },
   {
@@ -88,6 +92,8 @@ export const additionalRoles = [
   "cashier", // Captures payments, issues receipts
   "eft_reviewer", // Reviews EFT imports and transactions
   "eft_allocator", // Allocates EFT transactions to policies
+  "easypay_reviewer", // Reviews Easypay imports and transactions
+  "easypay_allocator", // Allocates Easypay transactions to policies
 
   // Funeral Ops
   "funeral_coordinator", // Oversees funeral arrangements and logistics
