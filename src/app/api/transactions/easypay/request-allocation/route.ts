@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       policyNumber,
       easypayNumber,
       type: "Easypay",
+      transactionModel: "EasypayTransaction",
       notes,
       evidence: [],
       requestedBy: user._id,

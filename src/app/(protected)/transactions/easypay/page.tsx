@@ -643,7 +643,7 @@ export default function EasypayTransactionsPage() {
     setSelectedTransaction(null);
   };
 
-  const requestAllocation = async () => {
+  const submitAllocationRequest = async () => {
     try {
       setAllocationRequestLoading(true);
 
@@ -1243,7 +1243,7 @@ export default function EasypayTransactionsPage() {
         footer={
           <Space>
             <Button onClick={() => setShowAllocationRequestDrawer(false)}>Cancel</Button>
-            <Button onClick={requestAllocation} loading={allocationRequestLoading} type="primary">Submit Request</Button>
+            <Button onClick={submitAllocationRequest} loading={allocationRequestLoading} type="primary">Submit Request</Button>
           </Space>
         }
       >
