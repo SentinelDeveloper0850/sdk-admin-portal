@@ -49,7 +49,7 @@ export default function AllocationRequestsPage() {
   const [rejectForm] = Form.useForm();
   const [reviewing, setReviewing] = useState<AllocationRequestItem | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewDetail, setReviewDetail] = useState<{ item: AllocationRequestItem; transaction: EftTransactionDetail } | null>(null);
+  const [reviewDetail, setReviewDetail] = useState<AllocationRequestItem>();
 
   const [scanDuplicatesOpen, setScanDuplicatesOpen] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -414,7 +414,7 @@ export default function AllocationRequestsPage() {
                         const res = await fetch(`/api/transactions/eft/allocation-requests/${record._id}`);
                         if (res.ok) {
                           const data = await res.json();
-                          setReviewDetail(data);
+                          setReviewDetail(data.item);
                         } else {
                           sweetAlert({ icon: 'error', title: 'Failed to load details' });
                           setReviewing(null);
@@ -442,23 +442,23 @@ export default function AllocationRequestsPage() {
       <Drawer
         title={
           <div>
-            <h3 className="mb-0 text-md font-semibold">{reviewDetail?.item?.status === 'PENDING' ? 'Review Allocation Request' : 'View Allocation Request'}</h3>
-            <p className="mb-0 text-sm text-gray-500 font-normal">{reviewDetail?.item?.status === 'PENDING' ? 'Review details and submit to the Finance Department for allocation on ASSIT.' : `This request is ${(reviewDetail?.item?.status || '').toLowerCase()}. You can only view the details.`}</p>
+            <h3 className="mb-0 text-md font-semibold">{reviewDetail?.status === 'PENDING' ? 'Review Allocation Request' : 'View Allocation Request'}</h3>
+            <p className="mb-0 text-sm text-gray-500 font-normal">{reviewDetail?.status === 'PENDING' ? 'Review details and submit to the Finance Department for allocation on ASSIT.' : `This request is ${(reviewDetail?.status || '').toLowerCase()}. You can only view the details.`}</p>
           </div>
         }
         placement="right"
         width="84%"
         open={!!reviewing}
-        onClose={() => { setReviewing(null); setReviewDetail(null); }}
+        onClose={() => { setReviewing(null); setReviewDetail(undefined); }}
         closable={false}
         extra={
           <Space>
-            <Button onClick={() => { setReviewing(null); setReviewDetail(null); }}>Close</Button>
+            <Button onClick={() => { setReviewing(null); setReviewDetail(undefined); }}>Close</Button>
           </Space>
         }
         footer={
           <Space>
-            {(reviewDetail?.item?.status === "PENDING") && (
+            {(reviewDetail?.status === "PENDING") && (
               <>
                 <Popconfirm
                   title="Are you sure you want to approve this request?"
@@ -467,23 +467,23 @@ export default function AllocationRequestsPage() {
                   cancelText="No"
                   icon={<QuestionCircleOutlined />}
                   onConfirm={async () => {
-                    const res = await fetch(`/api/transactions/eft/allocation-requests/${reviewDetail?.item?._id}`, {
+                    const res = await fetch(`/api/transactions/eft/allocation-requests/${reviewDetail?._id}`, {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ status: "APPROVED" }),
                     });
-                    if (res.ok) { sweetAlert({ icon: 'success', title: 'Approved', timer: 1500 }); setReviewing(null); setReviewDetail(null); handleRefresh(); } else { sweetAlert({ icon: 'error', title: 'Failed to approve' }); }
+                    if (res.ok) { sweetAlert({ icon: 'success', title: 'Approved', timer: 1500 }); setReviewing(null); setReviewDetail(undefined); handleRefresh(); } else { sweetAlert({ icon: 'error', title: 'Failed to approve' }); }
                   }}
                 >
                   <Button className="bg-green-500 hover:!bg-green-600 text-white hover:!text-white hover:!border-green-600 w-28">Approve</Button>
                 </Popconfirm>
               </>
             )}
-            {(reviewDetail?.item?.status === "PENDING") && (
-              <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail!.item); }}>Reject</Button>
+            {(reviewDetail?.status === "PENDING") && (
+              <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail); }}>Reject</Button>
             )}
-            {(reviewDetail?.item?.status === "APPROVED" && isReviewer) && (
-              <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail!.item); }}>Reject</Button>
+            {(reviewDetail?.status === "APPROVED" && isReviewer) && (
+              <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail); }}>Reject</Button>
             )}
           </Space>
         }
@@ -495,7 +495,7 @@ export default function AllocationRequestsPage() {
         )}
         {!reviewLoading && reviewDetail && (
           <div>
-            {reviewDetail.item.status === 'PENDING' && (
+            {reviewDetail.status === 'PENDING' && (
               <Alert
                 type="info"
                 showIcon
@@ -515,45 +515,45 @@ export default function AllocationRequestsPage() {
 
             <h3 className="mb-2 text-md font-semibold">Request Information</h3>
             <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
-              <Descriptions.Item label="Policy Number">{reviewDetail.item.policyNumber}</Descriptions.Item>
-              <Descriptions.Item label="Requested On">{new Date(reviewDetail.item.createdAt).toLocaleString()}</Descriptions.Item>
-              <Descriptions.Item label="Status"><Tag color={reviewDetail.item.status === 'PENDING' ? 'gold' : reviewDetail.item.status === 'APPROVED' ? 'green' : reviewDetail.item.status === 'REJECTED' ? 'red' : 'blue'}>{reviewDetail.item.status}</Tag></Descriptions.Item>
-              <Descriptions.Item label="Requested By">{(reviewDetail.item as any).requestedBy?.name || (reviewDetail.item as any).requestedBy?.email || '—'}</Descriptions.Item>
-              {reviewDetail.item.status === 'SUBMITTED' && (
+              <Descriptions.Item label="Policy Number">{reviewDetail.policyNumber}</Descriptions.Item>
+              <Descriptions.Item label="Requested On">{new Date(reviewDetail.createdAt).toLocaleString()}</Descriptions.Item>
+              <Descriptions.Item label="Status"><Tag color={reviewDetail.status === 'PENDING' ? 'gold' : reviewDetail.status === 'APPROVED' ? 'green' : reviewDetail.status === 'REJECTED' ? 'red' : 'blue'}>{reviewDetail.status}</Tag></Descriptions.Item>
+              <Descriptions.Item label="Requested By">{(reviewDetail as any).requestedBy?.name || (reviewDetail as any).requestedBy?.email || '—'}</Descriptions.Item>
+              {reviewDetail.status === 'SUBMITTED' && (
                 <>
-                  <Descriptions.Item label="Submitted By">{(reviewDetail.item as any).submittedBy?.name || (reviewDetail.item as any).submittedBy?.email || '—'}</Descriptions.Item>
-                  <Descriptions.Item label="Submitted At">{(reviewDetail.item as any).submittedAt ? new Date((reviewDetail.item as any).submittedAt).toLocaleString() : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Submitted By">{(reviewDetail as any).submittedBy?.name || (reviewDetail as any).submittedBy?.email || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Submitted At">{(reviewDetail as any).submittedAt ? new Date((reviewDetail as any).submittedAt).toLocaleString() : '—'}</Descriptions.Item>
                 </>
               )}
-              {reviewDetail.item.status === 'APPROVED' && (
+              {reviewDetail.status === 'APPROVED' && (
                 <>
-                  <Descriptions.Item label="Approved By">{(reviewDetail.item as any).approvedBy?.name || (reviewDetail.item as any).approvedBy?.email || '—'}</Descriptions.Item>
-                  <Descriptions.Item label="Approved At">{reviewDetail.item.approvedAt ? new Date((reviewDetail.item as any).approvedAt).toLocaleString() : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Approved By">{(reviewDetail as any).approvedBy?.name || (reviewDetail as any).approvedBy?.email || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Approved At">{reviewDetail.approvedAt ? new Date((reviewDetail as any).approvedAt).toLocaleString() : '—'}</Descriptions.Item>
                 </>
               )}
-              {reviewDetail.item.status === 'REJECTED' && (
+              {reviewDetail.status === 'REJECTED' && (
                 <>
-                  <Descriptions.Item label="Rejected By">{(reviewDetail.item as any).rejectedBy?.name || (reviewDetail.item as any).rejectedBy?.email || '—'}</Descriptions.Item>
-                  <Descriptions.Item label="Rejected At">{(reviewDetail.item as any).rejectedAt ? new Date((reviewDetail.item as any).rejectedAt).toLocaleString() : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Rejected By">{(reviewDetail as any).rejectedBy?.name || (reviewDetail as any).rejectedBy?.email || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Rejected At">{(reviewDetail as any).rejectedAt ? new Date((reviewDetail as any).rejectedAt).toLocaleString() : '—'}</Descriptions.Item>
                 </>
               )}
-              {reviewDetail.item.status === 'CANCELLED' && (
+              {reviewDetail.status === 'CANCELLED' && (
                 <>
-                  <Descriptions.Item label="Cancelled By">{(reviewDetail.item as any).cancelledBy?.name || (reviewDetail.item as any).cancelledBy?.email || '—'}</Descriptions.Item>
-                  <Descriptions.Item label="Cancelled At">{(reviewDetail.item as any).cancelledAt ? new Date((reviewDetail.item as any).cancelledAt).toLocaleString() : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Cancelled By">{(reviewDetail as any).cancelledBy?.name || (reviewDetail as any).cancelledBy?.email || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Cancelled At">{(reviewDetail as any).cancelledAt ? new Date((reviewDetail as any).cancelledAt).toLocaleString() : '—'}</Descriptions.Item>
                 </>
               )}
-              {reviewDetail.item.status === 'REJECTED' && reviewDetail.item.rejectionReason && (
-                <Descriptions.Item label="Rejection Reason" span={2}>{reviewDetail.item.rejectionReason}</Descriptions.Item>
+              {reviewDetail.status === 'REJECTED' && reviewDetail.rejectionReason && (
+                <Descriptions.Item label="Rejection Reason" span={2}>{reviewDetail.rejectionReason}</Descriptions.Item>
               )}
-              <Descriptions.Item label="Notes">{reviewDetail.item.notes?.length ? reviewDetail.item.notes.join("; ") : "—"}</Descriptions.Item>
+              <Descriptions.Item label="Notes">{reviewDetail.notes?.length ? reviewDetail.notes.join("; ") : "—"}</Descriptions.Item>
             </Descriptions>
 
-            {reviewDetail.item.evidence?.length > 0 && (
+            {reviewDetail.evidence?.length > 0 && (
               <div>
                 <h3 className="mb-2 text-md font-semibold">Supporting Documents</h3>
                 <ul className="list-disc pl-5">
-                  {reviewDetail.item.evidence.map((url, idx) => (
+                  {reviewDetail.evidence.map((url, idx) => (
                     <li key={idx}><a href={url} target="_blank" rel="noreferrer" className="text-blue-600">View document {idx + 1}</a></li>
                   ))}
                 </ul>
@@ -885,32 +885,6 @@ export default function AllocationRequestsPage() {
                             ),
                           },
                         ]}
-                      // expandable={{
-                      //   expandedRowRender: (record) => (
-                      //     <div className="p-4 bg-red-50 border border-red-200 rounded">
-                      //       <h6 className="font-medium text-red-800 mb-2">Matching CSV Records:</h6>
-                      //       <div className="space-y-2">
-                      //         {record.csvMatches.map((match: any, matchIndex: number) => {
-                      //           const effectiveDate = match['Effective Date'] || match['effective_date'] || match['EffectiveDate'];
-                      //           const membershipId = match['MembershipID'] || match['membership_id'] || match['Membership ID'];
-
-                      //           return (
-                      //             <div key={matchIndex} className="bg-white p-2 rounded border text-xs">
-                      //               <p><strong>Effective Date:</strong> {effectiveDate} (YYYY/MM/DD)</p>
-                      //               <p><strong>MembershipID:</strong> {membershipId}</p>
-                      //               {Object.keys(match).filter(key =>
-                      //                 !['Effective Date', 'effective_date', 'EffectiveDate', 'MembershipID', 'membership_id', 'Membership ID'].includes(key)
-                      //               ).map(key => (
-                      //                 <p key={key}><strong>{key}:</strong> {match[key]}</p>
-                      //               ))}
-                      //             </div>
-                      //           );
-                      //         })}
-                      //       </div>
-                      //     </div>
-                      //   ),
-                      //   rowExpandable: (record) => record.csvMatches && record.csvMatches.length > 0,
-                      // }}
                       />
                     </div>
                   ),

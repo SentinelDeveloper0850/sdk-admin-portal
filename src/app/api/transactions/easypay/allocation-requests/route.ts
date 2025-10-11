@@ -15,8 +15,8 @@ export async function GET(request: NextRequest) {
 
     const allowedRoles: string[] = [
       "admin",
-      "eft_reviewer",
-      "eft_allocator",
+      "easypay_reviewer",
+      "easypay_allocator",
     ];
     const userRoles = [user.role, ...(user.roles || [])].filter(Boolean) as string[];
     const hasAccess = userRoles.some((r) => allowedRoles.includes(r));
@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
         createdAt: 1,
         updatedAt: 1,
       })
+        .populate({ path: 'transaction', options: { strictPopulate: false } }) // gets EFT or Easypay
         .populate({ path: 'requestedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .populate({ path: 'approvedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .populate({ path: 'submittedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })

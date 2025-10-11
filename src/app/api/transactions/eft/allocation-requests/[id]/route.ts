@@ -94,6 +94,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const requestDoc = await AllocationRequestModel
       .findById(id)
+      .populate({ path: "transaction", options: { strictPopulate: false } }) // gets EFT or Easypay
       .populate({ path: 'requestedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
       .populate({ path: 'approvedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
       .populate({ path: 'submittedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
@@ -103,9 +104,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: "Allocation request not found" }, { status: 404 });
     }
 
-    const transaction = await EftTransactionModel.findById(requestDoc.transactionId);
-
-    return NextResponse.json({ item: requestDoc, transaction });
+    return NextResponse.json({ item: requestDoc });
   } catch (error) {
     console.error("Error fetching allocation request:", (error as Error).message);
     return NextResponse.json(
