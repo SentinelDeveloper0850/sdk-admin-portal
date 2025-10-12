@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { fetchAllPolicies, importPolicies } from "@/server/actions/assit-policies";
+import { fetchAllPolicies, getFilterOptions, importPolicies } from "@/server/actions/assit-policies";
 
 export async function GET(request: Request) {
   try {
@@ -8,8 +8,9 @@ export async function GET(request: Request) {
 
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const sortBy = searchParams.get("sortBy") || "policyNumber";
+    const sortBy = searchParams.get("sortBy") || "membershipID";
     const sortOrder = searchParams.get("sortOrder") || "asc";
+    const withFilters = (searchParams.get("withFilters") || "false").toLowerCase() === "true";
 
     // Parse filters from query parameters
     const filters: any = {};
@@ -26,7 +27,14 @@ export async function GET(request: Request) {
     const response = await fetchAllPolicies(page, limit, sortBy, sortOrder, filters);
 
     if (response.success) {
-      return NextResponse.json(response.data, { status: 200 });
+      let payload: any = response.data;
+      if (withFilters) {
+        const filtersResp = await getFilterOptions();
+        if (filtersResp.success) {
+          payload = { ...payload, filterOptions: filtersResp.data };
+        }
+      }
+      return NextResponse.json(payload, { status: 200 });
     } else {
       return NextResponse.json(
         { message: response.message },

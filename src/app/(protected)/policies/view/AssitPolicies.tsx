@@ -1,15 +1,13 @@
-import PageHeader from "@/app/components/page-header";
-import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
-import { CloseOutlined, DeleteOutlined, EyeOutlined, ImportOutlined, MailOutlined, PhoneOutlined, PrinterOutlined, ReloadOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Col, Form, Row, Input, Select, Space, Statistic, Table, Tag, Dropdown, Upload, message, UploadProps, Drawer, Alert } from "antd";
-import { EditOutlined, SearchOutlined, MoreOutlined } from "@ant-design/icons";
-import { useEffect, useState } from "react";
-import sweetAlert from "sweetalert";
-import Papa from "papaparse";
 import PolicyPrintCardDrawer from "@/app/components/policies/policy-print-card-drawer";
+import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
+import { useAuth } from "@/context/auth-context";
 import { formatToMoneyWithCurrency } from "@/utils/formatters";
 import { hasRole } from "@/utils/helpers/hasRole";
-import { useAuth } from "@/context/auth-context";
+import { MoreOutlined, PrinterOutlined, ReloadOutlined, SearchOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons";
+import { Alert, Button, Col, Drawer, Dropdown, Form, Input, message, Row, Select, Space, Statistic, Table, Tag, Upload, UploadProps } from "antd";
+import Papa from "papaparse";
+import { useEffect, useState } from "react";
+import sweetAlert from "sweetalert";
 
 const AssitPoliciesPage = () => {
   const [policies, setPolicies] = useState<IAssitPolicy[]>([]);
@@ -47,10 +45,39 @@ const AssitPoliciesPage = () => {
   });
 
   const fetchPolicies = async () => {
-    const response = await fetch("/api/policies/assit");
-    const data = await response.json();
-    setPolicies(data.policies);
-    setStats(data.stats);
+    try {
+      setTableLoading(true);
+      const params = new URLSearchParams();
+      params.set("page", String(currentPage));
+      params.set("limit", String(pageSize));
+      params.set("sortBy", sortBy);
+      params.set("sortOrder", sortOrder);
+      params.set("withFilters", "true");
+
+      if (filters.status) params.set("status", filters.status);
+      if (filters.productName) params.set("productName", String(filters.productName));
+      if (filters.branchName) params.set("branchName", String(filters.branchName));
+      if (filters.searchText) params.set("searchText", filters.searchText);
+
+      const response = await fetch(`/api/policies/assit?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to load policies");
+      }
+      const data = await response.json();
+      setPolicies(data.policies || []);
+      setStats(data.stats || { count: 0, totalPages: 0 });
+      if (data.filterOptions) {
+        setFilterOptions(data.filterOptions);
+        setFilterOptionsLoading(false);
+      }
+      setError(false);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to load policies");
+    } finally {
+      setTableLoading(false);
+      setBootstrapping(false);
+    }
   }
 
   const handleSearch = (value: string) => {
@@ -172,7 +199,7 @@ const AssitPoliciesPage = () => {
         body: JSON.stringify(importData),
       });
       const data = await response.json();
-      
+
       if (data.success) {
         sweetAlert({
           title: "Policies imported successfully",
@@ -182,7 +209,7 @@ const AssitPoliciesPage = () => {
         setImportData([]);
         setImportColumns([]);
         setImportDrawerOpen(false);
-        
+
         fetchPolicies();
       } else {
         sweetAlert({
@@ -203,7 +230,7 @@ const AssitPoliciesPage = () => {
 
   useEffect(() => {
     fetchPolicies();
-  }, []);
+  }, [currentPage, pageSize, sortBy, sortOrder, filters]);
 
   const uploadProps: UploadProps = {
     name: 'file',

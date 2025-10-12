@@ -19,7 +19,7 @@ export interface IAssitMembersReportItem {
 export const fetchAllPolicies = async (
   page = 1,
   limit = 10,
-  sortBy = "policyNumber",
+  sortBy = "membershipID",
   sortOrder = "asc",
   filters: any = {}
 ) => {
@@ -43,13 +43,9 @@ export const fetchAllPolicies = async (
 
     if (filters.searchText) {
       filterQuery.$or = [
-        { policyNumber: { $regex: filters.searchText, $options: "i" } },
+        { membershipID: { $regex: filters.searchText, $options: "i" } },
         { payAtNumber: { $regex: filters.searchText, $options: "i" } },
-        { memberID: { $regex: filters.searchText, $options: "i" } },
-        { fullname: { $regex: filters.searchText, $options: "i" } },
-        { iDNumber: { $regex: filters.searchText, $options: "i" } },
-        { cellphoneNumber: { $regex: filters.searchText, $options: "i" } },
-        { cellNumber: { $regex: filters.searchText, $options: "i" } },
+        { fullName: { $regex: filters.searchText, $options: "i" } },
       ];
     }
 
