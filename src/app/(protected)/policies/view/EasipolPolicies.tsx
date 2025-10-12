@@ -589,22 +589,22 @@ export default function EasipolPoliciesPage() {
               <Dropdown
                 menu={{
                   items: [
-                    {
-                      key: "view",
-                      icon: <EyeOutlined />,
-                      label: "View Details",
-                      onClick: () => setSelectedPolicyId(record._id || null),
-                    },
-                    {
-                      key: "edit",
-                      icon: <EditOutlined />,
-                      label: "Edit Easipol Policy",
-                      onClick: () => editPolicy(record),
-                    },
+                    // {
+                    //   key: "view",
+                    //   icon: <EyeOutlined />,
+                    //   label: "View Details",
+                    //   onClick: () => setSelectedPolicyId(record._id || null),
+                    // },
+                    // {
+                    //   key: "edit",
+                    //   icon: <EditOutlined />,
+                    //   label: "Edit Easipol Policy",
+                    //   onClick: () => editPolicy(record),
+                    // },
                     ...(record.cancellationStatus === "none" || !record.cancellationStatus ? [{
                       key: "request-cancellation",
                       icon: <CloseOutlined />,
-                      label: "Request Easipol Cancellation",
+                      label: "Request Cancellation",
                       onClick: () => {
                         setSelectedPolicyForCancellation(record);
                         setCancellationDrawerOpen(true);
@@ -613,16 +613,16 @@ export default function EasipolPoliciesPage() {
                     ...(record.paymentHistoryFile ? [{
                       key: "payment-history",
                       icon: <EyeOutlined />,
-                      label: "Easipol Payment History",
+                      label: "Payment History",
                       onClick: () => setPreviewImage(record.paymentHistoryFile || null),
                     }] : []),
-                    {
-                      key: "delete",
-                      icon: <DeleteOutlined />,
-                      label: "Delete Easipol Policy",
-                      danger: true,
-                      onClick: () => deletePolicy(record._id, record.policyNumber),
-                    },
+                    // {
+                    //   key: "delete",
+                    //   icon: <DeleteOutlined />,
+                    //   label: "Delete Easipol Policy",
+                    //   danger: true,
+                    //   onClick: () => deletePolicy(record._id, record.policyNumber),
+                    // },
                   ],
                 }}
                 trigger={["click"]}
