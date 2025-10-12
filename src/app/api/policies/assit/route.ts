@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
 
-import { fetchAllPolicies, importPolicy } from "@/server/actions/policies";
+import { fetchAllPolicies, importPolicies } from "@/server/actions/assit-policies";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    
+
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const sortBy = searchParams.get("sortBy") || "policyNumber";
     const sortOrder = searchParams.get("sortOrder") || "asc";
-    
+
     // Parse filters from query parameters
     const filters: any = {};
     const status = searchParams.get("status");
     const productName = searchParams.get("productName");
     const branchName = searchParams.get("branchName");
     const searchText = searchParams.get("searchText");
-    
+
     if (status) filters.status = status;
     if (productName) filters.productName = productName;
     if (branchName) filters.branchName = branchName;
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
-    const response = await importPolicy(payload);
+    const response = await importPolicies(payload);
 
     if (response?.success) {
       return NextResponse.json(response, { status: 200 });

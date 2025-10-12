@@ -1,5 +1,5 @@
+import { fetchAllPolicies } from "@/server/actions/easipol-policies";
 import { fetchAll } from "@/server/actions/easypay-transactions";
-import { fetchAllPolicies } from "@/server/actions/policies";
 import { parsePolicyData } from "@/utils/policy-parser";
 import { NextResponse } from "next/server";
 

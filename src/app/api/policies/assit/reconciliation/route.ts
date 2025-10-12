@@ -1,4 +1,4 @@
-import { fetchAllPolicies } from "@/server/actions/policies";
+import { fetchAllPolicies } from "@/server/actions/easipol-policies";
 import { parsePolicyData } from "@/utils/policy-parser";
 import { NextResponse } from "next/server";
 

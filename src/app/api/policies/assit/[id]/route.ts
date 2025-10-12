@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { deletePolicyById, fetchPolicyById } from "@/server/actions/policies";
+import { deletePolicyById, fetchPolicyById } from "@/server/actions/easipol-policies";
 
 export async function GET(
   request: NextRequest,

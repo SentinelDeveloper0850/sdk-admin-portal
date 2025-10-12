@@ -1,5 +1,6 @@
 "use client";
 
+import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
 import { IMemberPolicy } from "@/app/(protected)/policies/view/page";
 import { Button, Drawer, Form, Input, Space } from "antd";
 import Image from "next/image";
@@ -8,13 +9,13 @@ import React, { useEffect, useMemo, useRef } from "react";
 interface Props {
   open: boolean;
   onClose: () => void;
-  policy: IMemberPolicy;
+  policy: IAssitPolicy;
 }
 
 const CR80_RATIO = 85.6 / 53.98; // ~1.586 (w / h)
 
 const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
-  const [printCardForm] = Form.useForm<IMemberPolicy>();
+  const [printCardForm] = Form.useForm<IAssitPolicy>();
   const watched = Form.useWatch([], printCardForm);
 
   // Barcode SVG ref
@@ -25,7 +26,7 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
     if (open && policy) {
       console.log("policy", policy);
       printCardForm.setFieldsValue({
-        policyNumber: policy?.policyNumber || "TMB0000",
+        membershipID: policy?.membershipID || "TMB0000",
         payAtNumber: policy?.payAtNumber || "11536100264",
         fullName: policy?.fullName || "John Doe",
       });
@@ -59,7 +60,7 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
 
   const payload = useMemo(
     () => ({
-      policyNumber: watched?.policyNumber || "",
+      policyNumber: watched?.membershipID || "",
       payAtNumber: watched?.payAtNumber || "",
       fullName: watched?.fullName || "",
       orgName: "Somdaka Funerals",
@@ -86,7 +87,7 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
 
   return (
     <Drawer
-      title={`Policy Print Card - ${policy?.policyNumber || ""}`}
+      title={`Policy Print Card - ${policy?.membershipID || ""}`}
       placement="right"
       width="60%"
       onClose={onClose}
@@ -104,7 +105,7 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
         {/* ===== Left: Form ===== */}
         <div>
           <Form form={printCardForm} layout="vertical">
-            <Form.Item name="policyNumber" label="Policy Number" rules={[{ required: true }]}>
+            <Form.Item name="membershipID" label="Policy Number" rules={[{ required: true }]}>
               <Input />
             </Form.Item>
             <Form.Item

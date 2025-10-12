@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getFilterOptions } from "@/server/actions/policies";
+import { getFilterOptions } from "@/server/actions/easipol-policies";
 
 export async function GET() {
   try {
