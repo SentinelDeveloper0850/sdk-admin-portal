@@ -423,7 +423,7 @@ export default function EasipolPoliciesPage() {
         }}
         columns={[
           {
-            title: "Easipol Policy #",
+            title: "Policy Number",
             dataIndex: "policyNumber",
             key: "policyNumber",
             sorter: true,
@@ -433,13 +433,7 @@ export default function EasipolPoliciesPage() {
             ),
           },
           {
-            title: "Pay@ #",
-            dataIndex: "payAtNumber",
-            key: "payAtNumber",
-            sorter: (a, b) => a.payAtNumber?.localeCompare(b.payAtNumber || "") || 0,
-          },
-          {
-            title: "Easypay #",
+            title: "Easypay Number",
             dataIndex: "easypayNumber",
             key: "easypayNumber",
             sorter: (a, b) => a.easypayNumber?.localeCompare(b.easypayNumber || "") || 0,
