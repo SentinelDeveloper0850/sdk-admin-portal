@@ -1,7 +1,6 @@
 "use client";
 
 import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
-import { IMemberPolicy } from "@/app/(protected)/policies/view/page";
 import { Button, Drawer, Form, Input, Space } from "antd";
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef } from "react";
@@ -14,9 +13,14 @@ interface Props {
 
 const CR80_RATIO = 85.6 / 53.98; // ~1.586 (w / h)
 
+// Brand tokens (tweak as needed)
+const GOLD = "#ffac00";        // header band
+const TEXT = "#121417";
+const SUBTEXT = "rgba(18,20,23,0.68)";
+
 const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
-  const [printCardForm] = Form.useForm<IAssitPolicy>();
-  const watched = Form.useWatch([], printCardForm);
+  const [form] = Form.useForm<IAssitPolicy>();
+  const watched = Form.useWatch([], form);
 
   // Barcode SVG ref
   const barcodeRef = useRef<SVGSVGElement | null>(null);
@@ -24,14 +28,13 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
   // Seed form when opened
   useEffect(() => {
     if (open && policy) {
-      console.log("policy", policy);
-      printCardForm.setFieldsValue({
-        membershipID: policy?.membershipID || "TMB0000",
-        payAtNumber: policy?.payAtNumber || "11536100264",
-        fullName: policy?.fullName || "John Doe",
+      form.setFieldsValue({
+        membershipID: policy?.membershipID || "TMS196",
+        payAtNumber: policy?.payAtNumber || "11536110020",
+        fullName: policy?.fullName || "S MANDLAZI",
       });
     }
-  }, [open, policy, printCardForm]);
+  }, [open, policy, form]);
 
   // Re-render barcode whenever payAtNumber changes
   useEffect(() => {
@@ -39,19 +42,14 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
       if (!barcodeRef.current) return;
       const JsBarcode = (await import("jsbarcode")).default;
       const value = String(watched?.payAtNumber || "");
-      if (!value) {
-        barcodeRef.current.innerHTML = "";
-        return;
-      }
-      // Clean previous contents (important when re-rendering SVG)
       while (barcodeRef.current.firstChild) {
         barcodeRef.current.removeChild(barcodeRef.current.firstChild);
       }
-      // Render into <svg>
+      if (!value) return;
       JsBarcode(barcodeRef.current, value, {
         format: "CODE128",
         displayValue: false,
-        height: 44,      // tune visually for your preview box
+        height: 40,
         margin: 0,
       });
     };
@@ -64,12 +62,12 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
       payAtNumber: watched?.payAtNumber || "",
       fullName: watched?.fullName || "",
       orgName: "Somdaka Funerals",
-      brandHex: "#0B3B2E",
+      brandHex: "#ffac00",
     }),
     [watched]
   );
 
-  // Hit the PDF endpoint and open print dialog
+  // Print
   const handlePrint = async () => {
     const res = await fetch("/api/cards/print", {
       method: "POST",
@@ -81,9 +79,10 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
     window.open(url, "_blank");
   };
 
-  // preview sizing (keeps ratio; width can be tweaked)
+  // Preview sizing (keeps CR80 ratio)
   const previewWidth = 340; // px
   const previewHeight = Math.round(previewWidth / CR80_RATIO);
+  const headerH = 48;       // px
 
   return (
     <Drawer
@@ -104,7 +103,7 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
       <div className="grid grid-cols-2 gap-6">
         {/* ===== Left: Form ===== */}
         <div>
-          <Form form={printCardForm} layout="vertical">
+          <Form form={form} layout="vertical">
             <Form.Item name="membershipID" label="Policy Number" rules={[{ required: true }]}>
               <Input />
             </Form.Item>
@@ -115,7 +114,7 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
             >
               <Input />
             </Form.Item>
-            <Form.Item name="fullName" label="Full Name" rules={[{ required: true }]}>
+            <Form.Item name="fullName" label="Member Name" rules={[{ required: true }]}>
               <Input />
             </Form.Item>
           </Form>
@@ -124,92 +123,133 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
         {/* ===== Right: Live Preview (CR80) ===== */}
         <div>
           <div
-            className="rounded-md overflow-hidden relative select-none shadow-lg"
+            className="rounded-lg overflow-hidden relative select-none shadow-lg"
             style={{
               width: previewWidth,
               height: previewHeight,
               background: "#fff",
-              color: "#000",
+              color: TEXT,
               fontFamily:
                 "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
             }}
           >
-            {/* Brand strip background */}
-            <div className="bg-primary"
+            {/* HEADER (gold band with crest + title) */}
+            <div
               style={{
                 position: "absolute",
-                left: 0,
-                right: 0,
+                insetInline: 0,
                 top: 0,
-                height: 18,
-                // background: "#0B3B2E",
+                height: headerH,
+                background: "#ffac00",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "0 14px",
               }}
-            />
-
-            {/* 3-zone layout */}
-            <div className="relative z-10 h-full w-full flex flex-col pt-8 px-1">
-              {/* ==== HEADER (brand row) ==== */}
-              <div className="flex items-center justify-between px-3" style={{ height: 18 }}>
-                <div className="text-md font-semibold leading-none">Somdaka Funerals</div>
-                <Image
-                  src="/logo.png"
-                  alt="logo"
-                  width={36}
-                  height={36}
-                  className="block"
-                  priority
-                />
-              </div>
-
-              {/* ==== MIDDLE (policy + member row) ==== */}
-              <div className="flex-1 flex items-center px-3">
-                <div className="w-full flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-[10px] opacity-80 leading-none mb-1">Policy</div>
-                    <div className="text-[14px] font-semibold leading-[1.1]">
-                      {payload.policyNumber}
-                    </div>
-                  </div>
-                  <div className="min-w-0 text-right">
-                    <div className="text-[10px] opacity-80 leading-none mb-1">Member</div>
-                    <div
-                      className="text-[12px] font-semibold ml-auto"
-                      title={payload.fullName}
-                    >
-                      {payload.fullName}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ==== FOOTER (barcode + Pay@) ==== */}
-              <div className="px-3 pb-2 flex flex-col items-center justify-end">
-                <svg ref={barcodeRef} style={{ width: "96%", height: 32 }} />
-                <div className="text-[12px] font-bold mt-1 text-center">
-                  {payload.payAtNumber}
-                </div>
+            >
+              <Image
+                src="/logo.png"
+                alt="Somdaka crest"
+                width={28}
+                height={28}
+                style={{ display: "block" }}
+                priority
+              />
+              <div
+                style={{
+                  fontWeight: 700,
+                  letterSpacing: 0.25,
+                  color: "#000",
+                  fontSize: 14,
+                }}
+              >
+                SOMDAKA FUNERALS
               </div>
             </div>
 
-            {/* Optional safe-zone guide (preview only) */}
+            {/* WATERMARK (large crest, very faint) */}
+            <Image
+              src="/logo.png"
+              alt="watermark"
+              fill
+              style={{
+                objectFit: "contain",
+                opacity: 0.06,
+                transform: "scale(1.3)",
+                marginTop: headerH,
+              }}
+            />
+
+            {/* CONTENT */}
+            <div className="relative z-10 h-full w-full flex flex-col" style={{ paddingTop: headerH }}>
+              {/* Middle: labels + values */}
+              <div className="flex-1 px-4 py-3 flex flex-col gap-2 justify-center">
+                <div>
+                  <div style={{ fontSize: 10, color: SUBTEXT, lineHeight: 1 }}>Policy No.</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.15 }}>
+                    {payload.policyNumber || "\u00A0"}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 6 }}>
+                  <div style={{ fontSize: 10, color: SUBTEXT, lineHeight: 1 }}>Member</div>
+                  <div
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 800,
+                      lineHeight: 1.1,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.2,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                    title={payload.fullName}
+                  >
+                    {payload.fullName || "\u00A0"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer: barcode centered + Pay@ bottom-right */}
+              <div className="px-3 pb-2 relative">
+                <div className="flex flex-col items-center">
+                  <svg ref={barcodeRef} style={{ width: "92%", height: 36 }} />
+                  <div className="text-[12px] font-bold mt-1 text-center tracking-wider">
+                    {payload.payAtNumber}
+                  </div>
+                </div>
+
+                {/* Pay@ logo */}
+                <Image
+                  src="/payat.png"
+                  alt="Pay@"
+                  width={60}
+                  height={20}
+                  className="absolute"
+                  style={{ right: 8, bottom: 8 }}
+                />
+              </div>
+            </div>
+
+            {/* Safe-zone guide (preview only) */}
             <div
               style={{
                 position: "absolute",
                 inset: 6,
-                border: "1px dashed rgba(255,255,255,0.15)",
-                borderRadius: 6,
+                border: "1px dashed rgba(18,20,23,0.12)",
+                borderRadius: 8,
                 pointerEvents: "none",
               }}
             />
           </div>
 
           <div className="text-xs text-muted-foreground mt-2">
-            Preview is to scale (CR80). Actual print uses a PDF exactly sized for the Zenius.
+            Preview is to scale (CR80). The PDF print will match this layout exactly.
           </div>
         </div>
-
       </div>
-    </Drawer >
+    </Drawer>
   );
 };
 

@@ -9,6 +9,7 @@ export interface IPolicy extends Document {
   mandateReference?: string;
   internalReferenceNumber?: string;
   inceptionDate?: Date;
+  inceptionDateString?: string;
   fullname: string;
   iDNumber?: string;
   passportNumber?: string;
@@ -61,6 +62,7 @@ const PolicySchema: Schema = new Schema({
   mandateReference: { type: String, default: "" },
   internalReferenceNumber: { type: String, default: "" },
   inceptionDate: { type: Date },
+  inceptionDateString: { type: String },
   fullname: { type: String, required: true },
   iDNumber: { type: String },
   passportNumber: { type: String, default: "" },
