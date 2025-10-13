@@ -1,5 +1,6 @@
 "use server";
 
+import { AssitPolicyModel } from "@/app/models/scheme/assit-policy.schema";
 import {
   EasypayImportDataModel,
   IEasypayImportData,
@@ -326,7 +327,13 @@ export const syncPolicyNumbers = async () => {
     // Step 4: Bulk update transactions per group
     let updatedCount = 0;
     for (const [easypayNumber, txnIds] of Object.entries(groups)) {
-      const policyNumber = policyMap.get(easypayNumber);
+      let policyNumber = policyMap.get(easypayNumber);
+      const linkedAssitPolicy = await AssitPolicyModel.findOne({ linkedEasipolPolicyNumber: policyNumber });
+
+      if (linkedAssitPolicy) {
+        policyNumber = linkedAssitPolicy.membershipID;
+      }
+
       if (!policyNumber) continue;
 
       const result = await EasypayTransactionModel.updateMany(

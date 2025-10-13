@@ -8,6 +8,7 @@ import { EftTransactionModel } from "@/app/models/scheme/eft-transaction.schema"
 import { getUserFromRequest } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { connectToDatabase } from "@/lib/db";
+import { AssitPolicyModel } from "@/app/models/scheme/assit-policy.schema";
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,11 +40,26 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    const policy = await AssitPolicyModel.findOne({ membershipID: policyNumber });
+    if (!policy) {
+      return NextResponse.json({
+        success: false,
+        message: "ASSIT policy not found",
+      }, { status: 404 });
+    }
+
     const transaction = await EftTransactionModel.findById(transactionId);
     if (!transaction) {
       return NextResponse.json({
         success: false,
         message: "Transaction not found",
+      }, { status: 404 });
+    }
+
+    if (!policy || !transaction) {
+      return NextResponse.json({
+        success: false,
+        message: "ASSIT policy or transaction not found",
       }, { status: 404 });
     }
 
@@ -61,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     const allocation = await AllocationRequestModel.create({
       transactionId,
-      policyNumber,
+      policyId: policy._id,
       notes,
       evidence: [],
       requestedBy: user._id,
