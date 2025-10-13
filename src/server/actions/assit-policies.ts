@@ -1,6 +1,7 @@
 "use server";
 
 import { AssitPolicyModel, IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
+import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export interface IAssitMembersReportItem {
@@ -219,6 +220,42 @@ export const importPolicies = async (assitRecords: IAssitMembersReportItem[]) =>
       success: false,
       message: "Internal Server Error ~ Error importing ASSIT policies",
       error: error.message,
+    };
+  }
+};
+
+export const linkPolicy = async (payload: any) => {
+  try {
+    await connectToDatabase();
+
+    const { assitPolicyId, easipolPolicyId } = payload;
+
+    const assitPolicy = await AssitPolicyModel.findById(assitPolicyId);
+    const easipolPolicy = await PolicyModel.findById(easipolPolicyId);
+
+    if (!assitPolicy || !easipolPolicy) {
+      return {
+        success: false,
+        message: "ASSIT policy or Easipol policy not found ~ Error linking Easipol policy to ASSIT policy",
+      };
+    }
+
+    await AssitPolicyModel.findByIdAndUpdate(assitPolicyId, {
+      linkedEasipolPolicyId: easipolPolicyId,
+      linkedEasipolPolicyNumber: easipolPolicy.policyNumber,
+      hasLinkedEasipolPolicy: true,
+    });
+
+    return {
+      success: true,
+      message: "Easipol policy linked to ASSIT policy successfully",
+      data: assitPolicy,
+    };
+  } catch (error: any) {
+    console.error("Error linking Easipol policy to ASSIT policy:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error linking Easipol policy to ASSIT policy",
     };
   }
 };

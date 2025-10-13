@@ -31,6 +31,7 @@ export const fetchAllPolicies = async (
     if (filters.searchText) {
       filterQuery.$or = [
         { policyNumber: { $regex: filters.searchText, $options: "i" } },
+        { linkedEasipolPolicyNumber: { $regex: filters.searchText, $options: "i" } },
         { payAtNumber: { $regex: filters.searchText, $options: "i" } },
         { memberID: { $regex: filters.searchText, $options: "i" } },
         { fullname: { $regex: filters.searchText, $options: "i" } },

@@ -1,9 +1,10 @@
+import LinkPolicyDrawer from "@/app/components/policies/link-policy-drawer";
 import PolicyPrintCardDrawer from "@/app/components/policies/policy-print-card-drawer";
 import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
 import { useAuth } from "@/context/auth-context";
 import { formatToMoneyWithCurrency } from "@/utils/formatters";
 import { hasRole } from "@/utils/helpers/hasRole";
-import { MoreOutlined, PrinterOutlined, ReloadOutlined, SearchOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons";
+import { LinkOutlined, MoreOutlined, PrinterOutlined, ReloadOutlined, SearchOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons";
 import { Alert, Button, Col, Drawer, Dropdown, Form, Input, message, Row, Select, Space, Statistic, Table, Tag, Upload, UploadProps } from "antd";
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
@@ -15,15 +16,14 @@ const AssitPoliciesPage = () => {
   const [bootstrapping, setBootstrapping] = useState<boolean>(true);
   const [tableLoading, setTableLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
-  const [editingPolicy, setEditingPolicy] = useState<IAssitPolicy | null>(null);
-  const [cancellationDrawerOpen, setCancellationDrawerOpen] = useState(false);
-  const [selectedPolicyForCancellation, setSelectedPolicyForCancellation] = useState<IAssitPolicy | null>(null);
   const [filterOptionsLoading, setFilterOptionsLoading] = useState<boolean>(true);
   const [searchInput, setSearchInput] = useState("");
-  const [printCardModalOpen, setPrintCardModalOpen] = useState(false);
   const [selectedPolicyForPrintCard, setSelectedPolicyForPrintCard] = useState<IAssitPolicy | null>(null);
+  
+  const [printCardDrawerOpen, setPrintCardDrawerOpen] = useState(false);
+  const [linkPolicyDrawerOpen, setLinkPolicyDrawerOpen] = useState(false);
+  const [selectedPolicyForLinkPolicy, setSelectedPolicyForLinkPolicy] = useState<IAssitPolicy | null>(null);
+
 
   const { user } = useAuth();
 
@@ -93,6 +93,7 @@ const AssitPoliciesPage = () => {
 
   const handleClearFilters = () => {
     setFilters({ status: "", productName: "", branchName: "", searchText: "" });
+    setSearchInput("");
     setCurrentPage(1);
   };
 
@@ -106,60 +107,11 @@ const AssitPoliciesPage = () => {
     if (size) setPageSize(size);
   };
 
-  const deletePolicy = async (id: string, policyNumber: string) => {
-    try {
-      const confirmed = await sweetAlert({
-        title: "Are you sure?",
-        text: `This will permanently delete policy ${policyNumber} from the system.`,
-        icon: "warning",
-        buttons: ["Cancel", "Yes, delete it!"],
-        dangerMode: true,
-      });
 
-      if (!confirmed) return;
-
-      const response = await fetch(`/api/policies/assit/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        sweetAlert({
-          title: "Failed to delete policy!",
-          text: errorData.message,
-          icon: "error",
-        });
-        return;
-      }
-
-      sweetAlert({
-        title: "Policy deleted",
-        icon: "success",
-        timer: 2000,
-      });
-
-      // Remove from UI without re-fetching
-      setPolicies((prevPolicies) => prevPolicies.filter((p) => p.membershipID !== id));
-    } catch (err) {
-      console.error("Delete error:", err);
-      sweetAlert({
-        title: "Error deleting policy",
-        text: "Please try again later.",
-        icon: "error",
-      });
-    }
-  };
-
-  const editPolicy = (policy: IAssitPolicy) => {
-    setEditingPolicy(policy);
-    // You can implement edit functionality here
-    console.log("Edit policy:", policy);
-  };
 
   const printCard = (policy: IAssitPolicy) => {
     setSelectedPolicyForPrintCard(policy);
-    setPrintCardModalOpen(true);
+    setPrintCardDrawerOpen(true);
   };
 
   const [importColumns, setImportColumns] = useState<any[]>([]);
@@ -272,6 +224,58 @@ const AssitPoliciesPage = () => {
         </div>
       </div>
 
+      <Form layout="vertical" style={{ width: "100%" }}>
+        <Row gutter={16}>
+          <Col span={6}>
+            <Form.Item label="Search">
+              <Input
+                allowClear
+                placeholder="Search by Policy Number, Member ID, Name, ID Number, or Phone..."
+                value={searchInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchInput(val);
+                  if (val === "") {
+                    handleSearch("");
+                  }
+                }}
+                onPressEnter={() => handleSearch(searchInput)}
+                addonAfter={<SearchOutlined style={{ cursor: "pointer" }} onClick={() => handleSearch(searchInput)} />}
+              />
+            </Form.Item>
+          </Col>
+          {/* <Col span={6}>
+            <Form.Item label="Product">
+              <Select
+                allowClear
+                placeholder="All Products"
+                value={filters.productName || undefined}
+                onChange={(value) => handleFilterChange("productName", value)}
+                loading={filterOptionsLoading}
+              >
+                {filterOptions.products.map((product: string) => (
+                  <Select.Option key={product} value={product}>
+                    {product}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col> */}
+          <Col span={6}>
+            <Form.Item label=" ">
+              <Space>
+                <Button
+                  onClick={handleClearFilters}
+                  disabled={!filters.status && !filters.productName && !filters.branchName && !filters.searchText}
+                >
+                  Clear Filters
+                </Button>
+              </Space>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form>
+
       {/* Search Results Indicator */}
       {(filters.status || filters.productName || filters.branchName || filters.searchText) && (
         <div style={{
@@ -301,91 +305,7 @@ const AssitPoliciesPage = () => {
           </div>
         </div>
       )}
-      <Form layout="vertical" style={{ width: "100%" }}>
-        <Row gutter={16}>
-          <Col span={6}>
-            <Form.Item label="Search">
-              <Input
-                allowClear
-                placeholder="Search by Policy Number, Member ID, Name, ID Number, or Phone..."
-                value={searchInput}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setSearchInput(val);
-                  if (val === "") {
-                    handleSearch("");
-                  }
-                }}
-                onPressEnter={() => handleSearch(searchInput)}
-                addonAfter={<SearchOutlined style={{ cursor: "pointer" }} onClick={() => handleSearch(searchInput)} />}
-              />
-            </Form.Item>
-          </Col>
-          {/* <Col span={4}>
-            <Form.Item label="Status">
-              <Select
-                allowClear
-                placeholder="All Statuses"
-                value={filters.status || undefined}
-                onChange={(value: string) => handleFilterChange("status", value)}
-                loading={filterOptionsLoading}
-              >
-                {filterOptions.statuses.map((status: string) => (
-                  <Select.Option key={status} value={status}>
-                    {status}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col> */}
-          <Col span={6}>
-            <Form.Item label="Product">
-              <Select
-                allowClear
-                placeholder="All Products"
-                value={filters.productName || undefined}
-                onChange={(value) => handleFilterChange("productName", value)}
-                loading={filterOptionsLoading}
-              >
-                {filterOptions.products.map((product: string) => (
-                  <Select.Option key={product} value={product}>
-                    {product}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          {/* <Col span={4}>
-            <Form.Item label="Branch">
-              <Select
-                allowClear
-                placeholder="All Branches"
-                value={filters.branchName || undefined}
-                onChange={(value) => handleFilterChange("branchName", value)}
-                loading={filterOptionsLoading}
-              >
-                {filterOptions.branches.map((branch: string) => (
-                  <Select.Option key={branch} value={branch}>
-                    {branch}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col> */}
-          <Col span={6}>
-            <Form.Item label="Actions">
-              <Space>
-                <Button
-                  onClick={handleClearFilters}
-                  disabled={!filters.status && !filters.productName && !filters.branchName && !filters.searchText}
-                >
-                  Clear Filters
-                </Button>
-              </Space>
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
+
       <Table
         rowKey="_id"
         bordered
@@ -421,10 +341,19 @@ const AssitPoliciesPage = () => {
             ),
           },
           {
-            title: "Pay @ Number",
+            title: "Linked Easipol Policy",
+            dataIndex: "linkedEasipolPolicyNumber",
+            key: "linkedEasipolPolicyNumber",
+            // sorter: (a: IAssitPolicy, b: IAssitPolicy) => a.linkedEasipolPolicyNumber?.localeCompare(b.linkedEasipolPolicyNumber || "") || 0,
+            render: (linkedEasipolPolicyNumber: any) => (
+              <span className="font-mono font-semibold">{linkedEasipolPolicyNumber?.toString() ?? "--"}</span>
+            ),
+          },
+          {
+            title: "Payat Number",
             dataIndex: "payAtNumber",
             key: "payAtNumber",
-            sorter: (a: IAssitPolicy, b: IAssitPolicy) => a.payAtNumber?.localeCompare(b.payAtNumber || "") || 0,
+            // sorter: (a: IAssitPolicy, b: IAssitPolicy) => a.payAtNumber?.localeCompare(b.payAtNumber || "") || 0,
           },
           {
             title: "Main Member",
@@ -442,7 +371,7 @@ const AssitPoliciesPage = () => {
             title: "Cover Type",
             dataIndex: "category",
             key: "category",
-            sorter: (a: IAssitPolicy, b: IAssitPolicy) => a.category?.localeCompare(b.category || "") || 0,
+            // sorter: (a: IAssitPolicy, b: IAssitPolicy) => a.category?.localeCompare(b.category || "") || 0,
             render: (category: string) => (
               <Tag color="blue" className="w-fit">
                 {category}
@@ -477,6 +406,15 @@ const AssitPoliciesPage = () => {
                     //   label: "Edit Policy",
                     //   onClick: () => editPolicy(record),
                     // },
+                    {
+                      key: "link-policy",
+                      icon: <LinkOutlined />,
+                      label: "Link Policy",
+                      onClick: () => {
+                        setSelectedPolicyForLinkPolicy(record);
+                        setLinkPolicyDrawerOpen(true);
+                      },
+                    },
                     {
                       key: "print-card",
                       icon: <PrinterOutlined />,
@@ -517,12 +455,24 @@ const AssitPoliciesPage = () => {
 
       {selectedPolicyForPrintCard && (
         <PolicyPrintCardDrawer
-          open={printCardModalOpen}
+          open={printCardDrawerOpen}
           onClose={() => {
-            setPrintCardModalOpen(false);
+            setPrintCardDrawerOpen(false);
             setSelectedPolicyForPrintCard(null);
           }}
           policy={selectedPolicyForPrintCard}
+        />
+      )}
+
+      {selectedPolicyForLinkPolicy && (
+        <LinkPolicyDrawer
+          open={linkPolicyDrawerOpen}
+          onClose={() => {
+            setLinkPolicyDrawerOpen(false);
+            setSelectedPolicyForLinkPolicy(null);
+            fetchPolicies();
+          }}
+          policy={selectedPolicyForLinkPolicy}
         />
       )}
     </div>

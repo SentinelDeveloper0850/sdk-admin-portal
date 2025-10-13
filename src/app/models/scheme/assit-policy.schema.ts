@@ -6,7 +6,8 @@ import { SchemeSocietyModel } from "./scheme-society.schema";
 export interface IAssitPolicy {
   _id?: mongoose.Types.ObjectId | string;
   membershipID: string;
-  linkedEasipolPolicyId?: mongoose.Types.ObjectId;
+  linkedEasipolPolicyId?: mongoose.Types.ObjectId | string;
+  linkedEasipolPolicyNumber?: string;
   linkedSocietyId?: mongoose.Types.ObjectId;
   lastName: string;
   initials: string;
