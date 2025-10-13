@@ -579,11 +579,11 @@ export default function EasypayTransactionsPage() {
     }
   };
 
-  const sync = async () => {
+  const sync = async (shouldResync: boolean = false) => {
     try {
       setSyncing(true);
 
-      const result = await syncPolicyNumbers();
+      const result = await syncPolicyNumbers(shouldResync);
 
       if (result.success) {
         sweetAlert({
@@ -735,18 +735,28 @@ export default function EasypayTransactionsPage() {
               Import History
             </Button>
 
-            {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) &&
-              stats.toSync > 0 && (
+            {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
                 <Button
                   loading={syncing}
                   disabled={syncing}
                   onClick={async () => {
-                    await sync();
+                    await sync(false);
                   }}
                 >
                   {syncing ? "Syncing..." : "Sync Policy Numbers"}
                 </Button>
               )}
+            {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
+              <Button
+                loading={syncing}
+                disabled={syncing}
+                onClick={async () => {
+                  await sync(true);
+                }}
+              >
+                {syncing ? "Resyncing..." : "Resync ALL Policy Numbers"}
+              </Button>
+            )}
             {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
               <Button onClick={exportToCSV} disabled={!transactions.length}>
                 Export CSV

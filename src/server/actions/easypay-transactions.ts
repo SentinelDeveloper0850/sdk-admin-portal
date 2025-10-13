@@ -290,23 +290,34 @@ export const searchTransactionsByPolicyNumber = async (searchText: string, page 
   }
 };
 
-export const syncPolicyNumbers = async () => {
+export const syncPolicyNumbers = async (shouldResync: boolean = false) => {
   try {
     await connectToDatabase();
 
     // Step 1: Build map of easypayNumber -> policyNumber
     const policies = await PolicyModel.find({}, 'policyNumber easypayNumber');
-    const policyMap = new Map(policies.map(p => [p.easypayNumber, p.policyNumber]));
+    const assitPoliciesWithLinkedEasipolPolicies = await AssitPolicyModel.find({
+      hasLinkedEasipolPolicy: true
+    }, 'membershipID linkedEasipolPolicyNumber');
+    const policyMap = new Map(policies.map(p => {
+      const linkedAssitPolicy = assitPoliciesWithLinkedEasipolPolicies.find(ap => ap.linkedEasipolPolicyNumber === p.policyNumber);
+      if (linkedAssitPolicy) {
+        return [p.easypayNumber, linkedAssitPolicy.membershipID];
+      }
+      return [p.easypayNumber, p.policyNumber];
+    }));
 
-    // Step 2: Find only transactions missing a policyNumber
+
+    // Step 2: Find only transactions missing a policyNumber unless we should resync
+    const filter = shouldResync ? {} : {
+      $or: [
+        { policyNumber: { $exists: false } },
+        { policyNumber: null },
+        { policyNumber: "" }
+      ]
+    };
     const transactions = await EasypayTransactionModel.find(
-      {
-        $or: [
-          { policyNumber: { $exists: false } },
-          { policyNumber: null },
-          { policyNumber: "" }
-        ]
-      },
+      filter,
       'easypayNumber policyNumber'
     );
 
@@ -328,11 +339,6 @@ export const syncPolicyNumbers = async () => {
     let updatedCount = 0;
     for (const [easypayNumber, txnIds] of Object.entries(groups)) {
       let policyNumber = policyMap.get(easypayNumber);
-      const linkedAssitPolicy = await AssitPolicyModel.findOne({ linkedEasipolPolicyNumber: policyNumber });
-
-      if (linkedAssitPolicy) {
-        policyNumber = linkedAssitPolicy.membershipID;
-      }
 
       if (!policyNumber) continue;
 
