@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
       notes,
       evidence: [],
       requestedBy: user._id,
+      transactionModel: "EftTransaction",
     });
 
     if (!allocation._id) {
