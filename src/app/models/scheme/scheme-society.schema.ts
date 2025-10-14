@@ -1,17 +1,30 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { ISociety } from "./society.schema";
 
 // Define the interface for TypeScript
-export interface ISchemeSociety extends ISociety {
+export interface ISchemeSociety extends Document {
+  assitID: string;
+  name: string;
+  inceptionDate: string;
+  address: string;
+  phone: string;
+  fax: string;
+  chairmanFullNames: string;
+  chairmanPhone: string;
+  secretaryFullNames: string;
+  secretaryPhone: string;
+  treasurerFullNames: string;
+  treasurerPhone: string;
+  documentLinks: string[];
   planName: string;
   consultantId: string;
   consultantName: string;
+  numberOfMembers: number;
 }
 
 // Define the schema
 const SchemeSocietySchema: Schema = new Schema(
   {
-    societyId: { type: String },
+    assitID: { type: String },
     name: { type: String, required: true },
     inceptionDate: { type: String },
     address: { type: String },
@@ -23,11 +36,11 @@ const SchemeSocietySchema: Schema = new Schema(
     secretaryPhone: { type: String },
     treasurerFullNames: { type: String },
     treasurerPhone: { type: String },
-    balance: { type: Number },
     documentLinks: [{ type: String }],
-    planName: { type: String },
+    planName: { type: String, required: true },
     consultantId: { type: String },
     consultantName: { type: String },
+    numberOfMembers: { type: Number, default: 0 },
   },
   {
     timestamps: true,

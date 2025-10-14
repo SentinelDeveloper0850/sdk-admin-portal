@@ -5,6 +5,8 @@ import Papa from "papaparse";
 
 import { SocietyModel as Model } from "@/app/models/scheme/society.schema";
 import { connectToDatabase } from "@/lib/db";
+import { SocietyMemberModel } from "@/app/models/scheme/scheme-society-member.schema";
+import mongoose from "mongoose";
 
 export const fetchAllSocieties = async (page = 1, limit = 0) => {
   try {
@@ -132,5 +134,22 @@ export async function importSocietiesFromCSV(filePath: string) {
         cloudinaryFolder: row.cloudinaryFolder,
       });
     }
+  }
+}
+
+export const fetchSocietyMembersById = async (id: string) => {
+  await connectToDatabase();
+  try {
+    const members = await SocietyMemberModel.find({ societyId: new mongoose.Types.ObjectId(id) });
+    return {
+      success: true,
+      data: members || [],
+    };
+  } catch (error: any) {
+    console.error("Error fetching society members:", error.message);
+    return {
+      success: false,
+      message: "Internal Server Error ~ Error fetching society members",
+    };
   }
 }
