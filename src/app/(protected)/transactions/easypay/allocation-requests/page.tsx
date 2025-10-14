@@ -51,6 +51,11 @@ export default function AllocationRequestsPage() {
   const [items, setItems] = useState<AllocationRequestItem[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [filters, setFilters] = useState<{ status?: string; start?: string; end?: string; requester?: string }>({});
+  const [pagination, setPagination] = useState<{ current: number; pageSize: number; total: number }>({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+  });
 
   const [rejecting, setRejecting] = useState<AllocationRequestItem | null>(null);
   const [rejectForm] = Form.useForm();
@@ -118,7 +123,7 @@ export default function AllocationRequestsPage() {
     }
   };
 
-  const fetchData = async (status?: string) => {
+  const fetchData = async (status?: string, page = pagination.current, pageSize = pagination.pageSize) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -126,6 +131,8 @@ export default function AllocationRequestsPage() {
       if (filters.start) params.set("start", filters.start);
       if (filters.end) params.set("end", filters.end);
       if (filters.requester) params.set("requester", filters.requester);
+      if (page) params.set("page", String(page));
+      if (pageSize) params.set("limit", String(pageSize));
       const res = await fetch(`/api/transactions/easypay/allocation-requests?${params.toString()}`);
       if (!res.ok) {
         const data = await res.json();
@@ -134,6 +141,8 @@ export default function AllocationRequestsPage() {
       }
       const data = await res.json();
       setItems(data.items || []);
+      const total = data.pagination?.total ?? (data.items?.length || 0);
+      setPagination((p) => ({ ...p, current: page, pageSize, total }));
     } catch (e) {
       setError("An unexpected error occurred");
     } finally {
@@ -143,7 +152,7 @@ export default function AllocationRequestsPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchData(filters.status || 'PENDING');
+    await fetchData(filters.status || 'PENDING', pagination.current, pagination.pageSize);
     setRefreshing(false);
   };
 
@@ -175,7 +184,9 @@ export default function AllocationRequestsPage() {
 
   const handleTabChange = (key: string) => {
     setFilters((f) => ({ ...f, status: key }));
-    fetchData(key);
+    // reset to first page when changing tab/status
+    setPagination((p) => ({ ...p, current: 1 }));
+    fetchData(key, 1, pagination.pageSize);
   };
 
   const parseCSV = (csvText: string) => {
@@ -353,11 +364,12 @@ export default function AllocationRequestsPage() {
             }));
           }}
         />
-        <Button onClick={() => fetchData(filters.status || 'PENDING')}>Apply</Button>
+        <Button onClick={() => fetchData(filters.status || 'PENDING', 1, pagination.pageSize)}>Apply</Button>
         <Button
           onClick={() => {
             setFilters({});
-            fetchData(filters.status || 'PENDING');
+            setPagination((p) => ({ ...p, current: 1 }));
+            fetchData(filters.status || 'PENDING', 1, pagination.pageSize);
           }}
         >
           Reset
@@ -385,6 +397,19 @@ export default function AllocationRequestsPage() {
           getCheckboxProps: (record: AllocationRequestItem) => ({ disabled: !((!isAllocator && record.status === 'APPROVED') || (isAllocator && record.status === 'SUBMITTED')) }),
         } : undefined}
         dataSource={items}
+        pagination={{
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+        }}
+        onChange={(p: any) => {
+          const nextCurrent = p.current as number;
+          const nextPageSize = p.pageSize as number;
+          setPagination((prev) => ({ ...prev, current: nextCurrent, pageSize: nextPageSize }));
+          fetchData(filters.status || 'PENDING', nextCurrent, nextPageSize);
+        }}
         columns={[
           {
             title: "Requested On",
