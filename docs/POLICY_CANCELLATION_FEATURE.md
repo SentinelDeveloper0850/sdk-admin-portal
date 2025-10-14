@@ -56,7 +56,7 @@ interface IPolicyCancellationRequest {
 
 ## API Endpoints
 
-### POST `/api/policies/cancellation-request`
+### POST `/api/policies/easipol/cancellation-request`
 
 Submit a new cancellation request
 
@@ -88,7 +88,7 @@ Submit a new cancellation request
 }
 ```
 
-### GET `/api/policies/cancellation-request`
+### GET `/api/policies/easipol/cancellation-request`
 
 Fetch cancellation requests with pagination and filtering
 
@@ -99,7 +99,7 @@ Fetch cancellation requests with pagination and filtering
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 10)
 
-### PATCH `/api/policies/cancellation-request/[id]`
+### PATCH `/api/policies/easipol/cancellation-request/[id]`
 
 Approve or reject a cancellation request
 
@@ -112,7 +112,7 @@ Approve or reject a cancellation request
 }
 ```
 
-### DELETE `/api/policies/cancellation-request/[id]`
+### DELETE `/api/policies/easipol/cancellation-request/[id]`
 
 Delete a pending cancellation request
 

@@ -62,7 +62,7 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
 
       setLoading(true);
 
-      const response = await fetch("/api/policies/cancellation-request", {
+      const response = await fetch("/api/policies/easipol/cancellation-request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

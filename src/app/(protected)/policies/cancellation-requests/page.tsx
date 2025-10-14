@@ -94,7 +94,7 @@ function CancellationRequestsPage() {
       if (filters.policyNumber) queryParams.append("policyNumber", filters.policyNumber);
       if (filters.memberName) queryParams.append("memberName", filters.memberName);
 
-      const response = await fetch(`/api/policies/cancellation-request?${queryParams}`);
+      const response = await fetch(`/api/policies/easipol/cancellation-request?${queryParams}`);
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch cancellation requests");
@@ -129,7 +129,7 @@ function CancellationRequestsPage() {
     if (!selectedRequest) return;
 
     try {
-      const response = await fetch(`/api/policies/cancellation-request/${selectedRequest._id}`, {
+      const response = await fetch(`/api/policies/easipol/cancellation-request/${selectedRequest._id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +180,7 @@ function CancellationRequestsPage() {
 
     if (result === "Yes, delete it!") {
       try {
-        const response = await fetch(`/api/policies/cancellation-request/${requestId}`, {
+        const response = await fetch(`/api/policies/easipol/cancellation-request/${requestId}`, {
           method: "DELETE",
         });
 
