@@ -24,7 +24,7 @@ function SignupRequestDetailsPage() {
       if (!requestId) return;
       setLoading(true);
       try {
-        const res = await fetch(`/api/policies/signup-requests?requestId=${encodeURIComponent(requestId)}`);
+        const res = await fetch(`/api/policies/easipol/signup-requests?requestId=${encodeURIComponent(requestId)}`);
         const json = await res.json();
         if (json.success && json.data) {
           setRecord(json.data as IPolicySignUp);

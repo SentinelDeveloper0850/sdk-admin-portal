@@ -5,11 +5,11 @@ export interface ISocietyMember extends Document {
   firstNames: string;
   initials: string;
   lastName: string;
-  idNumber: string;
+  idNumber?: string;
   premium: number;
   cellNumber: string;
-  emailAddress: string;
-  address: string;
+  emailAddress?: string;
+  address?: string;
 }
 
 const SocietyMemberSchema: Schema = new Schema(
@@ -18,11 +18,11 @@ const SocietyMemberSchema: Schema = new Schema(
     firstNames: { type: String, required: true },
     initials: { type: String, required: true },
     lastName: { type: String, required: true },
-    idNumber: { type: String, required: true },
+    idNumber: { type: String, required: false },
     premium: { type: Number, required: true },
     cellNumber: { type: String, required: true },
-    emailAddress: { type: String, required: true },
-    address: { type: String, required: true },
+    emailAddress: { type: String, required: false },
+    address: { type: String, required: false },
   },
   {
     timestamps: true,

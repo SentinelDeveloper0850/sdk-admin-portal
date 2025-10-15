@@ -82,7 +82,7 @@ const SignupRequestsPage = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/policies/signup-requests');
+      const response = await fetch('/api/policies/easipol/signup-requests');
       const data = await response.json();
 
       if (data.success && data.data) {
@@ -163,7 +163,7 @@ const SignupRequestsPage = () => {
 
   const handleDelete = async (record: IPolicySignUp) => {
     try {
-      const response = await fetch('/api/policies/signup-requests', {
+      const response = await fetch('/api/policies/easipol/signup-requests', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -342,11 +342,7 @@ const SignupRequestsPage = () => {
                   {record.plan?.name || 'Unknown Plan'}
                 </p>
                 <p>
-                  <Badge
-                    count={record.numberOfDependents}
-                    style={{ backgroundColor: '#52c41a' }}
-                  />
-                  {' '}Dependents
+                  {record.numberOfDependents} Deps
                 </p>
               </>
             ),

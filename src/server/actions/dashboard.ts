@@ -1,5 +1,6 @@
 "use server";
 
+import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 import { DailyActivityModel } from "@/app/models/hr/daily-activity.schema";
 import { UserModel } from "@/app/models/hr/user.schema";
 import { ClaimModel } from "@/app/models/scheme/claim.schema";
@@ -8,6 +9,7 @@ import { EftTransactionModel } from "@/app/models/scheme/eft-transaction.schema"
 import PolicyCancellationRequestModel from "@/app/models/scheme/policy-cancellation-request.schema";
 import { PolicySignUpModel } from "@/app/models/scheme/policy-signup-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
+import { SchemeSocietyModel } from "@/app/models/scheme/scheme-society.schema";
 import { SocietyModel } from "@/app/models/scheme/society.schema";
 import { connectToDatabase } from "@/lib/db";
 
@@ -39,6 +41,7 @@ export const getDashboardData = async () => {
 
     // Execute all basic counts concurrently for better performance
     const [
+      schemeSocietyCount,
       prepaidSocietyCount,
       eftTransactionCount,
       easypayTransactionCount,
@@ -51,7 +54,10 @@ export const getDashboardData = async () => {
       pendingClaims,
       pendingSignupRequests,
       pendingCancellationRequests,
+      pendingEftAllocationRequests,
+      pendingEasypayAllocationRequests,
     ] = await Promise.all([
+      SchemeSocietyModel.countDocuments(),
       SocietyModel.countDocuments(),
       EftTransactionModel.countDocuments(),
       EasypayTransactionModel.countDocuments(),
@@ -77,6 +83,14 @@ export const getDashboardData = async () => {
       }),
       PolicyCancellationRequestModel.countDocuments({
         status: "pending"
+      }),
+      AllocationRequestModel.countDocuments({
+        status: "PENDING",
+        type: "EFT"
+      }),
+      AllocationRequestModel.countDocuments({
+        status: "PENDING",
+        type: "Easypay"
       }),
     ]);
 
@@ -160,6 +174,7 @@ export const getDashboardData = async () => {
       data: {
         // Basic stats
         userCount,
+        schemeSocietyCount,
         prepaidSocietyCount,
         eftTransactionCount,
         easypayTransactionCount,
@@ -178,6 +193,8 @@ export const getDashboardData = async () => {
           claims: pendingClaims,
           signupRequests: pendingSignupRequests,
           cancellationRequests: pendingCancellationRequests,
+          eftAllocationRequests: pendingEftAllocationRequests,
+          easypayAllocationRequests: pendingEasypayAllocationRequests,
         },
 
         // Daily activity compliance
