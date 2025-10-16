@@ -18,15 +18,6 @@ interface AllocationRequestItem extends IAllocationRequest {
   transaction: IEftTransaction;
 }
 
-interface EftTransactionDetail {
-  _id: string;
-  uuid: string;
-  description: string;
-  additionalInformation: string;
-  amount: number;
-  date: string;
-}
-
 export default function AllocationRequestsPage() {
   const { hasRole } = useRole();
 

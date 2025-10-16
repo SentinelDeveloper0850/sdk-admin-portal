@@ -1,15 +1,13 @@
 import { EAllocationRequestStatus } from '@/app/enums/hr/allocation-request-status.enum';
-import { IEasypayTransaction } from '@/app/models/scheme/easypay-transaction.schema';
-import { IEftTransaction } from '@/app/models/scheme/eft-transaction.schema';
 import mongoose, { Schema, Types } from 'mongoose';
 
 export interface IAllocationRequest {
   _id?: string;
 
   // 🔑 This must be model names
-  transactionModel: "EftTransaction" | "EasypayTransaction";
+  transactionModel: string;
   transactionId: Types.ObjectId;
-  transaction?: unknown | IEftTransaction | IEasypayTransaction;
+  transaction?: any;
 
   policyNumber: string;
   easypayNumber?: string;
@@ -55,8 +53,7 @@ const AllocationRequestSchema = new Schema(
     // 👇 tells mongoose which collection this ObjectId belongs to
     transactionModel: {
       type: String,
-      required: true,
-      enum: ['EftTransaction', 'EasypayTransaction'],
+      required: true
     },
 
     // 👇 one id that can point to either model above
@@ -119,17 +116,6 @@ AllocationRequestSchema.virtual("transaction", {
   localField: "transactionId",
   foreignField: "_id",
   justOne: true,
-});
-
-// (Optional) keep `type` and `transactionModel` in sync
-AllocationRequestSchema.pre("validate", function (next) {
-  const model = this.get("transactionModel");
-  const type = this.get("type");
-  if ((type === "EFT" && model !== "EftTransaction") ||
-    (type === "Easypay" && model !== "EasypayTransaction")) {
-    return next(new Error("type does not match transactionModel"));
-  }
-  next();
 });
 
 export const AllocationRequestModel =

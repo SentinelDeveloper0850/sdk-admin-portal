@@ -1,6 +1,4 @@
 import { IAllocationRequest } from "@/app/models/hr/allocation-request.schema";
-import { IEasypayTransaction } from "@/app/models/scheme/easypay-transaction.schema";
-import { IEftTransaction } from "@/app/models/scheme/eft-transaction.schema";
 import { connectToDatabase } from "@/lib/db";
 import dayjs from "dayjs";
 import { NextRequest, NextResponse } from "next/server";
@@ -74,9 +72,7 @@ export async function POST(request: NextRequest) {
 
 async function scanForDuplicates(request: IAllocationRequest, receiptsFromASSIT: any[]) {
   try {
-    const transaction = request.transaction as unknown as IEftTransaction | IEasypayTransaction;
-
-    if (!transaction) {
+    if (!request.transaction) {
       return { duplicate: false, failed: true, importToASSIT: false };
     }
 
@@ -93,7 +89,7 @@ async function scanForDuplicates(request: IAllocationRequest, receiptsFromASSIT:
     // Reduce receiptsMatchingPolicyNumber to only include receipts that match the date using dayjs
     const receiptsMatchingPolicyNumberAndDate = receiptsMatchingPolicyNumber.filter((receipt) => {
       const receiptDate: string = receipt['Effective Date'] || receipt['effective_date'] || receipt['EffectiveDate'];
-      return dayjs(receiptDate).isSame(transaction.date, 'day');
+      return dayjs(receiptDate).isSame(request.transaction.date, 'day');
     });
 
     if (receiptsMatchingPolicyNumberAndDate.length > 0) {
