@@ -20,6 +20,7 @@ import {
   Spin,
   Statistic,
   Table,
+  Tag,
   Upload,
 } from "antd";
 import Search from "antd/es/input/Search";
@@ -32,6 +33,7 @@ import { useRole } from "@/app/hooks/use-role";
 import { useAuth } from "@/context/auth-context";
 
 import { ERoles } from "../../../../../types/roles.enum";
+import { IAllocationRequest } from "@/app/models/hr/allocation-request.schema";
 
 export interface IEftTransaction {
   _id: string;
@@ -42,6 +44,8 @@ export interface IEftTransaction {
   amount: number;
   date: string;
   created_at: string;
+  // allocationRequests: mongoose.Types.ObjectId[] or AllocationRequest[];
+  allocationRequests?: IAllocationRequest[];
 }
 
 export interface IEftImportData {
@@ -53,6 +57,17 @@ export interface IEftImportData {
   created_at: Date;
 }
 
+export interface IEftStats {
+  count: number;
+  totalAllocationRequestsCount: number;
+  pendingAllocationRequestsCount: number;
+  submittedAllocationRequestsCount: number;
+  approvedAllocationRequestsCount: number;
+  rejectedAllocationRequestsCount: number;
+  cancelledAllocationRequestsCount: number;
+  duplicateAllocationRequestsCount: number;
+}
+
 export default function EftTransactionsPage() {
   const [transactions, setTransactions] = useState<IEftTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -61,7 +76,7 @@ export default function EftTransactionsPage() {
 
   const { message, notification } = App.useApp();
 
-  const [stats, setStats] = useState<{ count: number }>({ count: 0 });
+  const [stats, setStats] = useState<IEftStats>({ count: 0, totalAllocationRequestsCount: 0, pendingAllocationRequestsCount: 0, submittedAllocationRequestsCount: 0, approvedAllocationRequestsCount: 0, rejectedAllocationRequestsCount: 0, cancelledAllocationRequestsCount: 0, duplicateAllocationRequestsCount: 0 });
 
   const [imports, setImports] = useState<IEftImportData[]>([]);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
@@ -94,7 +109,7 @@ export default function EftTransactionsPage() {
 
       const data = await response.json();
       setTransactions(data.transactions);
-      setStats({ count: data.count });
+      setStats(data.stats);
     } catch (err) {
       console.log(err);
       setError("An error occurred while fetching transactions.");
@@ -309,6 +324,7 @@ export default function EftTransactionsPage() {
                 title="Selected Transactions"
                 value={transactions?.length || 0}
               />
+              <Statistic title="Allocation Requests" value={stats.totalAllocationRequestsCount} />
             </Space>
           </Col>
           <Col
@@ -332,34 +348,10 @@ export default function EftTransactionsPage() {
           onClose={() => setError(false)}
         />
       )}
-      <Form
-        layout="vertical"
-        style={{
-          width: "100%",
-          borderBottom: "1px solid #ddd",
-          padding: "2rem 1rem 3rem 1rem",
-        }}
-      >
-        <Space
-          size={32}
-          wrap
-          style={{
-            display: "flex",
-            justifyContent: "flex-start",
-            paddingBottom: "0",
-            width: "100%",
-          }}
-        >
-          <Form.Item style={{ marginBottom: "0" }}>
-            <p
-              style={{
-                marginBottom: ".5rem",
-                textTransform: "uppercase",
-                letterSpacing: ".2rem",
-              }}
-            >
-              Search for reference
-            </p>
+      <Form layout="vertical" className="w-full mb-8">
+        <Space size={32} wrap className="flex w-full">
+          <Form.Item className="mb-0">
+            <p className="mb-2 dark:text-white font-medium">Search for reference</p>
             <Search
               allowClear
               value={search}
@@ -375,15 +367,7 @@ export default function EftTransactionsPage() {
             />
           </Form.Item>
           <Form.Item style={{ marginBottom: "0" }}>
-            <p
-              style={{
-                marginBottom: ".5rem",
-                textTransform: "uppercase",
-                letterSpacing: ".2rem",
-              }}
-            >
-              Search for Amount
-            </p>
+            <p className="mb-2 dark:text-white font-medium">Search for Amount</p>
             <Space>
               <Search
                 allowClear
@@ -476,25 +460,43 @@ export default function EftTransactionsPage() {
             sorter: (a, b) => a.amount - b.amount,
           },
           {
+            title: "Allocation",
+            dataIndex: "allocationRequests",
+            key: "allocationRequests",
+            sorter: (a, b) => (a.allocationRequests?.length || 0) - (b.allocationRequests?.length || 0),
+            render: (requests: IAllocationRequest[]) => {
+              if (requests.length === 0) return;
+              return (
+                <Space>
+                  <Tag>{requests.length > 1 ? `${requests.length} requests` : requests[0].status}</Tag>
+                </Space>
+              );
+            },
+          },
+          {
             title: "Actions",
             key: "actions",
-            render: (_: any, record: any) => (
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      key: "request-allocation",
-                      icon: <InboxOutlined />,
-                      label: "Request Allocation",
-                      onClick: () => openAllocationRequestDrawer(record)
-                    },
-                  ]
-                }}
-                trigger={["click"]}
-              >
-                <Button icon={<MoreOutlined />} />
-              </Dropdown>
-            ),
+            render: (_: any, record: IEftTransaction) => {
+              const hasAllocationRequests = record.allocationRequests && record.allocationRequests.length > 0;
+              return (
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: "request-allocation",
+                        icon: <InboxOutlined />,
+                        label: "Request Allocation",
+                        onClick: () => openAllocationRequestDrawer(record),
+                        disabled: hasAllocationRequests,
+                      },
+                    ]
+                  }}
+                  trigger={["click"]}
+                >
+                  <Button icon={<MoreOutlined />} />
+                </Dropdown>
+              )
+            },
           },
         ]}
       />

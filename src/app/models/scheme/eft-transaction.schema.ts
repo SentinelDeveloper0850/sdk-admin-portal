@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 // Define the interface for TypeScript
 export interface IEftTransaction extends Document {
-  _id?: string;
+  _id?: mongoose.Types.ObjectId;
   uuid: string;
   date: string;
   source: string;
@@ -10,20 +10,18 @@ export interface IEftTransaction extends Document {
   description: string;
   amount: number;
   created_at: Date;
+  allocationRequests?: mongoose.Types.ObjectId[];
 }
 
-// Define the schema
 const EftTransactionSchema: Schema = new Schema({
   uuid: { type: String, required: true },
   date: { type: String, required: true },
   source: { type: String, required: true },
-  additionalInformation: { type: String, required: false, default: "--" },
-  description: { type: String, required: false, default: "--" },
+  additionalInformation: { type: String, default: "--" },
+  description: { type: String, default: "--" },
   amount: { type: Number, required: true },
-  created_at: {
-    type: Date,
-    default: Date.now(),
-  },
+  created_at: { type: Date, default: Date.now },            // <- function, not call
+  allocationRequests: [{ type: Schema.Types.ObjectId, ref: "AllocationRequest", default: [] }], // <- ObjectId + ref works
 });
 
 // Check if the model is already compiled

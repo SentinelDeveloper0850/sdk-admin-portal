@@ -9,15 +9,25 @@ import {
   IEftTransaction,
 } from "@/app/models/scheme/eft-transaction.schema";
 import { connectToDatabase } from "@/lib/db";
+import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 
 export const fetchAll = async (limit?: number) => {
   try {
     await connectToDatabase();
 
     const numberOfTransactions = await EftTransactionModel.countDocuments();
+    
+    const totalAllocationRequestsCount = await AllocationRequestModel.countDocuments({ type: "EFT" });
+    const pendingAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "PENDING", type: "EFT" });
+    const submittedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "SUBMITTED", type: "EFT" });
+    const approvedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "APPROVED", type: "EFT" });
+    const rejectedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "REJECTED", type: "EFT" });
+    const cancelledAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "CANCELLED", type: "EFT" });
+    const duplicateAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "DUPLICATE", type: "EFT" });
 
     let transactionsQuery = EftTransactionModel.find()
-      .sort({ date: -1 });
+      .sort({ date: -1 })
+      .populate({ path: "allocationRequests", strictPopulate: false });
 
     if (limit) {
       transactionsQuery = transactionsQuery.limit(limit);
@@ -28,7 +38,16 @@ export const fetchAll = async (limit?: number) => {
     return {
       success: true,
       data: {
-        count: numberOfTransactions,
+        stats: {
+          count: numberOfTransactions,
+          totalAllocationRequestsCount: totalAllocationRequestsCount,
+          pendingAllocationRequestsCount: pendingAllocationRequestsCount,
+          submittedAllocationRequestsCount: submittedAllocationRequestsCount,
+          approvedAllocationRequestsCount: approvedAllocationRequestsCount,
+          rejectedAllocationRequestsCount: rejectedAllocationRequestsCount,
+          cancelledAllocationRequestsCount: cancelledAllocationRequestsCount,
+          duplicateAllocationRequestsCount: duplicateAllocationRequestsCount,
+        },
         transactions: transactions,
       },
     };
@@ -50,7 +69,8 @@ export const searchTransactions = async (searchText: string) => {
         { description: { $regex: searchText, $options: "i" } },
         { additionalInformation: { $regex: searchText, $options: "i" } },
       ],
-    }).sort({ date: -1 });
+    }).sort({ date: -1 })
+    .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
       success: true,
@@ -84,7 +104,8 @@ export const searchTransactionsByAmount = async (
                 : { $eq: amount },
         },
       ],
-    }).sort({ amount: filter === "<" ? "desc" : "asc" });
+    }).sort({ amount: filter === "<" ? "desc" : "asc" })
+    .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
       success: true,
@@ -123,7 +144,8 @@ export const findOne = async (id: string) => {
   try {
     await connectToDatabase();
 
-    const transaction = await EftTransactionModel.findById(id);
+    const transaction = await EftTransactionModel.findById(id)
+    .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
       success: true,
