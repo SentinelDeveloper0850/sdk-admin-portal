@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
 
     const allocation = await AllocationRequestModel.create({
       transactionId,
+      policyNumber,
       policyId: policy._id,
       notes,
       evidence: [],

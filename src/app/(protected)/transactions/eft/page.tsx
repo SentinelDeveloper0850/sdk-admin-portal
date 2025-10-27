@@ -234,10 +234,6 @@ export default function EftTransactionsPage() {
         });
       }
 
-      // Append simple fields last
-      formData.append("policyNumber", data.policyNumber);
-      formData.append("notes", data.notes || "");
-
       const response = await fetch(`/api/transactions/eft/request-allocation`, {
         method: "POST",
         body: formData,
