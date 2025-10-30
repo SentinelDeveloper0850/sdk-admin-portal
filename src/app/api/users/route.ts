@@ -10,13 +10,22 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url);
     const deleted = url.searchParams.get("deleted");
+    const slim = url.searchParams.get("slim");
     const onlyDeleted = deleted === "true";
 
     const query = onlyDeleted
       ? { deletedAt: { $exists: true } }
       : { deletedAt: { $exists: false } };
 
-    const users = await UsersModel.find(query).sort({ createdAt: -1 });
+    let users = [];
+
+    if (slim) {
+      // Select only the _id and name fields
+      users = await UsersModel.find(query).select("_id name").sort({ createdAt: -1 });
+    } else {
+      users = await UsersModel.find(query).sort({ createdAt: -1 });
+    }
+
 
     return NextResponse.json(users, { status: 200 });
   } catch (error: any) {

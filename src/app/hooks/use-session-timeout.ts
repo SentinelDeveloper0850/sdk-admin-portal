@@ -35,7 +35,7 @@ export function useSessionTimeout({
       onTimeout();
     } else {
       // Default behavior: redirect to login
-      router.push("/login");
+      router.push("/auth/signin");
     }
   };
 

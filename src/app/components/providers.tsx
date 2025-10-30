@@ -27,6 +27,18 @@ export default function Providers({ children }: { children: ReactNode }) {
           token: {
             colorPrimary: "#FFC107",
           },
+          components: {
+            Switch: {
+              colorBgBase: "#1a1a1a",
+              handleBg: "#ffa318",
+              colorPrimary: "#FFC107",
+              colorPrimaryBorder: "#ff8818",
+              colorText: "#1a1a1a",
+              colorTextLightSolid: "#1a1a1a",
+              // colorTextQuaternary: "#ffe39071",
+              colorTextTertiary: "#ffc118",
+            },
+          },
         }}
       >
         <NextUIProvider

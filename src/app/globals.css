@@ -42,9 +42,9 @@ a:hover {
   border-color: #333 !important;
 }
 
-.ant-table-row:hover > td {
+/* .ant-table-row:hover > td {
   @apply text-primary;
-}
+} */
 
 .dark .ant-table-row:hover > td {
   background-color: #2e2e2e !important;

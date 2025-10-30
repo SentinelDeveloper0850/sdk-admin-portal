@@ -8,6 +8,7 @@ import { Tooltip } from "antd";
 import {
   Banknote,
   BarChart3,
+  Calendar,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
@@ -31,10 +32,16 @@ const SideNavBar = () => {
 
   const menuItems = [
     {
-      id: 1,
+      id: 0,
       name: "Dashboard",
       icon: <LayoutDashboard size={18} />,
       url: "/dashboard",
+    },
+    {
+      id: 1,
+      name: "Calendar",
+      icon: <Calendar size={18} />,
+      url: "/calendar",
     },
     {
       id: 2,
@@ -222,32 +229,39 @@ const SideNavBar = () => {
       group: "Management",
       children: [
         {
+          id: "staff-members",
+          name: "Staff Members",
+          url: "/configurations/staff-members",
+          allowedRoles: [ERoles.Admin, ERoles.HRManager],
+          icon: undefined,
+        },
+        {
           id: "system-config",
           name: "System",
-          icon: <Settings size={18} />,
           url: "/configurations/system",
           allowedRoles: [ERoles.Admin],
+          icon: undefined,
         },
         {
           id: "scheme-config",
           name: "Scheme",
-          icon: <Settings size={18} />,
           url: "/configurations/scheme",
           allowedRoles: [ERoles.Admin],
+          icon: undefined,
         },
         {
           id: "branches-config",
           name: "Branches",
-          icon: <Settings size={18} />,
           url: "/configurations/branches",
           allowedRoles: [ERoles.Admin],
+          icon: undefined,
         },
         {
           id: "daily-activity-reminders-config",
           name: "Daily Activity Reminders",
-          icon: <Settings size={18} />,
           url: "/configurations/daily-activity-reminders",
           allowedRoles: [ERoles.Admin],
+          icon: undefined,
         },
       ],
     },
@@ -281,7 +295,7 @@ const SideNavBar = () => {
 
   return (
     <section
-      className={`h-full ${collapsed ? "w-16" : "w-64"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}
+      className={`h-full ${collapsed ? "w-16" : "w-64"} overflow-hidden overflow-y-scroll bg-white transition-all duration-200 dark:bg-zinc-900`}
     >
       <div
         className={`flex ${collapsed ? "justify-center" : "justify-end"} p-2`}
@@ -332,7 +346,7 @@ const SideNavBar = () => {
                             : "text-gray-600"
                             }`}
                         >
-                          {child.icon}
+                          {child.icon ?? <></>}
                           <span>{child.name}</span>
                         </div>
                       </Link>
