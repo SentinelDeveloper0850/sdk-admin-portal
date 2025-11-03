@@ -1,16 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from 'react'
-import { Alert, Button, Calendar, Checkbox, DatePicker, Divider, Drawer, Flex, Form, Input, message, Select, Space, Switch, TimePicker } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
-import { Building, Building2, User2 } from 'lucide-react'
+import { PlusOutlined } from '@ant-design/icons';
+import { Alert, Button, Checkbox, DatePicker, Drawer, Flex, Form, Input, message, Select, TimePicker } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
+import { combineDateAndTime } from '@/lib/utils';
 
-import PageHeader from '@/app/components/page-header'
-import CompanyCalendar from './company-calendar'
-import BranchCalendar from './branch-calendar'
-import PersonalCalendar from './personal-calendar'
 import CalendarPageContextMenu from '@/app/components/context-menu/calendar-page-context-menu';
+import PageHeader from '@/app/components/page-header';
 import { ICalendarEvent } from '@/app/models/calendar-event.schema';
+import axios from 'axios';
+import BranchCalendar from './branch-calendar';
+import CompanyCalendar from './company-calendar';
+import PersonalCalendar from './personal-calendar';
+import sweetAlert from 'sweetalert';
 
 const eventTypes = [
   {
@@ -64,6 +67,8 @@ const meetingProviders = [
 
 const CalendarPage = () => {
   const [selectedCalendar, setSelectedCalendar] = useState<string>('company');
+  const [companyEvents, setCompanyEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const calendarType = selectedCalendar === "company" ? "Company" : selectedCalendar === "branch" ? "Branch" : "Personal";
 
@@ -91,30 +96,165 @@ const CalendarPage = () => {
     loadStaffMembers();
   }, []);
 
-  const handleAddEvent = (values: ICalendarEvent) => {
+  const fetchEvents = async () => {
     try {
-      let payload = values;
+      setLoading(true);
+      const result = await fetch('/api/calendar/events?type=company');
+      const data = await result.json();
 
-      payload.startDateTime = values.startDateTime;
-      payload.endDateTime = values.endDateTime;
-      payload.durationHours = payload.endDateTime.getHours() - payload.startDateTime.getHours();
-      payload.durationMinutes = payload.endDateTime.getMinutes() - payload.startDateTime.getMinutes();
-      payload.isSingleDayEvent = payload.startDateTime.toDateString() === payload.endDateTime.toDateString();
-      payload.isAllDayEvent = payload.startDateTime.getHours() === 0 && payload.endDateTime.getHours() === 23 && payload.startDateTime.getMinutes() === 0 && payload.endDateTime.getMinutes() === 59;
+      const events = data.events?.map((event: any) => ({
+        id: event._id,
+        title: event.name,
+        start: `${event.start}`,
+        startTime: event.startTime,
+        end: event.end,
+        description: event.description,
+        color: "#ffac00",
+        textColor: "#000",
+        extendedProps: { ...event },
+      })) || [];
+      console.log("🚀 ~ fetchEvents ~ events:", events)
 
-    } catch (err) {
+      setCompanyEvents(events);
+    } catch (error) {
+      console.error("Error loading company events:", error);
+      sweetAlert({
+        title: "Error loading company events",
+        text: error instanceof Error ? error.message : "Failed to load company events",
+        icon: "error",
+        timer: 2000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const handleAddEvent = async (values: ICalendarEvent) => {
+    try {
+      setAddingEvent(true);
+
+      // values.start and values.startTime are Dayjs from AntD DatePicker/TimePicker
+      const startDT = combineDateAndTime(values.start as any, values.startTime as any); // Dayjs
+      if (!startDT.isValid()) throw new Error('Invalid start date/time');
+
+      // optional end handling: if you have end + endTime, combine; else use duration; else default 60m
+      let endDT: dayjs.Dayjs | null = null;
+      if (values.end) {
+        endDT = combineDateAndTime(values.end as any, values.endTime as any);
+        if (!endDT.isValid()) endDT = null;
+      } else if (values.durationHours || values.durationMinutes) {
+        endDT = startDT
+          .add(values.durationHours ?? 0, 'hour')
+          .add(values.durationMinutes ?? 0, 'minute');
+      } else {
+        endDT = startDT.add(60, 'minute'); // sensible default
+      }
+
+      const payload = {
+        // canonical fields the backend should store
+        name: values.name,
+        description: values.description,
+        type: values.type,
+        isAllDayEvent: !!values.isAllDayEvent,
+        isPrivate: !!values.isPrivate,
+        isVirtualEvent: !!values.isVirtualEvent,
+        virtualEventDetails: values.virtualEventDetails ?? undefined,
+        location: values.location ?? undefined,
+        attendees: values.attendees ?? [],
+        branchId: (values as any).branchId, // if you capture it on the form
+
+        // canonical: use Date fields
+        startDateTime: startDT.toDate(),
+        endDateTime: endDT?.toDate(),
+
+        // (optional) keep UI helpers if you want them in the doc
+        start: startDT.toISOString(),                // string mirror
+        end: endDT?.toISOString(),                   // string mirror
+        startTime: startDT.format('HH:mm'),
+        endTime: endDT?.format('HH:mm'),
+        durationHours: values.durationHours,
+        durationMinutes: values.durationMinutes,
+      };
+
+      const res = await axios.post('/api/calendar/events', payload);
+      if (res.status !== 201) throw new Error(res.data?.message || 'Failed to add event');
+
+      sweetAlert({ title: 'Event added successfully', icon: 'success', timer: 2000 });
+      setAddEventDrawerOpen(false);
+      addEventForm.resetFields();
+      fetchEvents();
+    } catch (err: any) {
       console.error(err);
+      sweetAlert({
+        title: 'Error adding event',
+        text: err?.message || 'Failed to add event',
+        icon: 'error',
+        timer: 2000,
+      });
     } finally {
       setAddingEvent(false);
-      message.error("Failed to add event. Please try again.");
     }
-  }
+  };
 
   // Watch for changes on isVirtualEvent
   const isVirtualEvent = Form.useWatch("isVirtualEvent", addEventForm);
   const isPrivate = Form.useWatch("isPrivate", addEventForm);
   const isSingleDayEvent = Form.useWatch("isSingleDayEvent", addEventForm);
   const isAllDayEvent = Form.useWatch("isAllDayEvent", addEventForm);
+  const isFuneralEvent = Form.useWatch("type", addEventForm) === "funeral";
+
+  const saveCalendarChange = async (payload: {
+    id: string;
+    start: string | null;
+    end: string | null;
+    allDay: boolean;
+    extendedProps: Record<string, any>;
+  }) => {
+    console.log("🚀 ~ saveCalendarChange ~ payload:", payload)
+    const res = await fetch(`/api/calendar/events/${payload.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        start: payload.start,
+        end: payload.end,
+        allDay: payload.allDay,
+        extendedProps: payload.extendedProps,
+        action: "move", // or "resize"/"receive" if you want to log audit trails
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(res.statusText);
+    }
+    return true;
+  };
+
+  const fcEvents = useMemo(() => {
+    return companyEvents
+      .map(e => {
+        console.log("🚀 ~ CalendarPage ~ e:", e)
+        const startISO = e.startDateTime
+          ? new Date(e.startDateTime).toISOString()
+          : (e.start && !Number.isNaN(Date.parse(e.start)) ? new Date(e.start).toISOString() : null);
+
+        const endISO = e.endDateTime
+          ? new Date(e.endDateTime).toISOString()
+          : (e.end && !Number.isNaN(Date.parse(e.end)) ? new Date(e.end).toISOString() : null);
+
+        return startISO ? {
+          id: String(e._id),
+          title: e.title,
+          start: startISO,
+          end: endISO || undefined,
+          allDay: !!e.isAllDayEvent,
+          extendedProps: { ...e },
+        } : null;
+      })
+      .filter(e => e !== null)
+  }, [companyEvents]);
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -128,7 +268,7 @@ const CalendarPage = () => {
             </Button>
           ]}
         />
-        {selectedCalendar === 'company' && <CompanyCalendar />}
+        {selectedCalendar === 'company' && <CompanyCalendar events={fcEvents} loading={loading} onEventChange={saveCalendarChange} />}
         {selectedCalendar === 'branch' && <BranchCalendar />}
         {selectedCalendar === 'personal' && <PersonalCalendar />}
       </div>
@@ -161,16 +301,16 @@ const CalendarPage = () => {
 
           <h4 className="text-md font-semibold mb-2">Event Options</h4>
           <Flex gap={16}>
-            <Form.Item name="isVirtualEvent" valuePropName="checked">
+            <Form.Item name="isVirtualEvent" valuePropName="checked" initialValue={false}>
               <Checkbox>Virtual Event</Checkbox>
             </Form.Item>
-            <Form.Item name="isPrivate" valuePropName="checked">
+            <Form.Item name="isPrivate" valuePropName="checked" initialValue={false}>
               <Checkbox>Private Event</Checkbox>
             </Form.Item>
-            <Form.Item name="isSingleDayEvent" valuePropName="checked">
+            <Form.Item name="isSingleDayEvent" valuePropName="checked" initialValue={true}>
               <Checkbox>Single Day Event</Checkbox>
             </Form.Item>
-            <Form.Item name="isAllDayEvent" valuePropName="checked">
+            <Form.Item name="isAllDayEvent" valuePropName="checked" initialValue={false}>
               <Checkbox>All Day Event</Checkbox>
             </Form.Item>
           </Flex>
@@ -188,12 +328,12 @@ const CalendarPage = () => {
             <Form.Item className="w-1/2" label="Event Type" name="type" rules={[{ required: true, message: "Please select the event type" }]}>
               <Select placeholder="Select event type" options={eventTypes.map((type) => ({ label: type.name, value: type.value }))} />
             </Form.Item>
-            <Form.Item className="w-1/2" label="Event Location" name="location" rules={[{ required: true, message: "Please enter the event location" }]}>
+            <Form.Item className="w-1/2" label="Event Location" name="location">
               <Input placeholder="Enter event location" />
             </Form.Item>
           </Flex>
 
-          <Form.Item label="Event Description" name="description" rules={[{ required: true, message: "Please enter the event description" }]}>
+          <Form.Item label="Event Description" name="description">
             <Input.TextArea />
           </Form.Item>
 
@@ -203,7 +343,7 @@ const CalendarPage = () => {
             {/* <h4 className="text-sm font-semibold mb-2">Virtual Meeting Details</h4> */}
 
             <Flex gap={16}>
-              <Form.Item name="virtualEventDetails.provider" label="Meeting Provider" className="w-1/3">
+              <Form.Item name="virtualEventDetails.provider" label="Meeting Provider" className="w-1/3" initialValue="discord">
                 <Select placeholder="Select meeting provider" options={meetingProviders.map((provider) => ({ label: provider.name, value: provider.value }))} />
               </Form.Item>
               <Form.Item name="virtualEventDetails.id" label="Meeting ID" className="w-1/3">
@@ -225,32 +365,28 @@ const CalendarPage = () => {
 
           {isSingleDayEvent ? (
             <Flex gap={16}>
-              <Form.Item label="Event Date" className="w-1/3" name="date" rules={[{ required: true, message: "Please enter the event date" }]}>
+              <Form.Item label="Event Date" className="w-1/3" name="start" rules={[{ required: true, message: "Please enter the event date" }]}>
                 <DatePicker className="w-full" />
               </Form.Item>
               {!isAllDayEvent && <>
                 <Form.Item label="Start Time" className="w-1/3" name="startTime" rules={[{ required: true, message: "Please enter the event time" }]}>
                   <TimePicker className="w-full" />
                 </Form.Item>
-                <Form.Item label="End Time" className="w-1/3" name="endTime" rules={[{ required: true, message: "Please enter the event time" }]}>
+                {!isFuneralEvent && <Form.Item label="End Time" className="w-1/3" name="endTime" rules={[{ required: true, message: "Please enter the event time" }]}>
                   <TimePicker className="w-full" />
-                </Form.Item>
+                </Form.Item>}
               </>}
             </Flex>
           ) : (
             <Flex gap={16}>
-              <Form.Item label="StartDate" className="w-1/3" name="startDate" rules={[{ required: true, message: "Please enter the event dates" }]}>
+              <Form.Item label="Start Date" className="w-1/3" name="start" rules={[{ required: true, message: "Please enter the event dates" }]}>
                 <DatePicker className="w-full" />
               </Form.Item>
-              <Form.Item label="EndDate" className="w-1/3" name="endDate" rules={[{ required: true, message: "Please enter the event dates" }]}>
+              <Form.Item label="End Date" className="w-1/3" name="end" rules={[{ required: true, message: "Please enter the event dates" }]}>
                 <DatePicker className="w-full" />
               </Form.Item>
             </Flex>
           )}
-
-          {isSingleDayEvent || isAllDayEvent && <Form.Item label="Event Date" name="date" rules={[{ required: true, message: "Please enter the event date" }]}>
-            <DatePicker showTime={!isAllDayEvent} />
-          </Form.Item>}
 
           <hr className="mb-4" />
 

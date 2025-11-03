@@ -41,7 +41,7 @@ const CalendarPageContextMenu = ({ selectedCalendar, setSelectedCalendar }: { se
 
   return (
     <section className={`h-full ${collapsed ? "w-14" : "w-64"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}>
-      <div className={`flex ${collapsed ? "justify-center" : "justify-end"} p-2`}>
+      <div className={`flex ${collapsed ? "justify-center" : "justify-start ml-3"} p-2`}>
         <Tooltip title={collapsed ? "Expand Context Menu" : "Collapse Context Menu"} placement="left">
           <button
             onClick={() => setCollapsed(!collapsed)}

@@ -11,6 +11,8 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ClipboardCheck,
   FileText,
   LayoutDashboard,
@@ -295,16 +297,16 @@ const SideNavBar = () => {
 
   return (
     <section
-      className={`h-full ${collapsed ? "w-16" : "w-64"} overflow-hidden overflow-y-scroll bg-white transition-all duration-200 dark:bg-zinc-900`}
+      className={`h-full ${collapsed ? "w-16" : "w-64 overflow-y-scroll"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}
     >
       <div
-        className={`flex ${collapsed ? "justify-center" : "justify-end"} p-2`}
+        className={`flex ${collapsed ? "justify-center !ml-[-4px]" : "justify-end"} p-2`}
       >
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="text-zinc-500 hover:text-black dark:hover:text-white"
+          className="text-zinc-500 hover:text-black dark:hover:text-white px-2"
         >
-          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          {collapsed ? <ChevronsRight size={20} /> : <ChevronsLeft size={20} />}
         </button>
       </div>
 

@@ -34,7 +34,7 @@ export interface IAttendee {
   name: string;
   email?: string;
   phone?: string;
-  userId?: string;
+  userId?: string; // used by filters like attendees: user._id
 }
 
 export interface ILocation {
@@ -43,7 +43,7 @@ export interface ILocation {
   address?: string;
   latitude?: number;
   longitude?: number;
-  branchId?: string;
+  branchId?: string; // optional: physical location tied to a branch
 }
 
 export interface IVirtualEventDetails {
@@ -56,65 +56,247 @@ export interface IVirtualEventDetails {
 }
 
 export interface ICalendarEvent extends Document {
-  name: string;
+  // Core
+  name: string;                 // <-- will be exposed via virtual "title" for FullCalendar
   description: string;
-  type: string;
-  
-  isVirtualEvent: boolean;
+  type: string;                 // "funeral" | "meeting" | "shift" | ...
+  branchId?: string;            // <-- added; your GET uses this
+
+  // Meeting style
+  isVirtualEvent?: boolean;
   virtualEventDetails?: IVirtualEventDetails;
 
-  isSingleDayEvent: boolean;
-  isPrivate: boolean;
-  isAllDayEvent: boolean;
+  // Flags
+  isSingleDayEvent?: boolean;
+  isPrivate?: boolean;
+  isAllDayEvent?: boolean;
 
-  startDateTime: Date;
-  endDateTime: Date;
-  durationHours: number;
-  durationMinutes: number;
-  
-  location: ILocation;
-  attendees: IAttendee[];
-  notes: INote[];
-  comments: IComment[];
-  attachments: IAttachment[];
+  // Time (Date fields are source of truth)
+  startDateTime?: Date;
+  startTime?: string;           // "HH:mm" (optional, kept for legacy UI)
+  start: string;                // ISO string (kept & auto-synced)
 
-  status: CalendarEventStatus;
-  
-  createdBy: string;
-  createdById: string;
+  endDateTime?: Date;
+  endTime?: string;
+  end: string;                  // ISO string (kept & auto-synced)
+
+  durationHours?: number;
+  durationMinutes?: number;
+
+  // Other
+  location?: ILocation;
+  attendees?: IAttendee[];
+  notes?: INote[];
+  comments?: IComment[];
+  attachments?: IAttachment[];
+
+  status?: CalendarEventStatus;
+
+  createdBy?: string;
+  createdById?: string;
 
   createdAt?: Date;
   updatedAt?: Date;
+
+  // Virtuals
+  title?: string;               // alias of name for FullCalendar
+  allDay?: boolean;             // alias of isAllDayEvent for FullCalendar
 }
 
-const CalendarEventSchema = new Schema({
-  name: { type: String, required: true },
-  description: { type: String, required: true },
-  type: { type: String, required: true },
+const NoteSchema = new Schema<INote>(
+  {
+    note: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    createdBy: { type: String, required: true },
+    createdById: { type: String, required: true },
+  },
+  { _id: false }
+);
 
-  isVirtualEvent: { type: Boolean, required: true },
-  virtualEventDetails: { type: Schema.Types.Mixed, required: false },
+const CommentSchema = new Schema<IComment>(
+  {
+    comment: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    createdBy: { type: String, required: true },
+    createdById: { type: String, required: true },
+  },
+  { _id: false }
+);
 
-  isSingleDayEvent: { type: Boolean, required: true },
-  isPrivate: { type: Boolean, required: false, default: false },
-  isAllDayEvent: { type: Boolean, required: false, default: false },
+const AttachmentSchema = new Schema<IAttachment>(
+  {
+    label: { type: String, required: true },
+    url: { type: String, required: true },
+    contentType: { type: String, required: true },
+    sizeBytes: { type: Number, required: true },
+    createdAt: { type: Date, default: Date.now },
+    createdBy: { type: String, required: true },
+    createdById: { type: String, required: true },
+  },
+  { _id: false }
+);
 
-  startDateTime: { type: Date, required: true },
-  endDateTime: { type: Date, required: true },
-  durationHours: { type: Number, required: true },
-  durationMinutes: { type: Number, required: true },
+const AttendeeSchema = new Schema<IAttendee>(
+  {
+    name: { type: String, required: true },
+    email: String,
+    phone: String,
+    userId: String,
+  },
+  { _id: false }
+);
 
-  location: { type: Schema.Types.Mixed, required: true },
-  attendees: { type: [Schema.Types.Mixed], required: true },
-  notes: { type: [Schema.Types.Mixed], required: true },
-  comments: { type: [Schema.Types.Mixed], required: true },
-  attachments: { type: [Schema.Types.Mixed], required: true },
+const LocationSchema = new Schema<ILocation>(
+  {
+    name: { type: String, required: true },
+    description: String,
+    address: String,
+    latitude: Number,
+    longitude: Number,
+    branchId: String,
+  },
+  { _id: false }
+);
 
-  status: { type: String, required: true, enum: CalendarEventStatus },
+const VirtualEventDetailsSchema = new Schema<IVirtualEventDetails>(
+  {
+    id: String,
+    url: String,
+    type: String,
+    provider: String,
+    joinUrl: String,
+    password: String,
+  },
+  { _id: false }
+);
 
-  createdBy: { type: String, required: true },
-  createdById: { type: String, required: true },
+const CalendarEventSchema = new Schema<ICalendarEvent>(
+  {
+    // Core
+    name: { type: String, required: true },
+    description: { type: String, required: false },
+    type: { type: String, required: true },
+    branchId: { type: String, required: false }, // <-- added
 
-}, { timestamps: true });
+    // Meeting style
+    isVirtualEvent: { type: Boolean, default: false },
+    virtualEventDetails: { type: VirtualEventDetailsSchema, required: false },
 
-export const CalendarEventModel = mongoose.models.CalendarEvent || mongoose.model<ICalendarEvent>("CalendarEvent", CalendarEventSchema);
+    // Flags
+    isSingleDayEvent: { type: Boolean, default: true },
+    isPrivate: { type: Boolean, default: false },
+    isAllDayEvent: { type: Boolean, default: false },
+
+    // Time (Dates are canonical; string fields are synced for clients)
+    startDateTime: { type: Date },
+    start: { type: String },        // ISO; auto-filled from startDateTime
+    startTime: { type: String },    // "HH:mm" (optional UI helper)
+
+    endDateTime: { type: Date },
+    end: { type: String },          // ISO; auto-filled from endDateTime
+    endTime: { type: String },      // "HH:mm"
+
+    durationHours: { type: Number },
+    durationMinutes: { type: Number },
+
+    // Other
+    location: { type: LocationSchema, required: false },
+    attendees: { type: [AttendeeSchema], required: false, default: [] },
+    notes: { type: [NoteSchema], required: false, default: [] },
+    comments: { type: [CommentSchema], required: false, default: [] },
+    attachments: { type: [AttachmentSchema], required: false, default: [] },
+
+    status: {
+      type: String,
+      enum: Object.values(CalendarEventStatus),
+      default: CalendarEventStatus.DRAFT,
+    },
+
+    createdBy: { type: String },
+    createdById: { type: String },
+  },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+/**
+ * Virtuals for FullCalendar compatibility
+ * - title: uses name
+ * - allDay: mirrors isAllDayEvent
+ */
+CalendarEventSchema.virtual("title").get(function (this: ICalendarEvent) {
+  return this.name;
+});
+CalendarEventSchema.virtual("allDay").get(function (this: ICalendarEvent) {
+  return !!this.isAllDayEvent;
+});
+
+/**
+ * Keep string fields (start/end) in sync with Date fields.
+ * Also compute isSingleDayEvent if both dates exist.
+ */
+CalendarEventSchema.pre("save", function (next) {
+  if (this.startDateTime) {
+    this.start = this.startDateTime.toISOString();
+    // Default startTime if not provided
+    if (!this.startTime) {
+      const d = this.startDateTime;
+      this.startTime = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
+  }
+  if (this.endDateTime) {
+    this.end = this.endDateTime.toISOString();
+    if (!this.endTime) {
+      const d = this.endDateTime;
+      this.endTime = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
+  }
+
+  // Derive endDateTime from duration if missing
+  if (this.startDateTime && !this.endDateTime && (this.durationHours || this.durationMinutes)) {
+    const ms =
+      (this.durationHours ? this.durationHours * 60 : 0) * 60 * 1000 +
+      (this.durationMinutes ? this.durationMinutes : 0) * 60 * 1000;
+    this.endDateTime = new Date(this.startDateTime.getTime() + ms);
+    this.end = this.endDateTime.toISOString();
+  }
+
+  // Normalize all-day: strip time to midnight if desired (optional)
+  if (this.isAllDayEvent && this.startDateTime) {
+    const s = new Date(this.startDateTime);
+    s.setHours(0, 0, 0, 0);
+    this.startDateTime = s;
+    this.start = s.toISOString();
+    if (this.endDateTime) {
+      const e = new Date(this.endDateTime);
+      e.setHours(0, 0, 0, 0);
+      this.endDateTime = e;
+      this.end = e.toISOString();
+    }
+  }
+
+  // isSingleDayEvent
+  if (this.startDateTime && this.endDateTime) {
+    const sameDay =
+      this.startDateTime.getFullYear() === this.endDateTime.getFullYear() &&
+      this.startDateTime.getMonth() === this.endDateTime.getMonth() &&
+      this.startDateTime.getDate() === this.endDateTime.getDate();
+    this.isSingleDayEvent = sameDay;
+  }
+
+  next();
+});
+
+/**
+ * Helpful indexes for range queries and common filters
+ */
+CalendarEventSchema.index({ startDateTime: 1 });
+CalendarEventSchema.index({ branchId: 1, startDateTime: 1 });
+CalendarEventSchema.index({ createdById: 1, startDateTime: 1 });
+CalendarEventSchema.index({ type: 1, startDateTime: 1 });
+
+export const CalendarEventModel: Model<ICalendarEvent> =
+  mongoose.models["calendar-events"] || mongoose.model<ICalendarEvent>("calendar-events", CalendarEventSchema);
