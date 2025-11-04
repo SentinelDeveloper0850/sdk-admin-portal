@@ -60,6 +60,7 @@ export interface ICalendarEvent extends Document {
   name: string;                 // <-- will be exposed via virtual "title" for FullCalendar
   description: string;
   type: string;                 // "funeral" | "meeting" | "shift" | ...
+  subType?: string;             // "funeral_pickup" | "funeral_bathing" | "funeral_tent" | "funeral_delivery" | "funeral_service" | "funeral_burial"
   branchId?: string;            // <-- added; your GET uses this
 
   // Meeting style
@@ -176,6 +177,7 @@ const CalendarEventSchema = new Schema<ICalendarEvent>(
     name: { type: String, required: true },
     description: { type: String, required: false },
     type: { type: String, required: true },
+    subType: { type: String, required: false },
     branchId: { type: String, required: false }, // <-- added
 
     // Meeting style

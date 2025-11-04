@@ -13,6 +13,8 @@ const JWT_AUDIENCE = "sdk-admin-portal-web";
 export async function middleware(request: NextRequest) {
   const protectedRoutes = [
     "/dashboard",
+    "/calendar",
+    "/funerals",
     "/transactions",
     "/policies",
     "/prepaid-societies",

@@ -332,10 +332,10 @@ const CompanyCalendar = ({
         title={<Flex justify="space-between" align="center">
           <Text>{details?.title}</Text>
           <Space>
-            <Tag color={details.status === 'published' ? 'green' : details.status === 'cancelled' ? 'red' : 'gold'}>
-              {String(details.status).toUpperCase()}
+            <Tag color={details?.status === 'published' ? 'green' : details?.status === 'cancelled' ? 'red' : 'gold'}>
+              {String(details?.status).toUpperCase()}
             </Tag>
-            {details?.type && <Tag color={details.type === 'funeral' ? 'red' : details.type === 'meeting' ? 'blue' : details.type === 'shift' ? 'green' : 'gold'}>{String(details.type).toUpperCase()}</Tag>}
+            {details?.type && <Tag color={details?.type === 'funeral' ? 'red' : details?.type === 'meeting' ? 'blue' : details?.type === 'shift' ? 'green' : 'gold'}>{String(details?.type).toUpperCase()}</Tag>}
           </Space>
         </Flex>}
         placement="right"

@@ -9,27 +9,24 @@ import {
   Banknote,
   BarChart3,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ClipboardCheck,
   FileText,
   LayoutDashboard,
   ListOrdered,
   Settings,
   Shield,
-  Users,
+  Users
 } from "lucide-react";
 import { HiOutlineDocumentCurrencyDollar } from "react-icons/hi2";
 
-import { ERoles } from "../../../types/roles.enum";
+import { IconCoffin, IconPigMoney } from "@tabler/icons-react";
+import { ERoles } from "../../types/roles.enum";
 import { useRole } from "../hooks/use-role";
-import { IconPigMoney } from "@tabler/icons-react";
 
 const SideNavBar = () => {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [openMenus, setOpenMenus] = useState<number[]>([]); // track open submenu items
 
   const menuItems = [
@@ -47,6 +44,12 @@ const SideNavBar = () => {
     },
     {
       id: 2,
+      name: "Funerals",
+      icon: <IconCoffin size={18} />,
+      url: "/funerals",
+    },
+    {
+      id: 3,
       name: "EFT Transactions",
       icon: <Banknote size={18} />,
       url: "/transactions/eft",
@@ -75,7 +78,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 3,
+      id: 4,
       name: "Easypay Transactions",
       icon: <Banknote size={18} />,
       url: "/transactions/easypay",
@@ -97,7 +100,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 4,
+      id: 5,
       name: "Policies",
       icon: <FileText size={18} />,
       url: "/policies",
@@ -134,7 +137,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 5,
+      id: 6,
       name: "Societies",
       icon: <Users size={18} />,
       url: "/societies",
@@ -158,7 +161,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 6,
+      id: 7,
       name: "Reports",
       icon: <BarChart3 size={18} />,
       url: "/reports",
@@ -175,7 +178,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 7,
+      id: 8,
       name: "Daily Activity",
       icon: <ListOrdered size={18} />,
       url: "/daily-activity",
@@ -183,7 +186,7 @@ const SideNavBar = () => {
       group: "Risk",
     },
     {
-      id: 8,
+      id: 9,
       name: "Cash-Up",
       icon: <IconPigMoney size={18} />,
       url: "/cash-up",
@@ -207,7 +210,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 9,
+      id: 10,
       name: "Claims",
       icon: <HiOutlineDocumentCurrencyDollar size={18} />,
       url: "/claims",
@@ -215,7 +218,7 @@ const SideNavBar = () => {
       group: "Risk",
     },
     {
-      id: 10,
+      id: 11,
       name: "Users",
       icon: <Shield size={18} />,
       url: "/users",

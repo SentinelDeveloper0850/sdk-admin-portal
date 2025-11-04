@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
 
     const user = await getUserFromRequest(request);
     if (!user) {
+      // Logout user
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 

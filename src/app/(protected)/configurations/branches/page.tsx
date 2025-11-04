@@ -31,7 +31,7 @@ import { IUser } from "@/app/models/hr/user.schema";
 import { useAuth } from "@/context/auth-context";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { CopyOutlined, MailOutlined, NumberOutlined, PhoneOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
-import { ERoles } from "../../../../../types/roles.enum";
+import { ERoles } from "../../../../types/roles.enum";
 
 const { TabPane } = Tabs;
 const { Option } = Select;

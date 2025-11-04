@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Badge, Col, Drawer, Image, Modal, Row, Space, Spin, Statistic, Table, Tag, message } from "antd";
+import { Col, Drawer, Image, Modal, Row, Space, Spin, Statistic, Table, Tag, message } from "antd";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
@@ -13,7 +13,7 @@ import { PolicySignupViewModal } from "@/app/components/policy-signup-view-modal
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
 
-import { ERoles } from "../../../../../types/roles.enum";
+import { ERoles } from "../../../../types/roles.enum";
 
 const getStatusColor = (status: string) => {
   switch (status.toLowerCase()) {

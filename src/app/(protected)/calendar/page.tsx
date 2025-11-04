@@ -261,7 +261,8 @@ const CalendarPage = () => {
       <div className="flex-1 space-y-6 p-6">
         <PageHeader
           title={`${selectedCalendar.charAt(0).toUpperCase() + selectedCalendar.slice(1)} Calendar`}
-          subtitle={`View and manage ${selectedCalendar === "company" ? "the company" : selectedCalendar === "branch" ? "your branch" : "your own"} calendar`}
+          // subtitle={`View and manage ${selectedCalendar === "company" ? "the company" : selectedCalendar === "branch" ? "your branch" : "your own"} calendar`}
+          subtitle="View and manage the company calendar"
           actions={[
             <Button key="add-event" type="dashed" onClick={() => setAddEventDrawerOpen(true)}>
               <PlusOutlined className="w-4 h-4" /> Add {calendarType} Event
@@ -269,8 +270,8 @@ const CalendarPage = () => {
           ]}
         />
         {selectedCalendar === 'company' && <CompanyCalendar events={fcEvents} loading={loading} onEventChange={saveCalendarChange} />}
-        {selectedCalendar === 'branch' && <BranchCalendar />}
-        {selectedCalendar === 'personal' && <PersonalCalendar />}
+        {/* {selectedCalendar === 'branch' && <BranchCalendar />}
+        {selectedCalendar === 'personal' && <PersonalCalendar />} */}
       </div>
 
       {/* Page Context Menu Container */}

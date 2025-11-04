@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 import useSWR from "swr";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
-import { ERoles } from "../../../../../../types/roles.enum";
+import { ERoles } from "../../../../../types/roles.enum";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 

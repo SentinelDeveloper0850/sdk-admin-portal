@@ -8,7 +8,7 @@ import { PolicySignupViewModal } from "@/app/components/policy-signup-view-modal
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
-import { ERoles } from "../../../../../../types/roles.enum";
+import { ERoles } from "../../../../../types/roles.enum";
 
 function SignupRequestDetailsPage() {
   const router = useRouter();

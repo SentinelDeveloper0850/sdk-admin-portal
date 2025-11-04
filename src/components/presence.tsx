@@ -31,11 +31,27 @@ export default function Presence() {
   const currentUserId = user?._id?.toString?.();
   const otherOnline = currentUserId ? online.filter(u => u.id !== currentUserId) : online;
 
+  const logoutUser = async () => {
+    try {
+      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      if (!res.ok) throw new Error(`Failed to logout (${res.status})`);
+      window.location.href = '/login';
+    } catch (error: any) {
+      console.error('Logout failed:', error);
+      window.location.href = '/login';
+    }
+    window.location.href = '/login';
+  };
+
   // Heartbeat: POST to /api/presence to update user's lastSeenAt
   const sendHeartbeat = async () => {
     if (!user) return;
     try {
-      await fetch('/api/presence', { method: 'POST' });
+      const res = await fetch('/api/presence', { method: 'POST' });
+      if (!res.ok) throw new Error(`Failed to send heartbeat (${res.status})`);
+      if (res.status === 401) {
+        await logoutUser();
+      }
       setLastError(null);
     } catch (error: any) {
       console.error('Heartbeat failed:', error);

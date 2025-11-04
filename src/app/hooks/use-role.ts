@@ -1,5 +1,5 @@
 import { useAuth } from "@/context/auth-context";
-import { ERoles } from "../../../types/roles.enum";
+import { ERoles } from "../../types/roles.enum";
 
 export const useRole = () => {
   const { user } = useAuth();

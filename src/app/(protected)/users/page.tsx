@@ -8,9 +8,9 @@ import {
   MoreOutlined,
   PhoneOutlined,
   PlusOutlined,
+  ReloadOutlined,
   StopOutlined,
-  UserOutlined,
-  ReloadOutlined
+  UserOutlined
 } from "@ant-design/icons";
 import { Avatar, Button, Switch } from "@nextui-org/react";
 import {
@@ -40,7 +40,7 @@ import CoreRoleSelect from "@/app/components/roles/core-role-select";
 import RoleSelect from "@/app/components/roles/role-select";
 import { useAuth } from "@/context/auth-context";
 
-import { ERoles } from "../../../../types/roles.enum";
+import { ERoles } from "../../../types/roles.enum";
 
 const UsersPage = () => {
   dayjs.extend(relativeTime);

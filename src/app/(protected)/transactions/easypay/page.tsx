@@ -6,7 +6,6 @@ import { EyeOutlined, InboxOutlined, MoreOutlined, UploadOutlined } from "@ant-d
 import {
   Alert,
   Button,
-  Upload,
   Col,
   DatePicker,
   Descriptions,
@@ -21,6 +20,7 @@ import {
   Spin,
   Statistic,
   Table,
+  Upload,
 } from "antd";
 import Search from "antd/es/input/Search";
 import { Dayjs } from "dayjs";
@@ -39,7 +39,7 @@ import { useAuth } from "@/context/auth-context";
 import { syncPolicyNumbers } from "@/server/actions/easypay-transactions";
 import useNotification from "antd/es/notification/useNotification";
 
-import { ERoles } from "../../../../../types/roles.enum";
+import { ERoles } from "../../../../types/roles.enum";
 
 interface IEasypayTransaction {
   _id: string;
@@ -115,7 +115,7 @@ export default function EasypayTransactionsPage() {
   const { user } = useAuth();
   const { hasRole } = useRole();
   const [notification, contextHolder] = useNotification();
-  
+
   const [showAllocationRequestDrawer, setShowAllocationRequestDrawer] = useState<boolean>(false);
   const [selectedTransaction, setSelectedTransaction] = useState<IEasypayTransaction | null>(null);
   const [allocationRequestForm] = Form.useForm();
@@ -736,16 +736,16 @@ export default function EasypayTransactionsPage() {
             </Button>
 
             {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
-                <Button
-                  loading={syncing}
-                  disabled={syncing}
-                  onClick={async () => {
-                    await sync(false);
-                  }}
-                >
-                  {syncing ? "Syncing..." : "Sync Policy Numbers"}
-                </Button>
-              )}
+              <Button
+                loading={syncing}
+                disabled={syncing}
+                onClick={async () => {
+                  await sync(false);
+                }}
+              >
+                {syncing ? "Syncing..." : "Sync Policy Numbers"}
+              </Button>
+            )}
             {hasRole([ERoles.Admin, ERoles.FinanceOfficer]) && (
               <Button
                 loading={syncing}

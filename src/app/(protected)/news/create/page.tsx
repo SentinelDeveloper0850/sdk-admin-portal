@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
-import { ERoles } from "../../../../../types/roles.enum";
+import { ERoles } from "../../../../types/roles.enum";
 
 const RichTextEditor = dynamic(() => import("@/app/components/editor/RichTextEditor"), { ssr: false });
 
