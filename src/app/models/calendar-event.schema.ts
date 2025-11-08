@@ -63,6 +63,11 @@ export interface ICalendarEvent extends Document {
   subType?: string;             // "funeral_pickup" | "funeral_bathing" | "funeral_tent" | "funeral_delivery" | "funeral_service" | "funeral_burial"
   branchId?: string;            // <-- added; your GET uses this
 
+  // Related models
+  relatedModel?: "funeral" | "none" | string; // future-proof
+  relatedId?: mongoose.Types.ObjectId;        // e.g., funeral _id
+  milestone?: "funeral_pickup" | "funeral_bathing" | "funeral_tent" | "funeral_delivery" | "funeral_service" | "funeral_burial" | string;
+
   // Meeting style
   isVirtualEvent?: boolean;
   virtualEventDetails?: IVirtualEventDetails;
@@ -207,6 +212,11 @@ const CalendarEventSchema = new Schema<ICalendarEvent>(
     notes: { type: [NoteSchema], required: false, default: [] },
     comments: { type: [CommentSchema], required: false, default: [] },
     attachments: { type: [AttachmentSchema], required: false, default: [] },
+
+    // Related models
+    relatedModel: { type: String, required: false },
+    relatedId: { type: Schema.Types.ObjectId, required: false },
+    milestone: { type: String, required: false },
 
     status: {
       type: String,

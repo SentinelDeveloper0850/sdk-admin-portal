@@ -113,6 +113,7 @@ const CompanyCalendar = ({
   onEventChange,
   externalDraggablesContainerId,
 }: IProps) => {
+  console.log("🚀 ~ CompanyCalendar ~ events:", events)
   const [eventDetailsDrawerOpen, setEventDetailsDrawerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const calendarRef = useRef<FullCalendar | null>(null);
@@ -152,6 +153,7 @@ const CompanyCalendar = ({
     console.log("🚀 ~ renderEventContent ~ eventInfo:", eventInfo)
     // Prefer extendedProps.name but safely fall back to title
     const { extendedProps } = eventInfo.event;
+    const { type } = extendedProps.extendedProps;
     const name = extendedProps?.name || eventInfo.event.title;
 
     const startTimeRaw = extendedProps?.startTime as string | undefined;
@@ -159,8 +161,11 @@ const CompanyCalendar = ({
       ? startTimeRaw.split(':').slice(0, 2).join(':')
       : eventInfo.timeText; // calendar's computed time if not provided
 
+    console.log("🚀 ~ renderEventContent ~ type:", type)
+    const bgColor = type === "funeral_burial" ? "bg-primary" : "bg-gray-200";
+
     return (
-      <div className="flex flex-col px-2 py-1 text-xs font-bold cursor-pointer bg-primary hover:bg-orange-500">
+      <div className={`flex flex-col px-2 py-1 text-xs font-bold cursor-pointer ${bgColor} text-black dark:text-black hover:bg-orange-500 rounded-r-lg shadow-sm`}>
         <p className="truncate">{name}</p>
         {startTime && <p>{startTime}</p>}
       </div>
@@ -356,6 +361,11 @@ const CompanyCalendar = ({
         }
       >
         {details && (
+          // Bathing Details: Time of Bathing, Address
+          // Tent Erection Details: Time of Erection, Address, Equipment (Tent Package) 
+          // Delivery Details: Grave Marker, Time of Delivery, Address, Programs, Via (Detour with address), Family Escorting Coffin?, Equipment (Screen, Chest Truck) 
+          // Burial Details: Cemetery, Time of Burial, Address, Coffin Type
+          // Tent Collection Details: Time of Collection, Address
           <div className="space-y-4">
             {/* When & Where */}
             <Descriptions
@@ -378,12 +388,8 @@ const CompanyCalendar = ({
                     <Space align="start">
                       <EnvironmentOutlined />
                       <div>
-                        <div>{asLocationText(details.location)}</div>
-                        {googleMapsHref(details.location) && (
-                          <a href={googleMapsHref(details.location)} target="_blank" rel="noreferrer">
-                            Open in Maps <LinkOutlined />
-                          </a>
-                        )}
+                        <div>{asLocationText(details.location)} | {googleMapsHref(details.location) && <a href={googleMapsHref(details.location)} target="_blank" rel="noreferrer"> Open in Maps <LinkOutlined /></a>}</div>
+                        
                       </div>
                     </Space>
                   ),

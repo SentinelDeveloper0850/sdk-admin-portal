@@ -2,6 +2,7 @@
 import dayjs from "dayjs";
 import { CalendarEventModel } from "@/app/models/calendar-event.schema";
 import type { IFuneral } from "@/types/funeral";
+import mongoose from "mongoose";
 
 type MilestoneKey = "pickUp" | "bathing" | "tentErection" | "delivery" | "serviceEscort" | "burial";
 
@@ -42,6 +43,9 @@ export async function upsertFuneralCalendarEvents(funeral: IFuneral, actor: { na
         ce.end = end.toISOString();
         ce.startTime = start.format("HH:mm");
         ce.endTime = end.format("HH:mm");
+        ce.relatedModel = "funeral";
+        ce.relatedId = funeral._id as mongoose.Types.ObjectId;
+        ce.milestone = meta.type;
         await ce.save();
         continue;
       }
@@ -65,6 +69,9 @@ export async function upsertFuneralCalendarEvents(funeral: IFuneral, actor: { na
       status: "published",
       createdBy: actor.name,
       createdById: actor.id,
+      relatedModel: "funeral",
+      relatedId: funeral._id as mongoose.Types.ObjectId,
+      milestone: meta.type,
       attendees: [
         // lightweight context for Drawer
         { name: `${funeral.informant.firstName} ${funeral.informant.lastName}`.trim(), phone: funeral.informant.phoneNumber },

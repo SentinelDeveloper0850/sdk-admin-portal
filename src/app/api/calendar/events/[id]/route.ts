@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
 import { CalendarEventModel } from "@/app/models/calendar-event.schema";
 import mongoose from "mongoose";
+import { FuneralModel } from "@/app/models/funeral.schema";
 
 type UpdatePayload = {
   start?: string | null; // ISO
@@ -62,6 +63,29 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const updated = await CalendarEventModel.findByIdAndUpdate(id, update, { new: true });
+
+    // 3) If this event is linked to a funeral milestone, update that milestone too
+    if (updated?.relatedModel === "funeral" && updated.relatedId && updated.milestone) {
+      const funeralId = updated.relatedId;
+      const ms = String(updated.milestone) as
+        | "pickUp" | "bathing" | "tentErection" | "delivery" | "serviceEscort" | "burial";
+
+      // Build the $set paths for the milestone
+      const set: Record<string, any> = {};
+      if (body.start !== undefined) {
+        set[`${ms}.startDateTime`] = body.start ? new Date(body.start) : null;
+      }
+      if (body.end !== undefined) {
+        set[`${ms}.endDateTime`] = body.end ? new Date(body.end) : null;
+      }
+      // mirror location or other props if you allow editing those on the calendar
+      // e.g., if (body.extendedProps?.location) set[`${ms}.location`] = body.extendedProps.location;
+
+      // Only write if we actually changed something
+      if (Object.keys(set).length > 0) {
+        await FuneralModel.findByIdAndUpdate(funeralId as mongoose.Types.ObjectId, { $set: set });
+      }
+    }
 
     return NextResponse.json(
       { success: true, message: "Event updated", event: updated },

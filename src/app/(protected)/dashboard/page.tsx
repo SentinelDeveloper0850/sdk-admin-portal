@@ -205,6 +205,7 @@ const DashboardPage: React.FC = () => {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Dashboard Overview"
+        subtitle="An overview of statistics and activity aggregated across the company"
         actions={[
           <Button
             key="refresh"
