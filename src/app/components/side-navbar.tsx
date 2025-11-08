@@ -300,7 +300,7 @@ const SideNavBar = () => {
 
   return (
     <section
-      className={`h-full ${collapsed ? "w-16" : "w-64 overflow-y-scroll"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}
+      className={`h-full pb-10 overflow-hidden ${collapsed ? "w-16" : "w-64 overflow-y-scroll"} bg-white transition-all duration-200 dark:bg-zinc-900`}
     >
       <div
         className={`flex ${collapsed ? "justify-center !ml-[-4px]" : "justify-end"} p-2`}

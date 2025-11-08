@@ -1,4 +1,5 @@
 import { BranchModel } from "@/app/models/system/branch.schema";
+import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -30,30 +31,38 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const {
-      name,
-      code,
-      address,
-      city,
-      province,
-      postalCode,
-      phone,
-      email,
-      manager,
-      latitude,
-      longitude,
-      isActive,
-      createdBy
-    } = body;
 
-    // Validate required fields
-    if (!name || !code || !address || !city || !province || !postalCode || !phone || !email || !manager || latitude === undefined || longitude === undefined) {
+    // Get user from request
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
           error: {
-            message: "Missing required fields: name, code, address, city, province, postalCode, phone, email, manager, latitude, longitude",
+            message: "Unauthorized",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    const createdBy = user._id;
+    const updatedBy = user._id;
+
+    const body = await request.json();
+    const {
+      name,
+      code,
+      ...restPayload
+    } = body;
+
+    // Validate required fields
+    if (!name || !code) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: "Missing required fields: name, code",
           },
         },
         { status: 400 }
@@ -77,23 +86,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const branch = new BranchModel({
+    let payload = {
       name: name.trim(),
       code: code.trim().toUpperCase(),
-      address: address.trim(),
-      city: city.trim(),
-      province,
-      postalCode: postalCode.trim(),
-      phone: phone.trim(),
-      email: `${email.trim().toLowerCase()}@somdaka.co.za`,
-      manager,
-      latitude,
-      longitude,
-      isActive: isActive !== undefined ? isActive : true,
+      address: restPayload.address?.trim(),
+      city: restPayload.city?.trim(),
+      province: restPayload.province?.trim(),
+      postalCode: restPayload.postalCode?.trim(),
+      phone: restPayload.phone?.trim(),
+      email: `${restPayload.email.trim().toLowerCase()}@somdaka.co.za`,
+      manager: restPayload.manager,
+      latitude: restPayload.latitude,
+      longitude: restPayload.longitude,
+      isActive: restPayload.isActive !== undefined ? restPayload.isActive : true,
       createdBy,
-      updatedBy: createdBy,
-    });
+      updatedBy,
+    }
 
+    const branch = new BranchModel(payload);
     const savedBranch = await branch.save();
 
     return NextResponse.json({

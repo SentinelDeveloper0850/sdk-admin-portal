@@ -16,7 +16,8 @@ export interface IDailyActivity {
   massReceipts?: boolean;
   date: string; // typically in YYYY-MM-DD
   time: string; // e.g., '14:30'
-  branch: string;
+  branch: string; // Represents the branch name
+  branchId?: string; // Represents the branch ID (MongoDB ObjectId)
   comments?: string;
 }
 
@@ -96,9 +97,16 @@ const dailyActivitySchema = new Schema({
     type: String,
     required: true,
   },
+  branchId: {
+    type: mongoose.Schema.Types.ObjectId,
+    description: "The branch ID",
+    ref: "Branch",
+    required: false,
+  },
   branch: {
     type: String,
-    required: true,
+    description: "The branch name. This way even if the branch is deleted, we can still get the branch name",
+    required: false,
   },
   comments: {
     type: String,
@@ -109,6 +117,16 @@ const dailyActivitySchema = new Schema({
 
 // Ensure unique fields where necessary (e.g., userName with date combination)
 // dailyActivitySchema.index({ userName: 1, currentDate: 1 }, { unique: true });
+
+// Populate branch
+dailyActivitySchema.pre("find", function (next) {
+  this.populate({
+    path: "branchId",
+    select: "name",
+    strictPopulate: false
+  });
+  next();
+});
 
 // Create Mongoose model
 export const DailyActivityModel =

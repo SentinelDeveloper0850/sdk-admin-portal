@@ -9,11 +9,12 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const userId = url.searchParams.get("userId");
+  const date = url.searchParams.get("date");
 
   try {
     const reports = userId
-      ? await DailyActivityModel.find({ userId }).sort({ createdAt: -1 })
-      : await DailyActivityModel.find().sort({ createdAt: -1 });
+      ? await DailyActivityModel.find({ userId, date }).sort({ createdAt: -1 })
+      : await DailyActivityModel.find({ date }).sort({ createdAt: -1 });
 
     if (!reports || reports.length === 0) {
       return NextResponse.json(

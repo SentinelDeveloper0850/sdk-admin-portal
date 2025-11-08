@@ -20,12 +20,11 @@ export async function GET(request: NextRequest) {
     let users = [];
 
     if (slim) {
-      // Select only the _id and name fields
+      // Select only the _id and name fields, exclude the password field
       users = await UsersModel.find(query).select("_id name").sort({ createdAt: -1 });
     } else {
-      users = await UsersModel.find(query).sort({ createdAt: -1 });
+      users = await UsersModel.find(query).select("-password -deletedAt -deletedBy -updatedAt -createdAt -mustChangePassword -status").sort({ createdAt: -1 });
     }
-
 
     return NextResponse.json(users, { status: 200 });
   } catch (error: any) {

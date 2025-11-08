@@ -3,20 +3,21 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IBranch extends Document {
   name: string;
   code: string;
-  address: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  phone: string;
-  email: string;
-  manager: mongoose.Types.ObjectId;
-  latitude: number;
-  longitude: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy: mongoose.Types.ObjectId;
-  updatedBy: mongoose.Types.ObjectId;
+  address?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  phone?: string;
+  phoneExtension?: string;
+  email?: string;
+  manager?: mongoose.Types.ObjectId;
+  latitude?: number;
+  longitude?: number;
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  createdBy?: mongoose.Types.ObjectId;
+  updatedBy?: mongoose.Types.ObjectId;
 }
 
 const branchSchema = new Schema<IBranch>({
@@ -36,19 +37,16 @@ const branchSchema = new Schema<IBranch>({
   },
   address: {
     type: String,
-    required: [true, 'Address is required'],
     trim: true,
     maxlength: [200, 'Address cannot exceed 200 characters']
   },
   city: {
     type: String,
-    required: [true, 'City is required'],
     trim: true,
     maxlength: [50, 'City name cannot exceed 50 characters']
   },
   province: {
     type: String,
-    required: [true, 'Province is required'],
     enum: {
       values: [
         'Gauteng',
@@ -66,19 +64,21 @@ const branchSchema = new Schema<IBranch>({
   },
   postalCode: {
     type: String,
-    required: [true, 'Postal code is required'],
     trim: true,
     maxlength: [10, 'Postal code cannot exceed 10 characters']
   },
   phone: {
     type: String,
-    required: [true, 'Phone number is required'],
     trim: true,
     maxlength: [20, 'Phone number cannot exceed 20 characters']
   },
+  phoneExtension: {
+    type: String,
+    trim: true,
+    maxlength: [10, 'Phone extension cannot exceed 10 characters']
+  },
   email: {
     type: String,
-    required: [true, 'Email is required'],
     trim: true,
     lowercase: true,
     maxlength: [100, 'Email cannot exceed 100 characters'],
@@ -90,17 +90,14 @@ const branchSchema = new Schema<IBranch>({
   manager: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Branch manager is required']
   },
   latitude: {
     type: Number,
-    required: [true, 'Latitude is required'],
     min: [-90, 'Latitude must be between -90 and 90'],
     max: [90, 'Latitude must be between -90 and 90']
   },
   longitude: {
     type: Number,
-    required: [true, 'Longitude is required'],
     min: [-180, 'Longitude must be between -180 and 180'],
     max: [180, 'Longitude must be between -180 and 180']
   },
@@ -111,12 +108,10 @@ const branchSchema = new Schema<IBranch>({
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Created by user is required']
   },
   updatedBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Updated by user is required']
   }
 }, {
   timestamps: true,
@@ -134,7 +129,7 @@ branchSchema.index({ latitude: 1, longitude: 1 }); // For geospatial queries
 
 // Virtual for full address
 branchSchema.virtual('fullAddress').get(function () {
-  return `${this.address}, ${this.city}, ${this.province} ${this.postalCode}`;
+  return `${this.address}, ${this.city}, ${this.province}, ${this.postalCode}`;
 });
 
 // Virtual for coordinates string

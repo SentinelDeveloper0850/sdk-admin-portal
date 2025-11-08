@@ -25,12 +25,13 @@ import {
   User
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import sweetAlert from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
 import { IUser } from "@/app/models/hr/user.schema";
 import { useAuth } from "@/context/auth-context";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
-import { CopyOutlined, MailOutlined, NumberOutlined, PhoneOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
+import { CopyOutlined, MailOutlined, NumberOutlined, PhoneOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from "@ant-design/icons";
 import { ERoles } from "../../../../types/roles.enum";
 
 const { TabPane } = Tabs;
@@ -83,11 +84,19 @@ const BranchConfigurationsPage = () => {
       if (data.success && data.data) {
         setBranches(data.data);
       } else {
-        message.error(data.error || "Failed to fetch branches");
+        sweetAlert({
+          title: "Error",
+          text: data.error || "Failed to fetch branches",
+          icon: "error",
+        });
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
-      message.error('An error occurred while fetching branches');
+      sweetAlert({
+        title: "Error",
+        text: "An error occurred while fetching branches.",
+        icon: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -99,13 +108,17 @@ const BranchConfigurationsPage = () => {
       const response = await fetch("/api/users");
       if (!response.ok) {
         const errorData = await response.json();
-        message.error(errorData.message || "Failed to fetch users");
+        sweetAlert({
+          title: "Error",
+          text: errorData.message || "Failed to fetch users",
+          icon: "error",
+        });
         return;
       }
 
       const data = await response.json();
 
-      const updatedUsers = data.users.map((v: any) => {
+      const updatedUsers = data.map((v: any) => {
         const firstRole = v.roles[0] ?? null;
         const isAdmin = v.role === "admin";
 
@@ -124,7 +137,11 @@ const BranchConfigurationsPage = () => {
       setUsers(updatedUsers);
     } catch (err) {
       console.log(err);
-      message.error("An error occurred while fetching users.");
+      sweetAlert({
+        title: "Error",
+        text: "An error occurred while fetching users.",
+        icon: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -134,6 +151,11 @@ const BranchConfigurationsPage = () => {
     fetchBranches();
     fetchUsers();
   }, []);
+
+  const handleRefresh = () => {
+    fetchBranches();
+    fetchUsers();
+  };
 
   const handleSaveBranch = async (values: any) => {
     try {
@@ -152,16 +174,28 @@ const BranchConfigurationsPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        message.success('Branch saved successfully');
+        sweetAlert({
+          title: "Success",
+          text: "Branch saved successfully",
+          icon: "success",
+        });
         form.resetFields();
         setDrawerVisible(false);
         fetchBranches();
       } else {
-        message.error(data.error || 'Failed to save branch');
+        sweetAlert({
+          title: "Error",
+          text: data.error || "Failed to save branch",
+          icon: "error",
+        });
       }
     } catch (error) {
       console.error('Error saving branch:', error);
-      message.error('An error occurred while saving branch');
+      sweetAlert({
+        title: "Error",
+        text: "An error occurred while saving branch",
+        icon: "error",
+      });
     } finally {
       setSaving(false);
     }
@@ -238,18 +272,30 @@ const BranchConfigurationsPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        message.success('Branch updated successfully');
+        sweetAlert({
+          title: "Success",
+          text: "Branch updated successfully",
+          icon: "success",
+        });
         setEditDrawerVisible(false);
         setEditingBranch(null);
         setOriginalBranchData(null);
         form.resetFields();
         fetchBranches();
       } else {
-        message.error(data.error || 'Failed to update branch');
+        sweetAlert({
+          title: "Error",
+          text: data.error || "Failed to update branch",
+          icon: "error",
+        });
       }
     } catch (error) {
       console.error('Error updating branch:', error);
-      message.error('An error occurred while updating branch');
+      sweetAlert({
+        title: "Error",
+        text: "An error occurred while updating branch",
+        icon: "error",
+      });
     } finally {
       setSaving(false);
     }
@@ -264,14 +310,26 @@ const BranchConfigurationsPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        message.success('Branch deleted successfully');
+        sweetAlert({
+          title: "Success",
+          text: "Branch deleted successfully",
+          icon: "success",
+        });
         fetchBranches();
       } else {
-        message.error(data.error || 'Failed to delete branch');
+        sweetAlert({
+          title: "Error",
+          text: data.error || "Failed to delete branch",
+          icon: "error",
+        });
       }
     } catch (error) {
       console.error('Error deleting branch:', error);
-      message.error('An error occurred while deleting branch');
+      sweetAlert({
+        title: "Error",
+        text: "An error occurred while deleting branch",
+        icon: "error",
+      });
     }
   };
 
@@ -384,7 +442,10 @@ const BranchConfigurationsPage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <PageHeader title="Branch Configurations" subtitle="Manage branch settings and policies" actions={[<Button key="add-branch" type="primary" icon={<PlusOutlined />} onClick={() => setDrawerVisible(true)}>Add New Branch</Button>]} />
+      <PageHeader title="Branch Configurations" subtitle="Manage branch settings and policies" actions={[
+        <Button key="refresh" type="default" icon={<ReloadOutlined />} onClick={handleRefresh}>Refresh</Button>,
+        <Button key="add-branch" type="primary" className="text-black" icon={<PlusOutlined />} onClick={() => setDrawerVisible(true)}>Add New Branch</Button>,
+      ]} />
 
       <Table
         dataSource={branches}
@@ -434,7 +495,6 @@ const BranchConfigurationsPage = () => {
           <Form.Item
             name="manager"
             label="Branch Manager"
-            rules={[{ required: true, message: 'Please select branch manager' }]}
           >
             <Select placeholder="Select branch manager" prefix={<User size={16} className="mr-1 dark:text-white" />} allowClear>
               {users.map((user, index) => (
@@ -448,7 +508,6 @@ const BranchConfigurationsPage = () => {
           <Form.Item
             name="phone"
             label="Phone"
-            rules={[{ required: true, message: 'Please enter phone number' }]}
           >
             <Input placeholder="+27 11 123 4567" allowClear prefix={<PhoneOutlined className="mr-1" />} suffix={<Button type="link" size="small" icon={<CopyOutlined />} title="Use Head Office Number" onClick={() => {
               form.setFieldsValue({
@@ -460,9 +519,6 @@ const BranchConfigurationsPage = () => {
           <Form.Item
             name="email"
             label="Email"
-            rules={[
-              { required: true, message: 'Please enter email' },
-            ]}
           >
             <Input prefix={<MailOutlined className="mr-1" />} placeholder="branch-name" allowClear suffix={<span className="text-xs text-primary">@somdaka.co.za</span>} />
           </Form.Item>
@@ -471,7 +527,6 @@ const BranchConfigurationsPage = () => {
             name="address"
             label="Address"
             className="col-span-3"
-            rules={[{ required: true, message: 'Please enter address' }]}
           >
             <TextArea rows={2} placeholder="Enter full address" />
           </Form.Item>
@@ -481,7 +536,6 @@ const BranchConfigurationsPage = () => {
               <Form.Item
                 name="city"
                 label="City"
-                rules={[{ required: true, message: 'Please enter city' }]}
               >
                 <Input placeholder="e.g: Johannesburg" />
               </Form.Item>
@@ -490,7 +544,6 @@ const BranchConfigurationsPage = () => {
               <Form.Item
                 name="province"
                 label="Province"
-                rules={[{ required: true, message: 'Please select province' }]}
               >
                 <Select placeholder="Select province">
                   <Option value="Gauteng">Gauteng</Option>
@@ -509,7 +562,6 @@ const BranchConfigurationsPage = () => {
               <Form.Item
                 name="postalCode"
                 label="Postal Code"
-                rules={[{ required: true, message: 'Please enter postal code' }]}
               >
                 <Input placeholder="e.g: 2000" />
               </Form.Item>
@@ -520,7 +572,6 @@ const BranchConfigurationsPage = () => {
             name="latitude"
             label="Latitude"
             rules={[
-              { required: true, message: 'Please enter latitude' },
               { type: 'number', min: -90, max: 90, message: 'Latitude must be between -90 and 90' }
             ]}
           >
@@ -535,7 +586,6 @@ const BranchConfigurationsPage = () => {
             name="longitude"
             label="Longitude"
             rules={[
-              { required: true, message: 'Please enter longitude' },
               { type: 'number', min: -180, max: 180, message: 'Longitude must be between -180 and 180' }
             ]}
           >
@@ -580,7 +630,6 @@ const BranchConfigurationsPage = () => {
           <Form.Item
             name="name"
             label="Branch Name"
-            rules={[{ required: true, message: 'Please enter branch name' }]}
           >
             <Input prefix={<Building size={16} className="mr-1" />} placeholder="eg: Daveyton" allowClear />
           </Form.Item>
@@ -588,7 +637,6 @@ const BranchConfigurationsPage = () => {
           <Form.Item
             name="code"
             label="Branch Code"
-            rules={[{ required: true, message: 'Please enter branch code' }]}
           >
             <Input prefix={<NumberOutlined size={16} className="mr-1" />} placeholder="eg: DTY001" allowClear />
           </Form.Item>
@@ -596,7 +644,6 @@ const BranchConfigurationsPage = () => {
           <Form.Item
             name="manager"
             label="Branch Manager"
-            rules={[{ required: true, message: 'Please select branch manager' }]}
           >
             <Select placeholder="Select branch manager" prefix={<User size={16} className="mr-1 dark:text-white" />} allowClear>
               {users.map((user, index) => (
@@ -610,7 +657,6 @@ const BranchConfigurationsPage = () => {
           <Form.Item
             name="phone"
             label="Phone"
-            rules={[{ required: true, message: 'Please enter phone number' }]}
           >
             <Input placeholder="+27 11 123 4567" allowClear prefix={<PhoneOutlined className="mr-1" />} suffix={<Button type="link" size="small" icon={<CopyOutlined />} title="Use Head Office Number" onClick={() => {
               form.setFieldsValue({
@@ -622,9 +668,6 @@ const BranchConfigurationsPage = () => {
           <Form.Item
             name="email"
             label="Email"
-            rules={[
-              { required: true, message: 'Please enter email' },
-            ]}
           >
             <Input prefix={<MailOutlined className="mr-1" />} placeholder="branch-name" allowClear suffix={<span className="text-xs text-primary">@somdaka.co.za</span>} />
           </Form.Item>
@@ -633,7 +676,6 @@ const BranchConfigurationsPage = () => {
             name="address"
             label="Address"
             className="col-span-3"
-            rules={[{ required: true, message: 'Please enter address' }]}
           >
             <TextArea rows={2} placeholder="Enter full address" />
           </Form.Item>
@@ -643,7 +685,6 @@ const BranchConfigurationsPage = () => {
               <Form.Item
                 name="city"
                 label="City"
-                rules={[{ required: true, message: 'Please enter city' }]}
               >
                 <Input placeholder="e.g: Johannesburg" />
               </Form.Item>
@@ -652,7 +693,6 @@ const BranchConfigurationsPage = () => {
               <Form.Item
                 name="province"
                 label="Province"
-                rules={[{ required: true, message: 'Please select province' }]}
               >
                 <Select placeholder="Select province">
                   <Option value="Gauteng">Gauteng</Option>
@@ -671,7 +711,6 @@ const BranchConfigurationsPage = () => {
               <Form.Item
                 name="postalCode"
                 label="Postal Code"
-                rules={[{ required: true, message: 'Please enter postal code' }]}
               >
                 <Input placeholder="e.g: 2000" />
               </Form.Item>
@@ -682,7 +721,6 @@ const BranchConfigurationsPage = () => {
             name="latitude"
             label="Latitude"
             rules={[
-              { required: true, message: 'Please enter latitude' },
               { type: 'number', min: -90, max: 90, message: 'Latitude must be between -90 and 90' }
             ]}
           >
@@ -697,7 +735,6 @@ const BranchConfigurationsPage = () => {
             name="longitude"
             label="Longitude"
             rules={[
-              { required: true, message: 'Please enter longitude' },
               { type: 'number', min: -180, max: 180, message: 'Longitude must be between -180 and 180' }
             ]}
           >

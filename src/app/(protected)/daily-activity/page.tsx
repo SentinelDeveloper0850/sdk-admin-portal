@@ -2,14 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Avatar, Button, Card, Chip, Divider, Input } from "@nextui-org/react";
+import { Avatar, Card, Chip, Divider } from "@nextui-org/react";
 import {
   Avatar as AntAvatar,
   Input as AntInput,
+  Button,
   Col,
   DatePicker,
   Descriptions,
   Drawer,
+  Flex,
   Form,
   List,
   Row,
@@ -28,15 +30,18 @@ import {
 } from "@/utils/formatters";
 
 import PageHeader from "@/app/components/page-header";
+import { IBranch } from "@/app/models/system/branch.schema";
 import { useAuth } from "@/context/auth-context";
+import { CalendarOutlined, LeftOutlined, ReloadOutlined, RightOutlined } from "@ant-design/icons";
 
-const branches = [
-  "Kaalfontein",
-  "Mangweni",
-  "Ndulwini",
-  "Sangweni",
-  "Simunye",
-  "Daveyton",
+const oldBranches = [
+  // "Ndulwini",
+  // "Mangweni",
+  // "Kaalfontein",
+  // "Sangweni",
+  // "Simunye",
+  // "Daveyton",
+  // "Ivory Park",
 ];
 
 const activities = [
@@ -108,6 +113,8 @@ export default function DailyActivityPage() {
   const [allReports, setAllReports] = useState<any[]>([]);
   const [stats, setStats] = useState<DailyActivityStats | null>(null);
 
+  const [branches, setBranches] = useState<IBranch[]>([]);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -156,11 +163,12 @@ export default function DailyActivityPage() {
     }
 
     const userId = user.id ?? user._id;
+    const date = selectedDate.format("DD/MM/YYYY");
 
     const url =
       user?.role == "admin"
-        ? "/api/daily-activity"
-        : `/api/daily-activity?userId=${userId}`;
+        ? `/api/daily-activity?date=${date}`
+        : `/api/daily-activity?userId=${userId}&date=${date}`;
 
     try {
       const response = await fetch(url, {
@@ -233,11 +241,54 @@ export default function DailyActivityPage() {
     });
   };
 
+  const fetchBranches = async () => {
+    try {
+      const response = await fetch("/api/configurations/branches");
+      const { data } = await response.json();
+      console.log("🚀 ~ fetchBranches ~ data:", data)
+      if (response.ok) {
+        setBranches(data as IBranch[]);
+      } else if (response.status == 404) {
+        sweetAlert({
+          title: "No branches found",
+          icon: "info",
+          timer: 2000,
+        });
+      } else {
+        console.error("Error fetching branches:", data.message);
+        sweetAlert({
+          title: "Error fetching branches",
+          icon: "error",
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      sweetAlert({
+        title: "Error fetching branches",
+        icon: "error",
+        timer: 2000,
+      });
+    }
+    finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (user) {
+    fetchBranches();
+  }, []);
+
+  useEffect(() => {
+    if (user && selectedDate) {
       fetchReports();
     }
-  }, [user]);
+  }, [user, selectedDate]);
+
+  const handleRefresh = () => {
+    fetchReports();
+    fetchBranches();
+  };
 
   // Filter reports based on selected date, search, and branch filter
   const filteredReports = useMemo(() => {
@@ -292,6 +343,11 @@ export default function DailyActivityPage() {
         const reportDate = dayjs(values.date).format("DD/MM/YYYY");
         const reportTime = dayjs(values.time).format("HH:mm");
         const userId = user.id ?? user._id;
+        const branch = branches.find(branch => {
+          return branch._id?.toString() === values.branch?.toString();
+        });
+
+        console.log("🚀 ~ submitReport ~ branch:", branch)
 
         const response = await fetch("/api/daily-activity", {
           method: "POST",
@@ -302,7 +358,8 @@ export default function DailyActivityPage() {
             userId,
             userName: user.name,
             activities: reportActivities,
-            branch: values.branch,
+            branch: branch?.name ?? values.branch,
+            branchId: branch?._id,
             date: reportDate,
             time: reportTime,
             comments: values.comments,
@@ -434,21 +491,34 @@ export default function DailyActivityPage() {
     setCurrentPage(1);
   };
 
+  const saveDraft = () => {
+    console.log("saveDraft");
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
         title="Daily Activity Reports"
         actions={[
           <Space>
-            {user?.role == "admin" ||
-              (reportSubmissionDue == true && (
-                <Button
-                  color="primary"
-                  onPress={() => setCreateDrawerOpen(true)}
-                >
-                  Submit Report
-                </Button>
-              ))}
+            {/* Refresh button */}
+            <Button
+              type="default"
+              icon={<ReloadOutlined />}
+              onClick={handleRefresh}
+            >
+              Refresh
+            </Button>
+
+            {/* Submit report button */}
+            {reportSubmissionDue == true && (
+              <Button
+                type="primary" className="text-black"
+                onClick={() => setCreateDrawerOpen(true)}
+              >
+                Submit Report
+              </Button>
+            )}
           </Space>,
         ]}
       />
@@ -532,29 +602,31 @@ export default function DailyActivityPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
                 <Button
-                  color="primary"
-                  variant="flat"
-                  size="sm"
-                  onPress={handlePreviousDay}
+                  type="primary"
+                  size="small" className="text-black text-xs"
+                  onClick={handlePreviousDay}
+                  icon={<LeftOutlined />}
                 >
-                  ← Previous Day
+                  Previous Day
                 </Button>
                 <Button
-                  color="primary"
-                  variant="flat"
-                  size="sm"
-                  onPress={handleToday}
+                  type="primary" size="small"
+                  className="text-black text-xs"
+                  onClick={handleToday}
+                  icon={<CalendarOutlined />}
                 >
                   Today
                 </Button>
                 <Button
-                  color="primary"
-                  variant="flat"
-                  size="sm"
-                  onPress={handleNextDay}
-                  isDisabled={selectedDate.isSame(dayjs(), 'day')}
+                  type="primary"
+                  size="small"
+                  className="text-black text-xs"
+                  onClick={handleNextDay}
+                  disabled={selectedDate.isSame(dayjs(), 'day')}
+                  icon={<RightOutlined />}
+                  iconPosition="end"
                 >
-                  Next Day →
+                  Next Day
                 </Button>
               </div>
               <div className="text-lg font-semibold">
@@ -563,12 +635,12 @@ export default function DailyActivityPage() {
             </div>
 
             {/* Search and Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <AntInput
                 placeholder="Search reports..."
-                value={searchTerm}
+                value={searchTerm} allowClear
                 onChange={(e) => setSearchTerm(e.target.value)}
-                startContent={
+                prefix={
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -581,9 +653,9 @@ export default function DailyActivityPage() {
                 allowClear
                 className="w-full"
               >
-                {branches.map((branch) => (
-                  <Select.Option key={branch} value={branch}>
-                    {branch}
+                {branches.map((branch: IBranch, index: number) => (
+                  <Select.Option key={index} value={branch._id}>
+                    {branch.name}
                   </Select.Option>
                 ))}
               </Select>
@@ -688,10 +760,9 @@ export default function DailyActivityPage() {
                 key: "actions",
                 render: (_, record: any) => (
                   <Button
-                    color="primary"
-                    variant="flat"
-                    size="sm"
-                    onPress={() => {
+                    type="primary"
+                    className="text-black"
+                    onClick={() => {
                       setSelectedReport(record);
                       setViewDrawerOpen(true);
                     }}
@@ -731,15 +802,17 @@ export default function DailyActivityPage() {
         open={createDrawerOpen}
         width="50%"
         footer={
-          <Space>
-            <Button color="primary" onPress={() => form.submit()}>
-              Save Draft
-            </Button>
-            <Button color="primary" onPress={() => form.submit()}>
-              Save & Submit
-            </Button>
+          <Flex justify="space-between" gap={2}>
+            <Space>
+              <Button type="primary" className="bg-gray-400 hover:!bg-gray-500 text-black" onClick={saveDraft}>
+                Save Draft
+              </Button>
+              <Button type="primary" className="bg-green-500 hover:!bg-green-600 text-black" onClick={() => form.submit()}>
+                Save & Submit
+              </Button>
+            </Space>
             <Button
-              color="danger"
+              danger type="default"
               onClick={() => {
                 resetForm();
                 setCreateDrawerOpen(false);
@@ -747,7 +820,7 @@ export default function DailyActivityPage() {
             >
               Cancel
             </Button>
-          </Space>
+          </Flex>
         }
       >
         <Form form={form} layout="vertical" onFinish={submitReport}>
@@ -776,9 +849,9 @@ export default function DailyActivityPage() {
                 ]}
               >
                 <Select>
-                  {branches.map((item) => (
-                    <Select.Option key={item} value={item}>
-                      {item}
+                  {branches.map((item, index: number) => (
+                    <Select.Option key={index} value={item._id}>
+                      {item.name}
                     </Select.Option>
                   ))}
                 </Select>
@@ -876,7 +949,7 @@ export default function DailyActivityPage() {
           <Row>
             <Col span={12}>
               <Form.Item>
-                <Button onPress={addActivityToReport} color="primary">
+                <Button type="default" onClick={addActivityToReport}>
                   Add Activity
                 </Button>
               </Form.Item>
