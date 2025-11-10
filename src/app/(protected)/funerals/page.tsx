@@ -1,17 +1,20 @@
 "use client";
 
+import { CreateFuneralBody } from "@/app/api/funerals/route";
 import PageHeader from "@/app/components/page-header";
-import type { IFuneral, EFuneralStatus, EPaymentStatus } from "@/types/funeral";
-import { CalendarOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import type { EFuneralStatus, EPaymentStatus, IFuneral } from "@/types/funeral";
+import { CalendarOutlined, DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import {
+  Alert,
   Button,
   Card,
+  Checkbox,
   DatePicker,
+  Divider,
   Drawer,
   Form,
   Input,
   InputNumber,
-  message,
   Popconfirm,
   Select,
   Space,
@@ -19,13 +22,10 @@ import {
   Table,
   Tag,
   Typography,
-  Divider,
-  Checkbox,
-  Alert,
 } from "antd";
-import { useEffect, useMemo, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
-import { CreateFuneralBody } from "@/app/api/funerals/route";
+import { useEffect, useMemo, useState } from "react";
+import sweetAlert from "sweetalert";
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -88,6 +88,8 @@ const FuneralsPage = () => {
   const [status, setStatus] = useState<EFuneralStatus | undefined>();
   const [branchId, setBranchId] = useState<string | undefined>();
   const [range, setRange] = useState<[Dayjs, Dayjs] | null>(null);
+  const [branches, setBranches] = useState<Array<{ name: string; code: string }>>([]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
 
   // drawer (create/edit)
   const [open, setOpen] = useState(false);
@@ -116,7 +118,7 @@ const FuneralsPage = () => {
       setTotal(json.total);
     } catch (e: any) {
       console.error(e);
-      message.error(e?.message || 'Failed to fetch funerals');
+      sweetAlert({ title: 'Error', text: e?.message || 'Failed to fetch funerals', icon: 'error' });
     } finally {
       setLoading(false);
     }
@@ -126,6 +128,48 @@ const FuneralsPage = () => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, q, status, branchId, range]);
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        setBranchesLoading(true);
+        const res = await fetch('/api/configurations/branches');
+        const json = await res.json();
+        if (!res.ok || !json?.success) {
+          throw new Error(json?.error?.message || 'Failed to load branches');
+        }
+        const list = Array.isArray(json.data) ? json.data : [];
+        setBranches(
+          list
+            .filter((item: any) => item?.name && item?.code)
+            .map((item: any) => ({
+              name: String(item.name),
+              code: String(item.code),
+            }))
+        );
+      } catch (error: any) {
+        console.error(error);
+        sweetAlert({
+          title: 'Error loading branches',
+          text: error?.message || 'Unable to load branches',
+          icon: 'error',
+        });
+      } finally {
+        setBranchesLoading(false);
+      }
+    };
+
+    loadBranches();
+  }, []);
+
+  const branchOptions = useMemo(
+    () =>
+      branches.map((branch) => ({
+        label: `${branch.name} (${branch.code})`,
+        value: branch.code,
+      })),
+    [branches]
+  );
 
   const onResetFilters = () => {
     setQ('');
@@ -268,7 +312,7 @@ const FuneralsPage = () => {
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json?.message || 'Save failed');
 
-      message.success(editing ? 'Funeral updated' : 'Funeral created');
+      sweetAlert({ title: 'Success', text: editing ? 'Funeral updated' : 'Funeral created', icon: 'success' });
       setOpen(false);
       setEditing(null);
       fetchData();
@@ -276,7 +320,7 @@ const FuneralsPage = () => {
       if (e?.errorFields) return; // antd form validation error
       console.error(e);
       setError(e?.message || 'Failed to save');
-      message.error(e?.message || 'Failed to save');
+      sweetAlert({ title: 'Error', text: e?.message || 'Failed to save', icon: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -287,13 +331,13 @@ const FuneralsPage = () => {
       const res = await fetch(`/api/funerals/${row._id}?deleteCalendar=true`, { method: 'DELETE' });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json?.message || 'Delete failed');
-      message.success('Funeral deleted');
+      sweetAlert({ title: 'Success', text: 'Funeral deleted', icon: 'success' });
       // if table ends up on an empty page, pull back one page
       if (items.length === 1 && page > 1) setPage(p => p - 1);
       else fetchData();
     } catch (e: any) {
       console.error(e);
-      message.error(e?.message || 'Failed to delete');
+      sweetAlert({ title: 'Error', text: e?.message || 'Failed to delete', icon: 'error' });
     }
   };
 
@@ -436,15 +480,19 @@ const FuneralsPage = () => {
               { value: 'cancelled', label: 'Cancelled' },
             ]}
           />
-          <Input
+          <Select
             allowClear
-            placeholder="Branch ID"
+            showSearch
+            placeholder="Branch"
             value={branchId}
-            onChange={(e) => {
+            loading={branchesLoading}
+            options={branchOptions}
+            optionFilterProp="label"
+            onChange={(value) => {
               setPage(1);
-              setBranchId(e.target.value || undefined);
+              setBranchId((value as string) || undefined);
             }}
-            style={{ width: 160 }}
+            style={{ width: 220 }}
           />
           <RangePicker
             allowEmpty={[true, true]}
@@ -513,8 +561,15 @@ const FuneralsPage = () => {
             <Form.Item label="Policy #" name="policyNumber">
               <Input placeholder="Optional" />
             </Form.Item>
-            <Form.Item label="Branch ID" name="branchId">
-              <Input placeholder="e.g., BR-EDENPARK" />
+            <Form.Item label="Branch" name="branchId">
+              <Select
+                allowClear
+                showSearch
+                placeholder="Select branch"
+                options={branchOptions}
+                optionFilterProp="label"
+                loading={branchesLoading}
+              />
             </Form.Item>
           </div>
 

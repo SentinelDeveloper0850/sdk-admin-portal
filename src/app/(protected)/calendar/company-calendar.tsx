@@ -5,13 +5,13 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { Alert, Badge, Button, Descriptions, Divider, Drawer, Flex, Skeleton, Space, Tag, Typography } from 'antd';
+import { Alert, Badge, Button, Descriptions, DescriptionsProps, Divider, Drawer, Flex, Skeleton, Space, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import utc from 'dayjs/plugin/utc';
-import { useEffect, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useRef, useState } from 'react';
 import sweetAlert from 'sweetalert';
-import { getEventPalette } from './event-palette';
+import { EventPalette, getEventPalette } from './event-palette';
 
 
 dayjs.extend(utc);
@@ -138,6 +138,400 @@ interface IProps {
    */
   externalDraggablesContainerId?: string;
 }
+
+interface EventDetailsViewModel {
+  title: string;
+  type?: string;
+  status?: string;
+  startISO?: string;
+  endISO?: string;
+  allDay?: boolean;
+  location?: any;
+  description?: string;
+  attendees: any[];
+  milestone?: string;
+  palette?: EventPalette;
+}
+
+type DescriptionItem = NonNullable<DescriptionsProps['items']>[number];
+
+const formatDuration = (hours?: number | string | null, minutes?: number | string | null) => {
+  const toNumber = (value?: number | string | null) => {
+    if (value === undefined || value === null) return 0;
+    const num = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(num) ? num : 0;
+  };
+  const h = toNumber(hours);
+  const m = toNumber(minutes);
+  if (!h && !m) return undefined;
+  const parts = [];
+  if (h) parts.push(`${h} hr${h === 1 ? '' : 's'}`);
+  if (m) parts.push(`${m} min${m === 1 ? '' : 's'}`);
+  return parts.join(' ');
+};
+
+const formatDateTime = (value?: string | Date | null) => {
+  if (!value) return undefined;
+  return dayjs(value).format('ddd, D MMM YYYY • HH:mm');
+};
+
+const WhenWhereSection = ({ details }: { details: EventDetailsViewModel }) => (
+  <Descriptions
+    column={1}
+    items={[
+      {
+        key: 'when',
+        label: 'When',
+        children: (
+          <Space>
+            <ClockCircleOutlined />
+            <Text>{fmtRange(details.startISO, details.endISO, details.allDay)}</Text>
+          </Space>
+        ),
+      },
+      {
+        key: 'where',
+        label: 'Location',
+        children: (
+          <Space align="start">
+            <EnvironmentOutlined />
+            <div>
+              <div>
+                {asLocationText(details.location)}{' '}
+                {googleMapsHref(details.location) && (
+                  <a href={googleMapsHref(details.location)} target="_blank" rel="noreferrer">
+                    {' '}
+                    Open in Maps <LinkOutlined />
+                  </a>
+                )}
+              </div>
+            </div>
+          </Space>
+        ),
+      },
+    ]}
+  />
+);
+
+const AttendeesSection = ({ details }: { details: EventDetailsViewModel }) => {
+  if (!details.attendees?.length) return null;
+  return (
+    <>
+      <Divider className="my-2" />
+      <div>
+        <Space style={{ marginBottom: 8 }}>
+          <TeamOutlined />
+          <Text strong>Attendees</Text>
+        </Space>
+        <Space wrap>
+          {details.attendees.map((a: any, i: number) => {
+            const label = a?.name || a?.email || a?.phone || 'Attendee';
+            return <Badge key={i} status="processing" text={label} />;
+          })}
+        </Space>
+      </div>
+    </>
+  );
+};
+
+const DescriptionSection = ({ details }: { details: EventDetailsViewModel }) => {
+  if (!details.description) return null;
+  return (
+    <>
+      <Divider className="my-2" />
+      <div>
+        <Text strong>Description</Text>
+        <Paragraph style={{ marginTop: 4 }} ellipsis={{ rows: 4, expandable: true, symbol: 'more' }} copyable>
+          {details.description}
+        </Paragraph>
+      </div>
+    </>
+  );
+};
+
+const BaseEventSections = ({ details }: { details: EventDetailsViewModel }) => (
+  <>
+    <WhenWhereSection details={details} />
+    <AttendeesSection details={details} />
+    <DescriptionSection details={details} />
+  </>
+);
+
+interface DrawerContentProps {
+  details: EventDetailsViewModel;
+  selectedEvent: any;
+  funeralDetails: any;
+  funeralLoading: boolean;
+  funeralError: string | null;
+  funeralDetailsContent: React.ReactNode;
+  milestoneMeta?: { label: string; field: 'pickUp' | 'bathing' | 'tentErection' | 'delivery' | 'serviceEscort' | 'burial' };
+  milestoneSlot?: any;
+  typeTagStyle?: CSSProperties;
+  typeTagColorFallback?: string;
+}
+
+type DrawerRenderer = (props: DrawerContentProps) => JSX.Element | null;
+
+const AdditionalDescriptionsSection = ({ title, items }: { title: string; items: DescriptionItem[] }) => {
+  if (!items.length) return null;
+  return (
+    <>
+      <Divider className="my-2" />
+      <div>
+        <Text strong>{title}</Text>
+        <Descriptions column={1} size="small" items={items} />
+      </div>
+    </>
+  );
+};
+
+const DefaultEventDrawerContent: DrawerRenderer = ({ details }) => (
+  <div className="space-y-4">
+    <BaseEventSections details={details} />
+  </div>
+);
+
+const FuneralDrawerContent: DrawerRenderer = ({ details, funeralDetailsContent }) => (
+  <div className="space-y-4">
+    <BaseEventSections details={details} />
+    <Divider className="my-2" />
+    <div>
+      <Space style={{ marginBottom: 8 }}>
+        <Text strong>Funeral Overview</Text>
+      </Space>
+      {funeralDetailsContent}
+    </div>
+  </div>
+);
+
+const FuneralMilestoneDrawerContent: DrawerRenderer = ({
+  details,
+  funeralDetailsContent,
+  milestoneMeta,
+  typeTagStyle,
+  typeTagColorFallback,
+}) => (
+  <div className="space-y-4">
+    <BaseEventSections details={details} />
+    <Divider className="my-2" />
+    <div>
+      <Space style={{ marginBottom: 8 }}>
+        <Text strong>{milestoneMeta?.label ? `${milestoneMeta.label} Details` : 'Funeral Details'}</Text>
+        {milestoneMeta?.label && (
+          <Tag style={typeTagStyle} color={typeTagColorFallback}>
+            {milestoneMeta.label}
+          </Tag>
+        )}
+      </Space>
+      {funeralDetailsContent}
+    </div>
+  </div>
+);
+
+const MeetingDrawerContent: DrawerRenderer = ({ details, selectedEvent }) => {
+  const virtualDetails = selectedEvent?.virtualEventDetails ?? {};
+  const joinUrl = virtualDetails?.joinUrl || virtualDetails?.url;
+  const meetingItems: DescriptionItem[] = [];
+
+  const organizer = selectedEvent?.organizer || selectedEvent?.createdBy;
+  if (organizer) meetingItems.push({ key: 'organizer', label: 'Organizer', children: organizer });
+
+  if (typeof selectedEvent?.isVirtualEvent === 'boolean') {
+    meetingItems.push({
+      key: 'mode',
+      label: 'Mode',
+      children: selectedEvent.isVirtualEvent ? 'Virtual' : 'In person',
+    });
+  }
+
+  if (virtualDetails?.provider) {
+    meetingItems.push({ key: 'provider', label: 'Platform', children: virtualDetails.provider });
+  }
+
+  if (joinUrl) {
+    meetingItems.push({
+      key: 'join',
+      label: 'Join Link',
+      children: (
+        <a href={joinUrl} target="_blank" rel="noreferrer">
+          Join meeting <LinkOutlined />
+        </a>
+      ),
+    });
+  }
+
+  if (virtualDetails?.password) {
+    meetingItems.push({ key: 'password', label: 'Password', children: virtualDetails.password });
+  }
+
+  if (virtualDetails?.dialIn || virtualDetails?.phone) {
+    meetingItems.push({
+      key: 'dialIn',
+      label: 'Dial-in',
+      children: virtualDetails.dialIn || virtualDetails.phone,
+    });
+  }
+
+  if (selectedEvent?.agenda) {
+    meetingItems.push({ key: 'agenda', label: 'Agenda', children: selectedEvent.agenda });
+  }
+
+  return (
+    <div className="space-y-4">
+      <BaseEventSections details={details} />
+      <AdditionalDescriptionsSection title="Meeting Details" items={meetingItems} />
+    </div>
+  );
+};
+
+const ShiftDrawerContent: DrawerRenderer = ({ details, selectedEvent }) => {
+  const assigned =
+    selectedEvent?.assignedTo ||
+    selectedEvent?.assignedStaff ||
+    (Array.isArray(details.attendees) && details.attendees.length
+      ? details.attendees.map((a: any) => a?.name || a?.email || a?.phone).filter(Boolean).join(', ')
+      : undefined);
+
+  const shiftItems: DescriptionItem[] = [];
+
+  const role = selectedEvent?.role || selectedEvent?.shiftRole || selectedEvent?.position;
+  if (role) shiftItems.push({ key: 'role', label: 'Role', children: role });
+
+  if (assigned) shiftItems.push({ key: 'assigned', label: 'Assigned To', children: assigned });
+
+  if (selectedEvent?.branchId) {
+    shiftItems.push({ key: 'branch', label: 'Branch', children: selectedEvent.branchId });
+  }
+
+  const duration = formatDuration(selectedEvent?.durationHours, selectedEvent?.durationMinutes);
+  if (duration) shiftItems.push({ key: 'duration', label: 'Duration', children: duration });
+
+  if (selectedEvent?.notes) {
+    shiftItems.push({ key: 'notes', label: 'Notes', children: selectedEvent.notes });
+  }
+
+  return (
+    <div className="space-y-4">
+      <BaseEventSections details={details} />
+      <AdditionalDescriptionsSection title="Shift Details" items={shiftItems} />
+    </div>
+  );
+};
+
+const TrainingDrawerContent: DrawerRenderer = ({ details, selectedEvent }) => {
+  const trainingItems: DescriptionItem[] = [];
+
+  if (selectedEvent?.trainer || selectedEvent?.facilitator) {
+    trainingItems.push({
+      key: 'trainer',
+      label: 'Trainer',
+      children: selectedEvent.trainer || selectedEvent.facilitator,
+    });
+  }
+
+  if (selectedEvent?.topic || selectedEvent?.course) {
+    trainingItems.push({
+      key: 'topic',
+      label: 'Topic',
+      children: selectedEvent.topic || selectedEvent.course,
+    });
+  }
+
+  const duration = formatDuration(selectedEvent?.durationHours, selectedEvent?.durationMinutes);
+  if (duration) trainingItems.push({ key: 'duration', label: 'Duration', children: duration });
+
+  if (selectedEvent?.materials) {
+    trainingItems.push({ key: 'materials', label: 'Materials', children: selectedEvent.materials });
+  }
+
+  if (selectedEvent?.registrationUrl) {
+    trainingItems.push({
+      key: 'registration',
+      label: 'Registration',
+      children: (
+        <a href={selectedEvent.registrationUrl} target="_blank" rel="noreferrer">
+          View registration <LinkOutlined />
+        </a>
+      ),
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      <BaseEventSections details={details} />
+      <AdditionalDescriptionsSection title="Training Details" items={trainingItems} />
+    </div>
+  );
+};
+
+const TaskDrawerContent: DrawerRenderer = ({ details, selectedEvent }) => {
+  const taskItems: DescriptionItem[] = [];
+
+  const taskStatus = selectedEvent?.taskStatus || selectedEvent?.status;
+  if (taskStatus) {
+    taskItems.push({
+      key: 'status',
+      label: 'Task Status',
+      children: formatKey(taskStatus) || taskStatus,
+    });
+  }
+
+  if (selectedEvent?.priority) {
+    taskItems.push({
+      key: 'priority',
+      label: 'Priority',
+      children: formatKey(selectedEvent.priority) || selectedEvent.priority,
+    });
+  }
+
+  const dueDate =
+    selectedEvent?.dueDate ||
+    selectedEvent?.due ||
+    selectedEvent?.endDateTime ||
+    selectedEvent?.end ||
+    selectedEvent?.expectedCompletion;
+  const formattedDue = formatDateTime(dueDate);
+  if (formattedDue) {
+    taskItems.push({ key: 'due', label: 'Due', children: formattedDue });
+  }
+
+  const owner =
+    selectedEvent?.owner ||
+    selectedEvent?.ownerName ||
+    selectedEvent?.assignedTo ||
+    (Array.isArray(details.attendees) && details.attendees.length
+      ? details.attendees.map((a: any) => a?.name || a?.email || a?.phone).filter(Boolean).join(', ')
+      : undefined);
+  if (owner) {
+    taskItems.push({ key: 'owner', label: 'Owner', children: owner });
+  }
+
+  if (selectedEvent?.notes) {
+    taskItems.push({ key: 'notes', label: 'Notes', children: selectedEvent.notes });
+  }
+
+  return (
+    <div className="space-y-4">
+      <BaseEventSections details={details} />
+      <AdditionalDescriptionsSection title="Task Details" items={taskItems} />
+    </div>
+  );
+};
+
+const EVENT_DRAWER_COMPONENTS: Record<string, DrawerRenderer> = {
+  funeral: FuneralDrawerContent,
+  funeral_pickup: FuneralMilestoneDrawerContent,
+  funeral_bathing: FuneralMilestoneDrawerContent,
+  funeral_tent: FuneralMilestoneDrawerContent,
+  funeral_delivery: FuneralMilestoneDrawerContent,
+  funeral_service: FuneralMilestoneDrawerContent,
+  funeral_burial: FuneralMilestoneDrawerContent,
+  meeting: MeetingDrawerContent,
+  shift: ShiftDrawerContent,
+  training: TrainingDrawerContent,
+  task: TaskDrawerContent,
+  default: DefaultEventDrawerContent,
+};
 
 const CompanyCalendar = ({
   events = [],
@@ -470,6 +864,16 @@ const CompanyCalendar = ({
           </Space>
         ),
       },
+      !funeralMilestoneMeta && funeralDetails.serviceDateTime && {
+        key: 'service',
+        label: 'Service Time',
+        children: formatDateTime(funeralDetails.serviceDateTime),
+      },
+      !funeralMilestoneMeta && funeralDetails.burialDateTime && {
+        key: 'burial',
+        label: 'Burial Time',
+        children: formatDateTime(funeralDetails.burialDateTime),
+      },
       (funeralDetails.cemetery || funeralDetails.branchId) && {
         key: 'location',
         label: 'Location',
@@ -479,6 +883,11 @@ const CompanyCalendar = ({
             {funeralDetails.branchId && <Text type="secondary">Branch: {funeralDetails.branchId}</Text>}
           </Space>
         ),
+      },
+      !funeralMilestoneMeta && funeralDetails.graveNumber && {
+        key: 'graveNumber',
+        label: 'Grave Number',
+        children: funeralDetails.graveNumber,
       },
       funeralDetails.notes && {
         key: 'notes',
@@ -513,6 +922,12 @@ const CompanyCalendar = ({
     }
     : undefined;
   const typeTagColorFallback = typeTagStyle ? undefined : 'gold';
+  const drawerKeySource =
+    selectedEvent?.subType || selectedEvent?.milestone || selectedEvent?.type || 'default';
+  const drawerKey =
+    typeof drawerKeySource === 'string' ? drawerKeySource.toLowerCase() : 'default';
+  const DrawerContentComponent =
+    EVENT_DRAWER_COMPONENTS[drawerKey] || EVENT_DRAWER_COMPONENTS.default;
 
   return (
     <div className="">
@@ -597,105 +1012,49 @@ const CompanyCalendar = ({
         }}
         destroyOnClose
         footer={
-          <Space>
-            <Button type="primary" className="text-black" icon={<EditOutlined />} onClick={() => {/* open edit drawer/modal */ }}>
-              Edit
-            </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={() => {
-              // await fetch(`/api/calendar/events/${selectedEvent.id}`, { method: 'DELETE' });
-              // fetchEvents(); setEventDetailsDrawerOpen(false);
-            }}>Delete</Button>
-          </Space>
+          !selectedEvent || (selectedEvent?.type || selectedEvent?.milestone || '').toString().toLowerCase().startsWith('funeral')
+            ? null
+            : (
+              <Space>
+                <Button
+                  type="primary"
+                  className="text-black"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    /* open edit drawer/modal */
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => {
+                    // await fetch(`/api/calendar/events/${selectedEvent.id}`, { method: 'DELETE' });
+                    // fetchEvents(); setEventDetailsDrawerOpen(false);
+                  }}
+                >
+                  Delete
+                </Button>
+              </Space>
+            )
         }
       >
-        {details && (
-          // Bathing Details: Time of Bathing, Address
-          // Tent Erection Details: Time of Erection, Address, Equipment (Tent Package) 
-          // Delivery Details: Grave Marker, Time of Delivery, Address, Programs, Via (Detour with address), Family Escorting Coffin?, Equipment (Screen, Chest Truck) 
-          // Burial Details: Cemetery, Time of Burial, Address, Coffin Type
-          // Tent Collection Details: Time of Collection, Address
-          <div className="space-y-4">
-            {/* When & Where */}
-            <Descriptions
-              column={1}
-              items={[
-                {
-                  key: 'when',
-                  label: 'When',
-                  children: (
-                    <Space>
-                      <ClockCircleOutlined />
-                      <Text>{fmtRange(details.startISO, details.endISO, details.allDay)}</Text>
-                    </Space>
-                  ),
-                },
-                {
-                  key: 'where',
-                  label: 'Location',
-                  children: (
-                    <Space align="start">
-                      <EnvironmentOutlined />
-                      <div>
-                        <div>{asLocationText(details.location)} | {googleMapsHref(details.location) && <a href={googleMapsHref(details.location)} target="_blank" rel="noreferrer"> Open in Maps <LinkOutlined /></a>}</div>
-
-                      </div>
-                    </Space>
-                  ),
-                },
-              ]}
-            />
-
-            {/* Attendees */}
-            {!!details.attendees?.length && (
-              <>
-                <Divider className="my-2" />
-                <div>
-                  <Space style={{ marginBottom: 8 }}>
-                    <TeamOutlined />
-                    <Text strong>Attendees</Text>
-                  </Space>
-                  <Space wrap>
-                    {details.attendees.map((a: any, i: number) => {
-                      const label = a?.name || a?.email || a?.phone || 'Attendee';
-                      return <Badge key={i} status="processing" text={label} />;
-                    })}
-                  </Space>
-                </div>
-              </>
-            )}
-
-            {/* Description (collapsible / copyable) */}
-            {details.description && (
-              <>
-                <Divider className="my-2" />
-                <div>
-                  <Text strong>Description</Text>
-                  <Paragraph style={{ marginTop: 4 }} ellipsis={{ rows: 4, expandable: true, symbol: 'more' }} copyable>
-                    {details.description}
-                  </Paragraph>
-                </div>
-              </>
-            )}
-
-            {selectedEvent?.relatedModel === 'funeral' && (
-              <>
-                <Divider className="my-2" />
-                <div>
-                  <Space style={{ marginBottom: 8 }}>
-                    <Text strong>Funeral Details</Text>
-                    {funeralMilestoneMeta?.label && (
-                      <Tag style={typeTagStyle} color={typeTagColorFallback}>
-                        {funeralMilestoneMeta.label}
-                      </Tag>
-                    )}
-                  </Space>
-                  {funeralDetailsContent}
-                </div>
-              </>
-            )}
-
-            <Divider className="my-2" />
-          </div>
+        {details ? (
+          <DrawerContentComponent
+            details={details}
+            selectedEvent={selectedEvent ?? {}}
+            funeralDetails={funeralDetails}
+            funeralLoading={funeralLoading}
+            funeralError={funeralError}
+            funeralDetailsContent={funeralDetailsContent}
+            milestoneMeta={funeralMilestoneMeta}
+            milestoneSlot={funeralMilestoneSlot}
+            typeTagStyle={typeTagStyle}
+            typeTagColorFallback={typeTagColorFallback}
+          />
+        ) : (
+          <Text type="secondary">Select an event to view its details.</Text>
         )}
       </Drawer>
     </div>
