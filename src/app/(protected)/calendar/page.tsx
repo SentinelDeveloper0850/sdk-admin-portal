@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import PageHeader from '@/app/components/page-header';
-import CompanyCalendar from './company-calendar';
 import sweetAlert from 'sweetalert';
+import CompanyCalendar from './company-calendar';
+import { getEventPalette, paletteToFullCalendarColors } from './event-palette';
 
 const CalendarPage = () => {
   const [companyEvents, setCompanyEvents] = useState<any[]>([]);
@@ -17,17 +18,9 @@ const CalendarPage = () => {
       const data = await result.json();
 
       const events = data.events?.map((event: any) => ({
-        id: event._id,
-        title: event.name,
-        start: `${event.start}`,
-        startTime: event.startTime,
-        end: event.end,
-        description: event.description,
-        color: "#ffac00",
-        textColor: "#000",
-        extendedProps: { ...event },
+        ...event,
+        id: event._id ?? event.id,
       })) || [];
-      console.log("🚀 ~ fetchEvents ~ events:", events)
 
       setCompanyEvents(events);
     } catch (error) {
@@ -74,7 +67,6 @@ const CalendarPage = () => {
   const fcEvents = useMemo(() => {
     return companyEvents
       .map(e => {
-        console.log("🚀 ~ CalendarPage ~ e:", e)
         const startISO = e.startDateTime
           ? new Date(e.startDateTime).toISOString()
           : (e.start && !Number.isNaN(Date.parse(e.start)) ? new Date(e.start).toISOString() : null);
@@ -83,14 +75,23 @@ const CalendarPage = () => {
           ? new Date(e.endDateTime).toISOString()
           : (e.end && !Number.isNaN(Date.parse(e.end)) ? new Date(e.end).toISOString() : null);
 
-        return startISO ? {
+        if (!startISO) return null;
+
+        const palette = getEventPalette(e);
+        const colorProps = paletteToFullCalendarColors(palette);
+
+        return {
           id: String(e._id || e.id),
-          title: e.title,
+          title: e.name || e.title,
           start: startISO,
           end: endISO || undefined,
           allDay: !!e.isAllDayEvent,
-          extendedProps: { ...e },
-        } : null;
+          ...colorProps,
+          extendedProps: {
+            ...e,
+            palette,
+          },
+        };
       })
       .filter(e => e !== null)
   }, [companyEvents]);
