@@ -34,16 +34,6 @@ import { IBranch } from "@/app/models/system/branch.schema";
 import { useAuth } from "@/context/auth-context";
 import { CalendarOutlined, LeftOutlined, ReloadOutlined, RightOutlined } from "@ant-design/icons";
 
-const oldBranches = [
-  // "Ndulwini",
-  // "Mangweni",
-  // "Kaalfontein",
-  // "Sangweni",
-  // "Simunye",
-  // "Daveyton",
-  // "Ivory Park",
-];
-
 const activities = [
   {
     id: 5,
