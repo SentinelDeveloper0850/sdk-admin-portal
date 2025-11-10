@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { Col, Drawer, Image, Modal, Row, Space, Spin, Statistic, Table, Tag, message } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
+import { Button, Col, Drawer, Form, Image, Input, Modal, Row, Select, Space, Spin, Statistic, Table, Tag, message } from "antd";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
@@ -13,6 +14,7 @@ import { PolicySignupViewModal } from "@/app/components/policy-signup-view-modal
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
 
+import { IUser } from "@/app/models/hr/user.schema";
 import { ERoles } from "../../../../types/roles.enum";
 
 const getStatusColor = (status: string) => {
@@ -63,9 +65,18 @@ const getStatusText = (status: string) => {
 
 const SignupRequestsPage = () => {
   const [requests, setRequests] = useState<IPolicySignUp[]>([]);
+  const [consultants, setConsultants] = useState<IUser[]>([]);
+
   const [loading, setLoading] = useState<boolean>(true);
+  const [consultantsLoading, setConsultantsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
   const [stats, setStats] = useState<{ count: number }>({ count: 0 });
+
+  // Filters
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [planFilter, setPlanFilter] = useState<string | undefined>();
+  const [assignedFilter, setAssignedFilter] = useState<string | undefined>();
 
   // Drawer states
   const [viewDrawerVisible, setViewDrawerVisible] = useState(false);
@@ -103,9 +114,110 @@ const SignupRequestsPage = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      setConsultantsLoading(true);
+      const response = await fetch('/api/users?type=consultants&slim=true');
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        setConsultants(data);
+      } else if (Array.isArray(data?.data)) {
+        setConsultants(data.data);
+      }
+    } catch (err) {
+      console.log(err);
+      setError("An error occurred while fetching consultants.");
+    } finally {
+      setConsultantsLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchRequests();
+    fetchUsers();
+  };
+
   useEffect(() => {
     fetchRequests();
+    fetchUsers();
   }, []);
+
+  const statusOptions = useMemo(
+    () => [
+      "submitted",
+      "reviewed",
+      "pending_info",
+      "approved",
+      "rejected",
+      "escalated",
+      "archived",
+    ],
+    []
+  );
+
+  const planOptions = useMemo(() => {
+    const plans = new Set<string>();
+    requests.forEach((request) => {
+      if (request.plan?.name) {
+        plans.add(request.plan.name);
+      }
+    });
+    return Array.from(plans).sort((a, b) => a.localeCompare(b));
+  }, [requests]);
+
+  const filteredRequests = useMemo(() => {
+    const loweredSearch = searchTerm.trim().toLowerCase();
+
+    return requests.filter((request) => {
+      const status = (request.currentStatus || request.status || "").toLowerCase();
+      const planName = request.plan?.name;
+      const consultantName = request.assignedConsultantName;
+      const consultantId = request.assignedConsultant ? String(request.assignedConsultant) : undefined;
+
+      const matchesStatus = statusFilter ? status === statusFilter : true;
+      const matchesPlan = planFilter ? planName === planFilter : true;
+      const matchesConsultant = assignedFilter
+        ? assignedFilter === "unassigned"
+          ? !consultantId && !consultantName
+          : consultantId === assignedFilter
+        : true;
+
+      const searchContent = [
+        request.requestId,
+        request.fullNames,
+        request.surname,
+        request.identificationNumber,
+        request.email,
+        request.phone,
+        planName,
+        consultantName,
+      ]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase())
+        .join(" ");
+
+      const matchesSearch = loweredSearch ? searchContent.includes(loweredSearch) : true;
+
+      return matchesStatus && matchesPlan && matchesConsultant && matchesSearch;
+    });
+  }, [requests, searchTerm, statusFilter, planFilter, assignedFilter]);
+
+  const hasActiveFilters = useMemo(() => {
+    return (
+      Boolean(searchTerm.trim()) ||
+      Boolean(statusFilter) ||
+      Boolean(planFilter) ||
+      Boolean(assignedFilter)
+    );
+  }, [searchTerm, statusFilter, planFilter, assignedFilter]);
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter(undefined);
+    setPlanFilter(undefined);
+    setAssignedFilter(undefined);
+  };
 
   // Action handlers
   const handleView = (record: IPolicySignUp) => {
@@ -272,14 +384,26 @@ const SignupRequestsPage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <PageHeader title="Signup Requests">
+      <PageHeader
+        title="Signup Requests"
+        actions={[
+          <Button
+            key="refresh"
+            icon={<ReloadOutlined />}
+            onClick={handleRefresh}
+            loading={loading || consultantsLoading}
+          >
+            Refresh
+          </Button>,
+        ]}
+      >
         <Row gutter={16}>
           <Col span={12}>
             <Space size={32}>
               <Statistic title="Total Requests" value={stats.count} />
               <Statistic
                 title="Listed Requests"
-                value={requests ? requests.length : 0}
+                value={filteredRequests.length}
               />
             </Space>
           </Col>
@@ -290,10 +414,93 @@ const SignupRequestsPage = () => {
         <div style={{ color: "red", marginBottom: "20px" }}>{error}</div>
       )}
 
+      <Form layout="vertical" style={{ marginBottom: 24 }}>
+        <Row gutter={16}>
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item label="Search">
+              <Input
+                allowClear
+                placeholder="Search by name, request ID, email, or phone"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Form.Item label="Status">
+              <Select
+                allowClear
+                placeholder="All statuses"
+                value={statusFilter}
+                onChange={(value) => setStatusFilter(value)}
+                options={statusOptions.map((status) => ({
+                  label: getStatusText(status),
+                  value: status,
+                }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Form.Item label="Plan">
+              <Select
+                allowClear
+                placeholder="All plans"
+                value={planFilter}
+                onChange={(value) => setPlanFilter(value)}
+                options={planOptions.map((plan) => ({
+                  label: plan,
+                  value: plan,
+                }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Form.Item label="Assigned Consultant">
+              <Select
+                allowClear
+                placeholder="All consultants"
+                value={assignedFilter}
+                onChange={(value) => setAssignedFilter(value ?? undefined)}
+                options={[
+                  { label: "Unassigned", value: "unassigned" },
+                  ...consultants
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((consultant) => ({
+                      label: consultant.name,
+                      value: consultant._id?.toString() ?? String(consultant._id),
+                    })),
+                ]}
+                loading={consultantsLoading}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row justify="space-between" align="middle">
+          <Col flex="auto">
+            {hasActiveFilters && (
+              <div
+                className="mb-3 mt-1 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-600"
+              >
+                Showing {filteredRequests.length} request{filteredRequests.length === 1 ? "" : "s"}{" "}
+                matching current filters.
+              </div>
+            )}
+          </Col>
+          <Col>
+            <Space>
+              <Button onClick={handleClearFilters} disabled={!hasActiveFilters}>
+                Clear Filters
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </Form>
+
       <Table
         rowKey="_id"
         bordered
-        dataSource={requests}
+        dataSource={filteredRequests}
         columns={[
           {
             title: "Request ID",

@@ -73,10 +73,10 @@ export const PolicySignupActionModals = ({
 
   const loadConsultants = async () => {
     try {
-      const response = await fetch('/api/policies/signup-requests/users?type=consultants');
+      const response = await fetch('/api/users?type=consultants&slim=true');
       const data = await response.json();
-      if (data.success) {
-        setConsultants(data.data || []);
+      if (data) {
+        setConsultants(data);
       }
     } catch (error) {
       console.error("Failed to load consultants:", error);
@@ -85,10 +85,10 @@ export const PolicySignupActionModals = ({
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/policies/signup-requests/users?type=escalation');
+      const response = await fetch('/api/users?type=escalation&slim=true');
       const data = await response.json();
-      if (data.success) {
-        setUsers(data.data || []);
+      if (data) {
+        setUsers(data);
       }
     } catch (error) {
       console.error("Failed to load users:", error);
@@ -102,27 +102,42 @@ export const PolicySignupActionModals = ({
     try {
       const userId = user._id || user.id || user.email;
 
-      const response = await fetch(`/api/policies/signup-requests/${record._id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action,
-          ...values,
-          userId,
-          authorName: user.name || user.email || "Unknown"
-        }),
-      });
+      let response = null;
 
-      const data = await response.json();
+      console.log("🚀 ~ handleSubmit ~ action:", action, values)
 
-      if (data.success) {
-        messageApi.success(`${getActionTitle(action)} completed successfully`);
-        onSuccess();
-        onClose();
+      if (action === "assign_consultant") {
+        response = await fetch(`/api/policies/assit/signup-requests/assign/${record._id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ consultantId: values.consultantId }),
+        });
       } else {
-        messageApi.error(data.error || "Action failed");
+
+        response = await fetch(`/api/policies/easipol/signup-requests/${record._id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action,
+            ...values,
+            userId,
+            authorName: user.name || user.email || "Unknown"
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          messageApi.success(`${getActionTitle(action)} completed successfully`);
+          onSuccess();
+          onClose();
+        } else {
+          messageApi.error(data.error || "Action failed");
+        }
       }
     } catch (error) {
       console.error("Action failed:", error);

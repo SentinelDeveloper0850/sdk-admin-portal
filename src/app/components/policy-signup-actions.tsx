@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Dropdown, Space, Tooltip, Popconfirm, message } from "antd";
-import { 
-  EyeOutlined, 
-  UserAddOutlined, 
-  CheckCircleOutlined, 
+import {
+  CheckCircleOutlined,
   CloseCircleOutlined,
-  QuestionCircleOutlined,
+  DeleteOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
+  EyeOutlined,
   InboxOutlined,
   MoreOutlined,
-  DeleteOutlined
+  QuestionCircleOutlined,
+  UserAddOutlined
 } from "@ant-design/icons";
+import { Button, Dropdown, Popconfirm, Space, Tooltip, message } from "antd";
+import { useState } from "react";
 
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
@@ -73,7 +73,7 @@ export const PolicySignupActions = ({
     if (!user || !isAdmin) {
       return false;
     }
-    
+
     // Only allow deletion of certain statuses
     const deletableStatuses = ["submitted", "rejected", "archived"];
     return deletableStatuses.includes(record.currentStatus || "submitted");
@@ -175,7 +175,7 @@ export const PolicySignupActions = ({
           Assigned: {record.assignedConsultantName}
         </div>
       )}
-      
+
       {/* Action Buttons */}
       <Space size="small">
         {/* Primary Actions */}
@@ -201,9 +201,9 @@ export const PolicySignupActions = ({
             </Tooltip>
           </>
         )}
-        
+
         {record.currentStatus === "reviewed" && (
-          <>
+          <Space size="small">
             <Tooltip title="Approve">
               <Button
                 type="primary"
@@ -222,9 +222,9 @@ export const PolicySignupActions = ({
                 onClick={() => handleAction("reject", onReject)}
               />
             </Tooltip>
-          </>
+          </Space>
         )}
-        
+
         {/* Delete Button for Admin Users */}
         {canDelete() && (
           <Popconfirm
@@ -246,7 +246,7 @@ export const PolicySignupActions = ({
             </Tooltip>
           </Popconfirm>
         )}
-        
+
         {/* More Actions Dropdown */}
         <Dropdown
           menu={{

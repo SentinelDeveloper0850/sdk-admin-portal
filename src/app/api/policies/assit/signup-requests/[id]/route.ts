@@ -51,6 +51,7 @@ export async function PATCH(
     switch (action) {
       case "assign_consultant":
         const consultant = await UserModel.findById(actionData.consultantId);
+        console.log("🚀 ~ PATCH ~ consultant:", consultant)
         if (!consultant) {
           return NextResponse.json(
             { success: false, error: "Consultant not found" },
@@ -215,14 +216,13 @@ export async function PATCH(
       id,
       updateData,
       { new: true }
-    );
-
-    if (!updatedRequest) {
+    ).catch((err) => {
+      console.error("Error updating signup request:", err);
       return NextResponse.json(
-        { success: false, error: "Signup request not found" },
-        { status: 404 }
+        { success: false, error: err.message },
+        { status: 500 }
       );
-    }
+    });
 
     // If approved, create policy record
     if (action === "approve") {

@@ -4,6 +4,22 @@ import { sendUserInvitationEmail } from "@/lib/email";
 import { generateTemporaryPassword } from "@/utils/generators/password";
 import { NextRequest, NextResponse } from "next/server";
 
+import { ERoles } from "@/types/roles.enum";
+
+const CONSULTANT_ROLES = [
+  ERoles.Admin,
+  ERoles.SchemeConsultant,
+  ERoles.SchemeConsultantOnline,
+  ERoles.SocietyConsultant,
+];
+
+const ESCALATION_ROLES = [
+  ERoles.Admin,
+  ERoles.HRManager,
+  ERoles.SchemeConsultant,
+  ERoles.SchemeConsultantOnline,
+];
+
 export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
@@ -11,17 +27,28 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const deleted = url.searchParams.get("deleted");
     const slim = url.searchParams.get("slim");
+    const type = url.searchParams.get("type");
     const onlyDeleted = deleted === "true";
 
-    const query = onlyDeleted
+    const query: Record<string, unknown> = onlyDeleted
       ? { deletedAt: { $exists: true } }
       : { deletedAt: { $exists: false } };
+
+    if (type === "consultants") {
+      query.roles = { $in: CONSULTANT_ROLES };
+      query.status = "Active";
+    } else if (type === "escalation") {
+      query.roles = { $in: ESCALATION_ROLES };
+      query.status = "Active";
+    }
 
     let users = [];
 
     if (slim) {
       // Select only the _id and name fields, exclude the password field
-      users = await UsersModel.find(query).select("_id name").sort({ createdAt: -1 });
+      users = await UsersModel.find(query)
+        .select("_id name email roles")
+        .sort({ createdAt: -1 });
     } else {
       users = await UsersModel.find(query).select("-password -deletedAt -deletedBy -updatedAt -createdAt -mustChangePassword -status").sort({ createdAt: -1 });
     }
