@@ -1,5 +1,5 @@
-import mongoose, { Document } from "mongoose";
 import { ILocation } from "@/app/models/calendar-event.schema";
+import mongoose, { Document } from "mongoose";
 
 export enum EFuneralStatus {
   PLANNED = "planned",
@@ -63,6 +63,7 @@ export interface IScheduledItem {
   location?: ILocation;
   notes?: string;
   calendarEventId?: mongoose.Types.ObjectId; // link to calendar-events
+  status?: string;                  // current status of the milestone (e.g., completed)
 }
 
 export interface IFuneral extends Document {

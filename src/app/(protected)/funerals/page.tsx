@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Collapse,
   DatePicker,
   Divider,
   Drawer,
@@ -32,21 +33,82 @@ const { Text } = Typography;
 
 type MilestoneKey = "pickUp" | "bathing" | "tentErection" | "delivery" | "serviceEscort" | "burial";
 
+const DECEASED_AGE_GROUPS = [
+  { id: 'infant', value: 'infant', label: 'Infant', ageRange: '0-2 years', ageMin: 0, ageMax: 2 }, // 0-2 years
+  { id: 'child', value: 'child', label: 'Child', ageRange: '3-12 years', ageMin: 3, ageMax: 12 }, // 3-12 years
+  { id: 'teen', value: 'teen', label: 'Teen', ageRange: '13-19 years', ageMin: 13, ageMax: 19 }, // 13-19 years
+  { id: 'adult', value: 'adult', label: 'Adult', ageRange: '20-64 years', ageMin: 20, ageMax: 64 }, // 20-64 years
+  { id: 'elderly', value: 'elderly', label: 'Elderly', ageRange: '65+ years', ageMin: 65, ageMax: null }, // 65+ years
+];
+
 function MilestoneFields({ name, label }: { name: MilestoneKey; label: string }) {
-  const [enabled, setEnabled] = useState(false);
+  const form = Form.useFormInstance();
+  const milestoneValue = Form.useWatch(name, form) as any;
+
+  const status = milestoneValue?.status;
+  const isCompleted = typeof status === "string" && status.toLowerCase() === "completed";
+  const isEnabled = Boolean(milestoneValue?.enabled);
+
+  const startValue = milestoneValue?.startDateTime;
+  const formattedStart = startValue
+    ? dayjs.isDayjs(startValue)
+      ? startValue.format('ddd, D MMM YYYY • HH:mm')
+      : fmtDT(startValue)
+    : 'Not provided';
+  const notesValue = milestoneValue?.notes;
+
   return (
-    <div>
-      <Form.Item name={[name, "enabled"]} valuePropName="checked" className="!mb-0">
-        <Checkbox checked={enabled} onChange={(e) => setEnabled(e.target.checked)}>{label}</Checkbox>
+    <div className="space-y-2">
+      <Form.Item name={[name, "status"]} hidden>
+        <Input />
       </Form.Item>
-      {enabled && <div className="grid grid-cols-2 gap-3 items-end">
-        <Form.Item label="Date & Time" name={[name, "startDateTime"]} className="col-span-1">
-          <DatePicker showTime className="w-full" />
-        </Form.Item>
-        <Form.Item label="Location/Notes" name={[name, "notes"]} className="col-span-1">
-          <Input placeholder="Optional note or location text" />
-        </Form.Item>
-      </div>}
+
+      {isCompleted ? (
+        <>
+          <div style={{ display: 'none' }}>
+            <Form.Item name={[name, "enabled"]} valuePropName="checked">
+              <Checkbox />
+            </Form.Item>
+            <Form.Item name={[name, "startDateTime"]}>
+              <DatePicker showTime className="w-full" />
+            </Form.Item>
+            <Form.Item name={[name, "notes"]}>
+              <Input />
+            </Form.Item>
+          </div>
+
+          <div className="rounded-md border border-green-200 bg-green-50 p-3">
+            <Space align="center" className="mb-1">
+              <Text strong>{label}</Text>
+              <Tag color="green">Completed</Tag>
+            </Space>
+            <div className="text-sm text-gray-700">
+              <Text strong>Date &amp; Time: </Text>
+              {formattedStart}
+            </div>
+            <div className="text-sm text-gray-700">
+              <Text strong>Notes: </Text>
+              {notesValue ? notesValue : <span className="text-gray-500">No additional notes.</span>}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <Form.Item name={[name, "enabled"]} valuePropName="checked" className="!mb-0">
+            <Checkbox>{label}</Checkbox>
+          </Form.Item>
+          {isEnabled && (
+            <div className="grid grid-cols-2 gap-3 items-end">
+              <Form.Item label="Date & Time" name={[name, "startDateTime"]} className="col-span-1">
+                <DatePicker showTime className="w-full" />
+              </Form.Item>
+              <Form.Item label="Location/Notes" name={[name, "notes"]} className="col-span-1">
+                <Input placeholder="Optional note or location text" />
+              </Form.Item>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -201,6 +263,10 @@ const FuneralsPage = () => {
       policyNumber: row.policyNumber,
       deceasedFirstName: row.deceased?.firstName,
       deceasedLastName: row.deceased?.lastName,
+      deceasedIdNumber: row.deceased?.idNumber,
+      deceasedPassportNumber: row.deceased?.passportNumber,
+      deceasedDateOfBirth: row.deceased?.dateOfBirth ? dayjs(row.deceased.dateOfBirth) : undefined,
+      deceasedDateOfDeath: row.deceased?.dateOfDeath ? dayjs(row.deceased.dateOfDeath) : undefined,
       serviceDateTime: row.serviceDateTime ? dayjs(row.serviceDateTime) : undefined,
       burialDateTime: row.burialDateTime ? dayjs(row.burialDateTime) : undefined,
       isSameDay: row.isSameDay,
@@ -213,35 +279,49 @@ const FuneralsPage = () => {
       paymentStatus: row.paymentStatus,
       status: row.status,
       createCalendarEvent: true, // for edits this flag is ignored; calendar is already linked
+      informantFirstName: row.informant?.firstName,
+      informantLastName: row.informant?.lastName,
+      informantIdNumber: row.informant?.idNumber,
+      informantPassportNumber: row.informant?.passportNumber,
+      informantAddress: row.informant?.address,
+      informantPhoneNumber: row.informant?.phoneNumber,
+      informantEmail: row.informant?.email,
+      informantRelationship: row.informant?.relationship,
       pickUp: {
         enabled: !!row.pickUp?.enabled,
         startDateTime: row.pickUp?.startDateTime ? dayjs(row.pickUp.startDateTime) : undefined,
         notes: row.pickUp?.notes,
+        status: row.pickUp?.status,
       },
       bathing: {
         enabled: !!row.bathing?.enabled,
         startDateTime: row.bathing?.startDateTime ? dayjs(row.bathing.startDateTime) : undefined,
         notes: row.bathing?.notes,
+        status: row.bathing?.status,
       },
       tentErection: {
         enabled: !!row.tentErection?.enabled,
         startDateTime: row.tentErection?.startDateTime ? dayjs(row.tentErection.startDateTime) : undefined,
         notes: row.tentErection?.notes,
+        status: row.tentErection?.status,
       },
       delivery: {
         enabled: !!row.delivery?.enabled,
         startDateTime: row.delivery?.startDateTime ? dayjs(row.delivery.startDateTime) : undefined,
         notes: row.delivery?.notes,
+        status: row.delivery?.status,
       },
       serviceEscort: {
         enabled: !!row.serviceEscort?.enabled,
         startDateTime: row.serviceEscort?.startDateTime ? dayjs(row.serviceEscort.startDateTime) : undefined,
         notes: row.serviceEscort?.notes,
+        status: row.serviceEscort?.status,
       },
       burial: {
         enabled: !!row.burial?.enabled,
         startDateTime: row.burial?.startDateTime ? dayjs(row.burial.startDateTime) : undefined,
         notes: row.burial?.notes,
+        status: row.burial?.status,
       },
 
     });
@@ -253,6 +333,36 @@ const FuneralsPage = () => {
     setSubmitting(true);
     const isDay = (d: any) => d && dayjs.isDayjs(d);
     const toISO = (d: any) => (isDay(d) ? (d as Dayjs).toISOString() : undefined);
+
+    const mapMilestone = (milestone: any) => {
+      if (!milestone) return { enabled: false };
+
+      const status = milestone.status;
+      const enabled = Boolean(milestone.enabled) || status === 'completed';
+
+      if (!enabled && status !== 'completed') {
+        return { enabled: false };
+      }
+
+      const result: Record<string, any> = {
+        enabled: enabled || status === 'completed',
+      };
+
+      const iso = toISO(milestone.startDateTime);
+      if (iso) {
+        result.startDateTime = iso;
+      }
+
+      if (milestone.notes) {
+        result.notes = milestone.notes;
+      }
+
+      if (status) {
+        result.status = status;
+      }
+
+      return result;
+    };
 
     try {
       const v = await form.validateFields();
@@ -294,12 +404,12 @@ const FuneralsPage = () => {
         notes: v.notes || undefined,
 
         // milestones
-        pickUp: v.pickUp?.enabled ? { enabled: true, startDateTime: toISO(v.pickUp.startDateTime), notes: v.pickUp.notes } : { enabled: false },
-        bathing: v.bathing?.enabled ? { enabled: true, startDateTime: toISO(v.bathing.startDateTime), notes: v.bathing.notes } : { enabled: false },
-        tentErection: v.tentErection?.enabled ? { enabled: true, startDateTime: toISO(v.tentErection.startDateTime), notes: v.tentErection.notes } : { enabled: false },
-        delivery: v.delivery?.enabled ? { enabled: true, startDateTime: toISO(v.delivery.startDateTime), notes: v.delivery.notes } : { enabled: false },
-        serviceEscort: v.serviceEscort?.enabled ? { enabled: true, startDateTime: toISO(v.serviceEscort.startDateTime), notes: v.serviceEscort.notes } : { enabled: false },
-        burial: v.burial?.enabled ? { enabled: true, startDateTime: toISO(v.burial.startDateTime), notes: v.burial.notes } : { enabled: false },
+        pickUp: mapMilestone(v.pickUp),
+        bathing: mapMilestone(v.bathing),
+        tentErection: mapMilestone(v.tentErection),
+        delivery: mapMilestone(v.delivery),
+        serviceEscort: mapMilestone(v.serviceEscort),
+        burial: mapMilestone(v.burial),
 
         createCalendarEvent: true, // ignored; API always upserts milestones
       };
@@ -532,6 +642,7 @@ const FuneralsPage = () => {
       <Drawer
         open={open}
         width="50%"
+        className="sm:w-full md:w-3/4 lg:w-2/3 xl:w-1/2"
         title={editing ? 'Edit Funeral' : 'New Funeral'}
         onClose={() => {
           setOpen(false);
@@ -554,214 +665,269 @@ const FuneralsPage = () => {
         }
       >
         <Form form={form} layout="vertical">
-          <div className="grid grid-cols-3 gap-4">
-            <Form.Item label="Reference #" name="referenceNumber">
-              <Input placeholder="Auto if blank (e.g., FNR-YYYYMMDD-HHmmss)" />
-            </Form.Item>
-            <Form.Item label="Policy #" name="policyNumber">
-              <Input placeholder="Optional" />
-            </Form.Item>
-            <Form.Item label="Branch" name="branchId">
-              <Select
-                allowClear
-                showSearch
-                placeholder="Select branch"
-                options={branchOptions}
-                optionFilterProp="label"
-                loading={branchesLoading}
-              />
-            </Form.Item>
-          </div>
+          <Collapse defaultActiveKey={['1']} bordered={false} className="bg-transparent" expandIconPosition="right" accordion={true}>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">1. Deceased Details</h4>} key="1">
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="Deceased First Name"
+                  name="deceasedFirstName"
+                  rules={[{ required: true, message: 'Required' }]}
+                >
+                  <Input />
+                </Form.Item>
 
-          <Divider orientation="center" plain className="uppercase !text-xs !font-bold !tracking-wider">Deceased Details</Divider>
+                <Form.Item
+                  label="Deceased Last Name"
+                  name="deceasedLastName"
+                  rules={[{ required: true, message: 'Required' }]}
+                >
+                  <Input />
+                </Form.Item>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Deceased First Name"
-              name="deceasedFirstName"
-              rules={[{ required: true, message: 'Required' }]}
-            >
-              <Input />
-            </Form.Item>
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="Deceased ID Number"
+                  name="deceasedIdNumber"
+                >
+                  <Input />
+                </Form.Item>
 
-            <Form.Item
-              label="Deceased Last Name"
-              name="deceasedLastName"
-              rules={[{ required: true, message: 'Required' }]}
-            >
-              <Input />
-            </Form.Item>
-          </div>
+                <Form.Item
+                  label="Deceased Passport Number"
+                  name="deceasedPassportNumber"
+                >
+                  <Input />
+                </Form.Item>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Deceased ID Number"
-              name="deceasedIdNumber"
-            >
-              <Input />
-            </Form.Item>
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="Deceased Date of Birth"
+                  name="deceasedDateOfBirth"
+                >
+                  <DatePicker showTime={false} className="w-full" />
+                </Form.Item>
 
-            <Form.Item
-              label="Deceased Passport Number"
-              name="deceasedPassportNumber"
-            >
-              <Input />
-            </Form.Item>
-          </div>
+                <Form.Item
+                  label="Deceased Date of Death"
+                  name="deceasedDateOfDeath"
+                >
+                  <DatePicker showTime={false} className="w-full" />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">2. Informant Details</h4>} key="2">
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="Informant First Name"
+                  name="informantFirstName"
+                  rules={[{ required: true, message: 'Required' }]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  label="Informant Last Name"
+                  name="informantLastName"
+                  rules={[{ required: true, message: 'Required' }]}
+                >
+                  <Input />
+                </Form.Item>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Deceased Date of Birth"
-              name="deceasedDateOfBirth"
-            >
-              <DatePicker showTime={false} className="w-full" />
-            </Form.Item>
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="Informant ID Number"
+                  name="informantIdNumber"
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  label="Informant Passport Number"
+                  name="informantPassportNumber"
+                >
+                  <Input />
+                </Form.Item>
+              </div>
 
-            <Form.Item
-              label="Deceased Date of Death"
-              name="deceasedDateOfDeath"
-            >
-              <DatePicker showTime={false} className="w-full" />
-            </Form.Item>
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="Informant Address"
+                  name="informantAddress"
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  label="Informant Phone Number"
+                  name="informantPhoneNumber"
+                >
+                  <Input />
+                </Form.Item>
+              </div>
 
-          <Divider orientation="center" plain className="uppercase !text-xs !font-bold !tracking-wider">Informant Details</Divider>
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="Informant Email"
+                  name="informantEmail"
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  label="Informant Relationship"
+                  name="informantRelationship"
+                >
+                  <Input />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">3. Billing Details</h4>} key="3">
+              <div className="grid grid-cols-3 gap-4">
+                <Form.Item label="Reference #" name="referenceNumber">
+                  <Input placeholder="Auto if blank (e.g., FNR-YYYYMMDD-HHmmss)" />
+                </Form.Item>
+                <Form.Item label="Policy #" name="policyNumber">
+                  <Input placeholder="Optional" />
+                </Form.Item>
+                <Form.Item label="Branch" name="branchId">
+                  <Select
+                    allowClear
+                    showSearch
+                    placeholder="Select branch"
+                    options={branchOptions}
+                    optionFilterProp="label"
+                    loading={branchesLoading}
+                  />
+                </Form.Item>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Informant First Name"
-              name="informantFirstName"
-              rules={[{ required: true, message: 'Required' }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label="Informant Last Name"
-              name="informantLastName"
-              rules={[{ required: true, message: 'Required' }]}
-            >
-              <Input />
-            </Form.Item>
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item label="Estimated Cost (ZAR)" name="estimatedCost">
+                  <InputNumber className="w-full" min={0} step={100} />
+                </Form.Item>
+                <Form.Item label="Actual Cost (ZAR)" name="actualCost">
+                  <InputNumber className="w-full" min={0} step={100} />
+                </Form.Item>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Informant ID Number"
-              name="informantIdNumber"
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label="Informant Passport Number"
-              name="informantPassportNumber"
-            >
-              <Input />
-            </Form.Item>
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item label="Payment Status" name="paymentStatus">
+                  <Select
+                    allowClear
+                    options={[
+                      { value: 'unpaid', label: 'Unpaid' },
+                      { value: 'partial', label: 'Partially Paid' },
+                      { value: 'paid', label: 'Paid' },
+                    ]}
+                  />
+                </Form.Item>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Informant Address"
-              name="informantAddress"
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label="Informant Phone Number"
-              name="informantPhoneNumber"
-            >
-              <Input />
-            </Form.Item>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Informant Email"
-              name="informantEmail"
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label="Informant Relationship"
-              name="informantRelationship"
-            >
-              <Input />
-            </Form.Item>
-          </div>
-
-          <Divider orientation="center" plain className="uppercase !text-xs !font-bold !tracking-wider">Service Details (optional/legacy)</Divider>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              label="Service Date & Time"
-              name="serviceDateTime"
-            >
-              <DatePicker showTime className="w-full" />
-            </Form.Item>
-
-            <Form.Item label="Burial Date & Time" name="burialDateTime">
-              <DatePicker showTime className="w-full" />
-            </Form.Item>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item label="Cemetery" name="cemetery">
-              <Input />
-            </Form.Item>
-            <Form.Item label="Grave Number" name="graveNumber">
-              <Input />
-            </Form.Item>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item label="Estimated Cost (ZAR)" name="estimatedCost">
-              <InputNumber className="w-full" min={0} step={100} />
-            </Form.Item>
-            <Form.Item label="Actual Cost (ZAR)" name="actualCost">
-              <InputNumber className="w-full" min={0} step={100} />
-            </Form.Item>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item label="Payment Status" name="paymentStatus">
-              <Select
-                allowClear
-                options={[
-                  { value: 'unpaid', label: 'Unpaid' },
-                  { value: 'partial', label: 'Partially Paid' },
-                  { value: 'paid', label: 'Paid' },
-                ]}
-              />
-            </Form.Item>
-
-            <Form.Item label="Status" name="status" initialValue="planned">
-              <Select
-                options={[
-                  { value: 'planned', label: 'Planned' },
-                  { value: 'in_progress', label: 'In Progress' },
-                  { value: 'completed', label: 'Completed' },
-                  { value: 'cancelled', label: 'Cancelled' },
-                ]}
-              />
-            </Form.Item>
-          </div>
-
-          <Divider orientation="center" plain className="uppercase !text-xs !font-bold !tracking-wider">
-            Milestones (calendar)
-          </Divider>
-
-          <MilestoneFields name="pickUp" label="Pickup (hospital/mortuary)" />
-          <MilestoneFields name="bathing" label="Family bathing" />
-          <MilestoneFields name="tentErection" label="Tent erection" />
-          <MilestoneFields name="delivery" label="Delivery to family/church" />
-          <MilestoneFields name="serviceEscort" label="Church/service escort" />
-          <MilestoneFields name="burial" label="Burial (cemetery)" />
-
-          <Divider orientation="center" plain className="uppercase !text-xs !font-bold !tracking-wider">Additional Information</Divider>
-
-          <Form.Item label="Notes" name="notes">
-            <Input.TextArea rows={4} />
-          </Form.Item>
+                <Form.Item label="Status" name="status" initialValue="planned">
+                  <Select
+                    options={[
+                      { value: 'planned', label: 'Planned' },
+                      { value: 'in_progress', label: 'In Progress' },
+                      { value: 'completed', label: 'Completed' },
+                      { value: 'cancelled', label: 'Cancelled' },
+                    ]}
+                  />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">4. Pickup Details</h4>} key="4">
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item label="Address / Location" name="pickUp.location">
+                  <Input />
+                </Form.Item>
+                <div className="grid grid-cols-2 gap-4">
+                  <Form.Item label="Age Group" name="pickUp.deceasedAge">
+                    <Select options={DECEASED_AGE_GROUPS} />
+                  </Form.Item>
+                  <Form.Item label="Date & Time" name="pickUp.dateTime">
+                    <DatePicker showTime className="w-full" />
+                  </Form.Item>
+                </div>
+                <Form.Item label="Notes" name="pickUp.notes" className="col-span-2">
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">5. Bathing Details</h4>} key="5">
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item label="Address / Location" name="bathing.location">
+                  <Select options={branches.map((branch) => ({ label: branch.name, value: branch.code }))} />
+                </Form.Item>
+                <Form.Item label="Date & Time" name="bathing.dateTime">
+                  <DatePicker showTime className="w-full" />
+                </Form.Item>
+                <Form.Item label="Notes" name="bathing.notes" className="col-span-2">
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">6. Tent Erection Details</h4>} key="6">
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item label="Address / Location" name="tentErection.location">
+                  <Input />
+                </Form.Item>
+                <Form.Item label="Date & Time" name="tentErection.dateTime">
+                  <DatePicker showTime className="w-full" />
+                </Form.Item>
+                <Form.Item label="Notes" name="tentErection.notes" className="col-span-2">
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">7. Delivery Details</h4>} key="7">
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item label="Address / Location" name="delivery.location">
+                  <Input />
+                </Form.Item>
+                <Form.Item label="Date & Time" name="delivery.dateTime">
+                  <DatePicker showTime className="w-full" />
+                </Form.Item>
+                <Form.Item label="Notes" name="delivery.notes" className="col-span-2">
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">8. Church Escort Details</h4>} key="8">
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item label="Origin (Collection Point)" name="church.escort.origin">
+                  <Input />
+                </Form.Item>
+                <Form.Item label="Destination (Drop-off Point)" name="church.escort.destination">
+                  <Input />
+                </Form.Item>
+                <Form.Item label="Date & Time" name="church.escort.dateTime">
+                  <DatePicker showTime className="w-full" />
+                </Form.Item>
+                <Form.Item label="Notes" name="church.escort.notes" className="col-span-2">
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">9. Burial Details</h4>} key="9">
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item label="Cemetery" name="burial.cemetery">
+                  <Input />
+                </Form.Item>
+                <Form.Item label="Grave Number" name="burial.graveNumber">
+                  <Input />
+                </Form.Item>
+                <Form.Item label="Date & Time" name="burial.dateTime">
+                  <DatePicker showTime className="w-full" />
+                </Form.Item>
+                <Form.Item label="Notes" name="burial.notes" className="col-span-2">
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </div>
+            </Collapse.Panel>
+            <Collapse.Panel header={<h4 className="uppercase !text-xs !font-bold !tracking-wider">10. Additional Information</h4>} key="10">
+              <Form.Item label="Funeral Notes" name="notes">
+                <Input.TextArea rows={4} />
+              </Form.Item>
+            </Collapse.Panel>
+          </Collapse>
         </Form>
       </Drawer>
     </div>

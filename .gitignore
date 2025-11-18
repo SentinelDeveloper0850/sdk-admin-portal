@@ -42,3 +42,4 @@ next-env.d.ts
 # lock file
 package-lock.json
 scripts/migrate-legacy-roles.ts
+src/app/api/transactions/easypay/query/route.ts

@@ -1,5 +1,5 @@
+import { IDeceased, IFuneral, IFuneralAssignment, IInformant, IScheduledItem, ITransportDetail } from "@/types/funeral";
 import mongoose, { Schema } from "mongoose";
-import { EFuneralStatus, EPaymentStatus, IDeceased, IFuneral, IFuneralAssignment, IInformant, IScheduledItem, ITransportDetail } from "@/types/funeral";
 
 const InformantSchema = new Schema<IInformant>(
   {
@@ -58,10 +58,17 @@ const ScheduledItemSchema = new Schema<IScheduledItem>(
     endDateTime: Date,
     location: { type: Schema.Types.Mixed },
     notes: String,
-    calendarEventId: { type: Schema.Types.ObjectId, ref: "calendar-events" },
+    status: { type: String, default: "pending" },
+    calendarEventId: { type: Schema.Types.ObjectId, ref: "CalendarEvents" },
   },
   { _id: false }
 );
+
+export enum ScheduledItemStatus {
+  PENDING = "pending", // not started
+  COMPLETED = "completed", // completed
+  CANCELLED = "cancelled", // cancelled
+}
 
 const FuneralSchema: Schema = new Schema(
   {

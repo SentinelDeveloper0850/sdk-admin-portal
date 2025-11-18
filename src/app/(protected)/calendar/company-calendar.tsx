@@ -1,15 +1,16 @@
 import Loading from '@/app/components/ui/loading';
-import { ClockCircleOutlined, DeleteOutlined, EditOutlined, EnvironmentOutlined, LinkOutlined, TeamOutlined } from '@ant-design/icons';
+import { CalendarEventStatus } from '@/app/models/calendar-event.schema';
+import { CheckCircleFilled, CheckCircleOutlined, ClockCircleOutlined, DeleteOutlined, EditOutlined, EnvironmentOutlined, LinkOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
 import type { EventDropArg, EventRemoveArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { Alert, Badge, Button, Descriptions, DescriptionsProps, Divider, Drawer, Flex, Skeleton, Space, Tag, Typography } from 'antd';
+import { Alert, Badge, Button, Descriptions, DescriptionsProps, Divider, Drawer, Flex, Select, Skeleton, Space, Tag, Typography, message } from 'antd';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import utc from 'dayjs/plugin/utc';
-import { CSSProperties, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import sweetAlert from 'sweetalert';
 import { EventPalette, getEventPalette } from './event-palette';
 
@@ -137,6 +138,15 @@ interface IProps {
    * Optional external draggable items container id (see ExternalDraggables below).
    */
   externalDraggablesContainerId?: string;
+  /**
+   * Refresh calendar events from the server.
+   */
+  onRefresh?: () => void;
+  /**
+   * Mark a funeral milestone as completed.
+   * Return false to prevent the default success handling.
+   */
+  onMarkMilestoneComplete?: (eventId: string) => Promise<boolean | void> | boolean | void;
 }
 
 interface EventDetailsViewModel {
@@ -538,14 +548,41 @@ const CompanyCalendar = ({
   loading = false,
   onEventChange,
   externalDraggablesContainerId,
+  onRefresh,
+  onMarkMilestoneComplete,
 }: IProps) => {
   const [eventDetailsDrawerOpen, setEventDetailsDrawerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [funeralDetails, setFuneralDetails] = useState<any | null>(null);
   const [funeralLoading, setFuneralLoading] = useState(false);
   const [funeralError, setFuneralError] = useState<string | null>(null);
+  const [selectedMilestones, setSelectedMilestones] = useState<string[]>([]);
+  const [markCompleteLoading, setMarkCompleteLoading] = useState(false);
   const calendarRef = useRef<FullCalendar | null>(null);
   const latestFuneralRequestRef = useRef(0);
+
+  const milestoneFilterOptions = useMemo(
+    () =>
+      Object.entries(FUNERAL_MILESTONE_BY_EVENT_TYPE).map(([value, meta]) => ({
+        label: meta.label,
+        value,
+      })),
+    []
+  );
+
+  const displayedEvents = useMemo(() => {
+    if (!selectedMilestones.length) {
+      return events;
+    }
+
+    return events.filter((event) => {
+      const props = (event as any)?.extendedProps ?? {};
+      const keyCandidate = props.milestone || props.type || '';
+      const key =
+        typeof keyCandidate === 'string' ? keyCandidate.toLowerCase() : String(keyCandidate).toLowerCase();
+      return selectedMilestones.includes(key);
+    });
+  }, [events, selectedMilestones]);
 
   // Enable dragging from an external list if provided
   useEffect(() => {
@@ -580,6 +617,7 @@ const CompanyCalendar = ({
 
   const renderEventContent = (eventInfo: any) => {
     const eventData = eventInfo.event.extendedProps || {};
+    console.log("🚀 ~ renderEventContent ~ eventData:", eventData)
     const palette = eventData.palette || getEventPalette(eventData);
     const name = eventData.name || eventInfo.event.title;
     const startTimeRaw = eventData.startTime as string | undefined;
@@ -587,6 +625,8 @@ const CompanyCalendar = ({
       ? startTimeRaw.split(':').slice(0, 2).join(':')
       : eventInfo.timeText;
     const typeLabel = formatKey(eventData.subType || eventData.milestone || eventData.type);
+    const isCompleted = String(eventData.status || '').toLowerCase() === CalendarEventStatus.COMPLETED.toString().toLowerCase();
+    console.log("🚀 ~ renderEventContent ~ isCompleted:", isCompleted)
 
     return (
       <div
@@ -595,12 +635,22 @@ const CompanyCalendar = ({
           backgroundColor: palette.background,
           color: palette.text,
           borderLeft: `3px solid ${palette.border}`,
+          position: 'relative',
         }}
       >
-        {typeLabel && (
-          <span className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
-            {typeLabel}
-          </span>
+        {(typeLabel || isCompleted) && (
+          <div className="flex items-start justify-between gap-1">
+            {typeLabel ? (
+              <span className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
+                {typeLabel}
+              </span>
+            ) : (
+              <span />
+            )}
+            {isCompleted && (
+              <CheckCircleFilled style={{ color: '#52c41a', fontSize: 12 }} />
+            )}
+          </div>
         )}
         <p className="truncate">{name.split(": ")[1] || name}</p>
         {startTime && <p className="text-[11px] font-medium">{startTime}</p>}
@@ -770,6 +820,57 @@ const CompanyCalendar = ({
   const funeralMilestoneMeta = FUNERAL_MILESTONE_BY_EVENT_TYPE[milestoneKey];
   const funeralMilestoneSlot = funeralMilestoneMeta && funeralDetails ? funeralDetails[funeralMilestoneMeta.field] : undefined;
 
+  const isFuneralMilestoneEvent = Boolean(funeralMilestoneMeta);
+
+  const handleMarkMilestoneComplete = async () => {
+    if (!selectedEvent?.id || !onMarkMilestoneComplete) {
+      return;
+    }
+
+    setMarkCompleteLoading(true);
+    try {
+      const result = await onMarkMilestoneComplete(String(selectedEvent.id));
+      if (!result) {
+        return;
+      }
+
+      sweetAlert({
+        title: "Milestone marked as completed",
+        text: "Milestone marked as completed",
+        icon: "success",
+        timer: 2000,
+      });
+
+      setSelectedEvent((prev: any) => (prev ? { ...prev, status: 'completed' } : prev));
+    } catch (err: any) {
+      const errMessage =
+        err instanceof Error ? err.message : 'Failed to mark milestone as completed';
+      message.error(errMessage);
+      sweetAlert({
+        title: "Failed to mark milestone as completed",
+        text: errMessage,
+        icon: "error",
+        timer: 2000,
+      })
+    } finally {
+      setMarkCompleteLoading(false);
+    }
+  };
+
+  const markCompleteButton =
+    isFuneralMilestoneEvent &&
+      String(selectedEvent?.status || '').toLowerCase() !== 'completed' &&
+      !!onMarkMilestoneComplete ? (
+      <Button
+        type="primary"
+        icon={<CheckCircleOutlined />}
+        onClick={handleMarkMilestoneComplete}
+        loading={markCompleteLoading}
+      >
+        Mark Completed
+      </Button>
+    ) : null;
+
   const funeralDetailsContent = (() => {
     if (funeralLoading) {
       return <Skeleton active title={false} paragraph={{ rows: 4 }} />;
@@ -929,8 +1030,51 @@ const CompanyCalendar = ({
   const DrawerContentComponent =
     EVENT_DRAWER_COMPONENTS[drawerKey] || EVENT_DRAWER_COMPONENTS.default;
 
+  const milestoneFiltersActive = selectedMilestones.length > 0;
+
   return (
     <div className="">
+      <Flex
+        align="center"
+        justify="space-between"
+        gap={12}
+        wrap="wrap"
+        className="mb-4"
+      >
+        <Space wrap>
+          <Select
+            mode="multiple"
+            allowClear
+            placeholder="Filter funeral milestones"
+            maxTagCount="responsive"
+            style={{ minWidth: 220 }}
+            value={selectedMilestones}
+            options={milestoneFilterOptions}
+            onChange={(values) =>
+              setSelectedMilestones(Array.isArray(values) ? (values as string[]) : [])
+            }
+            disabled={!milestoneFilterOptions.length}
+          />
+          <Button
+            onClick={() => setSelectedMilestones([])}
+            disabled={!milestoneFiltersActive}
+          >
+            Clear Filters
+          </Button>
+        </Space>
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => onRefresh?.()}
+            disabled={!onRefresh}
+            loading={loading}
+            type="default"
+          >
+            Refresh
+          </Button>
+        </Space>
+      </Flex>
+
       {loading ? (
         <Loading type="fullscreen" message="Loading calendar events..." />
       ) : (
@@ -949,7 +1093,7 @@ const CompanyCalendar = ({
             timeGridDay: { slotDuration: '00:30:00' },
             timeGridWeek: { slotDuration: '00:30:00' },
           }}
-          events={events}
+          events={displayedEvents}
           eventContent={renderEventContent}
           eventClick={(info) => {
             const eventData = info.event.extendedProps || {};
@@ -1001,6 +1145,7 @@ const CompanyCalendar = ({
         </Flex>}
         placement="right"
         width="40%"
+        extra={markCompleteButton}
         open={eventDetailsDrawerOpen}
         onClose={() => {
           setEventDetailsDrawerOpen(false);

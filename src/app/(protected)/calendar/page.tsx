@@ -64,6 +64,34 @@ const CalendarPage = () => {
     return true;
   };
 
+  const markMilestoneComplete = async (eventId: string) => {
+    const res = await fetch(`/api/calendar/events/${eventId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "completed",
+        action: "complete",
+      }),
+    });
+
+    let data: any = null;
+    try {
+      data = await res.json();
+      console.log("🚀 ~ markMilestoneComplete ~ data:", data)
+    } catch (error) {
+      console.error("Error marking milestone as completed:", error);
+      return false;
+    }
+
+    if (!res.ok || data?.success === false) {
+      return false;
+    }
+
+    fetchEvents();
+
+    return true;
+  };
+
   const fcEvents = useMemo(() => {
     return companyEvents
       .map(e => {
@@ -103,7 +131,13 @@ const CalendarPage = () => {
           title="Company Calendar"
           subtitle="View and manage the company calendar"
         />
-        <CompanyCalendar events={fcEvents} loading={loading} onEventChange={saveCalendarChange} />
+        <CompanyCalendar
+          events={fcEvents}
+          loading={loading}
+          onEventChange={saveCalendarChange}
+          onRefresh={fetchEvents}
+          onMarkMilestoneComplete={markMilestoneComplete}
+        />
       </div>
     </div>
   )

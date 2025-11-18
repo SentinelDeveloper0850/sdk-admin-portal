@@ -1,10 +1,10 @@
 // /api/calendar/events/[id]/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/auth";
-import { CalendarEventModel } from "@/app/models/calendar-event.schema";
-import mongoose from "mongoose";
+import { CalendarEventModel, CalendarEventStatus } from "@/app/models/calendar-event.schema";
 import { FuneralModel } from "@/app/models/funeral.schema";
+import { getUserFromRequest } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/db";
+import mongoose from "mongoose";
+import { NextRequest, NextResponse } from "next/server";
 
 type UpdatePayload = {
   start?: string | null; // ISO
@@ -94,5 +94,40 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     console.error("Error updating event:", error);
     return NextResponse.json({ success: false, message: "Failed to update event" }, { status: 500 });
+  }
+}
+
+// Patch request to mark a milestone as completed
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, message: "Invalid event id" }, { status: 400 });
+    }
+
+    await connectToDatabase();
+
+    const event = await CalendarEventModel.findById(id);
+    if (!event) {
+      return NextResponse.json({ success: false, message: "Event not found" }, { status: 404 });
+    }
+
+    if (event.relatedModel !== "funeral" || !event.milestone) {
+      return NextResponse.json({ success: false, message: "Event is not a funeral milestone" }, { status: 400 });
+    }
+
+    await CalendarEventModel.findByIdAndUpdate(id, { $set: { status: CalendarEventStatus.COMPLETED } });
+
+    await FuneralModel.findByIdAndUpdate(event.relatedId as mongoose.Types.ObjectId, { $set: { [`${event.milestone}.status`]: "completed" } });
+
+    return NextResponse.json({ success: true, message: "Milestone marked as completed" }, { status: 200 });
+  } catch (error) {
+    console.error("Error marking milestone as completed:", error);
+    return NextResponse.json({ success: false, message: "Failed to mark milestone as completed" }, { status: 500 });
   }
 }

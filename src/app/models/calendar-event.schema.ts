@@ -28,6 +28,7 @@ export enum CalendarEventStatus {
   DRAFT = "draft",
   PUBLISHED = "published",
   CANCELLED = "cancelled",
+  COMPLETED = "completed",
 }
 
 export interface IAttendee {
@@ -311,4 +312,4 @@ CalendarEventSchema.index({ createdById: 1, startDateTime: 1 });
 CalendarEventSchema.index({ type: 1, startDateTime: 1 });
 
 export const CalendarEventModel: Model<ICalendarEvent> =
-  mongoose.models["calendar-events"] || mongoose.model<ICalendarEvent>("calendar-events", CalendarEventSchema);
+  mongoose.models?.CalendarEvents || mongoose.model<ICalendarEvent>("CalendarEvents", CalendarEventSchema);
