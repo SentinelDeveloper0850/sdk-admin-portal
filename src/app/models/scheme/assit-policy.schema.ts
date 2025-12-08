@@ -62,5 +62,5 @@ AssitPolicySchema.pre("save", async function (next) {
 
 // Export the model
 export const AssitPolicyModel =
-  mongoose.models["assit_policies"] ||
-  mongoose.model<IAssitPolicy>("assit_policies", AssitPolicySchema);
+  mongoose.models.assit_policies ||
+  mongoose.model<IAssitPolicy>("assit_policies", AssitPolicySchema, "assit_policies");

@@ -1,4 +1,4 @@
-import { Schema, model, Types } from 'mongoose';
+import { model, Schema, Types } from 'mongoose';
 
 export interface IEmployee {
   _id: string;
@@ -49,4 +49,4 @@ const EmployeeSchema = new Schema(
   { timestamps: true }
 );
 
-export const Employee = model('Employee', EmployeeSchema);
+export const Employee = model('employees', EmployeeSchema, "employees");

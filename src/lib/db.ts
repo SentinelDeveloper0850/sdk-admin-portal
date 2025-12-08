@@ -1,11 +1,12 @@
 import mongoose, { ConnectionStates } from "mongoose";
 
+
 const connectionString =
-  process.env.MONGODB_URI;
+  process.env.MONGODB_ATLAS_URI;
 
 if (!connectionString)
   throw new Error(
-    "🧭 ~ Please define MONGODB_URI environment variable inside .env"
+    "🧭 ~ Please define MONGODB_ATLAS_URI environment variable inside .env"
   );
 
 let cachedConnection: typeof mongoose | null = null;
@@ -24,7 +25,7 @@ export async function connectToDatabase() {
         cachedConnection = connection;
       } else {
         throw new Error(
-          "🧭 ~ Please define MONGODB_URI environment variable inside .env"
+          "🧭 ~ Please define MONGODB_ATLAS_URI environment variable inside .env"
         );
       }
 

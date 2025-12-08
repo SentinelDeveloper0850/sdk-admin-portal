@@ -1,3 +1,4 @@
+import { DeceasedAgeGroup, IAddress, INote, ScheduledItemStatus } from "@/types";
 import { IDeceased, IFuneral, IFuneralAssignment, IInformant, IScheduledItem, ITransportDetail } from "@/types/funeral";
 import mongoose, { Schema } from "mongoose";
 
@@ -64,17 +65,91 @@ const ScheduledItemSchema = new Schema<IScheduledItem>(
   { _id: false }
 );
 
-export enum ScheduledItemStatus {
-  PENDING = "pending", // not started
-  COMPLETED = "completed", // completed
-  CANCELLED = "cancelled", // cancelled
-}
+const AddressSchema = new Schema<IAddress>({
+  name: { type: String, required: true },
+  addressLine1: { type: String, required: false },
+  addressLine2: { type: String, required: false },
+  suburb: { type: String, required: false },
+  townOrCity: { type: String, required: false },
+  province: { type: String, required: false, default: "Gauteng" },
+  country: { type: String, required: false, default: "South Africa" },
+  postalCode: { type: String, required: false },
+});
+
+const NoteSchema = new Schema<INote>({
+  note: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  createdBy: { type: String, required: true },
+  createdById: { type: String, required: true },
+});
+
+const PickupSchema = new Schema({
+  enabled: { type: Boolean, default: false },
+  dateTime: { type: Date, required: true },
+  durationMinutes: { type: Number, required: false, default: 60 },
+  deceasedAgeGroup: { type: String, required: true, enum: Object.values(DeceasedAgeGroup) },
+  address: { type: AddressSchema, required: true },
+  notes: { type: [NoteSchema], required: false, default: [] },
+  status: { type: String, enum: Object.values(ScheduledItemStatus), default: ScheduledItemStatus.PENDING },
+  calendarEventId: { type: Schema.Types.ObjectId, ref: "CalendarEvents" },
+})
+
+const BathingSchema = new Schema({
+  enabled: { type: Boolean, default: false },
+  dateTime: { type: Date, required: true },
+  durationMinutes: { type: Number, required: false, default: 60 },
+  address: { type: AddressSchema, required: true },
+  notes: { type: [NoteSchema], required: false, default: [] },
+  status: { type: String, enum: Object.values(ScheduledItemStatus), default: ScheduledItemStatus.PENDING },
+  calendarEventId: { type: Schema.Types.ObjectId, ref: "CalendarEvents" },
+});
+
+const TentErectionSchema = new Schema({
+  enabled: { type: Boolean, default: false },
+  dateTime: { type: Date, required: true },
+  durationMinutes: { type: Number, required: false, default: 60 },
+  address: { type: AddressSchema, required: true },
+  notes: { type: [NoteSchema], required: false, default: [] },
+  status: { type: String, enum: Object.values(ScheduledItemStatus), default: ScheduledItemStatus.PENDING },
+  calendarEventId: { type: Schema.Types.ObjectId, ref: "CalendarEvents" },
+});
+
+const DeliverySchema = new Schema({
+  enabled: { type: Boolean, default: false },
+  dateTime: { type: Date, required: true },
+  durationMinutes: { type: Number, required: false, default: 60 },
+  address: { type: AddressSchema, required: true },
+  notes: { type: [NoteSchema], required: false, default: [] },
+  status: { type: String, enum: Object.values(ScheduledItemStatus), default: ScheduledItemStatus.PENDING },
+  calendarEventId: { type: Schema.Types.ObjectId, ref: "CalendarEvents" },
+});
+
+const ChurchEscortSchema = new Schema({
+  enabled: { type: Boolean, default: false },
+  origin: { type: AddressSchema, required: true },
+  destination: { type: AddressSchema, required: true },
+  dateTime: { type: Date, required: true },
+  durationMinutes: { type: Number, required: false, default: 60 },
+  address: { type: AddressSchema, required: true },
+  notes: { type: [NoteSchema], required: false, default: [] },
+  status: { type: String, enum: Object.values(ScheduledItemStatus), default: ScheduledItemStatus.PENDING },
+  calendarEventId: { type: Schema.Types.ObjectId, ref: "CalendarEvents" },
+});
+
+const BurialSchema = new Schema({
+  enabled: { type: Boolean, default: false },
+  dateTime: { type: Date, required: true },
+  durationMinutes: { type: Number, required: false, default: 60 },
+  address: { type: AddressSchema, required: true },
+  notes: { type: [NoteSchema], required: false, default: [] },
+  status: { type: String, enum: Object.values(ScheduledItemStatus), default: ScheduledItemStatus.PENDING },
+  calendarEventId: { type: Schema.Types.ObjectId, ref: "CalendarEvents" },
+});
 
 const FuneralSchema: Schema = new Schema(
   {
     referenceNumber: { type: String, required: true, unique: true },
     policyNumber: String,
-    calendarEventId: { type: Schema.Types.ObjectId, ref: "calendar-events" },
 
     informant: { type: InformantSchema, required: true },
     deceased: { type: DeceasedSchema, required: true },
@@ -101,12 +176,12 @@ const FuneralSchema: Schema = new Schema(
     },
 
     // #region Milestones we care about on the calendar (for FullCalendar)
-    pickUp: { type: ScheduledItemSchema, default: () => ({ enabled: false }) },         // hospital/gov mortuary pickup
-    bathing: { type: ScheduledItemSchema, default: () => ({ enabled: false }) },        // family bathing
-    tentErection: { type: ScheduledItemSchema, default: () => ({ enabled: false }) },   // tent at family house
-    delivery: { type: ScheduledItemSchema, default: () => ({ enabled: false }) },       // deliver coffined deceased
-    serviceEscort: { type: ScheduledItemSchema, default: () => ({ enabled: false }) },  // escort family to church
-    burial: { type: ScheduledItemSchema, default: () => ({ enabled: false }) },         // cemetery burial
+    pickUp: { type: PickupSchema, default: () => ({ enabled: false }) },         // hospital/gov mortuary pickup
+    bathing: { type: BathingSchema, default: () => ({ enabled: false }) },        // family bathing
+    tentErection: { type: TentErectionSchema, default: () => ({ enabled: false }) },   // tent at family house
+    delivery: { type: DeliverySchema, default: () => ({ enabled: false }) },       // deliver coffined deceased
+    serviceEscort: { type: ChurchEscortSchema, default: () => ({ enabled: false }) },  // escort family to church
+    burial: { type: BurialSchema, default: () => ({ enabled: false }) },         // cemetery burial
     // #endregion
 
     notes: String,
@@ -126,5 +201,5 @@ FuneralSchema.index({ policyNumber: 1 });
 FuneralSchema.index({ calendarEventId: 1 });
 
 export const FuneralModel =
-  mongoose.models?.["funerals"]
-  || mongoose.model<IFuneral>("funerals", FuneralSchema);
+  mongoose.models.funerals ||
+  mongoose.model<IFuneral>("funerals", FuneralSchema, "funerals");

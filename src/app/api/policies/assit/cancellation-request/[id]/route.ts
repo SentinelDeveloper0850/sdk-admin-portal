@@ -1,5 +1,5 @@
 import UserModel from "@/app/models/hr/user.schema";
-import PolicyCancellationRequest from "@/app/models/scheme/policy-cancellation-request.schema";
+import { PolicyCancellationRequestModel } from "@/app/models/scheme/policy-cancellation-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
@@ -26,7 +26,7 @@ export async function GET(
     await connectToDatabase();
 
     // Get cancellation request by ID
-    const cancellationRequest = await PolicyCancellationRequest.findById(id).lean();
+    const cancellationRequest = await PolicyCancellationRequestModel.findById(id).lean();
 
     if (!cancellationRequest) {
       return NextResponse.json(
@@ -91,7 +91,7 @@ export async function PATCH(
     }
 
     // Get cancellation request
-    const cancellationRequest = await PolicyCancellationRequest.findById(id);
+    const cancellationRequest = await PolicyCancellationRequestModel.findById(id);
 
     if (!cancellationRequest) {
       return NextResponse.json(
@@ -188,7 +188,7 @@ export async function DELETE(
     await connectToDatabase();
 
     // Get cancellation request
-    const cancellationRequest = await PolicyCancellationRequest.findById(id);
+    const cancellationRequest = await PolicyCancellationRequestModel.findById(id);
 
     if (!cancellationRequest) {
       return NextResponse.json(
@@ -206,7 +206,7 @@ export async function DELETE(
     }
 
     // Delete the request
-    await PolicyCancellationRequest.findByIdAndDelete(id);
+    await PolicyCancellationRequestModel.findByIdAndDelete(id);
 
     // Reset policy cancellation status to none since cancellation request is deleted
     await PolicyModel.findByIdAndUpdate(cancellationRequest.policyId, {

@@ -295,5 +295,5 @@ PolicySignUpSchema.post("save", async function (doc) {
 });
 
 export const PolicySignUpModel =
-  mongoose.models["policy-signup-request"] ||
-  mongoose.model<IPolicySignUp>("policy-signup-request", PolicySignUpSchema);
+  mongoose.models.policy_signup_requests ||
+  mongoose.model<IPolicySignUp>("policy_signup_requests", PolicySignUpSchema, "policy_signup_requests");

@@ -24,8 +24,9 @@ const IEasypayImportDataSchema: Schema = new Schema({
 
 // Check if the model is already compiled
 export const EasypayImportDataModel =
-  mongoose.models["easypay-import-data"] ||
+  mongoose.models.easypay_import_data ||
   mongoose.model<IEasypayImportData>(
-    "easypay-import-data",
-    IEasypayImportDataSchema
+    "easypay_import_data",
+    IEasypayImportDataSchema,
+    "easypay_import_data"
   );

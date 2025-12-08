@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import PageHeader from '@/app/components/page-header';
 import sweetAlert from 'sweetalert';
 import CompanyCalendar from './company-calendar';
 import { getEventPalette, paletteToFullCalendarColors } from './event-palette';
@@ -127,10 +126,10 @@ const CalendarPage = () => {
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex-1 space-y-6 p-6">
-        <PageHeader
+        {/* <PageHeader
           title="Company Calendar"
           subtitle="View and manage the company calendar"
-        />
+        /> */}
         <CompanyCalendar
           events={fcEvents}
           loading={loading}

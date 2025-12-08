@@ -164,4 +164,6 @@ branchSchema.statics.findNear = function (lat: number, lng: number, maxDistance:
   });
 };
 
-export const BranchModel = mongoose.models.Branch || mongoose.model<IBranch>('Branch', branchSchema);
+export const BranchModel =
+  mongoose.models.branches ||
+  mongoose.model<IBranch>("branches", branchSchema, "branches");

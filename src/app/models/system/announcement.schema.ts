@@ -1,4 +1,4 @@
-import mongoose, { Schema, Types, model, models } from "mongoose";
+import mongoose, { Schema, Types, model } from "mongoose";
 
 export enum AnnouncementStatus {
   DRAFT = "DRAFT",
@@ -127,15 +127,15 @@ export interface IAnnouncementAck extends mongoose.Document {
 }
 
 export const AnnouncementModel =
-  (models.announcements as mongoose.Model<IAnnouncement>) ||
-  model<IAnnouncement>("announcements", AnnouncementSchema);
+  mongoose.models.announcements ||
+  model<IAnnouncement>("announcements", AnnouncementSchema, "announcements");
 
 export const AnnouncementReadModel =
-  (models.announcement_reads as mongoose.Model<IAnnouncementRead>) ||
-  model<IAnnouncementRead>("announcement_reads", AnnouncementReadSchema);
+  mongoose.models.announcement_reads ||
+  model<IAnnouncementRead>("announcement_reads", AnnouncementReadSchema, "announcement_reads");
 
 export const AnnouncementAckModel =
-  (models.announcement_acks as mongoose.Model<IAnnouncementAck>) ||
-  model<IAnnouncementAck>("announcement_acks", AnnouncementAckSchema);
+  mongoose.models.announcement_acks ||
+  model<IAnnouncementAck>("announcement_acks", AnnouncementAckSchema, "announcement_acks");
 
 

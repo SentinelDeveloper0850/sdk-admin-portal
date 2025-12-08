@@ -41,7 +41,7 @@ export interface IEmployment {
   endDate: Date;
   isActive: boolean;
   isPortalUser: boolean;
-  notes: string;  
+  notes: string;
 }
 
 const StaffMemberSchema = new Schema({
@@ -57,4 +57,4 @@ const StaffMemberSchema = new Schema({
   updatedBy: { type: String, required: false },
 }, { timestamps: true });
 
-export const StaffMemberModel = mongoose.models.StaffMember || mongoose.model<IStaffMember>("StaffMember", StaffMemberSchema);
+export const StaffMemberModel = mongoose.models.staff_members || mongoose.model<IStaffMember>("staff_members", StaffMemberSchema, "staff_members");

@@ -119,16 +119,16 @@ const dailyActivitySchema = new Schema({
 // dailyActivitySchema.index({ userName: 1, currentDate: 1 }, { unique: true });
 
 // Populate branch
-dailyActivitySchema.pre("find", function (next) {
-  this.populate({
-    path: "branchId",
-    select: "name",
-    strictPopulate: false
-  });
-  next();
-});
+// dailyActivitySchema.pre("find", function (next) {
+//   this.populate({
+//     path: "branchId",
+//     select: "name",
+//     strictPopulate: false
+//   });
+//   next();
+// });
 
 // Create Mongoose model
 export const DailyActivityModel =
-  mongoose.models["daily-activity"] ||
-  mongoose.model("daily-activity", dailyActivitySchema);
+  mongoose.models.daily_activities ||
+  mongoose.model("daily_activities", dailyActivitySchema, "daily_activities");

@@ -312,4 +312,4 @@ CalendarEventSchema.index({ createdById: 1, startDateTime: 1 });
 CalendarEventSchema.index({ type: 1, startDateTime: 1 });
 
 export const CalendarEventModel: Model<ICalendarEvent> =
-  mongoose.models?.CalendarEvents || mongoose.model<ICalendarEvent>("CalendarEvents", CalendarEventSchema);
+  mongoose.models.calendar_events || mongoose.model<ICalendarEvent>("calendar_events", CalendarEventSchema, "calendar_events");

@@ -31,5 +31,5 @@ const SocietyMemberSchema: Schema = new Schema(
 
 // Export the model
 export const SocietyMemberModel =
-  mongoose.models["society-members"] ||
-  mongoose.model<ISocietyMember>("society-members", SocietyMemberSchema);
+  mongoose.models.society_members ||
+  mongoose.model<ISocietyMember>("society_members", SocietyMemberSchema, "society_members");

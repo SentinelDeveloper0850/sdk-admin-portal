@@ -6,6 +6,7 @@ import { Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/context/auth-context';
+import { CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -19,7 +20,7 @@ interface OnlineUserFromServer {
   lastSeenAt?: string | Date;
 }
 
-export default function Presence() {
+export default function Presence({ showBadge = true }: { showBadge?: boolean }) {
   const [online, setOnline] = useState<OnlineUserFromServer[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -123,9 +124,9 @@ export default function Presence() {
   // Determine sync status for display
   const getConnectionStatus = () => {
     if (!user) return 'Not Logged In';
-    if (isSyncing) return 'Syncing...';
-    if (lastError) return 'Error';
-    return 'Online';
+    if (isSyncing) return <ReloadOutlined className="animate-spin" />;
+    if (lastError) return <CloseCircleOutlined className="text-red-500" />;
+    return <CheckCircleOutlined className="text-green-500" />;
   };
 
   const getConnectionColor = () => {
@@ -143,7 +144,7 @@ export default function Presence() {
   return (
     <>
       <div className="flex items-center gap-2">
-        <Badge
+        {showBadge ? (<Badge
           content={otherOnline.length}
           color={getConnectionColor()}
           isInvisible={otherOnline.length === 0}
@@ -157,14 +158,22 @@ export default function Presence() {
           >
             {getConnectionStatus()}
           </Chip>
-        </Badge>
+        </Badge>) : (<Chip
+          variant="flat"
+          color={getConnectionColor()}
+          startContent={<Users size={14} className="ml-2" />}
+          className="cursor-pointer"
+          onClick={handleChipClick}
+        >
+          {otherOnline.length} {getConnectionStatus()}
+        </Chip>)}
       </div>
 
       {/* Ant Design Drawer */}
       <Drawer
         title={
           <Space>
-            <span>Online Users ({otherOnline.length})</span>
+            <span className="text-sm">Online Users ({otherOnline.length})</span>
             <Tag color={getConnectionColor()}>
               {getConnectionStatus()}
             </Tag>
@@ -222,7 +231,7 @@ export default function Presence() {
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+          {/* <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             <Space direction="vertical" size="small" className="w-full">
               <Space>
                 <div className={`h-2 w-2 rounded-full ${(!user || lastError) ? 'bg-red-500' : isSyncing ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
@@ -238,7 +247,7 @@ export default function Presence() {
                 </div>
               )}
             </Space>
-          </div>
+          </div> */}
         </div>
       </Drawer>
     </>

@@ -6,7 +6,7 @@ import { UserModel } from "@/app/models/hr/user.schema";
 import { ClaimModel } from "@/app/models/scheme/claim.schema";
 import { EasypayTransactionModel } from "@/app/models/scheme/easypay-transaction.schema";
 import { EftTransactionModel } from "@/app/models/scheme/eft-transaction.schema";
-import PolicyCancellationRequestModel from "@/app/models/scheme/policy-cancellation-request.schema";
+import { PolicyCancellationRequestModel } from "@/app/models/scheme/policy-cancellation-request.schema";
 import { PolicySignUpModel } from "@/app/models/scheme/policy-signup-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { SchemeSocietyModel } from "@/app/models/scheme/scheme-society.schema";

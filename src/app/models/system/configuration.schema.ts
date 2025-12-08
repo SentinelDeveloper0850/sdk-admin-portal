@@ -1,4 +1,4 @@
-import { Schema, model, models } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
 export interface IConfiguration {
   _id?: string;
@@ -72,4 +72,4 @@ configurationSchema.pre("save", function (next) {
   next();
 });
 
-export const ConfigurationModel = models.Configuration || model<IConfiguration>("Configuration", configurationSchema);
+export const ConfigurationModel = models.configurations || model<IConfiguration>("configurations", configurationSchema, "configurations");

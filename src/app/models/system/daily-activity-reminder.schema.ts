@@ -220,5 +220,5 @@ dailyActivityReminderConfigSchema.methods.shouldRunToday = function () {
 };
 
 export const DailyActivityReminderConfigModel =
-  mongoose.models.DailyActivityReminderConfig ||
-  mongoose.model<IDailyActivityReminderConfig>("DailyActivityReminderConfig", dailyActivityReminderConfigSchema); 
+  mongoose.models.daily_activity_reminder_configs ||
+  mongoose.model<IDailyActivityReminderConfig>("daily_activity_reminder_configs", dailyActivityReminderConfigSchema, "daily_activity_reminder_configs"); 

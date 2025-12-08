@@ -25,5 +25,5 @@ const NotificationSchema = new Schema(
 );
 
 export const NotificationModel =
-    mongoose.models["notifications"] ??
+    mongoose.models.notifications ||
     mongoose.model("notifications", NotificationSchema, "notifications");

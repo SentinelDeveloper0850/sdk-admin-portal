@@ -49,5 +49,5 @@ const SchemeSocietySchema: Schema = new Schema(
 
 // Export the model
 export const SchemeSocietyModel =
-  mongoose.models["scheme-societies"] ||
-  mongoose.model<ISchemeSociety>("scheme-societies", SchemeSocietySchema);
+  mongoose.models.scheme_societies ||
+  mongoose.model<ISchemeSociety>("scheme_societies", SchemeSocietySchema, "scheme_societies");

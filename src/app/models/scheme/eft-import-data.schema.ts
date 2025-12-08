@@ -40,5 +40,5 @@ const IEftImportDataSchema: Schema = new Schema({
 
 // Check if the model is already compiled
 export const IEftImportDataModel =
-  mongoose.models["eft-import-data"] ||
-  mongoose.model<IEftImportData>("eft-import-data", IEftImportDataSchema);
+  mongoose.models.eft_import_data ||
+  mongoose.model<IEftImportData>("eft_import_data", IEftImportDataSchema, "eft_import_data");

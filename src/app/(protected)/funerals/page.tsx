@@ -414,6 +414,8 @@ const FuneralsPage = () => {
         createCalendarEvent: true, // ignored; API always upserts milestones
       };
 
+      console.log("🚀 ~ onSubmit ~ body:", body)
+
       const res = await fetch(editing ? `/api/funerals/${editing._id}` : '/api/funerals', {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -423,9 +425,9 @@ const FuneralsPage = () => {
       if (!res.ok || !json.success) throw new Error(json?.message || 'Save failed');
 
       sweetAlert({ title: 'Success', text: editing ? 'Funeral updated' : 'Funeral created', icon: 'success' });
-      setOpen(false);
-      setEditing(null);
-      fetchData();
+      // setOpen(false);
+      // setEditing(null);
+      // fetchData();
     } catch (e: any) {
       if (e?.errorFields) return; // antd form validation error
       console.error(e);

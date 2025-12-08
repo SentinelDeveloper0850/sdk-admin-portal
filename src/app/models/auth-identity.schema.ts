@@ -10,43 +10,43 @@ export interface IAuthIdentity extends Document {
 }
 
 const AuthIdentitySchema = new Schema({
-  userId: { 
-    type: Schema.Types.ObjectId, 
-    ref: "users", 
-    index: true, 
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: "users",
+    index: true,
     required: true,
     unique: true
   },
-  provider: { 
-    type: String, 
-    enum: ["google", "clerk"], 
+  provider: {
+    type: String,
+    enum: ["google", "clerk"],
     required: true
   },
-  providerUserId: { 
-    type: String, 
+  providerUserId: {
+    type: String,
     index: true,
     unique: true,
     default: undefined,
   },
-  clerkUserId: { 
-    type: String, 
-    index: true, 
+  clerkUserId: {
+    type: String,
+    index: true,
     required: true,
     unique: true
   },
-  emailAtLinkTime: { 
+  emailAtLinkTime: {
     type: String,
     unique: true,
     lowercase: true,
     trim: true
   },
-  lastLoginAt: { 
+  lastLoginAt: {
     type: Date,
     unique: true
   },
 }, {
   timestamps: true,
-  versionKey: false 
+  versionKey: false
 });
 
 /**
@@ -69,6 +69,6 @@ AuthIdentitySchema.index(
 AuthIdentitySchema.index({ lastLoginAt: -1 });
 
 export const AuthIdentityModel: Model<IAuthIdentity> =
-  mongoose.models.auth_identities || mongoose.model<IAuthIdentity>("auth_identities", AuthIdentitySchema);
+  mongoose.models.auth_identities || mongoose.model<IAuthIdentity>("auth_identities", AuthIdentitySchema, "auth_identities");
 
 export default AuthIdentityModel;

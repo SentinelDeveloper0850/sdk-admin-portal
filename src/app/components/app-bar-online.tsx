@@ -17,12 +17,13 @@ import {
   NavbarMenu,
   NavbarMenuToggle
 } from "@nextui-org/react";
-import { Tag } from "antd";
+import { Space } from "antd";
 
 import { logout } from "@/utils/auth";
 
 import { useAuth } from "@/context/auth-context";
 
+import { NotificationBell } from "@/app/components/notifications/notification-bell";
 import Presence from "@/components/presence";
 import SideNavBar from "./side-navbar";
 import { ThemeSwitcher } from "./theme-switcher";
@@ -69,10 +70,13 @@ export default function AppBarOnline() {
 
       <NavbarContent justify="end">
         <NavbarItem className="hidden md:flex">
-          <Presence />
+          <Presence showBadge={false} />
         </NavbarItem>
         <NavbarItem className="hidden md:flex">
-          <ThemeSwitcher />
+          <Space>
+            <ThemeSwitcher type="button" />
+            <NotificationBell />
+          </Space>
         </NavbarItem>
         <NavbarItem className="hidden md:flex">
           <Dropdown placement="bottom-end">
@@ -82,7 +86,7 @@ export default function AppBarOnline() {
                 as="button"
                 className="transition-transform"
                 size="sm"
-                src={user?.avatarUrl}
+                src={avatarUrl}
               />
             </DropdownTrigger>
             <DropdownMenu aria-label="Profile Actions" variant="flat">
@@ -91,9 +95,12 @@ export default function AppBarOnline() {
                 className="h-14 gap-2 rounded-b-none border-b hover:bg-white"
               >
                 <p className="font-semibold">{user?.name ?? "Unknown User"}</p>
-                <Tag color="orange" className="text-xs italic">
+                <p className="text-xs text-gray-500">{user?.email ?? "Unknown Email"}</p>
+                <p className="text-[12px] pb-2 text-gray-500">{user?.phone ?? "Unknown Phone"}</p>
+
+                {/* <Tag color="orange" className="text-xs italic">
                   {user?.role?.toUpperCase() ?? "No Role"}
-                </Tag>
+                </Tag> */}
               </DropdownItem>
               <DropdownItem
                 key="profile"

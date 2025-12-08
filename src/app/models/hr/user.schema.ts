@@ -89,6 +89,6 @@ userSchema.methods.comparePassword = async function (
 
 // Check if the model is already compiled
 export const UserModel: Model<IUser> =
-  mongoose.models.users || mongoose.model<IUser>("users", userSchema);
+  mongoose.models.users || mongoose.model<IUser>("users", userSchema, "users");
 
 export default UserModel;

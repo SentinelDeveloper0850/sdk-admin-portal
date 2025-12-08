@@ -1,4 +1,4 @@
-import { Schema, model, models } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
 export interface IPolicyConfiguration {
   _id?: string;
@@ -80,4 +80,4 @@ policyConfigurationSchema.pre("save", function (next) {
   next();
 });
 
-export const PolicyConfiguration = models.PolicyConfiguration || model<IPolicyConfiguration>("PolicyConfiguration", policyConfigurationSchema);
+export const PolicyConfiguration = models.policy_configurations || model<IPolicyConfiguration>("policy_configurations", policyConfigurationSchema, "policy_configurations");

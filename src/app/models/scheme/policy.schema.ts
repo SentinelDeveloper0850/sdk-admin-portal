@@ -112,5 +112,5 @@ const PolicySchema: Schema = new Schema({
 
 // Export the model
 export const PolicyModel =
-  mongoose.models["policies"] ||
-  mongoose.model<IPolicy>("policies", PolicySchema);
+  mongoose.models.policies ||
+  mongoose.model<IPolicy>("policies", PolicySchema, "policies");

@@ -66,5 +66,5 @@ const cashUpSubmissionSchema = new Schema({
 }, { timestamps: true });
 
 export const CashUpSubmissionModel =
-  mongoose.models["cash-up-submissions"] ||
-  mongoose.model("cash-up-submissions", cashUpSubmissionSchema);
+  mongoose.models.cashup_submissions ||
+  mongoose.model("cashup_submissions", cashUpSubmissionSchema, "cashup_submissions");

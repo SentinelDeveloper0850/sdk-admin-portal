@@ -190,5 +190,4 @@ PolicyCancellationRequestSchema.methods.markEmailSent = function () {
   return this.save();
 };
 
-export default mongoose.models.PolicyCancellationRequest ||
-  mongoose.model<IPolicyCancellationRequest>("PolicyCancellationRequest", PolicyCancellationRequestSchema); 
+export const PolicyCancellationRequestModel = mongoose.models.policy_cancellation_requests || mongoose.model<IPolicyCancellationRequest>("policy_cancellation_requests", PolicyCancellationRequestSchema, "policy_cancellation_requests");

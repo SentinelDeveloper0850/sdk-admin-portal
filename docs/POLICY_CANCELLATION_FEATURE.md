@@ -248,6 +248,7 @@ Sent when a request is approved or rejected
 ```env
 RESEND_API_KEY=your_resend_api_key
 MONGODB_URI=your_mongodb_connection_string
+MONGODB_ATLAS_URI=your_mongodb_atlas_connection_string
 NEXTAUTH_SECRET=your_nextauth_secret
 ```
 

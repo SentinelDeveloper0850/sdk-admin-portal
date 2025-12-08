@@ -47,7 +47,8 @@ const LeaveRequestSchema = new Schema(
   { timestamps: true }
 );
 
-export const LeaveRequest: Model<ILeaveRequest> = mongoose.models.Shift || mongoose.model<ILeaveRequest>(
-  "leave-request",
-  LeaveRequestSchema
+export const LeaveRequest: Model<ILeaveRequest> = mongoose.models.leave_requests || mongoose.model<ILeaveRequest>(
+  "leave_requests",
+  LeaveRequestSchema,
+  "leave_requests"
 );

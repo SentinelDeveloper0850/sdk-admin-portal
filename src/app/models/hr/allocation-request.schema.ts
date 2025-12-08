@@ -104,10 +104,11 @@ const AllocationRequestSchema = new Schema(
     markedAsDuplicateBy: { type: Types.ObjectId, ref: 'users' },
     markedAsDuplicateAt: { type: Date },
   },
-  { timestamps: true,
-    toJSON: { virtuals: true },  
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
     toObject: { virtuals: true },
-   }
+  }
 );
 
 // One nice polymorphic virtual called `transaction`
@@ -119,7 +120,7 @@ AllocationRequestSchema.virtual("transaction", {
 });
 
 export const AllocationRequestModel =
-  mongoose.models.AllocationRequest ||
-  mongoose.model<IAllocationRequest>("AllocationRequest", AllocationRequestSchema, "allocation-requests");
+  mongoose.models.allocation_requests ||
+  mongoose.model<IAllocationRequest>("allocation_requests", AllocationRequestSchema, "allocation_requests");
 
 export default AllocationRequestModel;
