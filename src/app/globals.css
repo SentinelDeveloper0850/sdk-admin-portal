@@ -29,11 +29,39 @@ a:hover {
   border-color: #333 !important;
 }
 
-.dark
-  .ant-table-wrapper
-  .ant-table-thead
-  th.ant-table-column-has-sorters:hover {
-  background: #2a2a2a;
+/* Sortable column hover state */
+.dark .ant-table-thead > tr > th.ant-table-column-has-sorters:hover {
+  background-color: #333 !important;
+  cursor: pointer;
+}
+
+/* Active sorted column */
+.dark .ant-table-thead > tr > th.ant-table-column-sort {
+  background-color: #333 !important;
+}
+
+/* Sort icons styling */
+.dark .ant-table-column-sorter {
+  color: #888;
+}
+
+.dark .ant-table-column-has-sorters:hover .ant-table-column-sorter {
+  color: #ffac00;
+}
+
+.dark .ant-table-column-sort .ant-table-column-sorter {
+  color: #ffac00;
+}
+
+/* Active sort direction icons */
+.dark .ant-table-column-sorter-up.on,
+.dark .ant-table-column-sorter-down.on {
+  color: #ffac00 !important;
+}
+
+.dark .ant-table-column-sort .ant-table-column-sorter-up.on,
+.dark .ant-table-column-sort .ant-table-column-sorter-down.on {
+  color: #ffac00 !important;
 }
 
 .dark .ant-table-tbody > tr > td {
@@ -53,6 +81,135 @@ a:hover {
 
 .dark .ant-table-container {
   border-color: #333 !important;
+}
+
+/* Pagination styles for dark mode */
+.dark .ant-pagination {
+  color: white;
+}
+
+.dark .ant-pagination-item {
+  background-color: #212121;
+  border-color: #444;
+}
+
+.dark .ant-pagination-item a {
+  color: white;
+}
+
+.dark .ant-pagination-item:hover {
+  border-color: #ffac00;
+}
+
+.dark .ant-pagination-item:hover a {
+  color: #ffac00;
+}
+
+.dark .ant-pagination-item-active {
+  background-color: #ffac00;
+  border-color: #ffac00;
+}
+
+.dark .ant-pagination-item-active a {
+  color: black;
+}
+
+.dark .ant-pagination-item-active:hover {
+  border-color: #e69b00;
+}
+
+.dark .ant-pagination-item-active:hover a {
+  color: black;
+}
+
+.dark .ant-pagination-prev,
+.dark .ant-pagination-next {
+  color: white;
+}
+
+.dark .ant-pagination-prev:hover .ant-pagination-item-link,
+.dark .ant-pagination-next:hover .ant-pagination-item-link {
+  border-color: #ffac00;
+  color: #ffac00;
+}
+
+.dark .ant-pagination-prev .ant-pagination-item-link,
+.dark .ant-pagination-next .ant-pagination-item-link {
+  background-color: #212121;
+  border-color: #444;
+  color: white;
+}
+
+.dark .ant-pagination-prev.ant-pagination-disabled .ant-pagination-item-link,
+.dark .ant-pagination-next.ant-pagination-disabled .ant-pagination-item-link {
+  background-color: #212121;
+  border-color: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.dark .ant-pagination-jump-prev .ant-pagination-item-link,
+.dark .ant-pagination-jump-next .ant-pagination-item-link {
+  background-color: #212121;
+  border-color: #444;
+  color: white;
+}
+
+.dark .ant-pagination-jump-prev:hover .ant-pagination-item-link,
+.dark .ant-pagination-jump-next:hover .ant-pagination-item-link {
+  border-color: #ffac00;
+  color: #ffac00;
+}
+
+.dark .ant-pagination-options {
+  color: white;
+}
+
+.dark .ant-pagination-options .ant-select-selector {
+  background-color: #212121 !important;
+  border-color: #444 !important;
+  color: white !important;
+}
+
+.dark .ant-pagination-options .ant-select-selector:hover {
+  border-color: #ffac00 !important;
+}
+
+.dark .ant-pagination-options .ant-select-arrow {
+  color: white !important;
+}
+
+.dark .ant-pagination-total-text {
+  color: #aaa;
+}
+
+/* Pagination text in table footer */
+.dark .ant-table-pagination {
+  color: white;
+}
+
+.dark .ant-table-pagination .ant-pagination-total-text {
+  color: #aaa;
+}
+
+.dark .ant-table-pagination-left,
+.dark .ant-table-pagination-right {
+  color: white;
+}
+
+.dark .ant-pagination-simple .ant-pagination-simple-pager input {
+  background-color: #212121;
+  border-color: #444;
+  color: white;
+}
+
+.dark .ant-pagination-simple .ant-pagination-simple-pager input:hover {
+  border-color: #ffac00;
+}
+
+.dark .ant-pagination-simple .ant-pagination-simple-pager input:focus {
+  border-color: #ffac00;
+  box-shadow: 0 0 0 2px rgba(255, 172, 0, 0.2);
 }
 
 .dark .ant-drawer-content {

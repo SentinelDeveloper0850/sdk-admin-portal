@@ -315,12 +315,12 @@ export default function EftTransactionsPage() {
             style={{ display: "flex", justifyContent: "flex-start" }}
           >
             <Space size={32}>
-              <Statistic title="Total Transactions" value={stats.count} />
+              <Statistic title="Total Transactions" value={stats?.count || 0} />
               <Statistic
                 title="Selected Transactions"
                 value={transactions?.length || 0}
               />
-              <Statistic title="Allocation Requests" value={stats.totalAllocationRequestsCount} />
+              <Statistic title="Allocation Requests" value={stats?.totalAllocationRequestsCount || 0} />
             </Space>
           </Col>
           <Col

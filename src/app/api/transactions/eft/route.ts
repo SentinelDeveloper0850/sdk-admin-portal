@@ -1,20 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
+import EftTransactionModel from "@/app/models/scheme/eft-transaction.schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/db";
 import { createAuditLog } from "@/server/actions/audit";
 import {
-  fetchAll,
   importFromBankStatement,
-  importFromTransactionHistory,
+  importFromTransactionHistory
 } from "@/server/actions/eft-transactions";
 
-export async function GET(_request: Request) {
+export async function GET(_request: NextRequest) {
   try {
-    const response = await fetchAll(1000); // Keep 1000 limit for performance
 
-    if (response.success) {
-      return NextResponse.json(response.data, { status: 200 });
-    }
+    const { searchParams } = new URL(_request.url);
+
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit') as string) : 1000;
+    const page = searchParams.get('page') ? parseInt(searchParams.get('page') as string) : 1;
+
+    await connectToDatabase();
+
+    const numberOfTransactions = await EftTransactionModel.countDocuments();
+
+    const transactions = await EftTransactionModel.find()
+      .sort({ date: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    console.log("🚀 ~ GET ~ transactions:", transactions)
+
+    const totalAllocationRequestsCount = await AllocationRequestModel.countDocuments({ type: "EFT" });
+    const pendingAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "PENDING", type: "EFT" });
+    const submittedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "SUBMITTED", type: "EFT" });
+    const approvedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "APPROVED", type: "EFT" });
+    const rejectedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "REJECTED", type: "EFT" });
+    const cancelledAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "CANCELLED", type: "EFT" });
+    const duplicateAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "DUPLICATE", type: "EFT" });
+
+    return NextResponse.json({
+      success: true,
+      pagination: {
+        page: page,
+        limit: limit,
+        total: numberOfTransactions,
+      },
+      stats: {
+        count: numberOfTransactions,
+        totalAllocationRequestsCount: totalAllocationRequestsCount,
+        pendingAllocationRequestsCount: pendingAllocationRequestsCount,
+        submittedAllocationRequestsCount: submittedAllocationRequestsCount,
+        approvedAllocationRequestsCount: approvedAllocationRequestsCount,
+        rejectedAllocationRequestsCount: rejectedAllocationRequestsCount,
+        cancelledAllocationRequestsCount: cancelledAllocationRequestsCount,
+        duplicateAllocationRequestsCount: duplicateAllocationRequestsCount,
+      },
+      transactions: transactions,
+    }, { status: 200 });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

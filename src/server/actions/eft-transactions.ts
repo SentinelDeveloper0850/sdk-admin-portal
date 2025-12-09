@@ -1,5 +1,6 @@
 "use server";
 
+import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 import {
   IEftImportData,
   IEftImportDataModel,
@@ -9,14 +10,13 @@ import {
   IEftTransaction,
 } from "@/app/models/scheme/eft-transaction.schema";
 import { connectToDatabase } from "@/lib/db";
-import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 
 export const fetchAll = async (limit?: number) => {
   try {
     await connectToDatabase();
 
     const numberOfTransactions = await EftTransactionModel.countDocuments();
-    
+
     const totalAllocationRequestsCount = await AllocationRequestModel.countDocuments({ type: "EFT" });
     const pendingAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "PENDING", type: "EFT" });
     const submittedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "SUBMITTED", type: "EFT" });
@@ -70,7 +70,7 @@ export const searchTransactions = async (searchText: string) => {
         { additionalInformation: { $regex: searchText, $options: "i" } },
       ],
     }).sort({ date: -1 })
-    .populate({ path: "allocationRequests", strictPopulate: false });
+      .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
       success: true,
@@ -105,7 +105,7 @@ export const searchTransactionsByAmount = async (
         },
       ],
     }).sort({ amount: filter === "<" ? "desc" : "asc" })
-    .populate({ path: "allocationRequests", strictPopulate: false });
+      .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
       success: true,
@@ -145,7 +145,7 @@ export const findOne = async (id: string) => {
     await connectToDatabase();
 
     const transaction = await EftTransactionModel.findById(id)
-    .populate({ path: "allocationRequests", strictPopulate: false });
+      .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
       success: true,
@@ -222,18 +222,18 @@ export const importFromBankStatement = async (payload: any) => {
               _amount = _amount.toString().trim().replace(" ", "");
 
               let _day = element.Date
-                ? element.Date.substr(0, 2)
+                ? element.Date.substring(0, 2)
                 : element.date
-                  ? element.date.substr(0, 2)
+                  ? element.date.substring(0, 2)
                   : "00";
               let _month = element.Date
-                ? element.Date.substr(3, 3)
+                ? element.Date.substring(3, 6)
                 : element.date
-                  ? element.date.substr(3, 3)
+                  ? element.date.substring(3, 6)
                   : "00";
 
               let _statementMonth = statementDate.split("-").pop();
-              let _statementYear = statementDate.substr(0, 4);
+              let _statementYear = statementDate.substring(0, 4);
 
               let _year = _statementYear;
 

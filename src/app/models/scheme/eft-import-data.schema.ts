@@ -27,7 +27,7 @@ const IEftImportDataSchema: Schema = new Schema({
   createdBy: { type: String, required: true },
   created_at: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
   // Enhanced fields (optional for backward compatibility)
   contentHash: { type: String, required: false },
@@ -40,5 +40,5 @@ const IEftImportDataSchema: Schema = new Schema({
 
 // Check if the model is already compiled
 export const IEftImportDataModel =
-  mongoose.models.eft_import_data ||
+  mongoose.models?.eft_import_data ||
   mongoose.model<IEftImportData>("eft_import_data", IEftImportDataSchema, "eft_import_data");
