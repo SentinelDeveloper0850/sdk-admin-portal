@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-sync-scripts */
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 
 import "antd/dist/reset.css";
@@ -34,6 +35,7 @@ export default function RootLayout({
       </head>
       <body className="h-screen w-screen">
         <Providers>{children}</Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
