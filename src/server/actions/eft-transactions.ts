@@ -70,7 +70,7 @@ export const searchTransactions = async (searchText: string) => {
         { additionalInformation: { $regex: searchText, $options: "i" } },
       ],
     }).sort({ date: -1 })
-      .populate({ path: "allocationRequests", strictPopulate: false });
+    // .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
       success: true,
@@ -105,7 +105,7 @@ export const searchTransactionsByAmount = async (
         },
       ],
     }).sort({ amount: filter === "<" ? "desc" : "asc" })
-      .populate({ path: "allocationRequests", strictPopulate: false });
+    // .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
       success: true,

@@ -1,35 +1,45 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import EftTransactionModel from "@/app/models/scheme/eft-transaction.schema";
+import { connectToDatabase } from "@/lib/db";
 import {
   searchTransactions,
-  searchTransactionsByAmount,
 } from "@/server/actions/eft-transactions";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // Parse the request body
     const body = await request.json();
 
-    const searchType = body.searchType;
+    const { searchType, searchText, amount, filterType } = body;
 
     if (searchType == "text") {
-      const searchText = body.searchText;
-
       const response = await searchTransactions(searchText);
-
-      if (response.success) {
-        return NextResponse.json(response.data, { status: 200 });
-      }
+      return NextResponse.json(response.data, { status: 200 });
     }
 
     if (searchType == "amount") {
-      const { amount, filterType } = body;
 
-      const response = await searchTransactionsByAmount(amount, filterType);
-
-      if (response.success) {
-        return NextResponse.json(response.data, { status: 200 });
+      if (!amount || !filterType) {
+        return NextResponse.json(
+          { message: "Amount and filter type are required" },
+          { status: 400 }
+        );
       }
+
+      await connectToDatabase();
+
+      const transactions = await EftTransactionModel.find({
+        $or: [
+          {
+            amount: filterType === ">" ? { $gt: amount } : filterType === "<"
+              ? { $lt: amount } : { $eq: amount },
+          },
+        ],
+      }).sort({ amount: filterType === "<" ? "desc" : "asc" })
+      // .populate({ path: "allocationRequests", strictPopulate: false });
+
+      return NextResponse.json(transactions, { status: 200 });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
