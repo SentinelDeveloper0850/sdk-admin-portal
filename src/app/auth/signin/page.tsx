@@ -62,7 +62,7 @@ const LoginPage = () => {
       // Update user in context
       setUser(data.user);
 
-      router.push("/calendar"); // Redirect to calendar
+      router.push("/dashboard"); // Redirect to dashboard
     } catch (error: any) {
       console.error(error.response.data.message);
       setError(error.response.data.message);

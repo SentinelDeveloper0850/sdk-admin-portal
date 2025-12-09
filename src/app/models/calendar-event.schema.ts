@@ -1,4 +1,4 @@
-import mongoose, { Document, Model, Schema } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface INote {
   note: string;
@@ -311,5 +311,6 @@ CalendarEventSchema.index({ branchId: 1, startDateTime: 1 });
 CalendarEventSchema.index({ createdById: 1, startDateTime: 1 });
 CalendarEventSchema.index({ type: 1, startDateTime: 1 });
 
-export const CalendarEventModel: Model<ICalendarEvent> =
-  mongoose.models.calendar_events || mongoose.model<ICalendarEvent>("calendar_events", CalendarEventSchema, "calendar_events");
+export const CalendarEventModel = mongoose.models.calendar_events || mongoose.model<ICalendarEvent>("calendar_events", CalendarEventSchema, "calendar_events");
+
+export default CalendarEventModel;
