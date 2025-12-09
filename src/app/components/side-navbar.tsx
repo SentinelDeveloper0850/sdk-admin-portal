@@ -14,6 +14,7 @@ import {
   FileText,
   LayoutDashboard,
   ListOrdered,
+  Server,
   Settings,
   Shield,
   Users
@@ -227,6 +228,14 @@ const SideNavBar = () => {
     },
     {
       id: 12,
+      name: "Status",
+      icon: <Server size={18} />,
+      url: "/status",
+      allowedRoles: [...Object.values(ERoles)],
+      group: "Management",
+    },
+    {
+      id: 13,
       name: "Configurations",
       icon: <Settings size={18} />,
       url: "/configurations",
