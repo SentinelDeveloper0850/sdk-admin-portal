@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     const [items, total] = await Promise.all([
       AllocationRequestModel.find(query, projection, options)
-        .populate({ path: "transaction", options: { strictPopulate: false } }) // gets EFT or Easypay
+        // .populate({ path: "transaction", options: { strictPopulate: false } }) // gets EFT or Easypay
         .populate({ path: 'requestedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .populate({ path: 'approvedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
         .populate({ path: 'submittedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
