@@ -17,7 +17,6 @@ import {
   NavbarMenu,
   NavbarMenuToggle
 } from "@nextui-org/react";
-import { Space } from "antd";
 
 import { logout } from "@/utils/auth";
 
@@ -26,6 +25,7 @@ import { useAuth } from "@/context/auth-context";
 import { NotificationBell } from "@/app/components/notifications/notification-bell";
 import Presence from "@/components/presence";
 import SideNavBar from "./side-navbar";
+import { TaskBell } from "./tasks/task-bell";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export default function AppBarOnline() {
@@ -73,10 +73,11 @@ export default function AppBarOnline() {
           <Presence showBadge={false} />
         </NavbarItem>
         <NavbarItem className="hidden md:flex">
-          <Space>
+          <div className="flex items-center gap-2">
             <ThemeSwitcher type="button" />
             <NotificationBell />
-          </Space>
+            <TaskBell />
+          </div>
         </NavbarItem>
         <NavbarItem className="hidden md:flex">
           <Dropdown placement="bottom-end">

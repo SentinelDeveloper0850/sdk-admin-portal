@@ -89,12 +89,11 @@ export function NotificationBell() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="relative"
-                    aria-label="Notifications"
-                >
+                    className="relative h-5 w-6"
+                    aria-label="Notifications">
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                        <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-semibold text-destructive-foreground">
+                        <span className="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
                             {unreadCount > 9 ? "9+" : unreadCount}
                         </span>
                     )}

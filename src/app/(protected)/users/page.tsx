@@ -392,11 +392,9 @@ const UsersPage = () => {
             <AntButton icon={<ReloadOutlined />} loading={loading} onClick={fetchUsers}>
               Refresh
             </AntButton>
-            {!showDeleted && (
-              <AntButton onClick={() => setCreateDrawerOpen(true)}>
-                <PlusOutlined /> New User
-              </AntButton>
-            )}
+            <AntButton onClick={() => setCreateDrawerOpen(true)}>
+              <PlusOutlined /> New User
+            </AntButton>
           </div>,
         ]}
       />

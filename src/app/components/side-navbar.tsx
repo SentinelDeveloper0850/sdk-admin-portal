@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Tooltip } from "antd";
 import {
   Banknote,
   BarChart3,
+  Briefcase,
   Calendar,
+  ChevronDown,
   ChevronsLeft,
   ChevronsRight,
+  ClipboardList,
+  FilePen,
   FileText,
   LayoutDashboard,
   ListOrdered,
@@ -28,7 +32,7 @@ import { useRole } from "../hooks/use-role";
 const SideNavBar = () => {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
-  const [openMenus, setOpenMenus] = useState<number[]>([]); // track open submenu items
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null); // track open submenu
 
   const menuItems = [
     {
@@ -45,12 +49,36 @@ const SideNavBar = () => {
     },
     {
       id: 2,
-      name: "Funerals",
-      icon: <IconCoffin size={18} />,
-      url: "/funerals",
+      name: "Tasks",
+      icon: <ClipboardList size={18} />,
+      url: "/tasks",
+      // No allowedRoles => visible to all logged in users
     },
     {
       id: 3,
+      name: "Operations",
+      icon: <Briefcase size={18} />,
+      url: "/operations",
+      group: "Operations",
+      children: [
+        {
+          id: "funerals",
+          name: "Funerals",
+          icon: <IconCoffin size={18} />,
+          url: "/funerals",
+        },
+        {
+          id: "claims",
+          name: "Claims",
+          icon: <HiOutlineDocumentCurrencyDollar size={18} />,
+          url: "/claims",
+          allowedRoles: [ERoles.Admin, ERoles.ClaimsOfficer],
+          group: "Risk",
+        },
+      ],
+    },
+    {
+      id: 4,
       name: "EFT Transactions",
       icon: <Banknote size={18} />,
       url: "/transactions/eft",
@@ -79,7 +107,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 4,
+      id: 5,
       name: "Easypay Transactions",
       icon: <Banknote size={18} />,
       url: "/transactions/easypay",
@@ -101,7 +129,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 5,
+      id: 6,
       name: "Policies",
       icon: <FileText size={18} />,
       url: "/policies",
@@ -138,7 +166,7 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 6,
+      id: 7,
       name: "Societies",
       icon: <Users size={18} />,
       url: "/societies",
@@ -162,64 +190,45 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 7,
-      name: "Reports",
+      id: 8,
+      name: "Reporting",
       icon: <BarChart3 size={18} />,
       url: "/reports",
-      allowedRoles: [ERoles.Admin],
-      group: "Management",
+      group: "Reporting",
       children: [
         {
           id: "report-policies",
           name: "Policies Report",
-          icon: <Banknote size={18} />,
+          icon: <BarChart3 size={18} />,
           url: "/reports/policies",
           allowedRoles: [ERoles.Admin],
         },
-      ],
-    },
-    {
-      id: 8,
-      name: "Daily Activity",
-      icon: <ListOrdered size={18} />,
-      url: "/daily-activity",
-      allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
-      group: "Risk",
-    },
-    {
-      id: 9,
-      name: "Cash-Up",
-      icon: <IconPigMoney size={18} />,
-      url: "/cash-up",
-      allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
-      group: "Risk",
-      children: [
+        {
+          id: "daily-activity",
+          name: "Daily Activity",
+          icon: <ListOrdered size={18} />,
+          url: "/daily-activity",
+          allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
+          group: "Risk",
+        },
         {
           id: "cash-up-dashboard",
-          name: "Dashboard",
-          icon: <LayoutDashboard size={18} />,
+          name: "Cashup",
+          icon: <IconPigMoney size={18} />,
           url: "/cash-up/dashboard",
           allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
         },
         {
           id: "cash-up-review",
-          name: "Review",
-          icon: <FileText size={18} />,
+          name: "Cashup Review",
+          icon: <FilePen size={18} />,
           url: "/cash-up/review",
           allowedRoles: [ERoles.Admin],
         },
       ],
     },
     {
-      id: 10,
-      name: "Claims",
-      icon: <HiOutlineDocumentCurrencyDollar size={18} />,
-      url: "/claims",
-      allowedRoles: [ERoles.Admin, ERoles.ClaimsOfficer],
-      group: "Risk",
-    },
-    {
-      id: 11,
+      id: 12,
       name: "Users",
       icon: <Shield size={18} />,
       url: "/users",
@@ -227,7 +236,7 @@ const SideNavBar = () => {
       group: "Management",
     },
     {
-      id: 12,
+      id: 13,
       name: "Status",
       icon: <Server size={18} />,
       url: "/status",
@@ -235,7 +244,7 @@ const SideNavBar = () => {
       group: "Management",
     },
     {
-      id: 13,
+      id: 14,
       name: "Configurations",
       icon: <Settings size={18} />,
       url: "/configurations",
@@ -247,44 +256,42 @@ const SideNavBar = () => {
           name: "Staff Members",
           url: "/configurations/staff-members",
           allowedRoles: [ERoles.Admin, ERoles.HRManager],
-          icon: undefined,
+          icon: <Settings size={18} />,
         },
         {
           id: "system-config",
           name: "System",
           url: "/configurations/system",
           allowedRoles: [ERoles.Admin],
-          icon: undefined,
+          icon: <Settings size={18} />,
         },
         {
           id: "scheme-config",
           name: "Scheme",
           url: "/configurations/scheme",
           allowedRoles: [ERoles.Admin],
-          icon: undefined,
+          icon: <Settings size={18} />,
         },
         {
           id: "branches-config",
           name: "Branches",
           url: "/configurations/branches",
           allowedRoles: [ERoles.Admin],
-          icon: undefined,
+          icon: <Settings size={18} />,
         },
         {
           id: "daily-activity-reminders-config",
           name: "Daily Activity Reminders",
           url: "/configurations/daily-activity-reminders",
           allowedRoles: [ERoles.Admin],
-          icon: undefined,
+          icon: <Settings size={18} />,
         },
       ],
     },
   ];
 
   const toggleSubmenu = (id: number) => {
-    setOpenMenus((prev) =>
-      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
-    );
+    setOpenMenuId((prev) => (prev === id ? null : id));
   };
 
   const { hasRole } = useRole();
@@ -306,6 +313,13 @@ const SideNavBar = () => {
         (!item.allowedRoles || hasRole(item.allowedRoles)) &&
         (item.children === undefined || item.children.length > 0)
     );
+
+  useEffect(() => {
+    const parent = filteredMenuItems.find((item) =>
+      item.children?.some((child) => pathname.startsWith(child.url || ""))
+    );
+    if (parent) setOpenMenuId(parent.id);
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <section
@@ -332,21 +346,38 @@ const SideNavBar = () => {
             : "border-l-4 border-l-transparent";
 
           if (item.children && item.children.length > 0) {
-            const isOpen = openMenus.includes(item.id);
+            const isOpen = openMenuId === item.id;
 
             return (
               <div key={item.id}>
                 <div
-                  className={`${baseClass} ${borderClass}`}
-                  onClick={() => toggleSubmenu(item.id)}
+                  className={`${baseClass} ${borderClass} justify-between`}
+                  onClick={() => {
+                    if (collapsed) {
+                      setCollapsed(false);
+                      setOpenMenuId((prev) => (prev === item.id ? null : item.id));
+                      return;
+                    }
+                    toggleSubmenu(item.id);
+                  }}
                 >
-                  {item.icon}
+                  <div className="flex items-center gap-3">
+                    {item.icon}
+                    {!collapsed && (
+                      <p className="text-xs font-normal uppercase tracking-wider">
+                        {item.name}
+                      </p>
+                    )}
+                  </div>
+
                   {!collapsed && (
-                    <p className="text-xs font-normal uppercase tracking-wider">
-                      {item.name}
-                    </p>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"}`}
+                    />
                   )}
                 </div>
+
 
                 {isOpen &&
                   !collapsed &&
@@ -360,7 +391,9 @@ const SideNavBar = () => {
                             : "text-gray-600"
                             }`}
                         >
-                          {child.icon ?? <></>}
+                          <span className="inline-flex w-5 justify-center">
+                            {child.icon ?? null}
+                          </span>
                           <span>{child.name}</span>
                         </div>
                       </Link>

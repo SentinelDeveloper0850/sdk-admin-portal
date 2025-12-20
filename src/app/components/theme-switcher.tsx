@@ -42,7 +42,7 @@ export function ThemeSwitcher({ showLabel, onThemeChange, type = "switch" }: IPr
           {showLabel && "Theme"}
         </Switch>) : (
         <>
-          {theme === "light" ? <IconSun className="text-xs h-4 w-4 cursor-pointer" onClick={() => setTheme("dark")} /> : <IconMoon className="text-white text-xs h-4 w-4 cursor-pointer" onClick={() => setTheme("light")} />}
+          {theme === "light" ? <IconSun className="text-xs h-5 w-6 cursor-pointer" onClick={() => setTheme("dark")} /> : <IconMoon className="text-white text-xs h-4 w-4 cursor-pointer" onClick={() => setTheme("light")} />}
         </>
       )}
     </>
