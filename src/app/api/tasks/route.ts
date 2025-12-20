@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { TASK_PRIORITIES, TASK_STATUSES, TaskModel } from "@/app/models/system/task.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
+import { notifyTaskAssigned } from "@/lib/notifications";
 
 function isPrivilegedUser(user: any) {
     const role =
@@ -145,6 +146,14 @@ export async function POST(req: NextRequest) {
         tags,
         isArchived: false,
     });
+
+    if (task.assigneeUserId) {
+        await notifyTaskAssigned({
+            recipientUserId: String(task.assigneeUserId),
+            actorUserId: String(user._id),
+            task: task,
+        });
+    }
 
     return NextResponse.json({ task }, { status: 201 });
 }

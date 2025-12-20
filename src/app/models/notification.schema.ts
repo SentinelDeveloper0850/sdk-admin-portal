@@ -7,7 +7,9 @@ const NotificationSchema = new Schema(
             required: true
         },
 
+        actorUserId: { type: String },
         type: { type: String, required: true },
+
         title: { type: String, required: true },
         message: { type: String, required: true },
         link: { type: String },

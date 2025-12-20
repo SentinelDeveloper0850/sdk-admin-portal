@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { TASK_PRIORITIES, TASK_STATUSES, TaskModel } from "@/app/models/system/task.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
+import { notifyTaskAssigned } from "@/lib/notifications";
 
 function isPrivilegedUser(user: any) {
     const role =
@@ -55,6 +56,9 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 
     const task = await TaskModel.findById(ctx.params.id);
     if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+
+    const oldAssignee = task.assigneeUserId ? String(task.assigneeUserId) : null;
+    const newAssignee = body.assigneeUserId === undefined ? oldAssignee : body.assigneeUserId ? String(body.assigneeUserId) : null; // explicit unassign (null)
 
     if (!canAccessTask(user, task.toObject())) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -135,7 +139,17 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
         task.isArchived = body.isArchived;
     }
 
-    const saved = await task.save();
+    const updatedTask = await task.save();
 
-    return NextResponse.json({ task: saved });
+    const assigneeChanged = oldAssignee !== newAssignee;
+
+    if (assigneeChanged && newAssignee) {
+        await notifyTaskAssigned({
+            recipientUserId: newAssignee,
+            actorUserId: String(user._id),
+            task: updatedTask,
+        });
+    }
+
+    return NextResponse.json({ task: updatedTask });
 }
