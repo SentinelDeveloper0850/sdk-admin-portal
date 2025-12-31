@@ -280,6 +280,13 @@ const SideNavBar = () => {
           icon: <Settings size={18} />,
         },
         {
+          id: "cemeteries-config",
+          name: "Cemeteries",
+          url: "/configurations/cemeteries",
+          allowedRoles: [ERoles.Admin],
+          icon: <Settings size={18} />,
+        },
+        {
           id: "daily-activity-reminders-config",
           name: "Daily Activity Reminders",
           url: "/configurations/daily-activity-reminders",

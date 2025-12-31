@@ -1,22 +1,55 @@
-// app/api/funerals/[id]/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
+// src/app/api/funerals/[id]/route.ts
 import dayjs from "dayjs";
-import { connectToDatabase } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/auth";
-import { FuneralModel } from "@/app/models/funeral.schema";
+import mongoose from "mongoose";
+import { NextRequest, NextResponse } from "next/server";
+
+import type { ILocation } from "@/app/models/calendar-event.schema";
 import { CalendarEventModel } from "@/app/models/calendar-event.schema";
+import {
+  FuneralModel,
+  ScheduledItemStatus,
+  type FuneralMilestoneType,
+} from "@/app/models/funeral.schema";
+import { getUserFromRequest } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/db";
 import { upsertFuneralCalendarEvents } from "@/server/actions/funeral-calendar";
 
+type MilestoneBody = {
+  type: FuneralMilestoneType;
+  enabled?: boolean;
+  startDateTime?: string | Date | null;
+  endDateTime?: string | Date | null;
+  durationMinutes?: number | null;
+
+  location?: ILocation | null;
+  origin?: ILocation | null;
+  destination?: ILocation | null;
+
+  status?: ScheduledItemStatus;
+  calendarEventId?: string | null;
+  notes?: any[];
+};
+
 const toDateOrUndef = (v: any) => (v ? dayjs(v).toDate() : undefined);
-const normalizeSlot = (slot?: any) =>
-  slot
-    ? {
-      ...slot,
-      startDateTime: toDateOrUndef(slot.startDateTime),
-      endDateTime: toDateOrUndef(slot.endDateTime),
-    }
-    : undefined;
+
+const normalizeMilestone = (m: MilestoneBody) => {
+  const start = m.startDateTime === null ? undefined : toDateOrUndef(m.startDateTime);
+  const end = m.endDateTime === null ? undefined : toDateOrUndef(m.endDateTime);
+
+  return {
+    type: m.type,
+    enabled: !!m.enabled,
+    startDateTime: start,
+    endDateTime: end,
+    durationMinutes: m.durationMinutes ?? undefined,
+    location: m.location ?? undefined,
+    origin: m.origin ?? undefined,
+    destination: m.destination ?? undefined,
+    status: m.status ?? ScheduledItemStatus.PENDING,
+    calendarEventId: m.calendarEventId ?? undefined,
+    notes: Array.isArray(m.notes) ? m.notes : [],
+  };
+};
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -24,9 +57,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
     }
+
     await connectToDatabase();
+
     const funeral = await FuneralModel.findById(id);
     if (!funeral) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+
     return NextResponse.json({ success: true, funeral }, { status: 200 });
   } catch (err) {
     console.error("GET /funerals/:id error:", err);
@@ -51,25 +87,27 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const funeral = await FuneralModel.findById(id);
     if (!funeral) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
 
-    const serviceDT = toDateOrUndef(body.serviceDateTime);
-    const burialDT = toDateOrUndef(body.burialDateTime);
+    const serviceDT = body.serviceDateTime === null ? undefined : toDateOrUndef(body.serviceDateTime);
+    const burialDT = body.burialDateTime === null ? undefined : toDateOrUndef(body.burialDateTime);
+
+    // canonical only
+    const milestones = Array.isArray(body.milestones)
+      ? body.milestones.map(normalizeMilestone)
+      : undefined;
 
     Object.assign(funeral, {
       ...body,
-      ...(serviceDT ? { serviceDateTime: serviceDT } : {}),
-      ...(burialDT ? { burialDateTime: burialDT } : {}),
-      ...(body.pickUp !== undefined ? { pickUp: normalizeSlot(body.pickUp) } : {}),
-      ...(body.bathing !== undefined ? { bathing: normalizeSlot(body.bathing) } : {}),
-      ...(body.tentErection !== undefined ? { tentErection: normalizeSlot(body.tentErection) } : {}),
-      ...(body.delivery !== undefined ? { delivery: normalizeSlot(body.delivery) } : {}),
-      ...(body.serviceEscort !== undefined ? { serviceEscort: normalizeSlot(body.serviceEscort) } : {}),
-      ...(body.burial !== undefined ? { burial: normalizeSlot(body.burial) } : {}),
+      ...(body.serviceDateTime !== undefined ? { serviceDateTime: serviceDT } : {}),
+      ...(body.burialDateTime !== undefined ? { burialDateTime: burialDT } : {}),
+      ...(milestones !== undefined ? { milestones } : {}),
+      ...(body.notes !== undefined ? { notes: Array.isArray(body.notes) ? body.notes : [] } : {}),
+      updatedBy: user.name || user.email,
+      updatedById: String(user._id),
     });
 
     await funeral.save();
 
-    const actor = { name: user.name, id: String(user._id) };
-    await upsertFuneralCalendarEvents(funeral, actor);
+    await upsertFuneralCalendarEvents(funeral, { name: user.name || user.email, id: String(user._id) });
 
     return NextResponse.json({ success: true, message: "Funeral updated", funeral }, { status: 200 });
   } catch (err) {
@@ -83,13 +121,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const user = await getUserFromRequest(request);
     if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
-    const { searchParams } = new URL(request.url);
-    const alsoDeleteCalendar = searchParams.get("deleteCalendar") === "true";
-
     const { id } = params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
     }
+
+    const { searchParams } = new URL(request.url);
+    const alsoDeleteCalendar = searchParams.get("deleteCalendar") === "true";
 
     await connectToDatabase();
 
@@ -100,18 +138,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     await FuneralModel.findByIdAndDelete(id);
 
     if (alsoDeleteCalendar) {
-      const ids = [
-        funeral.pickUp?.calendarEventId,
-        funeral.bathing?.calendarEventId,
-        funeral.tentErection?.calendarEventId,
-        funeral.delivery?.calendarEventId,
-        funeral.serviceEscort?.calendarEventId,
-        funeral.burial?.calendarEventId,
-      ].filter(Boolean);
-      if (ids.length) await CalendarEventModel.deleteMany({ _id: { $in: ids } });
-      // Optional legacy:
-      if (funeral.calendarEventId) {
-        await CalendarEventModel.findByIdAndDelete(funeral.calendarEventId);
+      const ids = (funeral.milestones || [])
+        .map((m: any) => m?.calendarEventId)
+        .filter(Boolean);
+
+      if (ids.length) {
+        await CalendarEventModel.deleteMany({ _id: { $in: ids } });
       }
     }
 

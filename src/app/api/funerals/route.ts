@@ -1,23 +1,45 @@
-// app/api/funerals/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/auth";
-import { FuneralModel } from "@/app/models/funeral.schema";
-import { CalendarEventModel, ILocation } from "@/app/models/calendar-event.schema";
+// src/app/api/funerals/route.ts
 import dayjs from "dayjs";
+import { NextRequest, NextResponse } from "next/server";
+
+import type { ILocation } from "@/app/models/calendar-event.schema";
+import {
+  FuneralModel,
+  FuneralStatus,
+  PaymentStatus,
+  ScheduledItemStatus,
+  type FuneralMilestoneType,
+} from "@/app/models/funeral.schema";
+import { getUserFromRequest } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/db";
 import { upsertFuneralCalendarEvents } from "@/server/actions/funeral-calendar";
 
-type ScheduledItemBody = {
+type MilestoneBody = {
+  type: FuneralMilestoneType;
   enabled?: boolean;
-  startDateTime?: string | Date;
-  endDateTime?: string | Date;
-  location?: ILocation;
-  notes?: string;
+  startDateTime?: string | Date | null;
+  endDateTime?: string | Date | null;
+  durationMinutes?: number | null;
+
+  location?: ILocation | null;
+
+  origin?: ILocation | null;
+  via?: ILocation | null;          // ✅ add
+  destination?: ILocation | null;
+
+  cemeteryCode?: string | null;    // ✅ add
+  graveNumber?: string | null;     // ✅ add
+
+  status?: ScheduledItemStatus;
+  calendarEventId?: string | null;
+
+  notes?: any[];
 };
 
 export type CreateFuneralBody = {
   referenceNumber?: string;
   policyNumber?: string;
+
   informant: {
     firstName: string;
     lastName: string;
@@ -28,6 +50,7 @@ export type CreateFuneralBody = {
     email?: string;
     relationship?: string;
   };
+
   deceased: {
     firstName: string;
     lastName: string;
@@ -37,48 +60,60 @@ export type CreateFuneralBody = {
     dateOfDeath?: string | Date;
     gender?: "male" | "female" | "other";
   };
-  serviceDateTime?: string | Date;
-  burialDateTime?: string | Date;
+
+  branchId: string;
+
+  // optional “summary” dates (still useful for list filters)
+  serviceDateTime?: string | Date | null;
+  burialDateTime?: string | Date | null;
   isSameDay?: boolean;
 
-  location?: ILocation;
+  serviceLocation?: ILocation;
+
+  // if you moved these into the Burial milestone, remove them from body/schema
   cemetery?: string;
   graveNumber?: string;
 
-  branchId?: string;
   assignments?: any[];
   transport?: any[];
 
   estimatedCost?: number;
   actualCost?: number;
-  paymentStatus?: "unpaid" | "partial" | "paid";
+  paymentStatus?: PaymentStatus;
 
-  status?: string;
-  notes?: string;
-  
-  // NEW: milestones we actually calendarize
-  pickUp?: ScheduledItemBody;
-  bathing?: ScheduledItemBody;
-  tentErection?: ScheduledItemBody;
-  delivery?: ScheduledItemBody;
-  serviceEscort?: ScheduledItemBody;
-  burial?: ScheduledItemBody;
+  status?: FuneralStatus;
 
-  // calendar
-  createCalendarEvent?: boolean; // ignored; we always upsert milestones
+  notes?: any[];
+
+  milestones: MilestoneBody[]; // ✅ canonical only
 };
 
-const toDateOrUndef = (v: string | Date | undefined) =>
-  v ? dayjs(v).toDate() : undefined;
+const toDateOrUndef = (v: any) => (v ? dayjs(v).toDate() : undefined);
 
-const normalizeSlot = (slot?: ScheduledItemBody) =>
-  slot
-    ? {
-      ...slot,
-      startDateTime: toDateOrUndef(slot.startDateTime as any),
-      endDateTime: toDateOrUndef(slot.endDateTime as any),
-    }
-    : undefined;
+const normalizeMilestone = (m: MilestoneBody) => {
+  const start = m.startDateTime === null ? undefined : toDateOrUndef(m.startDateTime);
+  const end = m.endDateTime === null ? undefined : toDateOrUndef(m.endDateTime);
+
+  return {
+    type: m.type,
+    enabled: !!m.enabled,
+    startDateTime: start,
+    endDateTime: end,
+    durationMinutes: m.durationMinutes ?? 60,
+
+    location: m.location ?? undefined,
+    origin: m.origin ?? undefined,
+    via: m.via ?? undefined, // ✅ keep
+    destination: m.destination ?? undefined,
+
+    cemeteryCode: m.cemeteryCode ?? undefined, // ✅ keep
+    graveNumber: m.graveNumber ?? undefined,   // ✅ keep
+
+    status: m.status ?? ScheduledItemStatus.PENDING,
+    calendarEventId: m.calendarEventId ?? undefined,
+    notes: Array.isArray(m.notes) ? m.notes : [],
+  };
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -88,9 +123,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = Math.max(Number(searchParams.get("page") || 1), 1);
     const limit = Math.min(Math.max(Number(searchParams.get("limit") || 20), 1), 100);
+
     const branchId = searchParams.get("branchId") || undefined;
     const status = searchParams.get("status") || undefined;
     const q = searchParams.get("q") || undefined;
+
     const startDate = searchParams.get("startDate") || undefined;
     const endDate = searchParams.get("endDate") || undefined;
 
@@ -109,7 +146,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Date range: match ANY milestone OR legacy fields within the range
+    // date range: milestone.startDateTime is canonical
     if (startDate || endDate) {
       const rng: any = {};
       if (startDate) rng.$gte = new Date(startDate);
@@ -117,14 +154,10 @@ export async function GET(request: NextRequest) {
 
       filter.$or = [
         ...(filter.$or || []),
-        { serviceDateTime: rng },      // legacy
-        { burialDateTime: rng },       // legacy
-        { "pickUp.startDateTime": rng },
-        { "bathing.startDateTime": rng },
-        { "tentErection.startDateTime": rng },
-        { "delivery.startDateTime": rng },
-        { "serviceEscort.startDateTime": rng },
-        { "burial.startDateTime": rng },
+        { "milestones.startDateTime": rng },
+        // optional: keep if you still use these:
+        { serviceDateTime: rng },
+        { burialDateTime: rng },
       ];
     }
 
@@ -155,55 +188,42 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as CreateFuneralBody;
 
-    // Basic validation
     if (!body?.informant?.firstName || !body?.informant?.lastName) {
       return NextResponse.json({ success: false, message: "Informant name is required" }, { status: 400 });
     }
     if (!body?.deceased?.firstName || !body?.deceased?.lastName) {
       return NextResponse.json({ success: false, message: "Deceased name is required" }, { status: 400 });
     }
+    if (!body.branchId) {
+      return NextResponse.json({ success: false, message: "branchId is required" }, { status: 400 });
+    }
+    if (!Array.isArray(body.milestones)) {
+      return NextResponse.json({ success: false, message: "milestones[] is required" }, { status: 400 });
+    }
 
     await connectToDatabase();
 
-    // Generate referenceNumber if not provided
     const ref = body.referenceNumber ?? `FNR-${dayjs().format("YYYYMMDD-HHmmss")}`;
 
-    // Normalize legacy times (optional)
-    const serviceDT = toDateOrUndef(body.serviceDateTime as any);
-    const burialDT = toDateOrUndef(body.burialDateTime as any);
+    const serviceDT = body.serviceDateTime === null ? undefined : toDateOrUndef(body.serviceDateTime);
+    const burialDT = body.burialDateTime === null ? undefined : toDateOrUndef(body.burialDateTime);
 
-    // Normalize milestone slots
-    const pickUp = normalizeSlot(body.pickUp);
-    const bathing = normalizeSlot(body.bathing);
-    const tentErection = normalizeSlot(body.tentErection);
-    const delivery = normalizeSlot(body.delivery);
-    const serviceEscort = normalizeSlot(body.serviceEscort);
-    const burial = normalizeSlot(body.burial);
+    const milestones = body.milestones.map(normalizeMilestone);
 
-    // Create funeral
     const funeral = await FuneralModel.create({
       ...body,
       referenceNumber: ref,
       serviceDateTime: serviceDT,
       burialDateTime: burialDT,
-      pickUp,
-      bathing,
-      tentErection,
-      delivery,
-      serviceEscort,
-      burial,
+      milestones,
+      notes: Array.isArray(body.notes) ? body.notes : [],
       createdBy: user.name || user.email,
       createdById: String(user._id),
     });
 
-    // Create/Update calendar events per milestone
-    const actor = { name: user.name || user.email, id: String(user._id) };
-    await upsertFuneralCalendarEvents(funeral, actor);
+    await upsertFuneralCalendarEvents(funeral, { name: user.name || user.email, id: String(user._id) });
 
-    return NextResponse.json(
-      { success: true, message: "Funeral created", funeral },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, message: "Funeral created", funeral }, { status: 201 });
   } catch (err) {
     console.error("POST /funerals error:", err);
     return NextResponse.json({ success: false, message: "Failed to create funeral" }, { status: 500 });
