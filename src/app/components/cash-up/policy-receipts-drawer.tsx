@@ -66,7 +66,7 @@ const PolicyReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
       const submissionData = {
         submissionIdSuffix: submissionIdSuffix,
         files: uploadedFiles,
-        date: form.getFieldValue("date") || dayjs().format("YYYY-MM-DD"),
+        date: new Date().toISOString(),
         submittedAmount: form.getFieldValue("submittedAmount") || 0,
         notes: form.getFieldValue("notes") || "",
         submittedAt: new Date().toISOString(),

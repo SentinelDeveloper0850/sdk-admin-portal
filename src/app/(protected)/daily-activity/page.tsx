@@ -32,6 +32,7 @@ import {
 import PageHeader from "@/app/components/page-header";
 import { IBranch } from "@/app/models/system/branch.schema";
 import { useAuth } from "@/context/auth-context";
+import { formatPolicyNumber } from "@/lib/utils";
 import { CalendarOutlined, LeftOutlined, ReloadOutlined, RightOutlined } from "@ant-design/icons";
 
 const activities = [
@@ -394,12 +395,12 @@ export default function DailyActivityPage() {
   };
 
   const addActivityToReport = () => {
-    const { activity, policyNumber, claimNumber, societyName } =
-      form.getFieldsValue();
+    const { activity, policyNumber, claimNumber, societyName } = form.getFieldsValue();
     let newActivity: any = { name: activity };
 
-    if (selectedActivity.type == "policy")
-      newActivity.policyNumber = policyNumber;
+    const formattedPolicyNumber = policyNumber ? formatPolicyNumber(policyNumber) : null;
+
+    if (selectedActivity.type == "policy") newActivity.policyNumber = formattedPolicyNumber;
     if (activity == "Claim Processing") newActivity.claimNumber = claimNumber;
     if (activity == "Society") newActivity.societyName = societyName;
 

@@ -32,6 +32,7 @@ import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
 import { useAuth } from "@/context/auth-context";
 
+import Loading2 from "@/app/components/ui/loading2";
 import { IAllocationRequest } from "@/app/models/hr/allocation-request.schema";
 import { ERoles } from "../../../../types/roles.enum";
 
@@ -71,6 +72,7 @@ export interface IEftStats {
 export default function EftTransactionsPage() {
   const [transactions, setTransactions] = useState<IEftTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [searching, setSearching] = useState<boolean>(true);
   const [error, setError] = useState<string | boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
@@ -121,7 +123,7 @@ export default function EftTransactionsPage() {
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
-      await fetchTransactions(false);
+      await fetchTransactions(true);
     } finally {
       setRefreshing(false);
     }
@@ -150,6 +152,7 @@ export default function EftTransactionsPage() {
 
   const searchTransactions = async (value: string) => {
     try {
+      setSearching(true);
       const response = await fetch("/api/transactions/eft/search", {
         method: "POST",
         headers: {
@@ -169,6 +172,8 @@ export default function EftTransactionsPage() {
     } catch (err) {
       console.log(err);
       setError("An error occurred while searching transactions.");
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -257,7 +262,7 @@ export default function EftTransactionsPage() {
   };
 
   useEffect(() => {
-    fetchTransactions();
+    fetchTransactions(true);
   }, []);
 
   if (loading) {
@@ -417,7 +422,7 @@ export default function EftTransactionsPage() {
         </Space>
       </Form>
 
-      <Table
+      {searching ? <Loading2 text="Searching transactions..." /> : (<Table
         rowKey="_id"
         bordered
         dataSource={transactions}
@@ -495,7 +500,7 @@ export default function EftTransactionsPage() {
             },
           },
         ]}
-      />
+      />)}
       <Drawer
         title="EFT Import History"
         placement="right"
