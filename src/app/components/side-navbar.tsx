@@ -216,14 +216,14 @@ const SideNavBar = () => {
           name: "Cashup",
           icon: <IconPigMoney size={18} />,
           url: "/cash-up/dashboard",
-          allowedRoles: [ERoles.Admin, ERoles.SchemeConsultant],
+          // All users can draft/submit Cashup
         },
         {
           id: "cash-up-review",
           name: "Cashup Review",
           icon: <FilePen size={18} />,
           url: "/cash-up/review",
-          allowedRoles: [ERoles.Admin],
+          allowedRoles: [ERoles.Admin, ERoles.CashupReviewer],
         },
       ],
     },

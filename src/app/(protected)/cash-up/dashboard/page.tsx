@@ -133,6 +133,14 @@ const CashUpDashboardPage = () => {
         return "orange";
       case "pending":
         return "blue";
+      case "needs_changes":
+        return "orange";
+      case "resolved":
+        return "blue";
+      case "approved":
+        return "green";
+      case "rejected":
+        return "red";
       case "nothing to submit":
         return "default";
       case "awaiting system balance":
@@ -154,20 +162,14 @@ const CashUpDashboardPage = () => {
         return "Draft";
       case "pending":
         return "Pending Review";
-      case "submitted":
-        return "Submitted";
-      case "reviewed":
-        return "Reviewed";
-      case "escalated":
-        return "Escalated";
-      case "archived":
-        return "Archived";
-      case "deleted":
-        return "Deleted";
+      case "needs_changes":
+        return "Sent Back";
+      case "resolved":
+        return "Re-Submitted";
+      case "approved":
+        return "Approved";
       case "rejected":
         return "Rejected";
-      case "pending_info":
-        return "Pending Info";
       case "short":
         return "Short";
       case "over":
@@ -183,28 +185,18 @@ const CashUpDashboardPage = () => {
 
   const getSubmissionStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
+      case "draft":
+        return "default";
       case "pending":
         return "blue";
-      case "submitted":
-        return "green";
-      case "reviewed":
-        return "green";
-      case "escalated":
-        return "purple";
-      case "archived":
-        return "gray";
-      case "deleted":
-        return "gray";
-      case "submitted late (grace period)":
+      case "needs_changes":
         return "orange";
-      case "pending_info":
-        return "orange";
-      case "submitted late":
+      case "resolved":
+        return "blue";
+      case "approved":
+        return "green";
+      case "rejected":
         return "red";
-      case "not submitted":
-        return "red";
-      case "nothing to submit":
-        return "default";
       default:
         return "default";
     }
@@ -227,14 +219,14 @@ const CashUpDashboardPage = () => {
   };
 
   // stats
-  const { awaitingReview, balancedCount, varianceCount, escalatedCount, lateCount } = useMemo(() => {
+  const { awaitingReview, draftCount, sentBackCount, approvedCount, lateCount } = useMemo(() => {
     const n = (s?: string) => (s || "").toLowerCase();
     return {
-      awaitingReview: cashUpSubmissions.filter(a => n(a.submissionStatus) === "submitted").length,
-      balancedCount: cashUpSubmissions.filter(a => n(a.status) === "balanced").length,
-      varianceCount: cashUpSubmissions.filter(a => ["short", "over"].includes(n(a.status))).length,
-      escalatedCount: cashUpSubmissions.filter(a => n(a.submissionStatus) === "escalated").length,
-      lateCount: cashUpSubmissions.filter(a => n(a.submissionStatus).includes("late")).length,
+      awaitingReview: cashUpSubmissions.filter(a => ["pending", "resolved"].includes(n(a.status))).length,
+      draftCount: cashUpSubmissions.filter(a => n(a.status) === "draft").length,
+      sentBackCount: cashUpSubmissions.filter(a => n(a.status) === "needs_changes").length,
+      approvedCount: cashUpSubmissions.filter(a => n(a.status) === "approved").length,
+      lateCount: cashUpSubmissions.filter(a => (a as any).isLateSubmission && ["pending", "resolved", "approved", "rejected"].includes(n(a.status))).length,
     };
   }, [cashUpSubmissions]);
 
@@ -325,7 +317,7 @@ const CashUpDashboardPage = () => {
       align: "center",
       render: (_: any, record: ICashUpSubmission) => (
         <Space>
-          {norm(record.status) === "draft" && isOwner(record) && (
+          {["draft", "needs_changes"].includes(norm(record.status)) && isOwner(record) && (
             <Button type="primary" className="text-black uppercase" onClick={() => submitForReview(record)}>
               Submit for Review
             </Button>
@@ -343,20 +335,20 @@ const CashUpDashboardPage = () => {
       color: "blue",
     },
     {
-      title: "Balanced",
-      value: balancedCount,
+      title: "Drafts",
+      value: draftCount,
       icon: <CheckCircleOutlined />,
       color: "green",
     },
     {
-      title: "Variances",
-      value: varianceCount,
+      title: "Sent Back",
+      value: sentBackCount,
       icon: <ExclamationCircleOutlined />,
       color: "orange",
     },
     {
-      title: "Escalated",
-      value: escalatedCount,
+      title: "Approved",
+      value: approvedCount,
       icon: <AlertOutlined />,
       color: "red",
     },
@@ -372,11 +364,11 @@ const CashUpDashboardPage = () => {
 
   // Check if the user has the user submitted today?
   const hasSubmittedToday = cashUpSubmissions.some(
-    a => a.date === dayjs().format('YYYY-MM-DD') && norm(a.submissionStatus) === 'submitted'
+    a => a.date === dayjs().format('YYYY-MM-DD') && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
   );
 
   // Calculate the time remaining until the submission deadline in minutes
-  const cutoff = dayjs().hour(18).minute(0).second(0);
+  const cutoff = dayjs().hour(20).minute(0).second(0);
   const minutesToCutoff = cutoff.diff(dayjs(), 'minutes'); // positive before cutoff, negative after
   const minutesLeft = minutesToCutoff;  // already positive before, negative after
   const humanMins = Math.max(0, minutesLeft);
@@ -461,7 +453,7 @@ const CashUpDashboardPage = () => {
             <p>You have not submitted your receipts for today. You have missed the submission deadline and will be flagged as a late submission.</p>
           </div>} />}
         </div>
-        <CashUpCountdown cutOffTime={"18:00:00"} />
+        <CashUpCountdown cutOffTime={"20:00:00"} />
       </div>
 
       {/* Cash-Up Submissions Table */}
@@ -555,4 +547,4 @@ const CashUpDashboardPage = () => {
   );
 };
 
-export default withRoleGuard(CashUpDashboardPage, [ERoles.Admin, ERoles.Member]); 
+export default withRoleGuard(CashUpDashboardPage, Object.values(ERoles) as unknown as string[]); 

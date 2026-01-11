@@ -18,17 +18,12 @@ interface CashUpSubmission {
   employeeId: string;
   employeeName: string;
   batchReceiptTotal: number;
-  systemBalance: number;
-  discrepancy: number;
   status: string;
-  submissionStatus: string;
-  riskLevel: string;
   submittedAt: string;
   reviewedBy?: string;
   reviewedAt?: string;
-  isResolved: boolean;
-  notes?: string;
-  resolutionNotes?: string;
+  isLateSubmission?: boolean;
+  notes?: string | null;
   attachments: string[];
 }
 
@@ -43,92 +38,12 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
   const { user } = useAuth();
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
-  const [resolutionStatus, setResolutionStatus] = useState<string>("");
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
       currency: 'ZAR'
     }).format(amount);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Balanced":
-        return "green";
-      case "Short":
-        return "red";
-      case "Over":
-        return "orange";
-      case "Awaiting System Balance":
-        return "blue";
-      case "Missing Batch Receipt":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const getRiskLevelColor = (riskLevel: string) => {
-    switch (riskLevel) {
-      case "high":
-        return "red";
-      case "medium":
-        return "orange";
-      case "low":
-        return "green";
-      default:
-        return "default";
-    }
-  };
-
-  const getSubmissionStatusColor = (status: string) => {
-    switch (status) {
-      case "Submitted":
-        return "green";
-      case "Submitted Late (Grace Period)":
-        return "orange";
-      case "Submitted Late":
-        return "red";
-      case "Not Submitted":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const handleResolve = async () => {
-    try {
-      const values = await form.validateFields();
-      setSaving(true);
-
-      const payload = {
-        ...values,
-        isResolved: true,
-        reviewedBy: user?._id,
-        reviewedAt: new Date().toISOString(),
-      };
-
-      const res = await fetch(`/api/cash-up/${cashUpSubmission?._id}/resolve`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const json = await res.json();
-
-      if (json.success) {
-        message.success("Cash up submission resolved successfully");
-        onUpdated();
-        onClose();
-      } else {
-        message.error(json.message || "Failed to resolve cash up submission");
-      }
-    } catch (error) {
-      message.error("Please correct the errors in the form");
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleAddNotes = async () => {
@@ -138,8 +53,6 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
 
       const payload = {
         notes: values.notes,
-        reviewedBy: user?._id,
-        reviewedAt: new Date().toISOString(),
       };
 
       const res = await fetch(`/api/cash-up/${cashUpSubmission?._id}/notes`, {
@@ -164,11 +77,40 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
     }
   };
 
-    if (!cashUpSubmission) return null;
+  const handleDecision = async (decision: "approve" | "reject" | "send_back") => {
+    try {
+      const values = await form.validateFields();
+      setSaving(true);
 
-  const isDiscrepancy = cashUpSubmission.status === "Short" || cashUpSubmission.status === "Over";
-  const isHighRisk = cashUpSubmission.riskLevel === "high";
-  const isLateSubmission = cashUpSubmission.submissionStatus.includes("Late");
+      const payload = {
+        decision,
+        note: values.notes,
+      };
+
+      const res = await fetch(`/api/cash-up/${cashUpSubmission?._id}/review`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        message.success(json.message || "Updated");
+        onUpdated();
+        onClose();
+      } else {
+        message.error(json.message || "Failed to update");
+      }
+    } catch {
+      message.error("Please add a review note first");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!cashUpSubmission) return null;
+
+  const isLateSubmission = !!cashUpSubmission.isLateSubmission;
 
   return (
     <Drawer
@@ -188,29 +130,19 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
           >
             Add Notes
           </Button>
-          {isDiscrepancy && !cashUpSubmission.isResolved && (
-            <Button
-              type="primary"
-              onClick={handleResolve}
-              loading={saving}
-            >
-              Mark as Resolved
-            </Button>
-          )}
+          <Button type="primary" onClick={() => handleDecision("approve")} loading={saving}>
+            Approve
+          </Button>
+          <Button danger onClick={() => handleDecision("reject")} loading={saving}>
+            Reject
+          </Button>
+          <Button onClick={() => handleDecision("send_back")} loading={saving}>
+            Send Back
+          </Button>
         </Space>
       }
     >
       <div className="space-y-6">
-        {/* Risk Level Alert */}
-        {isHighRisk && (
-          <Alert
-            message="High Risk Discrepancy"
-            description="This audit has a high-risk discrepancy that requires immediate attention."
-            type="error"
-            showIcon
-          />
-        )}
-
         {/* Late Submission Alert */}
         {isLateSubmission && (
           <Alert
@@ -236,19 +168,7 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
               {dayjs(cashUpSubmission.date).format("DD MMM YYYY")}
             </Descriptions.Item>
             <Descriptions.Item label="Status">
-              <Tag color={getStatusColor(cashUpSubmission.status)}>
-                {cashUpSubmission.status}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Risk Level">
-              <Tag color={getRiskLevelColor(cashUpSubmission.riskLevel)}>
-                {cashUpSubmission.riskLevel.toUpperCase()}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Submission Status">
-              <Tag color={getSubmissionStatusColor(cashUpSubmission.submissionStatus)}>
-                {cashUpSubmission.submissionStatus}
-              </Tag>
+              <Tag>{cashUpSubmission.status}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Submission Time">
               <div className="flex items-center gap-2">
@@ -263,25 +183,11 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
         <div className="space-y-4">
           <Title level={4}>Financial Details</Title>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="text-center p-4 border rounded-lg">
-              <Text className="text-gray-500">Receipt Total</Text>
+              <Text className="text-gray-500">Submitted Total</Text>
               <div className="text-xl font-semibold">
-                {cashUpSubmission.batchReceiptTotal ? formatCurrency(cashUpSubmission.batchReceiptTotal) : "--"}
-              </div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <Text className="text-gray-500">System Balance</Text>
-              <div className="text-xl font-semibold">
-                {cashUpSubmission.systemBalance ? formatCurrency(cashUpSubmission.systemBalance) : "--"}
-              </div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <Text className="text-gray-500">Discrepancy</Text>
-              <div className={`text-xl font-semibold ${cashUpSubmission.discrepancy === 0 ? "text-green-600" :
-                  cashUpSubmission.discrepancy > 0 ? "text-orange-600" : "text-red-600"
-                }`}>
-                {cashUpSubmission.discrepancy ? `${cashUpSubmission.discrepancy > 0 ? "+" : ""}${formatCurrency(cashUpSubmission.discrepancy)}` : "--"}
+                {cashUpSubmission.batchReceiptTotal !== undefined ? formatCurrency(cashUpSubmission.batchReceiptTotal) : "--"}
               </div>
             </div>
           </div>
@@ -311,26 +217,6 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
         )}
 
         {/* Resolution Status */}
-        {cashUpSubmission.isResolved && (
-          <div className="space-y-4">
-            <Title level={4}>Resolution Details</Title>
-
-            <Alert
-              message="Cash Up Submission Resolved"
-              description={`Resolved by ${cashUpSubmission.reviewedBy} on ${dayjs(cashUpSubmission.reviewedAt).format("DD MMM YYYY HH:mm")}`}
-              type="success"
-              showIcon
-            />
-
-            {cashUpSubmission.resolutionNotes && (
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <Text className="font-medium">Resolution Notes:</Text>
-                <div className="mt-2">{cashUpSubmission.resolutionNotes}</div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Review Notes */}
         {cashUpSubmission.notes && (
           <div className="space-y-4">
@@ -346,7 +232,7 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
 
         {/* Add Notes Form */}
         <div className="space-y-4">
-          <Title level={4}>Add Review Notes</Title>
+          <Title level={4}>Add Review Note</Title>
 
           <Form form={form} layout="vertical">
             <Form.Item
@@ -356,21 +242,9 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
             >
               <TextArea
                 rows={4}
-                placeholder="Add your review notes here..."
+                placeholder="Add your review note here..."
               />
             </Form.Item>
-
-            {isDiscrepancy && !cashUpSubmission.isResolved && (
-              <Form.Item
-                name="resolutionNotes"
-                label="Resolution Notes"
-              >
-                <TextArea
-                  rows={3}
-                  placeholder="Describe how the discrepancy was resolved..."
-                />
-              </Form.Item>
-            )}
           </Form>
         </div>
       </div>

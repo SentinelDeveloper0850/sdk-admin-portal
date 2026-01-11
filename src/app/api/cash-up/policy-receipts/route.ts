@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
-    if (!date || !submittedAmount || !submissionIdSuffix || !files) {
+    if (!date || submittedAmount === undefined || !submissionIdSuffix || !files) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }

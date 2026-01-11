@@ -18,6 +18,12 @@ export interface ICashUpSubmission {
   isLateSubmission: boolean;
   comments: string[];
   userId: string;
+  submittedAt?: string;
+  submittedById?: string;
+  submittedByName?: string;
+  reviewedAt?: string;
+  reviewedById?: string;
+  reviewedByName?: string;
 }
 
 const cashUpSubmissionSchema = new Schema({
@@ -52,7 +58,13 @@ const cashUpSubmissionSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'submitted', 'pending', 'approved', 'rejected'],
+    // Workflow:
+    // - draft: user still uploading/adjusting receipts
+    // - pending: user submitted for review
+    // - needs_changes: reviewer sent back with issues
+    // - resolved: user addressed issues and re-submitted
+    // - approved/rejected: reviewer final decision
+    enum: ["draft", "pending", "needs_changes", "resolved", "approved", "rejected"],
     default: 'draft',
   },
   isLateSubmission: {
@@ -63,6 +75,12 @@ const cashUpSubmissionSchema = new Schema({
     type: [String],
     default: [],
   },
+  submittedAt: { type: Date, required: false, default: null },
+  submittedById: { type: String, required: false, default: null },
+  submittedByName: { type: String, required: false, default: null },
+  reviewedAt: { type: Date, required: false, default: null },
+  reviewedById: { type: String, required: false, default: null },
+  reviewedByName: { type: String, required: false, default: null },
 }, { timestamps: true });
 
 export const CashUpSubmissionModel =

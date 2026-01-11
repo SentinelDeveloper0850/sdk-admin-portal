@@ -66,11 +66,11 @@ const PolicyReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
       const submissionData = {
         submissionIdSuffix: submissionIdSuffix,
         files: uploadedFiles,
-        date: new Date().toISOString(),
-        submittedAmount: form.getFieldValue("submittedAmount") || 0,
-        notes: form.getFieldValue("notes") || "",
+        date: dayjs(values.date).format("YYYY-MM-DD"),
+        submittedAmount: values.submittedAmount || 0,
+        notes: values.notes || "",
         submittedAt: new Date().toISOString(),
-        userId: user?.id || "",
+        userId: user?._id?.toString() || "",
       }
 
       const res = await fetch("/api/cash-up/policy-receipts", {
