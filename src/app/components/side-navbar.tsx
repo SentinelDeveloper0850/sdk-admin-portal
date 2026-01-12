@@ -56,9 +56,38 @@ const SideNavBar = () => {
     },
     {
       id: 9,
-      name: "Knowledge Hub",
+      name: "Communication",
       icon: <FileText size={18} />,
-      url: "/knowledge-hub",
+      url: "/communication",
+      group: "Communication",
+      children: [
+        {
+          id: "news",
+          name: "News & Announcements",
+          icon: <FileText size={18} />,
+          url: "/news",
+        },
+        {
+          id: "knowledge-hub",
+          name: "Knowledge Hub",
+          icon: <FileText size={18} />,
+          url: "/knowledge-hub",
+        },
+        {
+          id: "create-announcement",
+          name: "Create Announcement",
+          icon: <FilePen size={18} />,
+          url: "/news/create",
+          allowedRoles: [ERoles.Admin],
+        },
+        {
+          id: "create-knowledge-article",
+          name: "New Knowledge Article",
+          icon: <FilePen size={18} />,
+          url: "/knowledge-hub/create",
+          allowedRoles: [ERoles.Admin],
+        },
+      ],
     },
     {
       id: 3,
@@ -372,7 +401,9 @@ const SideNavBar = () => {
 
       <div className="grid gap-0">
         {filteredMenuItems.map((item) => {
-          const isActive = pathname.startsWith(item.url || "");
+          const isActive =
+            pathname.startsWith(item.url || "") ||
+            !!item.children?.some((child) => pathname.startsWith(child.url || ""));
           const baseClass =
             "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
           const borderClass = isActive
