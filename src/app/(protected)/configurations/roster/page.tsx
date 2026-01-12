@@ -6,6 +6,7 @@ import { Button, Card, DatePicker, Form, Select, Space, Spin, Table, Typography,
 import dayjs from "dayjs";
 
 import PageHeader from "@/app/components/page-header";
+import { useDutyRoster } from "@/app/hooks/use-duty-roster";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { ERoles } from "@/types/roles.enum";
 
@@ -44,11 +45,13 @@ function normalizeName(firstNames?: string, lastName?: string) {
 
 function DutyRosterPage() {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [date, setDate] = useState(dayjs());
   const [staff, setStaff] = useState<StaffOption[]>([]);
   const [rosterStaffIds, setRosterStaffIds] = useState<string[]>([]);
+
+  const dateKey = date.format("YYYY-MM-DD");
+  const { loading, roster, error: rosterError, refresh: refreshRoster } = useDutyRoster(dateKey);
 
   const fetchStaff = async () => {
     try {
@@ -69,28 +72,10 @@ function DutyRosterPage() {
     }
   };
 
-  const fetchRoster = async (dateKey: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/roster?date=${encodeURIComponent(dateKey)}`, { cache: "no-store" });
-      const json = (await res.json()) as RosterResponse;
-      if (!json?.success) throw new Error(json?.message || "Failed to load roster");
-
-      const ids = json.roster?.staff?.map((s) => String(s._id)) || [];
-      setRosterStaffIds(ids);
-      form.setFieldsValue({ note: json.roster?.note || "" });
-    } catch (e: any) {
-      message.error(e?.message || "Failed to load roster");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const saveRoster = async () => {
     try {
       const values = await form.validateFields();
       setSaving(true);
-      const dateKey = date.format("YYYY-MM-DD");
 
       const res = await fetch("/api/roster", {
         method: "POST",
@@ -104,7 +89,7 @@ function DutyRosterPage() {
       const json = await res.json();
       if (!json?.success) throw new Error(json?.message || "Failed to save roster");
       message.success("Roster saved");
-      await fetchRoster(dateKey);
+      await refreshRoster();
     } catch (e: any) {
       message.error(e?.message || "Failed to save roster");
     } finally {
@@ -117,9 +102,12 @@ function DutyRosterPage() {
   }, []);
 
   useEffect(() => {
-    fetchRoster(date.format("YYYY-MM-DD"));
+    // Sync local form state when roster changes
+    const ids = roster?.staff?.map((s) => String(s._id)) || [];
+    setRosterStaffIds(ids);
+    form.setFieldsValue({ note: roster?.note || "" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date]);
+  }, [roster]);
 
   const staffOptions = useMemo(() => staff.slice().sort((a, b) => a.name.localeCompare(b.name)), [staff]);
 
@@ -144,7 +132,7 @@ function DutyRosterPage() {
         subtitle="Select who was on duty for a given day (used to compute compliance expectations)"
         actions={[
           <Space key="actions">
-            <Button onClick={() => fetchRoster(date.format("YYYY-MM-DD"))}>Refresh</Button>
+            <Button onClick={refreshRoster}>Refresh</Button>
             <Button type="primary" className="text-black" onClick={saveRoster} loading={saving}>
               Save Roster
             </Button>
@@ -201,6 +189,8 @@ function DutyRosterPage() {
           <div className="flex justify-center py-10">
             <Spin />
           </div>
+        ) : rosterError ? (
+          <div className="text-red-600 font-medium">{rosterError}</div>
         ) : (
           <Table
             size="small"

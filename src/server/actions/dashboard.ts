@@ -3,9 +3,7 @@
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
 import { DailyActivityModel } from "@/app/models/hr/daily-activity.schema";
-import { DutyRosterModel } from "@/app/models/hr/duty-roster.schema";
 import { UserModel } from "@/app/models/hr/user.schema";
-import { StaffMemberModel } from "@/app/models/staff-member.schema";
 import { ClaimModel } from "@/app/models/scheme/claim.schema";
 import { EasypayTransactionModel } from "@/app/models/scheme/easypay-transaction.schema";
 import { EftTransactionModel } from "@/app/models/scheme/eft-transaction.schema";
@@ -15,6 +13,7 @@ import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { SchemeSocietyModel } from "@/app/models/scheme/scheme-society.schema";
 import { SocietyModel } from "@/app/models/scheme/society.schema";
 import { connectToDatabase } from "@/lib/db";
+import { getExpectedUsersFromDutyRoster } from "@/server/utils/duty-roster";
 
 export const getDashboardData = async () => {
   try {
@@ -114,30 +113,17 @@ export const getDashboardData = async () => {
     let expectedUsersForCompliance = allUsers;
     let complianceExpectedSource: "duty_roster" | "all_active_users" = "all_active_users";
     try {
-      const roster = await DutyRosterModel.findOne({ date: { $gte: yesterday, $lt: today } }).lean();
-      const staffIds = Array.isArray((roster as any)?.staffMemberIds) ? (roster as any).staffMemberIds : [];
+      const { expectedUsers, expectedSource } = await getExpectedUsersFromDutyRoster({
+        dayStart: yesterday,
+        dayEndExclusive: today,
+      });
 
-      if (roster && staffIds.length === 0) {
-        expectedUsersForCompliance = [];
+      if (expectedSource === "duty_roster") {
+        expectedUsersForCompliance = expectedUsers || [];
         complianceExpectedSource = "duty_roster";
-      } else if (roster && staffIds.length > 0) {
-        const staff = await StaffMemberModel.find({ _id: { $in: staffIds } })
-          .select({ _id: 1, userId: 1 })
-          .lean();
-        const userIds = staff.map((s: any) => String(s.userId || "")).filter(Boolean);
-        if (userIds.length > 0) {
-          expectedUsersForCompliance = await UserModel.find({
-            _id: { $in: userIds },
-            status: "Active",
-            deletedAt: { $exists: false },
-            role: { $nin: ["admin", "super_admin"] },
-          })
-            .select("_id name email avatarUrl status roles role")
-            .lean();
-        } else {
-          expectedUsersForCompliance = [];
-        }
-        complianceExpectedSource = "duty_roster";
+      } else {
+        expectedUsersForCompliance = allUsers;
+        complianceExpectedSource = "all_active_users";
       }
     } catch (e) {
       // non-fatal; keep fallback behavior
