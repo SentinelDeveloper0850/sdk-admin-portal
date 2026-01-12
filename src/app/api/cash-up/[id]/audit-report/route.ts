@@ -162,6 +162,7 @@ export async function POST(
 
     // If it doesn't balance: auto send-back + notify submitter
     let action: "stored" | "sent_back" = "stored";
+    let notifyFailed = false;
     if (!balanced) {
       (submission as any).status = "needs_changes";
       (submission as any).reviewedAt = new Date();
@@ -172,38 +173,51 @@ export async function POST(
         `[${new Date().toISOString()}] System: Audit report mismatch (expected net ${totals.netTotal.toFixed(2)} vs cashup ${cashupTotal.toFixed(2)}, delta ${delta.toFixed(2)}). Submission sent back.`,
       ];
 
-      const recipientUserId = String((submission as any).userId);
-      await NotificationModel.create({
-        recipientUserId,
-        actorUserId: String((user as any)._id),
-        type: "CASHUP_BALANCE_MISMATCH",
-        title: "Cashup requires attention",
-        message: `Your cashup does not balance against the uploaded audit report. Please review and resubmit.`,
-        link: "/cash-up/dashboard",
-        severity: "WARNING",
-        data: {
-          cashupSubmissionId: String((submission as any)._id),
-          date: new Date((submission as any).date).toISOString().slice(0, 10),
-          audit: {
-            incomeTotal: totals.incomeTotal,
-            expenseTotal: totals.expenseTotal,
-            netTotal: totals.netTotal,
-            cashupTotal,
-            delta,
-          },
-        },
-        readAt: null,
-      });
-
       action = "sent_back";
     }
 
     await submission.save();
 
+    // Best-effort notification (do not fail the request if this times out)
+    if (action === "sent_back") {
+      try {
+        const recipientUserId = String((submission as any).userId);
+        await NotificationModel.create({
+          recipientUserId,
+          actorUserId: String((user as any)._id),
+          type: "CASHUP_BALANCE_MISMATCH",
+          title: "Cashup requires attention",
+          message: `Your cashup does not balance against the uploaded audit report. Please review and resubmit.`,
+          link: "/cash-up/dashboard",
+          severity: "WARNING",
+          data: {
+            cashupSubmissionId: String((submission as any)._id),
+            date: new Date((submission as any).date).toISOString().slice(0, 10),
+            audit: {
+              incomeTotal: totals.incomeTotal,
+              expenseTotal: totals.expenseTotal,
+              netTotal: totals.netTotal,
+              cashupTotal,
+              delta,
+            },
+          },
+          readAt: null,
+        });
+      } catch (e) {
+        notifyFailed = true;
+        console.error("Failed to create cashup mismatch notification:", e);
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: balanced ? "Audit report uploaded" : "Audit report uploaded — submission sent back (does not balance)",
+      message: balanced
+        ? "Audit report uploaded"
+        : notifyFailed
+          ? "Audit report uploaded — submission sent back (notification failed)"
+          : "Audit report uploaded — submission sent back (does not balance)",
       action,
+      notifyFailed,
       audit: {
         incomeTotal: totals.incomeTotal,
         expenseTotal: totals.expenseTotal,
