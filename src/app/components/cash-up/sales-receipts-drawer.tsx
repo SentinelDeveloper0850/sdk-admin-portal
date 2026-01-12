@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 
 import { UploadOutlined } from "@ant-design/icons";
-import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, message, Space, Typography, Upload } from "antd";
+import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, message, Select, Space, Typography, Upload } from "antd";
 import dayjs from "dayjs";
 
 // import { useAuth } from "@/context/auth-context";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 interface Props {
   open: boolean;
@@ -29,6 +30,14 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =>
   const [isLateSubmission, setIsLateSubmission] = useState(false);
   // Direct pre-upload removed; we'll upload on submit
 
+  // Watch key fields so we can disable submit until valid
+  const wDate = Form.useWatch("date", form);
+  const wSubmittedAmount = Form.useWatch("submittedAmount", form);
+  const wPaymentMethod = Form.useWatch("paymentMethod", form);
+  const wCashAmount = Form.useWatch("cashAmount", form);
+  const wCardAmount = Form.useWatch("cardAmount", form);
+  const wReasonForCashTransactions = Form.useWatch("reasonForCashTransactions", form);
+
   const uploadFiles = async (files: File[], submissionIdSuffix: string) => {
     const uploadedFiles: any[] = [];
     for (const file of files) {
@@ -46,6 +55,31 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =>
     return uploadedFiles;
   };
 
+  const pmWatch = String(wPaymentMethod || "").toLowerCase();
+  const dateOk = !!wDate;
+  const amountOk = wSubmittedAmount !== undefined && wSubmittedAmount !== null && Number(wSubmittedAmount) >= 0;
+  const paymentOk = ["cash", "card", "both"].includes(pmWatch);
+  const splitOk =
+    pmWatch !== "both" ||
+    (wCashAmount !== undefined &&
+      wCashAmount !== null &&
+      wCardAmount !== undefined &&
+      wCardAmount !== null &&
+      Math.round((Number(wCashAmount) + Number(wCardAmount)) * 100) === Math.round(Number(wSubmittedAmount) * 100));
+  const reasonOk =
+    !["cash", "both"].includes(pmWatch) ||
+    (typeof wReasonForCashTransactions === "string" && wReasonForCashTransactions.trim().length > 0);
+
+  const canSubmit =
+    fileList.length > 0 &&
+    !processing &&
+    !uploading &&
+    dateOk &&
+    amountOk &&
+    paymentOk &&
+    splitOk &&
+    reasonOk;
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -62,11 +96,34 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =>
       const uploadedFiles = await uploadFiles(files, submissionIdSuffix);
       setUploading(false);
 
+      const pm = String(values.paymentMethod || "").toLowerCase();
+      const submitted = Number(values.submittedAmount || 0);
+      const cash = Number(values.cashAmount ?? 0);
+      const card = Number(values.cardAmount ?? 0);
+      const reason = String(values.reasonForCashTransactions || "").trim();
+
+      if (!["cash", "card", "both"].includes(pm)) {
+        message.error("Please select a payment method (cash, card, or both).");
+        return;
+      }
+      if (pm === "both" && Math.round((cash + card) * 100) !== Math.round(submitted * 100)) {
+        message.error("Cash + card must equal the submitted amount.");
+        return;
+      }
+      if (["cash", "both"].includes(pm) && !reason) {
+        message.error("Please provide a reason for cash transactions.");
+        return;
+      }
+
       const submissionData = {
         submissionIdSuffix,
         files: uploadedFiles,
         date: dayjs(values.date).format("YYYY-MM-DD"),
-        submittedAmount: values.submittedAmount || 0,
+        submittedAmount: submitted,
+        paymentMethod: pm,
+        cashAmount: pm === "both" ? cash : pm === "cash" ? submitted : undefined,
+        cardAmount: pm === "both" ? card : pm === "card" ? submitted : undefined,
+        reasonForCashTransactions: ["cash", "both"].includes(pm) ? reason : undefined,
         notes: values.notes || "",
         submittedAt: new Date().toISOString(),
       };
@@ -81,8 +138,8 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =>
 
       if (json.success) {
         message.success(json.message || "Receipts submitted successfully!");
-        resetForm();
         onClose();
+        resetForm();
         onSubmitted();
       } else {
         message.error(json.message || "Error submitting receipts");
@@ -141,7 +198,7 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =>
             type="primary"
             onClick={handleSubmit}
             loading={processing || uploading}
-            disabled={fileList.length === 0}
+            disabled={!canSubmit}
           >
             Submit Receipts
           </Button>
@@ -183,6 +240,67 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =>
 
           <Form.Item name="submittedAmount" label="Submitted Amount" rules={[{ required: true, message: "Please enter the submitted amount" }]}>
             <InputNumber prefix="R" min={0} step={100} style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item
+            name="paymentMethod"
+            label="Payment Method"
+            rules={[{ required: true, message: "Please select a payment method" }]}
+          >
+            <Select placeholder="Select payment method" disabled={processing}>
+              <Option value="cash">Cash</Option>
+              <Option value="card">Card</Option>
+              <Option value="both">Both (cash/card split)</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod || prev.submittedAmount !== cur.submittedAmount}>
+            {() => {
+              const pm = String(form.getFieldValue("paymentMethod") || "").toLowerCase();
+              if (pm !== "both") return null;
+              return (
+                <div className="grid grid-cols-2 gap-4">
+                  <Form.Item
+                    name="cashAmount"
+                    label="Cash Amount"
+                    rules={[{ required: true, message: "Enter cash amount" }]}
+                  >
+                    <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
+                  </Form.Item>
+                  <Form.Item
+                    name="cardAmount"
+                    label="Card Amount"
+                    rules={[{ required: true, message: "Enter card amount" }]}
+                  >
+                    <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
+                  </Form.Item>
+                </div>
+              );
+            }}
+          </Form.Item>
+
+          <Form.Item shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod}>
+            {() => {
+              const pm = String(form.getFieldValue("paymentMethod") || "").toLowerCase();
+              if (!["cash", "both"].includes(pm)) return null;
+              return (
+                <Form.Item
+                  name="reasonForCashTransactions"
+                  label="Reason for Cash Transactions"
+                  rules={[
+                    { required: true, whitespace: true, message: "Please provide a reason for cash transactions" },
+                    {
+                      validator: async (_, value) => {
+                        const v = String(value ?? "").trim();
+                        if (!v) throw new Error("Please provide a reason for cash transactions");
+                      },
+                    },
+                  ]}
+                >
+                  <Input placeholder="Explain why cash was used" disabled={processing} />
+                </Form.Item>
+              );
+            }}
           </Form.Item>
 
           <Form.Item

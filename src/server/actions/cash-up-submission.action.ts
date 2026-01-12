@@ -15,6 +15,7 @@ export interface ISubmissionData {
   bankDepositReference?: string;
   bankName?: string;
   depositorName?: string;
+  reasonForCashTransactions?: string;
   notes: string;
   submittedAt: string;
   userId: string;

@@ -10,6 +10,7 @@ export interface ICashUpSubmissionSubmission {
   bankDepositReference?: string;
   bankName?: string;
   depositorName?: string;
+  reasonForCashTransactions?: string;
   notes: string;
   submittedAt: string;
 }
@@ -65,6 +66,7 @@ const cashUpSubmissionSchema = new Schema({
       bankDepositReference: { type: String, required: false, trim: true, default: null },
       bankName: { type: String, required: false, trim: true, default: null },
       depositorName: { type: String, required: false, trim: true, default: null },
+      reasonForCashTransactions: { type: String, required: false, trim: true, default: null },
       notes: { type: String, required: false, trim: true },
       submittedAt: { type: Date, default: Date.now },
     })],
