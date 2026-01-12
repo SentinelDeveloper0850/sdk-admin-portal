@@ -4,6 +4,7 @@ import { Avatar, Badge, Chip } from '@nextui-org/react';
 import { Drawer, List, Space, Tabs, Tag, Typography } from 'antd';
 import { MessageCircle, Users, Wifi, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { io, type Socket } from 'socket.io-client';
 
 import { useAuth } from '@/context/auth-context';
 import { CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -30,6 +31,14 @@ type ConnectivityStatus = {
   latencyMs?: number;
 };
 
+type ChatMessage = {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  text: string;
+  ts: number;
+};
+
 export default function Presence({ showBadge = true }: { showBadge?: boolean }) {
   const [online, setOnline] = useState<OnlineUserFromServer[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -37,6 +46,11 @@ export default function Presence({ showBadge = true }: { showBadge?: boolean }) 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'online' | 'chat'>('online');
   const [chatUser, setChatUser] = useState<OnlineUserFromServer | null>(null);
+  const [chatDraft, setChatDraft] = useState('');
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [chatConnected, setChatConnected] = useState(false);
+  const [chatHistoryLoading, setChatHistoryLoading] = useState(false);
+  const [messagesByUserId, setMessagesByUserId] = useState<Record<string, ChatMessage[]>>({});
   const [connectivity, setConnectivity] = useState<ConnectivityStatus>({
     browserOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     reachable: true,
@@ -46,6 +60,7 @@ export default function Presence({ showBadge = true }: { showBadge?: boolean }) 
   const heartbeatIntervalRef = useRef<number | null>(null);
   const fetchIntervalRef = useRef<number | null>(null);
   const connectivityIntervalRef = useRef<number | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const currentUserId = user?._id?.toString?.();
   const otherOnline = currentUserId ? online.filter(u => u.id !== currentUserId) : online;
@@ -157,6 +172,15 @@ export default function Presence({ showBadge = true }: { showBadge?: boolean }) 
       if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
       if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
       if (connectivityIntervalRef.current) clearInterval(connectivityIntervalRef.current);
+
+      // Chat cleanup
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+      setChatConnected(false);
+      setChatError(null);
+      setChatUser(null);
+      setChatDraft('');
+      setMessagesByUserId({});
       return;
     }
 
@@ -208,6 +232,78 @@ export default function Presence({ showBadge = true }: { showBadge?: boolean }) 
       window.removeEventListener('offline', onOffline);
     };
   }, [user]);
+
+  // Real-time chat socket connection (auth via cookies).
+  useEffect(() => {
+    if (!user) return;
+    if (socketRef.current) return;
+
+    const s = io({
+      path: '/api/socket',
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelayMax: 5000,
+    });
+
+    socketRef.current = s;
+
+    const onConnect = () => {
+      setChatConnected(true);
+      setChatError(null);
+    };
+    const onDisconnect = () => {
+      setChatConnected(false);
+    };
+    const onConnectError = (err: any) => {
+      setChatConnected(false);
+      setChatError(err?.message || 'Chat connection failed');
+    };
+
+    const onMessage = (msg: ChatMessage) => {
+      const me = currentUserId;
+      if (!me) return;
+      const otherId = msg.fromUserId === me ? msg.toUserId : msg.fromUserId;
+      setMessagesByUserId((prev) => {
+        const existing = prev[otherId] ?? [];
+        // De-dupe by id
+        if (existing.some((m) => m.id === msg.id)) return prev;
+        return { ...prev, [otherId]: [...existing, msg] };
+      });
+    };
+
+    s.on('connect', onConnect);
+    s.on('disconnect', onDisconnect);
+    s.on('connect_error', onConnectError);
+    s.on('chat:message', onMessage);
+
+    return () => {
+      s.off('connect', onConnect);
+      s.off('disconnect', onDisconnect);
+      s.off('connect_error', onConnectError);
+      s.off('chat:message', onMessage);
+      s.disconnect();
+      socketRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const loadChatHistory = async (withUserId: string) => {
+    const s = socketRef.current;
+    if (!s || !chatConnected) return;
+    setChatHistoryLoading(true);
+    setChatError(null);
+    try {
+      const messages: ChatMessage[] = await new Promise((resolve) => {
+        s.emit('chat:history', { withUserId, limit: 50 }, (msgs: ChatMessage[]) => resolve(msgs ?? []));
+      });
+      setMessagesByUserId((prev) => ({ ...prev, [withUserId]: messages }));
+    } finally {
+      setChatHistoryLoading(false);
+    }
+  };
 
   // Determine sync status for display
   const getConnectionStatus = () => {
@@ -268,6 +364,44 @@ export default function Presence({ showBadge = true }: { showBadge?: boolean }) 
   const handleStartChat = (u: OnlineUserFromServer) => {
     setChatUser(u);
     setActiveTab('chat');
+    setChatDraft('');
+    if (socketRef.current) {
+      loadChatHistory(u.id);
+    }
+  };
+
+  const sendChatMessage = async () => {
+    if (!currentUserId) return;
+    const s = socketRef.current;
+    if (!s || !chatConnected) {
+      setChatError('Chat is not connected');
+      return;
+    }
+    if (!chatUser) {
+      setChatError('Select a user to chat');
+      return;
+    }
+    const text = chatDraft.trim();
+    if (!text) return;
+
+    setChatError(null);
+    const result = await new Promise<{ ok: true; message: ChatMessage } | { ok: false; error: string }>((resolve) => {
+      s.emit('chat:message', { toUserId: chatUser.id, text }, (r: any) => resolve(r));
+    });
+
+    if (!result.ok) {
+      setChatError(result.error || 'Failed to send message');
+      return;
+    }
+
+    // Message is also broadcast back, but append immediately for snappy UX.
+    const msg = result.message;
+    setMessagesByUserId((prev) => {
+      const existing = prev[chatUser.id] ?? [];
+      if (existing.some((m) => m.id === msg.id)) return prev;
+      return { ...prev, [chatUser.id]: [...existing, msg] };
+    });
+    setChatDraft('');
   };
 
   // Handle chip click - open drawer
@@ -380,7 +514,7 @@ export default function Presence({ showBadge = true }: { showBadge?: boolean }) 
                               type="button"
                               className="mx-2 w-full flex items-center gap-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg hover:opacity-90 text-left"
                               onClick={() => handleStartChat(u)}
-                              title="Open chat (coming soon)"
+                              title="Open chat"
                             >
                               <Avatar
                                 src={u.avatarUrl || ""}
@@ -414,7 +548,7 @@ export default function Presence({ showBadge = true }: { showBadge?: boolean }) 
                             {chatUser ? `Chat with ${chatUser.name}` : 'Chat'}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Chat is scaffolded here and will be wired up soon.
+                            {chatConnected ? 'Connected' : 'Connecting…'}
                           </p>
                         </div>
                         {getInternetTag()}
@@ -422,23 +556,72 @@ export default function Presence({ showBadge = true }: { showBadge?: boolean }) 
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4">
-                      {chatUser ? (
-                        <div className="text-sm text-gray-600 dark:text-gray-300">
-                          Messages will appear here once chat is enabled.
-                        </div>
-                      ) : (
+                      {!chatUser ? (
                         <div className="text-sm text-gray-600 dark:text-gray-300">
                           Select a user from the Online tab to start a chat.
+                        </div>
+                      ) : chatHistoryLoading ? (
+                        <div className="text-sm text-gray-600 dark:text-gray-300">
+                          Loading messages…
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {(messagesByUserId[chatUser.id] ?? []).map((m) => {
+                            const mine = m.fromUserId === currentUserId;
+                            return (
+                              <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                                <div
+                                  className={[
+                                    'max-w-[85%] rounded-lg px-3 py-2 text-sm',
+                                    mine
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100',
+                                  ].join(' ')}
+                                  title={new Date(m.ts).toLocaleString()}
+                                >
+                                  <div className="whitespace-pre-wrap break-words">{m.text}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {(messagesByUserId[chatUser.id] ?? []).length === 0 && (
+                            <div className="text-sm text-gray-600 dark:text-gray-300">
+                              No messages yet — say hi.
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
 
                     <div className="border-t border-gray-200 dark:border-gray-700 p-3">
-                      <input
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
-                        placeholder={chatUser ? "Type a message… (coming soon)" : "Select a user to chat"}
-                        disabled
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 disabled:opacity-60"
+                          placeholder={chatUser ? "Type a message…" : "Select a user to chat"}
+                          value={chatDraft}
+                          onChange={(e) => setChatDraft(e.target.value)}
+                          disabled={!chatUser || !chatConnected || !connectivity.reachable || !connectivity.browserOnline}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              sendChatMessage();
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="rounded-md bg-blue-600 text-white px-3 py-2 text-sm disabled:opacity-60"
+                          onClick={sendChatMessage}
+                          disabled={!chatUser || !chatConnected || !chatDraft.trim() || !connectivity.reachable || !connectivity.browserOnline}
+                        >
+                          Send
+                        </button>
+                      </div>
+                      {chatError && (
+                        <div className="mt-2 text-xs text-red-500">
+                          {chatError}
+                        </div>
+                      )}
                       {!connectivity.reachable && (
                         <div className="mt-2 text-xs text-red-500">
                           Connectivity issue detected — chat and presence updates may be delayed.
