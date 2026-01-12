@@ -66,8 +66,8 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
       const pm = String(values.paymentMethod || "").toLowerCase();
       const submitted = Number(values.submittedAmount || 0);
 
-      if (!["cash", "card", "both"].includes(pm)) {
-        message.error("Please select a payment method (cash, card, or both).");
+      if (!["cash", "card", "both", "bank_deposit"].includes(pm)) {
+        message.error("Please select a payment method (cash, card, both, or bank deposit).");
         return;
       }
 
@@ -78,6 +78,14 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
         return;
       }
 
+      if (pm === "bank_deposit") {
+        const ref = String(values.bankDepositReference || "").trim();
+        if (!ref) {
+          message.error("Please enter the bank deposit reference.");
+          return;
+        }
+      }
+
       const submissionData = {
         submissionIdSuffix,
         files: uploadedFiles,
@@ -86,6 +94,9 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
         paymentMethod: pm,
         cashAmount: pm === "both" ? cash : pm === "cash" ? submitted : undefined,
         cardAmount: pm === "both" ? card : pm === "card" ? submitted : undefined,
+        bankDepositReference: pm === "bank_deposit" ? String(values.bankDepositReference || "").trim() : undefined,
+        bankName: pm === "bank_deposit" ? String(values.bankName || "").trim() : undefined,
+        depositorName: pm === "bank_deposit" ? String(values.depositorName || "").trim() : undefined,
         notes: values.notes || "",
         submittedAt: new Date().toISOString(),
       };
@@ -213,6 +224,7 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
               <Option value="cash">Cash</Option>
               <Option value="card">Card</Option>
               <Option value="both">Both (part payments)</Option>
+              <Option value="bank_deposit">Bank Deposit (POP)</Option>
             </Select>
           </Form.Item>
 
@@ -235,6 +247,30 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
                     rules={[{ required: true, message: "Enter card amount" }]}
                   >
                     <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
+                  </Form.Item>
+                </div>
+              );
+            }}
+          </Form.Item>
+
+          <Form.Item shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod}>
+            {() => {
+              const pm = String(form.getFieldValue("paymentMethod") || "").toLowerCase();
+              if (pm !== "bank_deposit") return null;
+              return (
+                <div className="grid grid-cols-1 gap-4">
+                  <Form.Item
+                    name="bankDepositReference"
+                    label="Deposit Reference"
+                    rules={[{ required: true, message: "Please enter the deposit reference" }]}
+                  >
+                    <Input placeholder="e.g. bank ref / receipt ref" disabled={processing} />
+                  </Form.Item>
+                  <Form.Item name="bankName" label="Bank (Optional)">
+                    <Input placeholder="e.g. ABSA / FNB / Standard Bank" disabled={processing} />
+                  </Form.Item>
+                  <Form.Item name="depositorName" label="Depositor Name (Optional)">
+                    <Input placeholder="Name on the deposit slip" disabled={processing} />
                   </Form.Item>
                 </div>
               );

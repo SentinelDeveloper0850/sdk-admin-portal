@@ -8,9 +8,12 @@ export interface ISubmissionData {
   files: any[];
   date: string;
   submittedAmount: number;
-  paymentMethod?: "cash" | "card" | "both";
+  paymentMethod?: "cash" | "card" | "both" | "bank_deposit";
   cashAmount?: number;
   cardAmount?: number;
+  bankDepositReference?: string;
+  bankName?: string;
+  depositorName?: string;
   notes: string;
   submittedAt: string;
   userId: string;

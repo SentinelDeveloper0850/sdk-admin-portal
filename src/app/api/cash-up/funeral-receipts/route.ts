@@ -6,7 +6,20 @@ export async function POST(request: NextRequest) {
     // Handle JSON submission
     const body = await request.json();
 
-    const { submissionIdSuffix, files, date, submittedAmount, notes, submittedAt, paymentMethod, cashAmount, cardAmount } = body;
+    const {
+      submissionIdSuffix,
+      files,
+      date,
+      submittedAmount,
+      notes,
+      submittedAt,
+      paymentMethod,
+      cashAmount,
+      cardAmount,
+      bankDepositReference,
+      bankName,
+      depositorName,
+    } = body;
 
     // Get user from auth-token in request cookie
     const user = await getUserFromRequest(request);
@@ -27,9 +40,9 @@ export async function POST(request: NextRequest) {
     }
 
     const pm = String(paymentMethod || "").toLowerCase();
-    if (!["cash", "card", "both"].includes(pm)) {
+    if (!["cash", "card", "both", "bank_deposit"].includes(pm)) {
       return NextResponse.json(
-        { success: false, message: "Payment method is required (cash, card, or both)" },
+        { success: false, message: "Payment method is required (cash, card, both, or bank deposit)" },
         { status: 400 }
       );
     }
@@ -65,6 +78,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (pm === "bank_deposit") {
+      const ref = String(bankDepositReference || "").trim();
+      if (!ref) {
+        return NextResponse.json(
+          { success: false, message: "Bank deposit reference is required" },
+          { status: 400 }
+        );
+      }
+    }
+
     const submissionIdentifier = `${user._id}-${submissionIdSuffix}`;
 
     const { submitCashUpSubmissionData } = await import("@/server/actions/cash-up-submission.action");
@@ -73,9 +96,12 @@ export async function POST(request: NextRequest) {
       files,
       date,
       submittedAmount: submitted,
-      paymentMethod: pm as "cash" | "card" | "both",
+      paymentMethod: pm as "cash" | "card" | "both" | "bank_deposit",
       cashAmount: pm === "both" ? Number(cashAmount) : pm === "cash" ? submitted : undefined,
       cardAmount: pm === "both" ? Number(cardAmount) : pm === "card" ? submitted : undefined,
+      bankDepositReference: pm === "bank_deposit" ? String(bankDepositReference || "").trim() : undefined,
+      bankName: pm === "bank_deposit" ? String(bankName || "").trim() : undefined,
+      depositorName: pm === "bank_deposit" ? String(depositorName || "").trim() : undefined,
       notes,
       submittedAt,
       userId: user._id as unknown as string
