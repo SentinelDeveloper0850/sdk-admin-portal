@@ -15,7 +15,7 @@ export async function POST(
     }
 
     const roles = [(user as any)?.role, ...(((user as any)?.roles as string[]) || [])].filter(Boolean);
-    const canReview = roles.includes("admin") || roles.includes("cashup_reviewer");
+    const canReview = roles.includes("cashup_reviewer");
     if (!canReview) {
       return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }

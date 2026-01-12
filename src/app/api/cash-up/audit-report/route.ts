@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
 
     const roles = [(user as any)?.role, ...(((user as any)?.roles as string[]) || [])].filter(Boolean);
-    const canReview = roles.includes("admin") || roles.includes("cashup_reviewer");
+    const canReview = roles.includes("cashup_reviewer");
     if (!canReview) {
       return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
@@ -145,6 +145,9 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ success: false, message: "No file provided" }, { status: 400 });
     }
+
+    const targetUserIdFromForm = String(formData.get("userId") || "").trim();
+    const targetDateKeyFromForm = String(formData.get("dateKey") || "").trim(); // YYYY-MM-DD
 
     const fileName = String(file.name || "audit-report.xlsx");
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -162,57 +165,83 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
-    // Try to match user by name (must be unique)
-    const candidates = await UserModel.find({
-      name: { $regex: new RegExp(`^${reportName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
-    })
-      .select({ _id: 1, name: 1 })
-      .lean();
+    // If user+date were explicitly chosen (review index drawer), validate against them.
+    let targetUserId = "";
+    let expectedUserName = "";
+    let expectedDateKey = "";
 
-    if (candidates.length !== 1) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Could not uniquely match the report employee to a user. Please upload via a specific cashup submission instead.",
-          detected: { employeeName: reportName, date: reportDateKey },
-          matches: candidates.length,
-        },
-        { status: 400 }
-      );
-    }
+    if (targetUserIdFromForm && targetDateKeyFromForm) {
+      const userDoc = await UserModel.findById(targetUserIdFromForm).select({ _id: 1, name: 1 }).lean();
+      if (!userDoc) {
+        return NextResponse.json({ success: false, message: "Selected user not found" }, { status: 400 });
+      }
+      targetUserId = String((userDoc as any)._id);
+      expectedUserName = String((userDoc as any).name || "").trim();
+      expectedDateKey = targetDateKeyFromForm;
 
-    const targetUserId = String((candidates[0] as any)._id);
-    const expectedTokens = normName(String((candidates[0] as any).name || "")).split(" ").filter(Boolean);
-    const reportNorm = normName(reportName);
-    const nameMatches = expectedTokens.length ? expectedTokens.every((t) => reportNorm.includes(t)) : false;
-    if (!nameMatches) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Detected employee name does not match the resolved user name.",
-          detected: { employeeName: reportName, date: reportDateKey },
-          expected: { employeeName: String((candidates[0] as any).name || ""), date: reportDateKey },
-        },
-        { status: 400 }
-      );
+      const expectedTokens = normName(expectedUserName).split(" ").filter(Boolean);
+      const reportNorm = normName(reportName);
+      const nameMatches = expectedTokens.length ? expectedTokens.every((t) => reportNorm.includes(t)) : false;
+      const dateMatches = reportDateKey === expectedDateKey;
+
+      // If the report declares a FROM/TO range and it's not exactly the selected date, reject.
+      const fromKey = parsed.reportFromDateKey || reportDateKey;
+      const toKey = parsed.reportToDateKey || reportDateKey;
+      const rangeSingleDay = !fromKey || !toKey || fromKey === toKey;
+      const rangeMatchesDate = rangeSingleDay && (fromKey || reportDateKey) === expectedDateKey;
+
+      if (!nameMatches || !dateMatches || !rangeMatchesDate) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Uploaded report does not match the selected employee/date. Please upload the correct report.",
+            expected: { employeeName: expectedUserName, date: expectedDateKey },
+            detected: { employeeName: reportName, date: reportDateKey, from: fromKey, to: toKey },
+          },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Backwards-compatible behavior: match user by name (must be unique)
+      const candidates = await UserModel.find({
+        name: { $regex: new RegExp(`^${reportName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+      })
+        .select({ _id: 1, name: 1 })
+        .lean();
+
+      if (candidates.length !== 1) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Could not uniquely match the report employee to a user. Please select the user and date when uploading.",
+            detected: { employeeName: reportName, date: reportDateKey },
+            matches: candidates.length,
+          },
+          { status: 400 }
+        );
+      }
+
+      targetUserId = String((candidates[0] as any)._id);
+      expectedUserName = String((candidates[0] as any).name || "").trim();
+      expectedDateKey = reportDateKey;
     }
 
     const uploadResult = await uploadToCloudinaryRaw({
       buffer,
-      folder: `cash-up/audit-reports/${targetUserId}/${reportDateKey}`,
+      folder: `cash-up/audit-reports/${targetUserId}/${expectedDateKey}`,
       fileName,
     });
     const fileUrl = uploadResult?.secure_url ?? uploadResult?.url ?? null;
 
     await CashUpAuditReportModel.updateOne(
-      { userId: targetUserId, dateKey: reportDateKey },
+      { userId: targetUserId, dateKey: expectedDateKey },
       {
         $set: {
           userId: targetUserId,
-          dateKey: reportDateKey,
+          dateKey: expectedDateKey,
           employeeNameFromReport: reportName,
-          reportFromDateKey: parsed.reportFromDateKey || reportDateKey,
-          reportToDateKey: parsed.reportToDateKey || reportDateKey,
+          reportFromDateKey: parsed.reportFromDateKey || expectedDateKey,
+          reportToDateKey: parsed.reportToDateKey || expectedDateKey,
           fileUrl,
           fileName,
           incomeTotal: parsed.incomeTotal,
@@ -228,6 +257,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Audit report uploaded",
+      expected: { employeeName: expectedUserName, date: expectedDateKey },
       detected: { employeeName: reportName, date: reportDateKey },
       audit: {
         incomeTotal: parsed.incomeTotal,

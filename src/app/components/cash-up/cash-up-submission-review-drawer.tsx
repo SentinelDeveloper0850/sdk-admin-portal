@@ -94,7 +94,11 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
         message.success(json.message || "Audit report uploaded");
         onUpdated();
       } else {
-        message.error(json.message || "Failed to upload audit report");
+        if (json?.expected && json?.detected) {
+          message.error(`${json.message} (Expected: ${json.expected.employeeName} / ${json.expected.date}, Detected: ${json.detected.employeeName} / ${json.detected.date})`);
+        } else {
+          message.error(json.message || "Failed to upload audit report");
+        }
       }
     } catch (e: any) {
       message.error(e?.message || "Failed to upload audit report");

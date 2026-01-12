@@ -24,9 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Non-admins can only see their own
     const roles = [(user as any)?.role, ...(((user as any)?.roles as string[]) || [])].filter(Boolean);
-    const isAdmin = roles.includes("admin") || roles.includes("Admin");
-    const isCashupReviewer = roles.includes("cashup_reviewer");
-    const canReviewAll = isAdmin || isCashupReviewer;
+    const canReviewAll = roles.includes("cashup_reviewer");
 
     if (canReviewAll) {
       if (employeeIdParam) {
