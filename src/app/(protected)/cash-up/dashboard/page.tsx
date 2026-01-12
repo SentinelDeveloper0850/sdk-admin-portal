@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { AlertOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, PlusOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Space, Spin, Table, Tag, Typography } from "antd";
+import { Alert, Button, Card, Space, Spin, Table, Tag, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
 
 import PageHeader from "@/app/components/page-header";
@@ -38,6 +38,21 @@ interface ICashUpSubmission {
   isResolved: boolean;
   notes?: string;
   attachments: string[];
+  submissions?: Array<{
+    _idx: number;
+    invoiceNumber?: string | null;
+    paymentMethod?: string | null;
+    submittedAmount?: number | null;
+    cashAmount?: number | null;
+    cardAmount?: number | null;
+    bankDepositReference?: string | null;
+    bankName?: string | null;
+    depositorName?: string | null;
+    notes?: string | null;
+    submittedAt?: string | null;
+    files: string[];
+  }>;
+  isLateSubmission?: boolean;
 }
 
 interface WeeklySummary {
@@ -311,20 +326,6 @@ const CashUpDashboardPage = () => {
         </Tag>
       ),
     },
-    {
-      title: "Actions",
-      key: "actions",
-      align: "center",
-      render: (_: any, record: ICashUpSubmission) => (
-        <Space>
-          {["draft", "needs_changes"].includes(norm(record.status)) && isOwner(record) && (
-            <Button type="primary" className="text-black uppercase" onClick={() => submitForReview(record)}>
-              Submit for Review
-            </Button>
-          )}
-        </Space>
-      ),
-    },
   ];
 
   const statsCards = [
@@ -362,9 +363,28 @@ const CashUpDashboardPage = () => {
 
   const isOwner = (rec: ICashUpSubmission) => user?._id === rec.employeeId;
 
+  const today = dayjs().format("YYYY-MM-DD");
+
+  const currentSubmission = useMemo(() => {
+    // Prefer an "open" submission for today, else any for today, else null
+    const isOpen = (s?: string) => ["draft", "needs_changes"].includes(norm(s));
+    const todays = cashUpSubmissions.filter((s) => s.date === today);
+    return (
+      todays.find((s) => isOpen(s.status)) ||
+      todays.find((s) => isOpen(s.submissionStatus)) ||
+      todays[0] ||
+      null
+    );
+  }, [cashUpSubmissions, today]);
+
+  const previousSubmissions = useMemo(() => {
+    if (!currentSubmission) return cashUpSubmissions;
+    return cashUpSubmissions.filter((s) => s._id !== currentSubmission._id);
+  }, [cashUpSubmissions, currentSubmission]);
+
   // Check if the user has the user submitted today?
   const hasSubmittedToday = cashUpSubmissions.some(
-    a => a.date === dayjs().format('YYYY-MM-DD') && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
+    a => a.date === today && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
   );
 
   // Calculate the time remaining until the submission deadline in minutes
@@ -456,53 +476,142 @@ const CashUpDashboardPage = () => {
         <CashUpCountdown cutOffTime={"20:00:00"} />
       </div>
 
-      {/* Cash-Up Submissions Table */}
-      <Card size="small">
-        <div className="mb-4">
-          <Title level={4}>My Submissions</Title>
-        </div>
+      {/* Current vs Previous */}
+      <Tabs
+        defaultActiveKey="current"
+        items={[
+          {
+            key: "current",
+            label: "Current Submission",
+            children: (
+              <Card
+                size="small"
+                title={<span>Current Submission ({today})</span>}
+                extra={
+                  currentSubmission &&
+                  ["draft", "needs_changes"].includes(norm(currentSubmission.status)) &&
+                  isOwner(currentSubmission) && (
+                    <Button type="primary" className="text-black uppercase" onClick={() => submitForReview(currentSubmission)}>
+                      Submit for Review
+                    </Button>
+                  )
+                }
+              >
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <Spin size="large" />
+                  </div>
+                ) : !currentSubmission ? (
+                  <Alert
+                    type="info"
+                    showIcon
+                    message="No current submission"
+                    description="Upload receipts (Policy/Funeral/Sales) to start today’s cash-up."
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-3">
+                      <Tag color={getStatusColor(currentSubmission.status)} className="uppercase">
+                        {getStatusText(currentSubmission.status)}
+                      </Tag>
+                      {!!currentSubmission.isLateSubmission && <Tag color="red">LATE</Tag>}
+                      <Tag color="blue">Total: {formatCurrency(currentSubmission.batchReceiptTotal ?? 0)}</Tag>
+                    </div>
 
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Table
-            dataSource={cashUpSubmissions}
-            columns={columns as ColumnType<ICashUpSubmission>[]}
-            rowKey="_id"
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-            }}
-            locale={{ emptyText: "No submissions yet. Upload receipts to start today’s cash-up." }}
-            summary={(rows) => {
-              const total = rows.reduce((sum, r) => sum + (r.batchReceiptTotal ?? 0), 0);
-              return (
-                <Table.Summary fixed>
-                  <Table.Summary.Row>
-                    <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
-                    <Table.Summary.Cell index={1} align="right">{formatCurrency(total)}</Table.Summary.Cell>
-                    <Table.Summary.Cell index={2} />
-                    <Table.Summary.Cell index={3} />
-                    <Table.Summary.Cell index={4} />
-                    <Table.Summary.Cell index={5} />
-                    <Table.Summary.Cell index={6} />
-                  </Table.Summary.Row>
-                </Table.Summary>
-              );
-            }}
-          // onRow={(record) => ({
-          //   onClick: () => {
-          //     setSelectedCashUpSubmission(record);
-          //     setReviewDrawerOpen(true);
-          //   },
-          //   style: { cursor: 'pointer' }
-          // })}
-          />
-        )}
-      </Card>
+                    <Table
+                      size="small"
+                      rowKey={(r) => String(r._idx)}
+                      dataSource={(currentSubmission.submissions || []).map((s) => ({
+                        ...s,
+                        attachmentsCount: Array.isArray(s.files) ? s.files.length : 0,
+                      }))}
+                      columns={[
+                        {
+                          title: "#",
+                          dataIndex: "_idx",
+                          key: "_idx",
+                          width: 60,
+                          render: (v: number) => v + 1,
+                        },
+                        {
+                          title: "Invoice",
+                          dataIndex: "invoiceNumber",
+                          key: "invoiceNumber",
+                          render: (v: string) => v || "—",
+                        },
+                        {
+                          title: "Payment",
+                          dataIndex: "paymentMethod",
+                          key: "paymentMethod",
+                          render: (v: string) => (v ? String(v).replace("_", " ") : "—"),
+                        },
+                        {
+                          title: "Amount",
+                          dataIndex: "submittedAmount",
+                          key: "submittedAmount",
+                          align: "right",
+                          render: (v: number) => (v === null || v === undefined ? "—" : formatCurrency(Number(v))),
+                        },
+                        {
+                          title: "Notes",
+                          dataIndex: "notes",
+                          key: "notes",
+                          render: (v: string) => v || "—",
+                        },
+                        {
+                          title: "Submitted",
+                          dataIndex: "submittedAt",
+                          key: "submittedAt",
+                          render: (v: string) => (v ? dayjs(v).format("DD MMM HH:mm") : "—"),
+                        },
+                        {
+                          title: "Files",
+                          dataIndex: "attachmentsCount",
+                          key: "attachmentsCount",
+                          align: "center",
+                          render: (v: number, r: any) => (
+                            <span>{v || 0}</span>
+                          ),
+                        },
+                      ]}
+                      pagination={false}
+                      locale={{ emptyText: "No receipt entries yet for the current submission." }}
+                    />
+                  </div>
+                )}
+              </Card>
+            ),
+          },
+          {
+            key: "previous",
+            label: "Previous Submissions",
+            children: (
+              <Card size="small">
+                <div className="mb-4">
+                  <Title level={4}>Previous Submissions</Title>
+                </div>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <Table
+                    dataSource={previousSubmissions}
+                    columns={columns as ColumnType<ICashUpSubmission>[]}
+                    rowKey="_id"
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                    }}
+                    locale={{ emptyText: "No previous submissions." }}
+                  />
+                )}
+              </Card>
+            ),
+          },
+        ]}
+      />
 
       {/* Policy Receipts Drawer */}
       <PolicyReceiptsDrawer

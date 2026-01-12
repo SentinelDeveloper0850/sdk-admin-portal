@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
         employeeId: doc.userId,
         employeeName: userNameById.get(String(doc.userId)) || String(doc.userId),
         batchReceiptTotal: doc.totalAmount ?? null,
+        totalAmount: doc.totalAmount ?? null,
         systemBalance: null,
         discrepancy: 0,
         status: doc.status || "draft",
@@ -77,6 +78,22 @@ export async function GET(request: NextRequest) {
         notes: (doc.reviewNotes && doc.reviewNotes.length ? doc.reviewNotes.join("\n\n") : null),
         attachments: allAttachments.length ? allAttachments : (latestSubmission?.files || []),
         isLateSubmission: !!doc.isLateSubmission,
+        submissions: Array.isArray(doc.submissions)
+          ? doc.submissions.map((s: any, idx: number) => ({
+              _idx: idx,
+              invoiceNumber: s?.invoiceNumber ?? null,
+              paymentMethod: s?.paymentMethod ?? null,
+              submittedAmount: s?.submittedAmount ?? null,
+              cashAmount: s?.cashAmount ?? null,
+              cardAmount: s?.cardAmount ?? null,
+              bankDepositReference: s?.bankDepositReference ?? null,
+              bankName: s?.bankName ?? null,
+              depositorName: s?.depositorName ?? null,
+              notes: s?.notes ?? null,
+              submittedAt: s?.submittedAt ?? null,
+              files: Array.isArray(s?.files) ? s.files : [],
+            }))
+          : [],
       };
     });
 
