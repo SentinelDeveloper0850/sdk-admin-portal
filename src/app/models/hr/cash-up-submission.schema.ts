@@ -32,6 +32,19 @@ export interface ICashUpSubmission {
   reviewedAt?: string;
   reviewedById?: string;
   reviewedByName?: string;
+  auditReport?: {
+    fileUrl?: string;
+    fileName?: string;
+    incomeTotal?: number;
+    expenseTotal?: number;
+    netTotal?: number;
+    cashupTotal?: number;
+    delta?: number;
+    balanced?: boolean;
+    uploadedAt?: string;
+    uploadedById?: string;
+    uploadedByName?: string;
+  };
 }
 
 const cashUpSubmissionSchema = new Schema({
@@ -97,6 +110,26 @@ const cashUpSubmissionSchema = new Schema({
   reviewedAt: { type: Date, required: false, default: null },
   reviewedById: { type: String, required: false, default: null },
   reviewedByName: { type: String, required: false, default: null },
+  auditReport: {
+    type: new Schema(
+      {
+        fileUrl: { type: String, required: false, default: null },
+        fileName: { type: String, required: false, default: null },
+        incomeTotal: { type: Number, required: false, default: null },
+        expenseTotal: { type: Number, required: false, default: null },
+        netTotal: { type: Number, required: false, default: null },
+        cashupTotal: { type: Number, required: false, default: null },
+        delta: { type: Number, required: false, default: null },
+        balanced: { type: Boolean, required: false, default: null },
+        uploadedAt: { type: Date, required: false, default: null },
+        uploadedById: { type: String, required: false, default: null },
+        uploadedByName: { type: String, required: false, default: null },
+      },
+      { _id: false }
+    ),
+    required: false,
+    default: null,
+  },
 }, { timestamps: true });
 
 export const CashUpSubmissionModel =

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 import { ClockCircleOutlined, UserOutlined } from "@ant-design/icons";
-import { Alert, Button, Descriptions, Divider, Drawer, Form, Image, Input, Select, Space, Tag, Typography, message } from "antd";
+import { Alert, Button, Descriptions, Divider, Drawer, Form, Image, Input, Select, Space, Tag, Typography, Upload, message } from "antd";
 import dayjs from "dayjs";
 
 import { useAuth } from "@/context/auth-context";
@@ -38,6 +38,8 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
   const { user } = useAuth();
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
+  const [auditUploading, setAuditUploading] = useState(false);
+  const [auditResult, setAuditResult] = useState<any>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -75,6 +77,31 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleUploadAuditReport = async (file: File) => {
+    try {
+      setAuditUploading(true);
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/cash-up/${cashUpSubmission?._id}/audit-report`, {
+        method: "POST",
+        body: fd,
+      });
+      const json = await res.json();
+      if (json.success) {
+        setAuditResult(json.audit);
+        message.success(json.message || "Audit report uploaded");
+        onUpdated();
+      } else {
+        message.error(json.message || "Failed to upload audit report");
+      }
+    } catch (e: any) {
+      message.error(e?.message || "Failed to upload audit report");
+    } finally {
+      setAuditUploading(false);
+    }
+    return false;
   };
 
   const handleDecision = async (decision: "approve" | "reject" | "send_back") => {
@@ -143,6 +170,42 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
       }
     >
       <div className="space-y-6">
+        {/* Audit report upload (Excel) */}
+        <div className="space-y-2">
+          <Title level={4}>Audit Report (Excel)</Title>
+          <Text type="secondary">
+            Upload the Income & Expense Transaction Report (Excel). The system will parse totals and compare them to the cashup.
+          </Text>
+          <Upload.Dragger
+            name="file"
+            multiple={false}
+            accept=".xlsx,.xls,.csv"
+            beforeUpload={(file) => handleUploadAuditReport(file as any)}
+            showUploadList={false}
+            disabled={auditUploading || saving}
+          >
+            <p className="ant-upload-text">Click or drag the Excel report here to upload</p>
+            <p className="ant-upload-hint">Supported: .xlsx, .xls, .csv</p>
+          </Upload.Dragger>
+
+          {auditResult && (
+            <Alert
+              type={auditResult.balanced ? "success" : "error"}
+              showIcon
+              message={auditResult.balanced ? "Balances" : "Does not balance"}
+              description={
+                <div className="space-y-1">
+                  <div>Income: {formatCurrency(auditResult.incomeTotal || 0)}</div>
+                  <div>Expense: {formatCurrency(auditResult.expenseTotal || 0)}</div>
+                  <div>Net: {formatCurrency(auditResult.netTotal || 0)}</div>
+                  <div>Cashup total: {formatCurrency(auditResult.cashupTotal || 0)}</div>
+                  <div>Delta: {formatCurrency(auditResult.delta || 0)}</div>
+                </div>
+              }
+            />
+          )}
+        </div>
+
         {/* Late Submission Alert */}
         {isLateSubmission && (
           <Alert
