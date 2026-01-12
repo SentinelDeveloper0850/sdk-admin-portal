@@ -55,6 +55,12 @@ const SideNavBar = () => {
       // No allowedRoles => visible to all logged in users
     },
     {
+      id: 9,
+      name: "Knowledge Hub",
+      icon: <FileText size={18} />,
+      url: "/knowledge-hub",
+    },
+    {
       id: 3,
       name: "Operations",
       icon: <Briefcase size={18} />,
