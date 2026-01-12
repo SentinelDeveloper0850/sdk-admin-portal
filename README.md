@@ -230,6 +230,22 @@ This portal is organized around major operational domains. Each module combines 
   - **Email & Discord:** publish actions can trigger cross‑posting via `src/lib/email.ts` and `src/lib/discord.ts`.
   - **Notifications:** `src/app/components/notifications/notification-bell.tsx` and `/api/notifications` surface unread counts and per‑user notification feeds.
 
+### Knowledge Hub (company articles)
+
+- **Purpose:** Internal knowledge base for company-authored articles (Code of Conduct, SOPs, How-To guides, policies, training).
+- **UI:**
+  - Browse/search: `src/app/(protected)/knowledge-hub/page.tsx`
+  - Read: `src/app/(protected)/knowledge-hub/[slug]/page.tsx`
+  - Admin authoring: `src/app/(protected)/knowledge-hub/create/page.tsx`, `src/app/(protected)/knowledge-hub/[slug]/edit/page.tsx`
+- **APIs:** `src/app/api/knowledge/**`
+  - List/search + create: `GET/POST /api/knowledge`
+  - Detail + edit: `GET/PATCH /api/knowledge/[id]` (slug for reading, ObjectId for admin edit)
+  - Publish/unpublish: `POST /api/knowledge/[id]/publish`, `POST /api/knowledge/[id]/unpublish`
+- **Key model:** `KnowledgeArticleModel` – `src/app/models/system/knowledge-article.schema.ts`
+- **Access control:**
+  - **Readers:** any authenticated user can browse and read **published** articles
+  - **Authors/Editors:** currently **Admin-only** for create/edit/publish (via `withRoleGuard` + API checks)
+
 ### HR: staff, shifts, daily activity
 
 - **Purpose:** Model employees, shifts, and daily operational reporting per branch and user.
