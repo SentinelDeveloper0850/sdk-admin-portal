@@ -1,5 +1,7 @@
 import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
+import { CashUpAuditReportModel } from "@/app/models/hr/cash-up-audit-report.schema";
 import { NotificationModel } from "@/app/models/notification.schema";
+import UserModel from "@/app/models/hr/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { connectToDatabase } from "@/lib/db";
@@ -22,6 +24,24 @@ function normHeaderCell(value: unknown) {
     .trim()
     .toLowerCase()
     .replace(/[\s_-]+/g, "");
+}
+
+function normName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function dateKeyFrom(value: unknown): string | null {
+  // Supports "YYYY/MM/DD" or "YYYY-MM-DD" and Date objects
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  const s = String(value ?? "").trim();
+  const m = s.match(/(\d{4})[\/-](\d{2})[\/-](\d{2})/);
+  if (!m) return null;
+  return `${m[1]}-${m[2]}-${m[3]}`;
 }
 
 function extractTotalsFromWorkbook(buffer: Buffer) {
@@ -55,9 +75,12 @@ function extractTotalsFromWorkbook(buffer: Buffer) {
     throw new Error("Spreadsheet headers are missing TransactionType or Amount columns.");
   }
 
+  const idxEffDate = headerNorm.findIndex((h) => h === "effdate" || h === "eff-date");
+
   let incomeTotal = 0;
   let expenseTotal = 0;
   let rowsParsed = 0;
+  let firstDateKey: string | null = null;
 
   for (let i = headerRowIdx + 1; i < rows.length; i++) {
     const row = rows[i] || [];
@@ -73,10 +96,43 @@ function extractTotalsFromWorkbook(buffer: Buffer) {
     else continue;
 
     rowsParsed += 1;
+
+    if (!firstDateKey && idxEffDate !== -1) {
+      firstDateKey = dateKeyFrom(row[idxEffDate]);
+    }
   }
 
   const netTotal = incomeTotal - expenseTotal;
-  return { incomeTotal, expenseTotal, netTotal, rowsParsed, sheetName };
+  return { incomeTotal, expenseTotal, netTotal, rowsParsed, sheetName, firstDateKey };
+}
+
+function extractMetaFromWorkbook(buffer: Buffer) {
+  const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
+  const sheetName = wb.SheetNames[0];
+  if (!sheetName) throw new Error("No worksheet found in the uploaded file.");
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true }) as unknown[][];
+
+  let employeeNameFromReport: string | null = null;
+  let reportFromDateKey: string | null = null;
+  let reportToDateKey: string | null = null;
+
+  for (let i = 0; i < Math.min(rows.length, 30); i++) {
+    const row = Array.isArray(rows[i]) ? (rows[i] as unknown[]) : [];
+    const line = row.map((c) => String(c ?? "").trim()).filter(Boolean).join(" ");
+    const upper = line.toUpperCase();
+
+    const nameMatch = upper.match(/TRANSACTION REPORT\s+FOR\s+(.+)$/i);
+    if (!employeeNameFromReport && nameMatch?.[1]) {
+      employeeNameFromReport = String(nameMatch[1]).trim();
+    }
+
+    const fromToMatch = upper.match(/FROM\s+(\d{4}[\/-]\d{2}[\/-]\d{2})\s+TO\s+(\d{4}[\/-]\d{2}[\/-]\d{2})/i);
+    if (!reportFromDateKey && fromToMatch?.[1]) reportFromDateKey = dateKeyFrom(fromToMatch[1]);
+    if (!reportToDateKey && fromToMatch?.[2]) reportToDateKey = dateKeyFrom(fromToMatch[2]);
+  }
+
+  return { employeeNameFromReport, reportFromDateKey, reportToDateKey };
 }
 
 async function uploadToCloudinaryRaw(params: { buffer: Buffer; folder: string; fileName: string }) {
@@ -128,11 +184,50 @@ export async function POST(
     const buffer = Buffer.from(arrayBuffer);
 
     const totals = extractTotalsFromWorkbook(buffer);
+    const meta = extractMetaFromWorkbook(buffer);
 
     await connectToDatabase();
     const submission = await CashUpSubmissionModel.findById(id);
     if (!submission) {
       return NextResponse.json({ success: false, message: "Cash up submission not found" }, { status: 404 });
+    }
+
+    const submissionDateKey = new Date((submission as any).date).toISOString().slice(0, 10);
+    const submissionUserId = String((submission as any).userId);
+    const submissionUser = await UserModel.findById(submissionUserId).select({ name: 1 }).lean();
+    const expectedName = String((submissionUser as any)?.name || "").trim();
+
+    const reportName = String(meta.employeeNameFromReport || "").trim();
+    const reportFrom = meta.reportFromDateKey || totals.firstDateKey;
+    const reportTo = meta.reportToDateKey || totals.firstDateKey;
+
+    const reportDateKey = reportFrom || reportTo;
+    if (!reportName || !reportDateKey) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Could not detect employee name and/or report date from the spreadsheet.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate report belongs to this cashier and date
+    const expectedTokens = normName(expectedName).split(" ").filter(Boolean);
+    const reportNorm = normName(reportName);
+    const nameMatches = expectedTokens.length ? expectedTokens.every((t) => reportNorm.includes(t)) : false;
+    const dateMatches = reportDateKey === submissionDateKey;
+
+    if (!nameMatches || !dateMatches) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Uploaded report does not match the selected employee/date. Please upload the correct report.",
+          expected: { employeeName: expectedName, date: submissionDateKey },
+          detected: { employeeName: reportName, date: reportDateKey },
+        },
+        { status: 400 }
+      );
     }
 
     const cashupTotal = Number((submission as any).totalAmount ?? 0) || 0;
@@ -146,8 +241,33 @@ export async function POST(
       fileName,
     });
 
+    const fileUrl = uploadResult?.secure_url ?? uploadResult?.url ?? null;
+
+    // Upsert report for user+date (so we can reuse it even if cashup wasn't submitted yet)
+    await CashUpAuditReportModel.updateOne(
+      { userId: submissionUserId, dateKey: submissionDateKey },
+      {
+        $set: {
+          userId: submissionUserId,
+          dateKey: submissionDateKey,
+          employeeNameFromReport: reportName,
+          reportFromDateKey: reportFrom || submissionDateKey,
+          reportToDateKey: reportTo || submissionDateKey,
+          fileUrl,
+          fileName,
+          incomeTotal: totals.incomeTotal,
+          expenseTotal: totals.expenseTotal,
+          netTotal: totals.netTotal,
+          uploadedById: String((user as any)._id),
+          uploadedByName: String((user as any).name || ""),
+        },
+      },
+      { upsert: true }
+    );
+
+    // Mirror summary on the submission for quick rendering
     (submission as any).auditReport = {
-      fileUrl: uploadResult?.secure_url ?? uploadResult?.url ?? null,
+      fileUrl,
       fileName,
       incomeTotal: totals.incomeTotal,
       expenseTotal: totals.expenseTotal,
@@ -227,8 +347,10 @@ export async function POST(
         balanced,
         rowsParsed: totals.rowsParsed,
         sheetName: totals.sheetName,
-        fileUrl: uploadResult?.secure_url ?? uploadResult?.url ?? null,
+        fileUrl,
         fileName,
+        expected: { employeeName: expectedName, date: submissionDateKey },
+        detected: { employeeName: reportName, date: reportDateKey },
       },
     });
   } catch (error) {
