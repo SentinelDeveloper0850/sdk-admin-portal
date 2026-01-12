@@ -72,7 +72,7 @@ export interface IEftStats {
 export default function EftTransactionsPage() {
   const [transactions, setTransactions] = useState<IEftTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searching, setSearching] = useState<boolean>(true);
+  const [searching, setSearching] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
@@ -179,6 +179,7 @@ export default function EftTransactionsPage() {
 
   const searchByAmount = async ({ amount, filterType }: any) => {
     try {
+      setSearching(true);
       const response = await fetch("/api/transactions/eft/search", {
         method: "POST",
         headers: {
@@ -202,6 +203,8 @@ export default function EftTransactionsPage() {
     } catch (err) {
       console.log(err);
       setError("An error occurred while searching transactions.");
+    } finally {
+      setSearching(false);
     }
   };
 
