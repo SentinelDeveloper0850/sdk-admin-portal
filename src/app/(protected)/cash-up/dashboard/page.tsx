@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { AlertOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, PlusOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Space, Spin, Table, Tag, Tabs, Typography } from "antd";
+import { Alert, Button, Card, DatePicker, Modal, Space, Spin, Table, Tag, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
 
 import PageHeader from "@/app/components/page-header";
@@ -83,6 +83,10 @@ const CashUpDashboardPage = () => {
 
   const [selectedCashUpSubmission, setSelectedCashUpSubmission] = useState<ICashUpSubmission | null>(null);
   const [selectedWeek, setSelectedWeek] = useState(dayjs().format('YYYY-MM-DD'));
+
+  const [activeDate, setActiveDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [lateModalOpen, setLateModalOpen] = useState(false);
+  const [lateDate, setLateDate] = useState(dayjs().subtract(1, "day"));
 
   const fetchCashUpSubmissions = async () => {
     setLoading(true);
@@ -368,19 +372,18 @@ const CashUpDashboardPage = () => {
   const currentSubmission = useMemo(() => {
     // Prefer an "open" submission for today, else any for today, else null
     const isOpen = (s?: string) => ["draft", "needs_changes"].includes(norm(s));
-    const todays = cashUpSubmissions.filter((s) => s.date === today);
+    const todays = cashUpSubmissions.filter((s) => s.date === activeDate);
     return (
       todays.find((s) => isOpen(s.status)) ||
       todays.find((s) => isOpen(s.submissionStatus)) ||
       todays[0] ||
       null
     );
-  }, [cashUpSubmissions, today]);
+  }, [cashUpSubmissions, activeDate]);
 
   const previousSubmissions = useMemo(() => {
-    if (!currentSubmission) return cashUpSubmissions;
-    return cashUpSubmissions.filter((s) => s._id !== currentSubmission._id);
-  }, [cashUpSubmissions, currentSubmission]);
+    return cashUpSubmissions.filter((s) => s.date !== activeDate);
+  }, [cashUpSubmissions, activeDate]);
 
   const currentPaymentBreakdown = useMemo(() => {
     const subs = currentSubmission?.submissions || [];
@@ -416,6 +419,10 @@ const CashUpDashboardPage = () => {
     a => a.date === today && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
   );
 
+  const hasSubmittedForActiveDate = cashUpSubmissions.some(
+    a => a.date === activeDate && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
+  );
+
   // Calculate the time remaining until the submission deadline in minutes
   const cutoff = dayjs().hour(20).minute(0).second(0);
   const minutesToCutoff = cutoff.diff(dayjs(), 'minutes'); // positive before cutoff, negative after
@@ -439,13 +446,22 @@ const CashUpDashboardPage = () => {
         subtitle="Match today’s collections to ASSIT and resolve variances"
         actions={[
           <Space key="actions">
-            {!hasSubmittedToday && <Button onClick={() => setPolicyDrawerOpen(true)} type="dashed">
+            <Button onClick={() => setLateModalOpen(true)} type="default">
+              Capture Late Submission
+            </Button>
+            {activeDate !== today && (
+              <Button onClick={() => setActiveDate(today)} type="default">
+                Back to Today
+              </Button>
+            )}
+
+            {!hasSubmittedForActiveDate && <Button onClick={() => setPolicyDrawerOpen(true)} type="dashed">
               <PlusOutlined className="w-4 h-4" /> Policy Receipts
             </Button>}
-            {!hasSubmittedToday && <Button onClick={() => setFuneralDrawerOpen(true)} type="dashed">
+            {!hasSubmittedForActiveDate && <Button onClick={() => setFuneralDrawerOpen(true)} type="dashed">
               <PlusOutlined className="w-4 h-4" /> Funeral Receipts
             </Button>}
-            {!hasSubmittedToday && <Button onClick={() => setSalesDrawerOpen(true)} type="dashed">
+            {!hasSubmittedForActiveDate && <Button onClick={() => setSalesDrawerOpen(true)} type="dashed">
               <PlusOutlined className="w-4 h-4" /> Sales Receipts
             </Button>}
             {/* <Button
@@ -479,30 +495,30 @@ const CashUpDashboardPage = () => {
       <div className="flex gap-4">
         <div className="flex-1">
           {/* Daily Cash-Up Submitted */}
-          {hasSubmittedToday && <Alert type="success" showIcon description={<div className="space-y-2 w-full">
+          {activeDate === today && hasSubmittedToday && <Alert type="success" showIcon description={<div className="space-y-2 w-full">
             <h4 className="font-bold">Daily Cash-Up Submitted</h4>
             <p>You have already submitted your receipts for today. Please wait for the system to process your submissions. If you need to submit more receipts, please contact your manager.</p>
           </div>} />}
 
           {/* Cash-Up Due */}
-          {(!hasSubmittedToday && minutesToCutoff >= 60) && <Alert type="info" showIcon description={<div className="space-y-2 w-full">
+          {(activeDate === today && !hasSubmittedToday && minutesToCutoff >= 60) && <Alert type="info" showIcon description={<div className="space-y-2 w-full">
             <h4 className="font-bold"><span>Cash-Up Due</span></h4>
             <p>You have not submitted your receipts for today. Please ensure you submit your receipts before the cut-off time to avoid any penalties.</p>
           </div>} />}
 
           {/* Cutting It Close */}
-          {(!hasSubmittedToday && minutesToCutoff >= 0 && minutesToCutoff < 60) && <Alert type="warning" showIcon description={<div className="space-y-2 w-full">
+          {(activeDate === today && !hasSubmittedToday && minutesToCutoff >= 0 && minutesToCutoff < 60) && <Alert type="warning" showIcon description={<div className="space-y-2 w-full">
             <h4 className="font-bold">Cutting It Close</h4>
             <p>You have not submitted your receipts for today. Please submit your receipts before the cut-off time to avoid any penalties. You have {humanMins} minute{plural} left.</p>
           </div>} />}
 
           {/* Deadline Missed */}
-          {(!hasSubmittedToday && minutesToCutoff < 0) && <Alert type="error" showIcon description={<div className="space-y-2 w-full">
+          {(activeDate === today && !hasSubmittedToday && minutesToCutoff < 0) && <Alert type="error" showIcon description={<div className="space-y-2 w-full">
             <h4 className="font-bold">Deadline Missed</h4>
             <p>You have not submitted your receipts for today. You have missed the submission deadline and will be flagged as a late submission.</p>
           </div>} />}
         </div>
-        <CashUpCountdown cutOffTime={"20:00:00"} />
+        {activeDate === today && <CashUpCountdown cutOffTime={"20:00:00"} />}
       </div>
 
       {/* Current vs Previous */}
@@ -515,7 +531,7 @@ const CashUpDashboardPage = () => {
             children: (
               <Card
                 size="small"
-                title={<span>Current Submission ({today})</span>}
+                title={<span>Current Submission ({activeDate})</span>}
                 extra={
                   currentSubmission &&
                   ["draft", "needs_changes"].includes(norm(currentSubmission.status)) &&
@@ -539,6 +555,14 @@ const CashUpDashboardPage = () => {
                   />
                 ) : (
                   <div className="space-y-4">
+                    {activeDate !== today && (
+                      <Alert
+                        type="warning"
+                        showIcon
+                        message="Capturing a late submission"
+                        description={`You are capturing receipts for ${dayjs(activeDate).format("DD MMM YYYY")}. This will be flagged as a late submission when submitted for review.`}
+                      />
+                    )}
                     <div className="flex flex-wrap gap-3">
                       <Tag color={getStatusColor(currentSubmission.status)} className="uppercase">
                         {getStatusText(currentSubmission.status)}
@@ -645,11 +669,36 @@ const CashUpDashboardPage = () => {
         ]}
       />
 
+      <Modal
+        title="Capture Late Submission"
+        open={lateModalOpen}
+        onCancel={() => setLateModalOpen(false)}
+        onOk={() => {
+          const next = (lateDate || dayjs().subtract(1, "day")).format("YYYY-MM-DD");
+          setActiveDate(next);
+          setLateModalOpen(false);
+        }}
+        okText="Use this date"
+      >
+        <div className="space-y-3">
+          <div className="text-sm text-gray-600">
+            Select the date you want to capture receipts for.
+          </div>
+          <DatePicker
+            style={{ width: "100%" }}
+            value={lateDate}
+            onChange={(d) => d && setLateDate(d)}
+            disabledDate={(current) => !!current && current.isAfter(dayjs(), "day")}
+          />
+        </div>
+      </Modal>
+
       {/* Policy Receipts Drawer */}
       <PolicyReceiptsDrawer
         open={policyDrawerOpen}
         onClose={() => setPolicyDrawerOpen(false)}
         onSubmitted={fetchCashUpSubmissions}
+        defaultDate={activeDate}
       />
 
       {/* Funeral Receipts Drawer */}
@@ -657,6 +706,7 @@ const CashUpDashboardPage = () => {
         open={funeralDrawerOpen}
         onClose={() => setFuneralDrawerOpen(false)}
         onSubmitted={fetchCashUpSubmissions}
+        defaultDate={activeDate}
       />
 
       {/* Sales Receipts Drawer */}
@@ -664,6 +714,7 @@ const CashUpDashboardPage = () => {
         open={salesDrawerOpen}
         onClose={() => setSalesDrawerOpen(false)}
         onSubmitted={fetchCashUpSubmissions}
+        defaultDate={activeDate}
       />
       {/* Audit Review Drawer */}
       <CashUpSubmissionReviewDrawer

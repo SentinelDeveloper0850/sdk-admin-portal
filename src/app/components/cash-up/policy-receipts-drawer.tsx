@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { UploadOutlined } from "@ant-design/icons";
 import { Alert, Button, Col, DatePicker, Drawer, Form, Input, InputNumber, message, Row, Select, Space, Typography, Upload } from "antd";
@@ -16,11 +16,12 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSubmitted: () => void;
+  defaultDate?: string; // YYYY-MM-DD
 }
 
 // OCR removed for now
 
-const PolicyReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
+const PolicyReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defaultDate }) => {
   const { user } = useAuth();
   const [form] = Form.useForm();
   const [uploading, setUploading] = useState(false);
@@ -87,8 +88,8 @@ const PolicyReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
 
       setProcessing(true);
 
-      // Get submission identifier (user ID and date)
-      const submissionIdSuffix = dayjs().format("YYYYMMDD");
+      // Group submissions by the selected receipt date
+      const submissionIdSuffix = dayjs(values.date).format("YYYYMMDD");
 
       const files: File[] = fileList.map((file) => file.originFileObj as File);
 
@@ -153,12 +154,6 @@ const PolicyReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
     }
   };
 
-  const resetForm = () => {
-    form.resetFields();
-    setFileList([]);
-    setIsLateSubmission(false);
-  };
-
   const checkSubmissionTiming = (date: dayjs.Dayjs) => {
     const now = dayjs();
     const submissionDate = date || now;
@@ -167,6 +162,26 @@ const PolicyReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) =
 
     setIsLateSubmission(now.isAfter(gracePeriod));
   };
+
+  const resetForm = () => {
+    form.resetFields();
+    setFileList([]);
+    setIsLateSubmission(false);
+    if (defaultDate) {
+      const d = dayjs(defaultDate);
+      form.setFieldsValue({ date: d });
+      checkSubmissionTiming(d);
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    if (!defaultDate) return;
+    const d = dayjs(defaultDate);
+    form.setFieldsValue({ date: d });
+    checkSubmissionTiming(d);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultDate]);
 
   const uploadProps = {
     // prevent auto upload; we'll upload on submit
