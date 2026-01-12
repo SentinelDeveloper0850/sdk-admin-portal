@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
       submissionIdSuffix,
       files,
       date,
+      invoiceNumber,
       submittedAmount,
       notes,
       submittedAt,
@@ -35,6 +36,14 @@ export async function POST(request: NextRequest) {
     if (!date || submittedAmount === undefined || !submissionIdSuffix || !files) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const inv = String(invoiceNumber || "").trim();
+    if (!inv) {
+      return NextResponse.json(
+        { success: false, message: "Invoice number is required" },
         { status: 400 }
       );
     }
@@ -95,6 +104,7 @@ export async function POST(request: NextRequest) {
       submissionIdentifier,
       files,
       date,
+      invoiceNumber: inv,
       submittedAmount: submitted,
       paymentMethod: pm as "cash" | "card" | "both" | "bank_deposit",
       cashAmount: pm === "both" ? Number(cashAmount) : pm === "cash" ? submitted : undefined,

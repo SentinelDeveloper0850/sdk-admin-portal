@@ -7,6 +7,7 @@ export interface ISubmissionData {
   submissionIdentifier: string;
   files: any[];
   date: string;
+  invoiceNumber?: string;
   submittedAmount: number;
   paymentMethod?: "cash" | "card" | "both" | "bank_deposit";
   cashAmount?: number;

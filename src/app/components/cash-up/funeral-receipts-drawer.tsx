@@ -65,9 +65,14 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
 
       const pm = String(values.paymentMethod || "").toLowerCase();
       const submitted = Number(values.submittedAmount || 0);
+      const inv = String(values.invoiceNumber || "").trim();
 
       if (!["cash", "card", "both", "bank_deposit"].includes(pm)) {
         message.error("Please select a payment method (cash, card, both, or bank deposit).");
+        return;
+      }
+      if (!inv) {
+        message.error("Please enter the invoice number.");
         return;
       }
 
@@ -90,6 +95,7 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
         submissionIdSuffix,
         files: uploadedFiles,
         date: dayjs(values.date).format("YYYY-MM-DD"),
+        invoiceNumber: inv,
         submittedAmount: submitted,
         paymentMethod: pm,
         cashAmount: pm === "both" ? cash : pm === "cash" ? submitted : undefined,
@@ -209,6 +215,14 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
               onChange={checkSubmissionTiming}
               defaultValue={dayjs()}
             />
+          </Form.Item>
+
+          <Form.Item
+            name="invoiceNumber"
+            label="Invoice Number"
+            rules={[{ required: true, message: "Please enter the invoice number" }]}
+          >
+            <Input placeholder="Enter invoice number" disabled={processing} />
           </Form.Item>
 
           <Form.Item name="submittedAmount" label="Submitted Amount" rules={[{ required: true, message: "Please enter the submitted amount" }]}>
