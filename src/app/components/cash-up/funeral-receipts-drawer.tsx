@@ -30,6 +30,15 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
   const [isLateSubmission, setIsLateSubmission] = useState(false);
   // Direct pre-upload removed; we'll upload on submit
 
+  // Watch key fields so we can disable submit until valid
+  const wDate = Form.useWatch("date", form);
+  const wInvoiceNumber = Form.useWatch("invoiceNumber", form);
+  const wSubmittedAmount = Form.useWatch("submittedAmount", form);
+  const wPaymentMethod = Form.useWatch("paymentMethod", form);
+  const wCashAmount = Form.useWatch("cashAmount", form);
+  const wCardAmount = Form.useWatch("cardAmount", form);
+  const wBankDepositReference = Form.useWatch("bankDepositReference", form);
+
   const uploadFiles = async (files: File[], submissionIdSuffix: string) => {
     const uploadedFiles: any[] = [];
     for (const file of files) {
@@ -46,6 +55,33 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
     }
     return uploadedFiles;
   };
+
+  const pmWatch = String(wPaymentMethod || "").toLowerCase();
+  const invoiceOk = typeof wInvoiceNumber === "string" && wInvoiceNumber.trim().length > 0;
+  const dateOk = !!wDate;
+  const amountOk = wSubmittedAmount !== undefined && wSubmittedAmount !== null && Number(wSubmittedAmount) >= 0;
+  const paymentOk = ["cash", "card", "both", "bank_deposit"].includes(pmWatch);
+  const splitOk =
+    pmWatch !== "both" ||
+    (wCashAmount !== undefined &&
+      wCashAmount !== null &&
+      wCardAmount !== undefined &&
+      wCardAmount !== null &&
+      Math.round((Number(wCashAmount) + Number(wCardAmount)) * 100) === Math.round(Number(wSubmittedAmount) * 100));
+  const bankDepositOk =
+    pmWatch !== "bank_deposit" ||
+    (typeof wBankDepositReference === "string" && wBankDepositReference.trim().length > 0);
+
+  const canSubmit =
+    fileList.length > 0 &&
+    !processing &&
+    !uploading &&
+    dateOk &&
+    invoiceOk &&
+    amountOk &&
+    paymentOk &&
+    splitOk &&
+    bankDepositOk;
 
   const handleSubmit = async () => {
     try {
@@ -177,7 +213,7 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
             type="primary"
             onClick={handleSubmit}
             loading={processing || uploading}
-            disabled={fileList.length === 0}
+            disabled={!canSubmit}
           >
             Submit Receipts
           </Button>
@@ -220,7 +256,15 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
           <Form.Item
             name="invoiceNumber"
             label="Invoice Number"
-            rules={[{ required: true, message: "Please enter the invoice number" }]}
+            rules={[
+              { required: true, whitespace: true, message: "Please enter the invoice number" },
+              {
+                validator: async (_, value) => {
+                  const v = String(value ?? "").trim();
+                  if (!v) throw new Error("Please enter the invoice number");
+                },
+              },
+            ]}
           >
             <Input placeholder="Enter invoice number" disabled={processing} />
           </Form.Item>
@@ -276,7 +320,15 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
                   <Form.Item
                     name="bankDepositReference"
                     label="Deposit Reference"
-                    rules={[{ required: true, message: "Please enter the deposit reference" }]}
+                    rules={[
+                      { required: true, whitespace: true, message: "Please enter the deposit reference" },
+                      {
+                        validator: async (_, value) => {
+                          const v = String(value ?? "").trim();
+                          if (!v) throw new Error("Please enter the deposit reference");
+                        },
+                      },
+                    ]}
                   >
                     <Input placeholder="e.g. bank ref / receipt ref" disabled={processing} />
                   </Form.Item>
