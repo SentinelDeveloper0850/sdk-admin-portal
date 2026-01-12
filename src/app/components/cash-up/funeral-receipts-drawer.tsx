@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 
 import { UploadOutlined } from "@ant-design/icons";
-import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, message, Space, Typography, Upload } from "antd";
+import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, message, Space, Typography, Upload, Select } from "antd";
 import dayjs from "dayjs";
 
 // import { useAuth } from "@/context/auth-context";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 interface Props {
   open: boolean;
@@ -62,11 +63,29 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
       const uploadedFiles = await uploadFiles(files, submissionIdSuffix);
       setUploading(false);
 
+      const pm = String(values.paymentMethod || "").toLowerCase();
+      const submitted = Number(values.submittedAmount || 0);
+
+      if (!["cash", "card", "both"].includes(pm)) {
+        message.error("Please select a payment method (cash, card, or both).");
+        return;
+      }
+
+      const cash = Number(values.cashAmount ?? 0);
+      const card = Number(values.cardAmount ?? 0);
+      if (pm === "both" && Math.round((cash + card) * 100) !== Math.round(submitted * 100)) {
+        message.error("Cash + card must equal the submitted amount.");
+        return;
+      }
+
       const submissionData = {
         submissionIdSuffix,
         files: uploadedFiles,
         date: dayjs(values.date).format("YYYY-MM-DD"),
-        submittedAmount: values.submittedAmount || 0,
+        submittedAmount: submitted,
+        paymentMethod: pm,
+        cashAmount: pm === "both" ? cash : pm === "cash" ? submitted : undefined,
+        cardAmount: pm === "both" ? card : pm === "card" ? submitted : undefined,
         notes: values.notes || "",
         submittedAt: new Date().toISOString(),
       };
@@ -183,6 +202,43 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
 
           <Form.Item name="submittedAmount" label="Submitted Amount" rules={[{ required: true, message: "Please enter the submitted amount" }]}>
             <InputNumber prefix="R" min={0} step={100} style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item
+            name="paymentMethod"
+            label="Payment Method"
+            rules={[{ required: true, message: "Please select a payment method" }]}
+          >
+            <Select placeholder="Select payment method" disabled={processing}>
+              <Option value="cash">Cash</Option>
+              <Option value="card">Card</Option>
+              <Option value="both">Both (part payments)</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod || prev.submittedAmount !== cur.submittedAmount}>
+            {() => {
+              const pm = String(form.getFieldValue("paymentMethod") || "").toLowerCase();
+              if (pm !== "both") return null;
+              return (
+                <div className="grid grid-cols-2 gap-4">
+                  <Form.Item
+                    name="cashAmount"
+                    label="Cash Amount"
+                    rules={[{ required: true, message: "Enter cash amount" }]}
+                  >
+                    <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
+                  </Form.Item>
+                  <Form.Item
+                    name="cardAmount"
+                    label="Card Amount"
+                    rules={[{ required: true, message: "Enter card amount" }]}
+                  >
+                    <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
+                  </Form.Item>
+                </div>
+              );
+            }}
           </Form.Item>
 
           <Form.Item

@@ -3,6 +3,9 @@ import mongoose, { Schema } from "mongoose";
 export interface ICashUpSubmissionSubmission {
   files: any[]; // Temporary until we know the type that is returned from cloudinary upload
   submittedAmount: number;
+  paymentMethod?: "cash" | "card" | "both";
+  cashAmount?: number;
+  cardAmount?: number;
   notes: string;
   submittedAt: string;
 }
@@ -51,6 +54,9 @@ const cashUpSubmissionSchema = new Schema({
     type: [new Schema({
       files: { type: [Schema.Types.Mixed], required: true },
       submittedAmount: { type: Number, required: true, min: [0, "Submitted amount cannot be negative"], },
+      paymentMethod: { type: String, required: false, enum: ["cash", "card", "both"], default: null },
+      cashAmount: { type: Number, required: false, min: [0, "Cash amount cannot be negative"], default: null },
+      cardAmount: { type: Number, required: false, min: [0, "Card amount cannot be negative"], default: null },
       notes: { type: String, required: false, trim: true },
       submittedAt: { type: Date, default: Date.now },
     })],

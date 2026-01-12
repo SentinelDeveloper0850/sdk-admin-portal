@@ -8,6 +8,9 @@ export interface ISubmissionData {
   files: any[];
   date: string;
   submittedAmount: number;
+  paymentMethod?: "cash" | "card" | "both";
+  cashAmount?: number;
+  cardAmount?: number;
   notes: string;
   submittedAt: string;
   userId: string;
