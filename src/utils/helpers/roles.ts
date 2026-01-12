@@ -4,6 +4,7 @@ export const roleLabels: Record<string, string> = {
 
   // Claims & Compliance
   claims_officer: "Claims Officer",
+  compliance_officer: "Compliance Officer",
   compliance_auditor: "Compliance Auditor",
 
   // HR & Finance
@@ -42,6 +43,7 @@ export const groupedRoles = [
     category: "Claims & Compliance",
     roles: [
       { key: "claims_officer", label: "Claims Officer", description: "Manages policyholder claims" },
+      { key: "compliance_officer", label: "Compliance Officer", description: "Monitors operational compliance across modules" },
       { key: "compliance_auditor", label: "Compliance Auditor", description: "Audits system and policy compliance" },
     ],
   },
@@ -86,6 +88,7 @@ export const roles = ["admin", "member"];
 export const additionalRoles = [
   // Claims & Compliance
   "claims_officer", // Can submit and manage claims
+  "compliance_officer", // Can view compliance reporting across modules
   "compliance_auditor", // Can audit system usage, policy adherence
 
   // HR & Finance

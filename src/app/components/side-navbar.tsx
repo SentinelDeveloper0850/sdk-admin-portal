@@ -232,6 +232,13 @@ const SideNavBar = () => {
           url: "/reports/audit-reports",
           allowedRoles: [ERoles.CashupReviewer],
         },
+        {
+          id: "compliance-reporting",
+          name: "Compliance",
+          icon: <Shield size={18} />,
+          url: "/reports/compliance",
+          allowedRoles: [ERoles.Admin, ERoles.ComplianceOfficer],
+        },
       ],
     },
     {

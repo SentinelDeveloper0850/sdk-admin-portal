@@ -28,6 +28,12 @@ const groupedRoles = [
         icon: <ClipboardList size={16} />,
       },
       {
+        key: "compliance_officer",
+        label: "Compliance Officer",
+        description: "Monitors operational compliance across modules",
+        icon: <FileCheck size={16} />,
+      },
+      {
         key: "compliance_auditor",
         label: "Compliance Auditor",
         description: "Audits system and policy compliance",

@@ -4,6 +4,7 @@ export enum ERoles {
 
   // Claims & Compliance
   ClaimsOfficer = "claims_officer",
+  ComplianceOfficer = "compliance_officer",
   ComplianceAuditor = "compliance_auditor",
 
   // HR & Finance
