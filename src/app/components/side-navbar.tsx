@@ -307,6 +307,13 @@ const SideNavBar = () => {
           allowedRoles: [ERoles.Admin],
           icon: <Settings size={18} />,
         },
+        {
+          id: "duty-roster-config",
+          name: "Duty Roster",
+          url: "/configurations/roster",
+          allowedRoles: [ERoles.Admin, ERoles.HRManager],
+          icon: <Settings size={18} />,
+        },
       ],
     },
   ];

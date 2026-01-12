@@ -26,6 +26,7 @@ type ComplianceBlock = {
   totalUsers: number;
   compliantCount: number;
   nonCompliantCount: number;
+  expectedSource?: "duty_roster" | "all_active_users";
 };
 
 type DashboardResponse = {
@@ -75,11 +76,18 @@ function ComplianceSection(props: { title: string; subtitle: string; block?: Com
   const b = props.block;
   if (!b) return null;
 
+  const sourceText =
+    b.expectedSource === "duty_roster"
+      ? "Expected users sourced from Duty Roster."
+      : "Expected users defaulted to all active users (no roster for the day).";
+
   return (
     <Card size="small" className="bg-white dark:bg-zinc-900">
       <div className="flex flex-col gap-1 mb-3">
         <div className="text-base font-semibold">{props.title}</div>
-        <Text type="secondary">{props.subtitle}</Text>
+        <Text type="secondary">
+          {props.subtitle} • {sourceText}
+        </Text>
       </div>
 
       <div className="flex flex-wrap gap-6 mb-4">

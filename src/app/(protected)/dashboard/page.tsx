@@ -85,6 +85,7 @@ interface DailyActivityCompliance {
   totalUsers: number;
   compliantCount: number;
   nonCompliantCount: number;
+  expectedSource?: "duty_roster" | "all_active_users";
 }
 
 interface DashboardData {
@@ -258,6 +259,9 @@ const DashboardPage: React.FC = () => {
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Based on yesterday's reports (cutoff: 18:00 daily) • Excludes admins and inactive users
+                {dashboardData.dailyActivityCompliance.expectedSource === "duty_roster"
+                  ? " • Expected users from Duty Roster"
+                  : " • Expected users: all active users (no roster)"}
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -428,6 +432,9 @@ const DashboardPage: React.FC = () => {
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Based on yesterday's cashups (cutoff: 20:00 daily) • Cashiers only • Excludes admins and inactive users
+                {dashboardData.cashUpSubmissionCompliance.expectedSource === "duty_roster"
+                  ? " • Expected users from Duty Roster"
+                  : " • Expected users: all active users (no roster)"}
               </p>
             </div>
             <div className="flex items-center gap-4">

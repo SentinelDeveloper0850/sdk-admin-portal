@@ -3,7 +3,9 @@
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
 import { DailyActivityModel } from "@/app/models/hr/daily-activity.schema";
+import { DutyRosterModel } from "@/app/models/hr/duty-roster.schema";
 import { UserModel } from "@/app/models/hr/user.schema";
+import { StaffMemberModel } from "@/app/models/staff-member.schema";
 import { ClaimModel } from "@/app/models/scheme/claim.schema";
 import { EasypayTransactionModel } from "@/app/models/scheme/easypay-transaction.schema";
 import { EftTransactionModel } from "@/app/models/scheme/eft-transaction.schema";
@@ -107,6 +109,41 @@ export const getDashboardData = async () => {
         new Set([u?.role, ...((u?.roles as string[]) || [])].filter(Boolean).map((r: string) => String(r)))
       );
 
+    // Determine who was expected to submit (based on duty roster)
+    // If no roster exists for yesterday, fall back to all active users (current behavior).
+    let expectedUsersForCompliance = allUsers;
+    let complianceExpectedSource: "duty_roster" | "all_active_users" = "all_active_users";
+    try {
+      const roster = await DutyRosterModel.findOne({ date: { $gte: yesterday, $lt: today } }).lean();
+      const staffIds = Array.isArray((roster as any)?.staffMemberIds) ? (roster as any).staffMemberIds : [];
+
+      if (roster && staffIds.length === 0) {
+        expectedUsersForCompliance = [];
+        complianceExpectedSource = "duty_roster";
+      } else if (roster && staffIds.length > 0) {
+        const staff = await StaffMemberModel.find({ _id: { $in: staffIds } })
+          .select({ _id: 1, userId: 1 })
+          .lean();
+        const userIds = staff.map((s: any) => String(s.userId || "")).filter(Boolean);
+        if (userIds.length > 0) {
+          expectedUsersForCompliance = await UserModel.find({
+            _id: { $in: userIds },
+            status: "Active",
+            deletedAt: { $exists: false },
+            role: { $nin: ["admin", "super_admin"] },
+          })
+            .select("_id name email avatarUrl status roles role")
+            .lean();
+        } else {
+          expectedUsersForCompliance = [];
+        }
+        complianceExpectedSource = "duty_roster";
+      }
+    } catch (e) {
+      // non-fatal; keep fallback behavior
+      console.error("Failed to load duty roster for compliance:", e);
+    }
+
     // Get yesterday's daily activity reports - using DD/MM/YYYY format
     const yesterdayFormattedDDMMYYYY = yesterday.toLocaleDateString('en-GB'); // This gives DD/MM/YYYY format
     const yesterdaysDailyActivities = await DailyActivityModel.find({
@@ -117,11 +154,11 @@ export const getDashboardData = async () => {
     const compliantUserIds = new Set(yesterdaysDailyActivities.map(activity => activity.userId.toString()));
 
     // Separate users into compliant and non-compliant
-    const compliantUsers = allUsers.filter((user: any) => user.role !== "admin" && user.role !== "super_admin" && user.status !== "Inactive").filter((user: any) => compliantUserIds.has(user._id.toString()));
-    const nonCompliantUsers = allUsers.filter((user: any) => user.role !== "admin" && user.role !== "super_admin" && user.status !== "Inactive").filter((user: any) => !compliantUserIds.has(user._id.toString()));
+    const compliantUsers = expectedUsersForCompliance.filter((user: any) => compliantUserIds.has(user._id.toString()));
+    const nonCompliantUsers = expectedUsersForCompliance.filter((user: any) => !compliantUserIds.has(user._id.toString()));
 
     // Cashup submission compliance (Cashiers only)
-    const cashupExpectedUsers = allUsers.filter((u: any) => getUserRoles(u).includes("cashier"));
+    const cashupExpectedUsers = expectedUsersForCompliance.filter((u: any) => getUserRoles(u).includes("cashier"));
 
     const yesterdaysCashupSubmissions = await CashUpSubmissionModel.find({
       date: { $gte: yesterday, $lt: today },
@@ -226,6 +263,7 @@ export const getDashboardData = async () => {
 
         // Daily activity compliance
         dailyActivityCompliance: {
+          expectedSource: complianceExpectedSource,
           compliantUsers: compliantUsers.map(user => ({
             _id: user._id,
             name: user.name,
@@ -242,14 +280,15 @@ export const getDashboardData = async () => {
             status: user.status,
             roles: user.roles
           })),
-          complianceRate: allUsers.length > 0 ? (compliantUsers.length / allUsers.length) * 100 : 0,
-          totalUsers: allUsers.length,
+          complianceRate: expectedUsersForCompliance.length > 0 ? (compliantUsers.length / expectedUsersForCompliance.length) * 100 : 0,
+          totalUsers: expectedUsersForCompliance.length,
           compliantCount: compliantUsers.length,
           nonCompliantCount: nonCompliantUsers.length
         },
 
         // Cashup submission compliance (Cashiers only)
         cashUpSubmissionCompliance: {
+          expectedSource: complianceExpectedSource,
           compliantUsers: cashupCompliantUsers.map((user: any) => ({
             _id: user._id,
             name: user.name,
