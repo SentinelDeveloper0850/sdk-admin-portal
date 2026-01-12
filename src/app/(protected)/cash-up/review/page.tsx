@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Button, Card, Space, Spin, Table, Tag, Typography, message } from "antd";
+import { Button, Card, Space, Spin, Table, Tag, Tabs, Typography, message } from "antd";
 import dayjs from "dayjs";
 
 import CashUpSubmissionReviewDrawer from "@/app/components/cash-up/cash-up-submission-review-drawer";
@@ -70,9 +70,16 @@ const CashUpReviewPage = () => {
     fetchAll();
   }, []);
 
-  const reviewQueue = useMemo(() => {
+  const byStatus = useMemo(() => {
     const n = (s?: string) => (s || "").toLowerCase();
-    return rows.filter((r) => ["pending", "resolved"].includes(n(r.status)));
+    const all = rows;
+    const pending = rows.filter((r) => n(r.status) === "pending");
+    const resolved = rows.filter((r) => n(r.status) === "resolved");
+    const needsChanges = rows.filter((r) => n(r.status) === "needs_changes");
+    const approved = rows.filter((r) => n(r.status) === "approved");
+    const rejected = rows.filter((r) => n(r.status) === "rejected");
+    const draft = rows.filter((r) => n(r.status) === "draft");
+    return { all, pending, resolved, needsChanges, approved, rejected, draft };
   }, [rows]);
 
   const columns = [
@@ -141,24 +148,109 @@ const CashUpReviewPage = () => {
       />
 
       <Card size="small">
-        <div className="mb-4 flex items-center justify-between">
-          <Title level={4} style={{ margin: 0 }}>Queue</Title>
-          <Text className="text-gray-500">{reviewQueue.length} pending</Text>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Table
-            dataSource={reviewQueue}
-            columns={columns}
-            rowKey="_id"
-            pagination={{ pageSize: 10, showSizeChanger: true }}
-            locale={{ emptyText: "No cashup submissions awaiting review." }}
-          />
-        )}
+        <Tabs
+          defaultActiveKey="pending"
+          items={[
+            {
+              key: "pending",
+              label: `Pending (${byStatus.pending.length})`,
+              children: (
+                <Table
+                  loading={loading}
+                  dataSource={byStatus.pending}
+                  columns={columns}
+                  rowKey="_id"
+                  pagination={{ pageSize: 10, showSizeChanger: true }}
+                  locale={{ emptyText: "No pending submissions." }}
+                />
+              ),
+            },
+            {
+              key: "resolved",
+              label: `Resolved (${byStatus.resolved.length})`,
+              children: (
+                <Table
+                  loading={loading}
+                  dataSource={byStatus.resolved}
+                  columns={columns}
+                  rowKey="_id"
+                  pagination={{ pageSize: 10, showSizeChanger: true }}
+                  locale={{ emptyText: "No resolved submissions." }}
+                />
+              ),
+            },
+            {
+              key: "needs_changes",
+              label: `Needs Changes (${byStatus.needsChanges.length})`,
+              children: (
+                <Table
+                  loading={loading}
+                  dataSource={byStatus.needsChanges}
+                  columns={columns}
+                  rowKey="_id"
+                  pagination={{ pageSize: 10, showSizeChanger: true }}
+                  locale={{ emptyText: "No submissions needing changes." }}
+                />
+              ),
+            },
+            {
+              key: "approved",
+              label: `Approved (${byStatus.approved.length})`,
+              children: (
+                <Table
+                  loading={loading}
+                  dataSource={byStatus.approved}
+                  columns={columns}
+                  rowKey="_id"
+                  pagination={{ pageSize: 10, showSizeChanger: true }}
+                  locale={{ emptyText: "No approved submissions." }}
+                />
+              ),
+            },
+            {
+              key: "rejected",
+              label: `Rejected (${byStatus.rejected.length})`,
+              children: (
+                <Table
+                  loading={loading}
+                  dataSource={byStatus.rejected}
+                  columns={columns}
+                  rowKey="_id"
+                  pagination={{ pageSize: 10, showSizeChanger: true }}
+                  locale={{ emptyText: "No rejected submissions." }}
+                />
+              ),
+            },
+            {
+              key: "draft",
+              label: `Draft (${byStatus.draft.length})`,
+              children: (
+                <Table
+                  loading={loading}
+                  dataSource={byStatus.draft}
+                  columns={columns}
+                  rowKey="_id"
+                  pagination={{ pageSize: 10, showSizeChanger: true }}
+                  locale={{ emptyText: "No draft submissions." }}
+                />
+              ),
+            },
+            {
+              key: "all",
+              label: `All (${byStatus.all.length})`,
+              children: (
+                <Table
+                  loading={loading}
+                  dataSource={byStatus.all}
+                  columns={columns}
+                  rowKey="_id"
+                  pagination={{ pageSize: 10, showSizeChanger: true }}
+                  locale={{ emptyText: "No submissions." }}
+                />
+              ),
+            },
+          ]}
+        />
       </Card>
 
       <CashUpSubmissionReviewDrawer
