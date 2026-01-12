@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 import { ClockCircleOutlined, UserOutlined } from "@ant-design/icons";
-import { Alert, Button, Descriptions, Divider, Drawer, Form, Image, Input, Select, Space, Tag, Typography, message } from "antd";
+import { Alert, Button, Descriptions, Divider, Drawer, Form, Image, Input, Select, Space, Tag, Typography, Upload, message } from "antd";
 import dayjs from "dayjs";
 
 import { useAuth } from "@/context/auth-context";
@@ -18,17 +18,12 @@ interface CashUpSubmission {
   employeeId: string;
   employeeName: string;
   batchReceiptTotal: number;
-  systemBalance: number;
-  discrepancy: number;
   status: string;
-  submissionStatus: string;
-  riskLevel: string;
   submittedAt: string;
   reviewedBy?: string;
   reviewedAt?: string;
-  isResolved: boolean;
-  notes?: string;
-  resolutionNotes?: string;
+  isLateSubmission?: boolean;
+  notes?: string | null;
   attachments: string[];
 }
 
@@ -43,92 +38,14 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
   const { user } = useAuth();
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
-  const [resolutionStatus, setResolutionStatus] = useState<string>("");
+  const [auditUploading, setAuditUploading] = useState(false);
+  const [auditResult, setAuditResult] = useState<any>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
       currency: 'ZAR'
     }).format(amount);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Balanced":
-        return "green";
-      case "Short":
-        return "red";
-      case "Over":
-        return "orange";
-      case "Awaiting System Balance":
-        return "blue";
-      case "Missing Batch Receipt":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const getRiskLevelColor = (riskLevel: string) => {
-    switch (riskLevel) {
-      case "high":
-        return "red";
-      case "medium":
-        return "orange";
-      case "low":
-        return "green";
-      default:
-        return "default";
-    }
-  };
-
-  const getSubmissionStatusColor = (status: string) => {
-    switch (status) {
-      case "Submitted":
-        return "green";
-      case "Submitted Late (Grace Period)":
-        return "orange";
-      case "Submitted Late":
-        return "red";
-      case "Not Submitted":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const handleResolve = async () => {
-    try {
-      const values = await form.validateFields();
-      setSaving(true);
-
-      const payload = {
-        ...values,
-        isResolved: true,
-        reviewedBy: user?._id,
-        reviewedAt: new Date().toISOString(),
-      };
-
-      const res = await fetch(`/api/cash-up/${cashUpSubmission?._id}/resolve`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const json = await res.json();
-
-      if (json.success) {
-        message.success("Cash up submission resolved successfully");
-        onUpdated();
-        onClose();
-      } else {
-        message.error(json.message || "Failed to resolve cash up submission");
-      }
-    } catch (error) {
-      message.error("Please correct the errors in the form");
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleAddNotes = async () => {
@@ -138,8 +55,6 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
 
       const payload = {
         notes: values.notes,
-        reviewedBy: user?._id,
-        reviewedAt: new Date().toISOString(),
       };
 
       const res = await fetch(`/api/cash-up/${cashUpSubmission?._id}/notes`, {
@@ -164,11 +79,70 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
     }
   };
 
-    if (!cashUpSubmission) return null;
+  const handleUploadAuditReport = async (file: File) => {
+    try {
+      setAuditUploading(true);
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/cash-up/${cashUpSubmission?._id}/audit-report`, {
+        method: "POST",
+        body: fd,
+      });
+      const json = await res.json();
+      if (json.success) {
+        setAuditResult(json.audit);
+        message.success(json.message || "Audit report uploaded");
+        onUpdated();
+      } else {
+        if (json?.expected && json?.detected) {
+          message.error(`${json.message} (Expected: ${json.expected.employeeName} / ${json.expected.date}, Detected: ${json.detected.employeeName} / ${json.detected.date})`);
+        } else {
+          message.error(json.message || "Failed to upload audit report");
+        }
+      }
+    } catch (e: any) {
+      message.error(e?.message || "Failed to upload audit report");
+    } finally {
+      setAuditUploading(false);
+    }
+    return false;
+  };
 
-  const isDiscrepancy = cashUpSubmission.status === "Short" || cashUpSubmission.status === "Over";
-  const isHighRisk = cashUpSubmission.riskLevel === "high";
-  const isLateSubmission = cashUpSubmission.submissionStatus.includes("Late");
+  const handleDecision = async (decision: "approve" | "reject" | "send_back") => {
+    try {
+      const values = await form.validateFields();
+      setSaving(true);
+
+      const payload = {
+        decision,
+        note: values.notes,
+      };
+
+      const res = await fetch(`/api/cash-up/${cashUpSubmission?._id}/review`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        message.success(json.message || "Updated");
+        onUpdated();
+        onClose();
+      } else {
+        message.error(json.message || "Failed to update");
+      }
+    } catch {
+      message.error("Please add a review note first");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!cashUpSubmission) return null;
+
+  const isLateSubmission = !!cashUpSubmission.isLateSubmission;
+  const isPdfUrl = (url: string) => url.toLowerCase().split("?")[0].endsWith(".pdf");
 
   return (
     <Drawer
@@ -188,28 +162,54 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
           >
             Add Notes
           </Button>
-          {isDiscrepancy && !cashUpSubmission.isResolved && (
-            <Button
-              type="primary"
-              onClick={handleResolve}
-              loading={saving}
-            >
-              Mark as Resolved
-            </Button>
-          )}
+          <Button type="primary" onClick={() => handleDecision("approve")} loading={saving}>
+            Approve
+          </Button>
+          <Button danger onClick={() => handleDecision("reject")} loading={saving}>
+            Reject
+          </Button>
+          <Button onClick={() => handleDecision("send_back")} loading={saving}>
+            Send Back
+          </Button>
         </Space>
       }
     >
       <div className="space-y-6">
-        {/* Risk Level Alert */}
-        {isHighRisk && (
-          <Alert
-            message="High Risk Discrepancy"
-            description="This audit has a high-risk discrepancy that requires immediate attention."
-            type="error"
-            showIcon
-          />
-        )}
+        {/* Audit report upload (Excel) */}
+        <div className="space-y-2">
+          <Title level={4}>Audit Report (Excel)</Title>
+          <Text type="secondary">
+            Upload the Income & Expense Transaction Report (Excel). The system will parse totals and compare them to the cashup.
+          </Text>
+          <Upload.Dragger
+            name="file"
+            multiple={false}
+            accept=".xlsx,.xls,.csv"
+            beforeUpload={(file) => handleUploadAuditReport(file as any)}
+            showUploadList={false}
+            disabled={auditUploading || saving}
+          >
+            <p className="ant-upload-text">Click or drag the Excel report here to upload</p>
+            <p className="ant-upload-hint">Supported: .xlsx, .xls, .csv</p>
+          </Upload.Dragger>
+
+          {auditResult && (
+            <Alert
+              type={auditResult.balanced ? "success" : "error"}
+              showIcon
+              message={auditResult.balanced ? "Balances" : "Does not balance"}
+              description={
+                <div className="space-y-1">
+                  <div>Income: {formatCurrency(auditResult.incomeTotal || 0)}</div>
+                  <div>Expense: {formatCurrency(auditResult.expenseTotal || 0)}</div>
+                  <div>Net: {formatCurrency(auditResult.netTotal || 0)}</div>
+                  <div>Cashup total: {formatCurrency(auditResult.cashupTotal || 0)}</div>
+                  <div>Delta: {formatCurrency(auditResult.delta || 0)}</div>
+                </div>
+              }
+            />
+          )}
+        </div>
 
         {/* Late Submission Alert */}
         {isLateSubmission && (
@@ -236,19 +236,7 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
               {dayjs(cashUpSubmission.date).format("DD MMM YYYY")}
             </Descriptions.Item>
             <Descriptions.Item label="Status">
-              <Tag color={getStatusColor(cashUpSubmission.status)}>
-                {cashUpSubmission.status}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Risk Level">
-              <Tag color={getRiskLevelColor(cashUpSubmission.riskLevel)}>
-                {cashUpSubmission.riskLevel.toUpperCase()}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Submission Status">
-              <Tag color={getSubmissionStatusColor(cashUpSubmission.submissionStatus)}>
-                {cashUpSubmission.submissionStatus}
-              </Tag>
+              <Tag>{cashUpSubmission.status}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Submission Time">
               <div className="flex items-center gap-2">
@@ -263,25 +251,11 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
         <div className="space-y-4">
           <Title level={4}>Financial Details</Title>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="text-center p-4 border rounded-lg">
-              <Text className="text-gray-500">Receipt Total</Text>
+              <Text className="text-gray-500">Submitted Total</Text>
               <div className="text-xl font-semibold">
-                {cashUpSubmission.batchReceiptTotal ? formatCurrency(cashUpSubmission.batchReceiptTotal) : "--"}
-              </div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <Text className="text-gray-500">System Balance</Text>
-              <div className="text-xl font-semibold">
-                {cashUpSubmission.systemBalance ? formatCurrency(cashUpSubmission.systemBalance) : "--"}
-              </div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <Text className="text-gray-500">Discrepancy</Text>
-              <div className={`text-xl font-semibold ${cashUpSubmission.discrepancy === 0 ? "text-green-600" :
-                  cashUpSubmission.discrepancy > 0 ? "text-orange-600" : "text-red-600"
-                }`}>
-                {cashUpSubmission.discrepancy ? `${cashUpSubmission.discrepancy > 0 ? "+" : ""}${formatCurrency(cashUpSubmission.discrepancy)}` : "--"}
+                {cashUpSubmission.batchReceiptTotal !== undefined ? formatCurrency(cashUpSubmission.batchReceiptTotal) : "--"}
               </div>
             </div>
           </div>
@@ -295,12 +269,25 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
             <div className="grid grid-cols-2 gap-4">
               {cashUpSubmission.attachments.map((attachment, index) => (
                 <div key={index} className="border rounded-lg p-2">
-                  <Image
-                    src={attachment}
-                    alt={`Receipt ${index + 1}`}
-                    className="w-full h-32 object-cover rounded"
-                    fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-                  />
+                  {isPdfUrl(attachment) ? (
+                    <div className="flex h-32 items-center justify-center rounded border bg-gray-50">
+                      <a
+                        href={attachment}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Open PDF (Receipt {index + 1})
+                      </a>
+                    </div>
+                  ) : (
+                    <Image
+                      src={attachment}
+                      alt={`Receipt ${index + 1}`}
+                      className="w-full h-32 object-cover rounded"
+                      fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+                    />
+                  )}
                   <div className="text-center mt-2">
                     <Text className="text-xs text-gray-500">Receipt {index + 1}</Text>
                   </div>
@@ -311,26 +298,6 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
         )}
 
         {/* Resolution Status */}
-        {cashUpSubmission.isResolved && (
-          <div className="space-y-4">
-            <Title level={4}>Resolution Details</Title>
-
-            <Alert
-              message="Cash Up Submission Resolved"
-              description={`Resolved by ${cashUpSubmission.reviewedBy} on ${dayjs(cashUpSubmission.reviewedAt).format("DD MMM YYYY HH:mm")}`}
-              type="success"
-              showIcon
-            />
-
-            {cashUpSubmission.resolutionNotes && (
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <Text className="font-medium">Resolution Notes:</Text>
-                <div className="mt-2">{cashUpSubmission.resolutionNotes}</div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Review Notes */}
         {cashUpSubmission.notes && (
           <div className="space-y-4">
@@ -346,7 +313,7 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
 
         {/* Add Notes Form */}
         <div className="space-y-4">
-          <Title level={4}>Add Review Notes</Title>
+          <Title level={4}>Add Review Note</Title>
 
           <Form form={form} layout="vertical">
             <Form.Item
@@ -356,21 +323,9 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
             >
               <TextArea
                 rows={4}
-                placeholder="Add your review notes here..."
+                placeholder="Add your review note here..."
               />
             </Form.Item>
-
-            {isDiscrepancy && !cashUpSubmission.isResolved && (
-              <Form.Item
-                name="resolutionNotes"
-                label="Resolution Notes"
-              >
-                <TextArea
-                  rows={3}
-                  placeholder="Describe how the discrepancy was resolved..."
-                />
-              </Form.Item>
-            )}
           </Form>
         </div>
       </div>

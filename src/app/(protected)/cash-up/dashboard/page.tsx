@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { AlertOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, PlusOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Space, Spin, Table, Tag, Typography } from "antd";
+import { Alert, Button, Card, DatePicker, Modal, Space, Spin, Table, Tag, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
 
 import PageHeader from "@/app/components/page-header";
@@ -38,6 +38,21 @@ interface ICashUpSubmission {
   isResolved: boolean;
   notes?: string;
   attachments: string[];
+  submissions?: Array<{
+    _idx: number;
+    invoiceNumber?: string | null;
+    paymentMethod?: string | null;
+    submittedAmount?: number | null;
+    cashAmount?: number | null;
+    cardAmount?: number | null;
+    bankDepositReference?: string | null;
+    bankName?: string | null;
+    depositorName?: string | null;
+    notes?: string | null;
+    submittedAt?: string | null;
+    files: string[];
+  }>;
+  isLateSubmission?: boolean;
 }
 
 interface WeeklySummary {
@@ -68,6 +83,10 @@ const CashUpDashboardPage = () => {
 
   const [selectedCashUpSubmission, setSelectedCashUpSubmission] = useState<ICashUpSubmission | null>(null);
   const [selectedWeek, setSelectedWeek] = useState(dayjs().format('YYYY-MM-DD'));
+
+  const [activeDate, setActiveDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [lateModalOpen, setLateModalOpen] = useState(false);
+  const [lateDate, setLateDate] = useState(dayjs().subtract(1, "day"));
 
   const fetchCashUpSubmissions = async () => {
     setLoading(true);
@@ -133,6 +152,14 @@ const CashUpDashboardPage = () => {
         return "orange";
       case "pending":
         return "blue";
+      case "needs_changes":
+        return "orange";
+      case "resolved":
+        return "blue";
+      case "approved":
+        return "green";
+      case "rejected":
+        return "red";
       case "nothing to submit":
         return "default";
       case "awaiting system balance":
@@ -154,20 +181,14 @@ const CashUpDashboardPage = () => {
         return "Draft";
       case "pending":
         return "Pending Review";
-      case "submitted":
-        return "Submitted";
-      case "reviewed":
-        return "Reviewed";
-      case "escalated":
-        return "Escalated";
-      case "archived":
-        return "Archived";
-      case "deleted":
-        return "Deleted";
+      case "needs_changes":
+        return "Sent Back";
+      case "resolved":
+        return "Re-Submitted";
+      case "approved":
+        return "Approved";
       case "rejected":
         return "Rejected";
-      case "pending_info":
-        return "Pending Info";
       case "short":
         return "Short";
       case "over":
@@ -183,28 +204,18 @@ const CashUpDashboardPage = () => {
 
   const getSubmissionStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
+      case "draft":
+        return "default";
       case "pending":
         return "blue";
-      case "submitted":
-        return "green";
-      case "reviewed":
-        return "green";
-      case "escalated":
-        return "purple";
-      case "archived":
-        return "gray";
-      case "deleted":
-        return "gray";
-      case "submitted late (grace period)":
+      case "needs_changes":
         return "orange";
-      case "pending_info":
-        return "orange";
-      case "submitted late":
+      case "resolved":
+        return "blue";
+      case "approved":
+        return "green";
+      case "rejected":
         return "red";
-      case "not submitted":
-        return "red";
-      case "nothing to submit":
-        return "default";
       default:
         return "default";
     }
@@ -227,14 +238,14 @@ const CashUpDashboardPage = () => {
   };
 
   // stats
-  const { awaitingReview, balancedCount, varianceCount, escalatedCount, lateCount } = useMemo(() => {
+  const { awaitingReview, draftCount, sentBackCount, approvedCount, lateCount } = useMemo(() => {
     const n = (s?: string) => (s || "").toLowerCase();
     return {
-      awaitingReview: cashUpSubmissions.filter(a => n(a.submissionStatus) === "submitted").length,
-      balancedCount: cashUpSubmissions.filter(a => n(a.status) === "balanced").length,
-      varianceCount: cashUpSubmissions.filter(a => ["short", "over"].includes(n(a.status))).length,
-      escalatedCount: cashUpSubmissions.filter(a => n(a.submissionStatus) === "escalated").length,
-      lateCount: cashUpSubmissions.filter(a => n(a.submissionStatus).includes("late")).length,
+      awaitingReview: cashUpSubmissions.filter(a => ["pending", "resolved"].includes(n(a.status))).length,
+      draftCount: cashUpSubmissions.filter(a => n(a.status) === "draft").length,
+      sentBackCount: cashUpSubmissions.filter(a => n(a.status) === "needs_changes").length,
+      approvedCount: cashUpSubmissions.filter(a => n(a.status) === "approved").length,
+      lateCount: cashUpSubmissions.filter(a => (a as any).isLateSubmission && ["pending", "resolved", "approved", "rejected"].includes(n(a.status))).length,
     };
   }, [cashUpSubmissions]);
 
@@ -319,20 +330,6 @@ const CashUpDashboardPage = () => {
         </Tag>
       ),
     },
-    {
-      title: "Actions",
-      key: "actions",
-      align: "center",
-      render: (_: any, record: ICashUpSubmission) => (
-        <Space>
-          {norm(record.status) === "draft" && isOwner(record) && (
-            <Button type="primary" className="text-black uppercase" onClick={() => submitForReview(record)}>
-              Submit for Review
-            </Button>
-          )}
-        </Space>
-      ),
-    },
   ];
 
   const statsCards = [
@@ -343,20 +340,20 @@ const CashUpDashboardPage = () => {
       color: "blue",
     },
     {
-      title: "Balanced",
-      value: balancedCount,
+      title: "Drafts",
+      value: draftCount,
       icon: <CheckCircleOutlined />,
       color: "green",
     },
     {
-      title: "Variances",
-      value: varianceCount,
+      title: "Sent Back",
+      value: sentBackCount,
       icon: <ExclamationCircleOutlined />,
       color: "orange",
     },
     {
-      title: "Escalated",
-      value: escalatedCount,
+      title: "Approved",
+      value: approvedCount,
       icon: <AlertOutlined />,
       color: "red",
     },
@@ -370,13 +367,64 @@ const CashUpDashboardPage = () => {
 
   const isOwner = (rec: ICashUpSubmission) => user?._id === rec.employeeId;
 
+  const today = dayjs().format("YYYY-MM-DD");
+
+  const currentSubmission = useMemo(() => {
+    // Prefer an "open" submission for today, else any for today, else null
+    const isOpen = (s?: string) => ["draft", "needs_changes"].includes(norm(s));
+    const todays = cashUpSubmissions.filter((s) => s.date === activeDate);
+    return (
+      todays.find((s) => isOpen(s.status)) ||
+      todays.find((s) => isOpen(s.submissionStatus)) ||
+      todays[0] ||
+      null
+    );
+  }, [cashUpSubmissions, activeDate]);
+
+  const previousSubmissions = useMemo(() => {
+    return cashUpSubmissions.filter((s) => s.date !== activeDate);
+  }, [cashUpSubmissions, activeDate]);
+
+  const currentPaymentBreakdown = useMemo(() => {
+    const subs = currentSubmission?.submissions || [];
+    let cash = 0;
+    let card = 0;
+    let banking = 0;
+
+    for (const s of subs) {
+      const pm = norm(s.paymentMethod);
+      const submitted = Number(s.submittedAmount ?? 0) || 0;
+      const cashAmount = Number(s.cashAmount ?? 0) || 0;
+      const cardAmount = Number(s.cardAmount ?? 0) || 0;
+
+      if (pm === "cash") cash += submitted;
+      else if (pm === "card") card += submitted;
+      else if (pm === "both") {
+        cash += cashAmount;
+        card += cardAmount;
+      } else if (pm === "bank_deposit" || pm === "eft") {
+        banking += submitted;
+      } else {
+        // Fallback: if amounts are present, count them.
+        cash += cashAmount;
+        card += cardAmount;
+      }
+    }
+
+    return { cash, card, banking };
+  }, [currentSubmission]);
+
   // Check if the user has the user submitted today?
   const hasSubmittedToday = cashUpSubmissions.some(
-    a => a.date === dayjs().format('YYYY-MM-DD') && norm(a.submissionStatus) === 'submitted'
+    a => a.date === today && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
+  );
+
+  const hasSubmittedForActiveDate = cashUpSubmissions.some(
+    a => a.date === activeDate && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
   );
 
   // Calculate the time remaining until the submission deadline in minutes
-  const cutoff = dayjs().hour(18).minute(0).second(0);
+  const cutoff = dayjs().hour(20).minute(0).second(0);
   const minutesToCutoff = cutoff.diff(dayjs(), 'minutes'); // positive before cutoff, negative after
   const minutesLeft = minutesToCutoff;  // already positive before, negative after
   const humanMins = Math.max(0, minutesLeft);
@@ -398,13 +446,22 @@ const CashUpDashboardPage = () => {
         subtitle="Match today’s collections to ASSIT and resolve variances"
         actions={[
           <Space key="actions">
-            {!hasSubmittedToday && <Button onClick={() => setPolicyDrawerOpen(true)} type="dashed">
+            <Button onClick={() => setLateModalOpen(true)} type="default">
+              Capture Late Submission
+            </Button>
+            {activeDate !== today && (
+              <Button onClick={() => setActiveDate(today)} type="default">
+                Back to Today
+              </Button>
+            )}
+
+            {!hasSubmittedForActiveDate && <Button onClick={() => setPolicyDrawerOpen(true)} type="dashed">
               <PlusOutlined className="w-4 h-4" /> Policy Receipts
             </Button>}
-            {!hasSubmittedToday && <Button onClick={() => setFuneralDrawerOpen(true)} type="dashed">
+            {!hasSubmittedForActiveDate && <Button onClick={() => setFuneralDrawerOpen(true)} type="dashed">
               <PlusOutlined className="w-4 h-4" /> Funeral Receipts
             </Button>}
-            {!hasSubmittedToday && <Button onClick={() => setSalesDrawerOpen(true)} type="dashed">
+            {!hasSubmittedForActiveDate && <Button onClick={() => setSalesDrawerOpen(true)} type="dashed">
               <PlusOutlined className="w-4 h-4" /> Sales Receipts
             </Button>}
             {/* <Button
@@ -438,85 +495,210 @@ const CashUpDashboardPage = () => {
       <div className="flex gap-4">
         <div className="flex-1">
           {/* Daily Cash-Up Submitted */}
-          {hasSubmittedToday && <Alert type="success" showIcon description={<div className="space-y-2 w-full">
+          {activeDate === today && hasSubmittedToday && <Alert type="success" showIcon description={<div className="space-y-2 w-full">
             <h4 className="font-bold">Daily Cash-Up Submitted</h4>
             <p>You have already submitted your receipts for today. Please wait for the system to process your submissions. If you need to submit more receipts, please contact your manager.</p>
           </div>} />}
 
           {/* Cash-Up Due */}
-          {(!hasSubmittedToday && minutesToCutoff >= 60) && <Alert type="info" showIcon description={<div className="space-y-2 w-full">
+          {(activeDate === today && !hasSubmittedToday && minutesToCutoff >= 60) && <Alert type="info" showIcon description={<div className="space-y-2 w-full">
             <h4 className="font-bold"><span>Cash-Up Due</span></h4>
             <p>You have not submitted your receipts for today. Please ensure you submit your receipts before the cut-off time to avoid any penalties.</p>
           </div>} />}
 
           {/* Cutting It Close */}
-          {(!hasSubmittedToday && minutesToCutoff >= 0 && minutesToCutoff < 60) && <Alert type="warning" showIcon description={<div className="space-y-2 w-full">
+          {(activeDate === today && !hasSubmittedToday && minutesToCutoff >= 0 && minutesToCutoff < 60) && <Alert type="warning" showIcon description={<div className="space-y-2 w-full">
             <h4 className="font-bold">Cutting It Close</h4>
             <p>You have not submitted your receipts for today. Please submit your receipts before the cut-off time to avoid any penalties. You have {humanMins} minute{plural} left.</p>
           </div>} />}
 
           {/* Deadline Missed */}
-          {(!hasSubmittedToday && minutesToCutoff < 0) && <Alert type="error" showIcon description={<div className="space-y-2 w-full">
+          {(activeDate === today && !hasSubmittedToday && minutesToCutoff < 0) && <Alert type="error" showIcon description={<div className="space-y-2 w-full">
             <h4 className="font-bold">Deadline Missed</h4>
             <p>You have not submitted your receipts for today. You have missed the submission deadline and will be flagged as a late submission.</p>
           </div>} />}
         </div>
-        <CashUpCountdown cutOffTime={"18:00:00"} />
+        {activeDate === today && <CashUpCountdown cutOffTime={"20:00:00"} />}
       </div>
 
-      {/* Cash-Up Submissions Table */}
-      <Card size="small">
-        <div className="mb-4">
-          <Title level={4}>My Submissions</Title>
-        </div>
+      {/* Current vs Previous */}
+      <Tabs
+        defaultActiveKey="current"
+        items={[
+          {
+            key: "current",
+            label: "Current Submission",
+            children: (
+              <Card
+                size="small"
+                title={<span>Current Submission ({activeDate})</span>}
+                extra={
+                  currentSubmission &&
+                  ["draft", "needs_changes"].includes(norm(currentSubmission.status)) &&
+                  isOwner(currentSubmission) && (
+                    <Button type="primary" className="text-black uppercase" onClick={() => submitForReview(currentSubmission)}>
+                      Submit for Review
+                    </Button>
+                  )
+                }
+              >
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <Spin size="large" />
+                  </div>
+                ) : !currentSubmission ? (
+                  <Alert
+                    type="info"
+                    showIcon
+                    message="No current submission"
+                    description="Upload receipts (Policy/Funeral/Sales) to start today’s cash-up."
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {activeDate !== today && (
+                      <Alert
+                        type="warning"
+                        showIcon
+                        message="Capturing a late submission"
+                        description={`You are capturing receipts for ${dayjs(activeDate).format("DD MMM YYYY")}. This will be flagged as a late submission when submitted for review.`}
+                      />
+                    )}
+                    <div className="flex flex-wrap gap-3">
+                      <Tag color={getStatusColor(currentSubmission.status)} className="uppercase">
+                        {getStatusText(currentSubmission.status)}
+                      </Tag>
+                      {!!currentSubmission.isLateSubmission && <Tag color="red">LATE</Tag>}
+                      <Tag color="blue">Total Cash: {formatCurrency(currentPaymentBreakdown.cash)}</Tag>
+                      <Tag color="blue">Total Card: {formatCurrency(currentPaymentBreakdown.card)}</Tag>
+                      <Tag color="blue">Banking Total: {formatCurrency(currentPaymentBreakdown.banking)}</Tag>
+                      <Tag color="purple">Grand Total: {formatCurrency(currentSubmission.batchReceiptTotal ?? 0)}</Tag>
+                    </div>
 
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <Spin size="large" />
+                    <Table
+                      size="small"
+                      rowKey={(r) => String(r._idx)}
+                      dataSource={(currentSubmission.submissions || []).map((s) => ({
+                        ...s,
+                        attachmentsCount: Array.isArray(s.files) ? s.files.length : 0,
+                      }))}
+                      columns={[
+                        {
+                          title: "#",
+                          dataIndex: "_idx",
+                          key: "_idx",
+                          width: 60,
+                          render: (v: number) => v + 1,
+                        },
+                        {
+                          title: "Invoice",
+                          dataIndex: "invoiceNumber",
+                          key: "invoiceNumber",
+                          render: (v: string) => v || "—",
+                        },
+                        {
+                          title: "Payment",
+                          dataIndex: "paymentMethod",
+                          key: "paymentMethod",
+                          render: (v: string) => (v ? String(v).replace("_", " ") : "—"),
+                        },
+                        {
+                          title: "Amount",
+                          dataIndex: "submittedAmount",
+                          key: "submittedAmount",
+                          align: "right",
+                          render: (v: number) => (v === null || v === undefined ? "—" : formatCurrency(Number(v))),
+                        },
+                        {
+                          title: "Notes",
+                          dataIndex: "notes",
+                          key: "notes",
+                          render: (v: string) => v || "—",
+                        },
+                        {
+                          title: "Submitted",
+                          dataIndex: "submittedAt",
+                          key: "submittedAt",
+                          render: (v: string) => (v ? dayjs(v).format("DD MMM HH:mm") : "—"),
+                        },
+                        {
+                          title: "Files",
+                          dataIndex: "attachmentsCount",
+                          key: "attachmentsCount",
+                          align: "center",
+                          render: (v: number, r: any) => (
+                            <span>{v || 0}</span>
+                          ),
+                        },
+                      ]}
+                      pagination={false}
+                      locale={{ emptyText: "No receipt entries yet for the current submission." }}
+                    />
+                  </div>
+                )}
+              </Card>
+            ),
+          },
+          {
+            key: "previous",
+            label: "Previous Submissions",
+            children: (
+              <Card size="small">
+                <div className="mb-4">
+                  <Title level={4}>Previous Submissions</Title>
+                </div>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <Table
+                    dataSource={previousSubmissions}
+                    columns={columns as ColumnType<ICashUpSubmission>[]}
+                    rowKey="_id"
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                    }}
+                    locale={{ emptyText: "No previous submissions." }}
+                  />
+                )}
+              </Card>
+            ),
+          },
+        ]}
+      />
+
+      <Modal
+        title="Capture Late Submission"
+        open={lateModalOpen}
+        onCancel={() => setLateModalOpen(false)}
+        onOk={() => {
+          const next = (lateDate || dayjs().subtract(1, "day")).format("YYYY-MM-DD");
+          setActiveDate(next);
+          setLateModalOpen(false);
+        }}
+        okText="Use this date"
+      >
+        <div className="space-y-3">
+          <div className="text-sm text-gray-600">
+            Select the date you want to capture receipts for.
           </div>
-        ) : (
-          <Table
-            dataSource={cashUpSubmissions}
-            columns={columns as ColumnType<ICashUpSubmission>[]}
-            rowKey="_id"
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-            }}
-            locale={{ emptyText: "No submissions yet. Upload receipts to start today’s cash-up." }}
-            summary={(rows) => {
-              const total = rows.reduce((sum, r) => sum + (r.batchReceiptTotal ?? 0), 0);
-              return (
-                <Table.Summary fixed>
-                  <Table.Summary.Row>
-                    <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
-                    <Table.Summary.Cell index={1} align="right">{formatCurrency(total)}</Table.Summary.Cell>
-                    <Table.Summary.Cell index={2} />
-                    <Table.Summary.Cell index={3} />
-                    <Table.Summary.Cell index={4} />
-                    <Table.Summary.Cell index={5} />
-                    <Table.Summary.Cell index={6} />
-                  </Table.Summary.Row>
-                </Table.Summary>
-              );
-            }}
-          // onRow={(record) => ({
-          //   onClick: () => {
-          //     setSelectedCashUpSubmission(record);
-          //     setReviewDrawerOpen(true);
-          //   },
-          //   style: { cursor: 'pointer' }
-          // })}
+          <DatePicker
+            style={{ width: "100%" }}
+            value={lateDate}
+            onChange={(d) => d && setLateDate(d)}
+            disabledDate={(current) => !!current && current.isAfter(dayjs(), "day")}
           />
-        )}
-      </Card>
+        </div>
+      </Modal>
 
       {/* Policy Receipts Drawer */}
       <PolicyReceiptsDrawer
         open={policyDrawerOpen}
         onClose={() => setPolicyDrawerOpen(false)}
         onSubmitted={fetchCashUpSubmissions}
+        defaultDate={activeDate}
       />
 
       {/* Funeral Receipts Drawer */}
@@ -524,6 +706,7 @@ const CashUpDashboardPage = () => {
         open={funeralDrawerOpen}
         onClose={() => setFuneralDrawerOpen(false)}
         onSubmitted={fetchCashUpSubmissions}
+        defaultDate={activeDate}
       />
 
       {/* Sales Receipts Drawer */}
@@ -531,6 +714,7 @@ const CashUpDashboardPage = () => {
         open={salesDrawerOpen}
         onClose={() => setSalesDrawerOpen(false)}
         onSubmitted={fetchCashUpSubmissions}
+        defaultDate={activeDate}
       />
       {/* Audit Review Drawer */}
       <CashUpSubmissionReviewDrawer
@@ -555,4 +739,4 @@ const CashUpDashboardPage = () => {
   );
 };
 
-export default withRoleGuard(CashUpDashboardPage, [ERoles.Admin, ERoles.Member]); 
+export default withRoleGuard(CashUpDashboardPage, Object.values(ERoles) as unknown as string[]); 

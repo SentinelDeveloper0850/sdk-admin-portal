@@ -4,15 +4,16 @@ import jwt from "jsonwebtoken";
 import UsersModel from "@/app/models/hr/user.schema";
 
 // JWT secret and expiration
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in the environment variables.");
-}
 const JWT_EXPIRES_IN = "8h";
 const JWT_ISSUER = "sdk-admin-portal";
 const JWT_AUDIENCE = "sdk-admin-portal-web";
 
 export const loginUser = async (email: string, password: string) => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error("Server misconfigured (missing JWT secret)");
+  }
+
   // Find the user by email
   const user = await UsersModel.findOne({ email });
 

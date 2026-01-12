@@ -1,7 +1,15 @@
 import { Resend } from 'resend';
 import { EMAIL_TEMPLATES, renderTemplate } from './email-templates';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () => {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  try {
+    return new Resend(key);
+  } catch {
+    return null;
+  }
+};
 
 // Base email configuration
 const EMAIL_CONFIG = {
@@ -14,6 +22,12 @@ const EMAIL_CONFIG = {
  */
 const sendEmail = async (to: string, subject: string, templateName: string, data: any) => {
   try {
+    const resend = getResend();
+    if (!resend) {
+      console.warn("Email not sent: RESEND_API_KEY not configured");
+      return { success: false, error: new Error("Email service not configured") };
+    }
+
     const html = renderTemplate(templateName, data);
 
     const result = await resend.emails.send({

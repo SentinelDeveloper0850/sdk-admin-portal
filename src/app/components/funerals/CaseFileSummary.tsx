@@ -94,7 +94,33 @@ export default function CaseFileSummary({
     cemeteryMap?: Record<string, string>;
 }) {
     const form = Form.useFormInstance?.();
-    const usingForm = !record && !!form;
+    const usingForm = !record;
+
+    // IMPORTANT: `Form.useWatch` is a React Hook and must be called unconditionally.
+    // We always call it and then decide whether to use record-values or watched-values.
+    const w_referenceNumber = Form.useWatch("referenceNumber", form);
+    const w_policyNumber = Form.useWatch("policyNumber", form);
+    const w_branchId = Form.useWatch("branchId", form);
+
+    const w_deceasedFirstName = Form.useWatch("deceasedFirstName", form);
+    const w_deceasedLastName = Form.useWatch("deceasedLastName", form);
+
+    const w_informantFirstName = Form.useWatch("informantFirstName", form);
+    const w_informantLastName = Form.useWatch("informantLastName", form);
+    const w_informantPhoneNumber = Form.useWatch("informantPhoneNumber", form);
+
+    const w_status = Form.useWatch("status", form);
+    const w_paymentStatus = Form.useWatch("paymentStatus", form);
+
+    const w_estimatedCost = Form.useWatch("estimatedCost", form);
+    const w_actualCost = Form.useWatch("actualCost", form);
+
+    const w_pickUp = Form.useWatch("pickUp", form);
+    const w_bathing = Form.useWatch("bathing", form);
+    const w_tentErection = Form.useWatch("tentErection", form);
+    const w_delivery = Form.useWatch("delivery", form);
+    const w_serviceEscort = Form.useWatch("serviceEscort", form);
+    const w_burial = Form.useWatch("burial", form);
 
     // helper to read from either record or form
     const get = (path: any, fallback?: any) => {
@@ -105,7 +131,21 @@ export default function CaseFileSummary({
             return cur ?? fallback;
         }
         if (usingForm) {
-            return Form.useWatch(path, form) ?? fallback;
+            switch (String(path)) {
+                case "referenceNumber": return w_referenceNumber ?? fallback;
+                case "policyNumber": return w_policyNumber ?? fallback;
+                case "branchId": return w_branchId ?? fallback;
+                case "deceasedFirstName": return w_deceasedFirstName ?? fallback;
+                case "deceasedLastName": return w_deceasedLastName ?? fallback;
+                case "informantFirstName": return w_informantFirstName ?? fallback;
+                case "informantLastName": return w_informantLastName ?? fallback;
+                case "informantPhoneNumber": return w_informantPhoneNumber ?? fallback;
+                case "status": return w_status ?? fallback;
+                case "paymentStatus": return w_paymentStatus ?? fallback;
+                case "estimatedCost": return w_estimatedCost ?? fallback;
+                case "actualCost": return w_actualCost ?? fallback;
+                default: return fallback;
+            }
         }
         return fallback;
     };
@@ -143,12 +183,12 @@ export default function CaseFileSummary({
             burial: milestoneFromRecord(record, "burial") || {},
         }
         : {
-            pickUp: Form.useWatch("pickUp", form),
-            bathing: Form.useWatch("bathing", form),
-            tentErection: Form.useWatch("tentErection", form),
-            delivery: Form.useWatch("delivery", form),
-            serviceEscort: Form.useWatch("serviceEscort", form),
-            burial: Form.useWatch("burial", form),
+            pickUp: w_pickUp || {},
+            bathing: w_bathing || {},
+            tentErection: w_tentErection || {},
+            delivery: w_delivery || {},
+            serviceEscort: w_serviceEscort || {},
+            burial: w_burial || {},
         };
 
     const enabledWithDates = MILESTONES

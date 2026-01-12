@@ -57,6 +57,12 @@ const groupedRoles = [
         icon: <DollarSign size={16} />,
       },
       {
+        key: "cashup_reviewer",
+        label: "Cashup Reviewer",
+        description: "Reviews and audits daily cashup submissions",
+        icon: <FileCheck size={16} />,
+      },
+      {
         key: "eft_reviewer",
         label: "EFT Reviewer",
         description: "Reviews EFT imports and transactions",

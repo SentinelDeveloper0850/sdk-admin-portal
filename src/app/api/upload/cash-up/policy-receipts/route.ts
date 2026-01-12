@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
       const stream = cloudinary.uploader.upload_stream(
         {
           folder: `cash-up/policy-receipts/${submissionIdentifier}`,
+          resource_type: "auto",
         },
         (err, result) => {
           if (err) {
