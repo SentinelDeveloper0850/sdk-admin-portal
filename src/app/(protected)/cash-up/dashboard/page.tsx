@@ -382,6 +382,35 @@ const CashUpDashboardPage = () => {
     return cashUpSubmissions.filter((s) => s._id !== currentSubmission._id);
   }, [cashUpSubmissions, currentSubmission]);
 
+  const currentPaymentBreakdown = useMemo(() => {
+    const subs = currentSubmission?.submissions || [];
+    let cash = 0;
+    let card = 0;
+    let banking = 0;
+
+    for (const s of subs) {
+      const pm = norm(s.paymentMethod);
+      const submitted = Number(s.submittedAmount ?? 0) || 0;
+      const cashAmount = Number(s.cashAmount ?? 0) || 0;
+      const cardAmount = Number(s.cardAmount ?? 0) || 0;
+
+      if (pm === "cash") cash += submitted;
+      else if (pm === "card") card += submitted;
+      else if (pm === "both") {
+        cash += cashAmount;
+        card += cardAmount;
+      } else if (pm === "bank_deposit" || pm === "eft") {
+        banking += submitted;
+      } else {
+        // Fallback: if amounts are present, count them.
+        cash += cashAmount;
+        card += cardAmount;
+      }
+    }
+
+    return { cash, card, banking };
+  }, [currentSubmission]);
+
   // Check if the user has the user submitted today?
   const hasSubmittedToday = cashUpSubmissions.some(
     a => a.date === today && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
@@ -515,7 +544,10 @@ const CashUpDashboardPage = () => {
                         {getStatusText(currentSubmission.status)}
                       </Tag>
                       {!!currentSubmission.isLateSubmission && <Tag color="red">LATE</Tag>}
-                      <Tag color="blue">Total: {formatCurrency(currentSubmission.batchReceiptTotal ?? 0)}</Tag>
+                      <Tag color="blue">Total Cash: {formatCurrency(currentPaymentBreakdown.cash)}</Tag>
+                      <Tag color="blue">Total Card: {formatCurrency(currentPaymentBreakdown.card)}</Tag>
+                      <Tag color="blue">Banking Total: {formatCurrency(currentPaymentBreakdown.banking)}</Tag>
+                      <Tag color="purple">Grand Total: {formatCurrency(currentSubmission.batchReceiptTotal ?? 0)}</Tag>
                     </div>
 
                     <Table
