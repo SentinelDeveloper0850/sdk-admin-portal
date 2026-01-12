@@ -138,6 +138,7 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
   if (!cashUpSubmission) return null;
 
   const isLateSubmission = !!cashUpSubmission.isLateSubmission;
+  const isPdfUrl = (url: string) => url.toLowerCase().split("?")[0].endsWith(".pdf");
 
   return (
     <Drawer
@@ -264,12 +265,25 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
             <div className="grid grid-cols-2 gap-4">
               {cashUpSubmission.attachments.map((attachment, index) => (
                 <div key={index} className="border rounded-lg p-2">
-                  <Image
-                    src={attachment}
-                    alt={`Receipt ${index + 1}`}
-                    className="w-full h-32 object-cover rounded"
-                    fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-                  />
+                  {isPdfUrl(attachment) ? (
+                    <div className="flex h-32 items-center justify-center rounded border bg-gray-50">
+                      <a
+                        href={attachment}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Open PDF (Receipt {index + 1})
+                      </a>
+                    </div>
+                  ) : (
+                    <Image
+                      src={attachment}
+                      alt={`Receipt ${index + 1}`}
+                      className="w-full h-32 object-cover rounded"
+                      fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+                    />
+                  )}
                   <div className="text-center mt-2">
                     <Text className="text-xs text-gray-500">Receipt {index + 1}</Text>
                   </div>
