@@ -17,6 +17,13 @@ function toNumber(value: unknown): number | null {
   return null;
 }
 
+function normHeaderCell(value: unknown) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+}
+
 function extractTotalsFromWorkbook(buffer: Buffer) {
   const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
   const sheetName = wb.SheetNames[0];
@@ -29,8 +36,8 @@ function extractTotalsFromWorkbook(buffer: Buffer) {
   // Find header row that contains "TransactionType" and "Amount"
   let headerRowIdx = -1;
   for (let i = 0; i < Math.min(rows.length, 50); i++) {
-    const row = rows[i] || [];
-    const norm = row.map((c) => String(c ?? "").trim().toLowerCase());
+    const row = Array.isArray(rows[i]) ? (rows[i] as unknown[]) : [];
+    const norm = row.map((c) => normHeaderCell(c));
     if (norm.includes("transactiontype") && norm.includes("amount")) {
       headerRowIdx = i;
       break;
@@ -40,9 +47,10 @@ function extractTotalsFromWorkbook(buffer: Buffer) {
     throw new Error("Could not find the TransactionType/Amount header row in the spreadsheet.");
   }
 
-  const header = (rows[headerRowIdx] || []).map((c) => String(c ?? "").trim());
-  const idxTransactionType = header.findIndex((h) => h.toLowerCase() === "transactiontype");
-  const idxAmount = header.findIndex((h) => h.toLowerCase() === "amount");
+  const headerRow = Array.isArray(rows[headerRowIdx]) ? (rows[headerRowIdx] as unknown[]) : [];
+  const headerNorm = headerRow.map((c) => normHeaderCell(c));
+  const idxTransactionType = headerNorm.findIndex((h) => h === "transactiontype");
+  const idxAmount = headerNorm.findIndex((h) => h === "amount");
   if (idxTransactionType === -1 || idxAmount === -1) {
     throw new Error("Spreadsheet headers are missing TransactionType or Amount columns.");
   }
