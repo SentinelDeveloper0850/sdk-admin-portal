@@ -153,8 +153,9 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
 
       if (json.success) {
         message.success(json.message || "Receipts submitted successfully!");
-        resetForm();
+        // Close first (controlled by parent), then clear local form state
         onClose();
+        resetForm();
         onSubmitted();
       } else {
         message.error(json.message || "Error submitting receipts");
