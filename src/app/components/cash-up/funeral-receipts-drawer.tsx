@@ -72,8 +72,10 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
     pmWatch !== "bank_deposit" ||
     (typeof wBankDepositReference === "string" && wBankDepositReference.trim().length > 0);
 
+  const attachmentsOk = pmWatch === "cash" ? true : fileList.length > 0;
+
   const canSubmit =
-    fileList.length > 0 &&
+    attachmentsOk &&
     !processing &&
     !uploading &&
     dateOk &&
@@ -94,10 +96,18 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
 
       const files: File[] = fileList.map((file) => file.originFileObj as File);
 
+      if (pmWatch !== "cash" && files.length === 0) {
+        message.error("Please upload the supporting POP/receipt file.");
+        return;
+      }
+
       // Upload files to Cloudinary (collect URLs)
-      setUploading(true);
-      const uploadedFiles = await uploadFiles(files, submissionIdSuffix);
-      setUploading(false);
+      const uploadedFiles: any[] = [];
+      if (files.length > 0) {
+        setUploading(true);
+        uploadedFiles.push(...(await uploadFiles(files, submissionIdSuffix)));
+        setUploading(false);
+      }
 
       const pm = String(values.paymentMethod || "").toLowerCase();
       const submitted = Number(values.submittedAmount || 0);
@@ -129,7 +139,7 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
 
       const submissionData = {
         submissionIdSuffix,
-        files: uploadedFiles,
+        files: uploadedFiles, // can be [] for cash
         date: dayjs(values.date).format("YYYY-MM-DD"),
         invoiceNumber: inv,
         submittedAmount: submitted,
@@ -354,26 +364,35 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) 
             />
           </Form.Item>
 
-          {/* File Upload Section */}
-          <div className="space-y-4">
-            <Title level={5}>Upload Receipt Images</Title>
+          {/* File Upload Section (not required for cash) */}
+          {pmWatch === "cash" ? (
+            <Alert
+              type="info"
+              showIcon
+              message="No upload required"
+              description="Cash payments don't require a POP/receipt upload."
+            />
+          ) : (
+            <div className="space-y-4">
+              <Title level={5}>Upload Supporting POP/Receipts</Title>
 
-            <Upload.Dragger {...uploadProps}>
-              <p className="ant-upload-drag-icon">
-                <UploadOutlined />
-              </p>
-              <p className="ant-upload-text">Click or drag receipt images to upload</p>
-              <p className="ant-upload-hint">
-                Support for JPG, PNG, PDF files. Max file size: 10MB
-              </p>
-            </Upload.Dragger>
+              <Upload.Dragger {...uploadProps}>
+                <p className="ant-upload-drag-icon">
+                  <UploadOutlined />
+                </p>
+                <p className="ant-upload-text">Click or drag files to upload</p>
+                <p className="ant-upload-hint">
+                  Support for JPG, PNG, PDF files. Max file size: 10MB
+                </p>
+              </Upload.Dragger>
 
-            {uploading && (
-              <div className="text-center py-4">
-                <div className="text-blue-500">Uploading and processing...</div>
-              </div>
-            )}
-          </div>
+              {uploading && (
+                <div className="text-center py-4">
+                  <div className="text-blue-500">Uploading and processing...</div>
+                </div>
+              )}
+            </div>
+          )}
         </Form>
       </div>
     </Drawer>
