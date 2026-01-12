@@ -10,6 +10,7 @@ export const roleLabels: Record<string, string> = {
   hr_manager: "HR Manager",
   finance_officer: "Finance Officer",
   cashier: "Cashier",
+  cashup_reviewer: "Cashup Reviewer",
   eft_reviewer: "EFT Reviewer",
   eft_allocator: "EFT Allocator",
   easypay_reviewer: "Easypay Reviewer",
@@ -50,6 +51,7 @@ export const groupedRoles = [
       { key: "hr_manager", label: "HR Manager", description: "Manages employees, leave and contracts" },
       { key: "finance_officer", label: "Finance Officer", description: "Handles payments and reconciliation" },
       { key: "cashier", label: "Cashier", description: "Captures payments and issues receipts" },
+      { key: "cashup_reviewer", label: "Cashup Reviewer", description: "Reviews and audits daily cashup submissions" },
       { key: "eft_reviewer", label: "EFT Reviewer", description: "Reviews EFT imports and transactions" },
       { key: "eft_allocator", label: "EFT Allocator", description: "Allocates EFT transactions to policies" },
       { key: "easypay_reviewer", label: "Easypay Reviewer", description: "Reviews Easypay imports and transactions" },
@@ -90,6 +92,7 @@ export const additionalRoles = [
   "hr_manager", // Handles leave, employees, contracts
   "finance_officer", // Handles payments, reports, reconciliations
   "cashier", // Captures payments, issues receipts
+  "cashup_reviewer", // Reviews and audits cashup submissions
   "eft_reviewer", // Reviews EFT imports and transactions
   "eft_allocator", // Allocates EFT transactions to policies
   "easypay_reviewer", // Reviews Easypay imports and transactions
