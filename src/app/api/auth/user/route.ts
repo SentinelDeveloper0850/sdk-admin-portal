@@ -6,15 +6,18 @@ import jwt from "jsonwebtoken";
 import UsersModel from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in the environment variables.");
-}
-
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET ?? null;
 const JWT_ISSUER = "sdk-admin-portal";
 const JWT_AUDIENCE = "sdk-admin-portal-web";
 
 export async function GET() {
+  if (!JWT_SECRET) {
+    return NextResponse.json(
+      { message: "Server misconfigured (missing JWT secret)" },
+      { status: 500 }
+    );
+  }
+
   const token = (await cookies()).get("auth-token")?.value;
 
   if (!token) {

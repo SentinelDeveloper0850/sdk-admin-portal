@@ -2,11 +2,9 @@ import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in the environment variables.");
-}
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+const JWT_SECRET = process.env.JWT_SECRET
+  ? new TextEncoder().encode(process.env.JWT_SECRET)
+  : null;
 const JWT_ISSUER = "sdk-admin-portal";
 const JWT_AUDIENCE = "sdk-admin-portal-web";
 
@@ -28,6 +26,11 @@ export async function middleware(request: NextRequest) {
 
   // Only run if the route is protected
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
+    // If the server is misconfigured, fail closed for protected routes.
+    if (!JWT_SECRET) {
+      return NextResponse.redirect(new URL("/auth/signin", request.url));
+    }
+
     const token = request.cookies.get("auth-token")?.value;
 
     if (!token) {
