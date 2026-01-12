@@ -87,7 +87,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching cash up submissions:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch cash up submissions" },
+      {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch cash up submissions",
+      },
       { status: 500 }
     );
   }

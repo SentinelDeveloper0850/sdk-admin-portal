@@ -4,14 +4,13 @@ import mongoose, { ConnectionStates } from "mongoose";
 const connectionString =
   process.env.MONGODB_ATLAS_URI;
 
-if (!connectionString)
-  throw new Error(
-    "🧭 ~ Please define MONGODB_ATLAS_URI environment variable inside .env"
-  );
-
 let cachedConnection: typeof mongoose | null = null;
 
 export async function connectToDatabase() {
+  if (!connectionString) {
+    throw new Error("Please define MONGODB_ATLAS_URI in the environment variables.");
+  }
+
   if (mongoose.connection.readyState != ConnectionStates.connected) {
     try {
       if (cachedConnection) {
