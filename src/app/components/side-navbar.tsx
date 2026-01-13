@@ -67,12 +67,13 @@ const SideNavBar = () => {
           icon: <FileText size={18} />,
           url: "/news",
         },
-        {
-          id: "knowledge-hub",
-          name: "Knowledge Hub",
-          icon: <FileText size={18} />,
-          url: "/knowledge-hub",
-        },
+        // Knowledge Hub is intentionally hidden until ready for wider rollout.
+        // {
+        //   id: "knowledge-hub",
+        //   name: "Knowledge Hub",
+        //   icon: <FileText size={18} />,
+        //   url: "/knowledge-hub",
+        // },
       ],
     },
     {

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "@tiptap/extension-link";
+import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
+import { Extension } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { Config as DomPurifyConfig } from "dompurify";
@@ -10,6 +12,7 @@ import {
   Bold,
   Braces,
   Code,
+  CornerDownLeft,
   Eraser,
   Heading2,
   Heading3,
@@ -24,7 +27,7 @@ import {
   Underline as UnderlineIcon,
   Undo2,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import TurndownService from "turndown";
 
 import { Button } from "@/app/components/ui/button";
@@ -35,49 +38,92 @@ type Props = {
   onChange?: (html: string, md: string) => void;
 };
 
+const FONT_SIZE_CLASSES = ["text-xs", "text-sm", "text-base", "text-lg", "text-xl"] as const;
+type FontSizeClass = (typeof FONT_SIZE_CLASSES)[number];
+
+const FontSize = Extension.create({
+  name: "fontSize",
+  addCommands() {
+    return {
+      setFontSize:
+        (size: FontSizeClass) =>
+        ({ editor, chain }) => {
+          const current = String(editor.getAttributes("textStyle")?.class || "");
+          const tokens = current.split(/\s+/).filter(Boolean);
+          const without = tokens.filter((t) => !FONT_SIZE_CLASSES.includes(t as any));
+          const next = [...without, size].join(" ");
+          return chain().setMark("textStyle", { class: next }).run();
+        },
+      unsetFontSize:
+        () =>
+        ({ editor, chain }) => {
+          const current = String(editor.getAttributes("textStyle")?.class || "");
+          const tokens = current.split(/\s+/).filter(Boolean);
+          const next = tokens.filter((t) => !FONT_SIZE_CLASSES.includes(t as any)).join(" ");
+          if (!next) return chain().unsetMark("textStyle").run();
+          return chain().setMark("textStyle", { class: next }).run();
+        },
+    };
+  },
+});
+
 export default function RichTextEditor({ valueHtml, placeholder, onChange }: Props) {
-  const SANITIZE: DomPurifyConfig = {
-    ALLOWED_TAGS: [
-      "p",
-      "br",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      "strong",
-      "em",
-      "u",
-      "s",
-      "a",
-      "ul",
-      "ol",
-      "li",
-      "blockquote",
-      "pre",
-      "code",
-      "hr",
-      "span",
-    ],
-    ALLOWED_ATTR: ["href", "target", "rel", "class"],
-  };
+  const SANITIZE: DomPurifyConfig = useMemo(
+    () => ({
+      ALLOWED_TAGS: [
+        "p",
+        "br",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "strong",
+        "em",
+        "u",
+        "s",
+        "a",
+        "ul",
+        "ol",
+        "li",
+        "blockquote",
+        "pre",
+        "code",
+        "hr",
+        "span",
+      ],
+      // We support limited font sizes via Tailwind classes on spans.
+      ALLOWED_ATTR: ["href", "target", "rel", "class"],
+    }),
+    []
+  );
+
+  // Prevent a controlled-component feedback loop (which breaks headings/newlines).
+  const lastEmittedHtmlRef = useRef<string>("");
+  const isApplyingExternalValueRef = useRef(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
+      TextStyle,
+      FontSize,
       Link.configure({ openOnClick: false }),
     ],
     content: valueHtml || "",
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "prose dark:prose-invert max-w-none min-h-48 rounded-md border bg-background px-3 py-2 text-sm",
+        class:
+          "prose dark:prose-invert max-w-none min-h-48 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none",
       },
     },
     onUpdate: ({ editor }) => {
+      if (isApplyingExternalValueRef.current) return;
       const html = editor.getHTML();
       const clean = DOMPurify.sanitize(html, SANITIZE) as string;
+      lastEmittedHtmlRef.current = clean;
       const turndown = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
       // Preserve single line breaks inside paragraphs
       // TipTap outputs <p>..</p> with <br> for soft breaks; turndown by default handles <br> to \n
@@ -88,9 +134,14 @@ export default function RichTextEditor({ valueHtml, placeholder, onChange }: Pro
 
   useEffect(() => {
     if (!editor) return;
-    if (typeof valueHtml === "string" && valueHtml !== editor.getHTML()) {
-      editor.commands.setContent(valueHtml);
-    }
+    if (typeof valueHtml !== "string") return;
+    // Ignore updates that originated from this editor instance.
+    if (valueHtml === lastEmittedHtmlRef.current) return;
+
+    // External update (e.g. loading existing doc for editing).
+    isApplyingExternalValueRef.current = true;
+    editor.commands.setContent(valueHtml, false);
+    isApplyingExternalValueRef.current = false;
   }, [valueHtml, editor]);
 
   if (!editor) return null;
@@ -104,6 +155,11 @@ export default function RichTextEditor({ valueHtml, placeholder, onChange }: Pro
     }
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   };
+
+  const activeFontSize = (() => {
+    const cls = String(editor.getAttributes("textStyle")?.class || "");
+    return FONT_SIZE_CLASSES.find((c) => cls.split(/\s+/).includes(c)) || "";
+  })();
 
   return (
     <div className="space-y-2">
@@ -133,6 +189,24 @@ export default function RichTextEditor({ valueHtml, placeholder, onChange }: Pro
 
         <span className="mx-2 inline-block h-6 w-px bg-border align-middle" />
 
+        <select
+          className="h-9 rounded-md border bg-background px-2 text-sm"
+          value={activeFontSize}
+          onChange={(e) => {
+            const v = e.target.value as FontSizeClass | "";
+            if (!v) editor.chain().focus().unsetFontSize().run();
+            else editor.chain().focus().setFontSize(v).run();
+          }}
+        >
+          <option value="">Font size</option>
+          <option value="text-xs">Small</option>
+          <option value="text-sm">Normal</option>
+          <option value="text-lg">Large</option>
+          <option value="text-xl">Extra large</option>
+        </select>
+
+        <span className="mx-2 inline-block h-6 w-px bg-border align-middle" />
+
         <Button variant="outline" size="sm" onClick={() => editor.chain().focus().toggleBulletList().run()} className={editor.isActive("bulletList") ? "bg-muted" : ""}>
           <List className="h-4 w-4" />
         </Button>
@@ -154,6 +228,9 @@ export default function RichTextEditor({ valueHtml, placeholder, onChange }: Pro
         <Button variant="outline" size="sm" onClick={promptLink} className={editor.isActive("link") ? "bg-muted" : ""}>
           <LinkIcon className="h-4 w-4" />
         </Button>
+        <Button variant="outline" size="sm" title="Line break" onClick={() => editor.chain().focus().setHardBreak().run()}>
+          <CornerDownLeft className="h-4 w-4" />
+        </Button>
 
         <span className="mx-2 inline-block h-6 w-px bg-border align-middle" />
 
@@ -174,7 +251,7 @@ export default function RichTextEditor({ valueHtml, placeholder, onChange }: Pro
         </div>
       ) : null}
 
-      <div className="rounded-md border">
+      <div className="rounded-md">
         <EditorContent editor={editor} />
       </div>
     </div>

@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
+import { Card } from "antd";
+
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { ERoles } from "../../../../types/roles.enum";
 
@@ -72,55 +74,65 @@ function CreateKnowledgeArticleInner() {
           onChange={(e) => setTags(e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
         />
 
-        <RichTextEditor
-          valueHtml={bodyHtml}
-          placeholder="Write article…"
-          onChange={(html, md) => {
-            setBodyHtml(html);
-            setBodyMd(md);
-          }}
-        />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <div className="text-sm font-medium mb-2">Content</div>
+            <RichTextEditor
+              valueHtml={bodyHtml}
+              placeholder="Write article…"
+              onChange={(html, md) => {
+                setBodyHtml(html);
+                setBodyMd(md);
+              }}
+            />
+          </div>
+          <div>
+            <div className="text-sm font-medium mb-2">Preview</div>
+            <Card size="small" className="h-full">
+              {bodyHtml ? (
+                <article
+                  className="prose dark:prose-invert max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(bodyHtml, {
+                      ALLOWED_TAGS: [
+                        "p",
+                        "br",
+                        "h1",
+                        "h2",
+                        "h3",
+                        "h4",
+                        "h5",
+                        "h6",
+                        "strong",
+                        "em",
+                        "u",
+                        "s",
+                        "a",
+                        "ul",
+                        "ol",
+                        "li",
+                        "blockquote",
+                        "pre",
+                        "code",
+                        "hr",
+                        "span",
+                      ],
+                      ALLOWED_ATTR: ["href", "target", "rel", "class"],
+                    }) as string,
+                  }}
+                />
+              ) : (
+                <div className="text-sm text-muted-foreground">Start writing to see a live preview.</div>
+              )}
+            </Card>
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-2">
         <button className="rounded border px-3 py-1 text-sm" onClick={handleSubmit} disabled={saving}>
           {saving ? "Saving..." : "Save draft"}
         </button>
-      </div>
-
-      <div className="pt-4">
-        <h2 className="text-sm font-semibold mb-2">Preview</h2>
-        <article
-          className="prose dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(bodyHtml, {
-              ALLOWED_TAGS: [
-                "p",
-                "br",
-                "h1",
-                "h2",
-                "h3",
-                "h4",
-                "h5",
-                "h6",
-                "strong",
-                "em",
-                "u",
-                "s",
-                "a",
-                "ul",
-                "ol",
-                "li",
-                "blockquote",
-                "pre",
-                "code",
-                "hr",
-                "span",
-              ],
-              ALLOWED_ATTR: ["href", "target", "rel", "class"],
-            }) as string,
-          }}
-        />
       </div>
     </div>
   );
