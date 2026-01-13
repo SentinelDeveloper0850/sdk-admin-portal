@@ -54,27 +54,27 @@ const SideNavBar = () => {
       url: "/tasks",
       // No allowedRoles => visible to all logged in users
     },
-    {
-      id: 9,
-      name: "Communication",
-      icon: <FileText size={18} />,
-      url: "/communication",
-      group: "Communication",
-      children: [
-        {
-          id: "news",
-          name: "News & Announcements",
-          icon: <FileText size={18} />,
-          url: "/news",
-        },
-        {
-          id: "knowledge-hub",
-          name: "Knowledge Hub",
-          icon: <FileText size={18} />,
-          url: "/knowledge-hub",
-        },
-      ],
-    },
+    // {
+    //   id: 9,
+    //   name: "Communication",
+    //   icon: <FileText size={18} />,
+    //   url: "/communication",
+    //   group: "Communication",
+    //   children: [
+    //     {
+    //       id: "news",
+    //       name: "News & Announcements",
+    //       icon: <FileText size={18} />,
+    //       url: "/news",
+    //     },
+    //     {
+    //       id: "knowledge-hub",
+    //       name: "Knowledge Hub",
+    //       icon: <FileText size={18} />,
+    //       url: "/knowledge-hub",
+    //     },
+    //   ],
+    // },
     {
       id: 3,
       name: "Operations",
