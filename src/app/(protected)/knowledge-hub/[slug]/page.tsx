@@ -5,12 +5,15 @@ import Link from "next/link";
 import { useCallback } from "react";
 import useSWR from "swr";
 
+import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
+import { ERoles } from "@/types/roles.enum";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function KnowledgeArticleDetailPage({ params }: { params: { slug: string } }) {
-  const { isAdmin } = useRole();
+  const { hasRole } = useRole();
+  const isAdmin = hasRole(ERoles.Admin);
   const { data, isLoading, mutate } = useSWR(`/api/knowledge/${params.slug}`, fetcher);
 
   const doc = data;
@@ -32,33 +35,36 @@ export default function KnowledgeArticleDetailPage({ params }: { params: { slug:
 
   return (
     <div className="p-4 space-y-4">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold">{doc.title}</h1>
-        <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
-          <span>{doc.category}</span>
-          {doc.publishedAt ? <span>• Published {new Date(doc.publishedAt).toLocaleString()}</span> : null}
-          {doc.updatedAt ? <span>• Updated {new Date(doc.updatedAt).toLocaleString()}</span> : null}
-          {isAdmin ? <span className="font-medium">• {doc.status}</span> : null}
-        </div>
-        {doc.summary ? <p className="text-sm text-muted-foreground">{doc.summary}</p> : null}
-      </div>
+      <PageHeader
+        title={doc.title}
+        subtitle={doc.summary ? String(doc.summary) : null}
+        actions={[
+          isAdmin ? (
+            <Link key="edit" className="rounded border px-3 py-1 text-sm" href={`/knowledge-hub/${doc.slug}/edit`}>
+              Edit
+            </Link>
+          ) : null,
+          isAdmin ? (
+            doc.status === "PUBLISHED" ? (
+              <button key="unpublish" className="rounded border px-3 py-1 text-sm" onClick={handleUnpublish}>
+                Unpublish
+              </button>
+            ) : (
+              <button key="publish" className="rounded border px-3 py-1 text-sm" onClick={handlePublish}>
+                Publish
+              </button>
+            )
+          ) : null,
+        ].filter(Boolean)}
+        noDivider
+      />
 
-      {isAdmin ? (
-        <div className="flex flex-wrap gap-2">
-          <Link className="rounded border px-3 py-1 text-sm" href={`/knowledge-hub/${doc.slug}/edit`}>
-            Edit
-          </Link>
-          {doc.status === "PUBLISHED" ? (
-            <button className="rounded border px-3 py-1 text-sm" onClick={handleUnpublish}>
-              Unpublish
-            </button>
-          ) : (
-            <button className="rounded border px-3 py-1 text-sm" onClick={handlePublish}>
-              Publish
-            </button>
-          )}
-        </div>
-      ) : null}
+      <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
+        <span>{doc.category}</span>
+        {doc.publishedAt ? <span>• Published {new Date(doc.publishedAt).toLocaleString()}</span> : null}
+        {doc.updatedAt ? <span>• Updated {new Date(doc.updatedAt).toLocaleString()}</span> : null}
+        {isAdmin ? <span className="font-medium">• {doc.status}</span> : null}
+      </div>
 
       {doc.tags && doc.tags.length ? (
         <div className="text-xs text-muted-foreground">Tags: {doc.tags.join(", ")}</div>

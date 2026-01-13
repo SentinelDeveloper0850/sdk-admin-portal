@@ -4,9 +4,16 @@ import Link from "next/link";
 import { useMemo } from "react";
 import useSWRInfinite from "swr/infinite";
 
+import { Button } from "antd";
+
+import PageHeader from "@/app/components/page-header";
+import { useRole } from "@/app/hooks/use-role";
+import { ERoles } from "@/types/roles.enum";
+
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function NewsListPage() {
+  const { hasRole } = useRole();
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && !previousPageData.nextCursor) return null;
     const cursor = pageIndex === 0 ? "" : `&cursor=${previousPageData.nextCursor}`;
@@ -30,9 +37,20 @@ export default function NewsListPage() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">News & Announcements</h1>
-      </div>
+      <PageHeader
+        title="News & Announcements"
+        subtitle="Company updates, operational alerts, and staff announcements."
+        actions={[
+          hasRole([ERoles.Admin]) ? (
+            <Link key="create-announcement" href="/news/create">
+              <Button type="primary" className="text-black">
+                Create Announcement
+              </Button>
+            </Link>
+          ) : null,
+        ].filter(Boolean)}
+        noDivider
+      />
 
       <div className="grid gap-3">
         {items.map((item) => (

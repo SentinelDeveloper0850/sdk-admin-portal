@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 
+import { Button } from "antd";
+
+import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
+import { ERoles } from "@/types/roles.enum";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -26,7 +30,9 @@ const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 export default function KnowledgeHubListPage() {
-  const { isAdmin } = useRole();
+  const { hasRole } = useRole();
+  const isAdmin = hasRole(ERoles.Admin);
+
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
@@ -60,17 +66,20 @@ export default function KnowledgeHubListPage() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Knowledge Hub</h1>
-          <p className="text-sm text-muted-foreground">Company documents, SOPs, and how-to guides.</p>
-        </div>
-        {isAdmin ? (
-          <Link className="rounded border px-3 py-1 text-sm" href="/knowledge-hub/create">
-            New article
-          </Link>
-        ) : null}
-      </div>
+      <PageHeader
+        title="Knowledge Hub"
+        subtitle="Company documents, SOPs, and how-to guides."
+        actions={[
+          hasRole([ERoles.Admin]) ? (
+            <Link key="create-knowledge-article" href="/knowledge-hub/create">
+              <Button type="primary" className="text-black">
+                Create Article
+              </Button>
+            </Link>
+          ) : null,
+        ].filter(Boolean)}
+        noDivider
+      />
 
       <div className="grid gap-2 md:grid-cols-3">
         <input
