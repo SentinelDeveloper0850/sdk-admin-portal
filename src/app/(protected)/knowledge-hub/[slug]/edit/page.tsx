@@ -3,7 +3,10 @@
 import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
 import useSWR from "swr";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
@@ -14,6 +17,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 function EditKnowledgeArticleInner({ params }: { params: { slug: string } }) {
   const { data, isLoading, mutate } = useSWR(`/api/knowledge/${params.slug}`, fetcher);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -21,6 +25,9 @@ function EditKnowledgeArticleInner({ params }: { params: { slug: string } }) {
   const [tags, setTags] = useState<string[]>([]);
   const [bodyMd, setBodyMd] = useState("");
   const [bodyHtml, setBodyHtml] = useState("");
+  const [editorMode, setEditorMode] = useState<"markdown" | "rich">("markdown");
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -35,17 +42,56 @@ function EditKnowledgeArticleInner({ params }: { params: { slug: string } }) {
 
   const tagsString = useMemo(() => tags.join(","), [tags]);
 
+  const applyMarkdown = useCallback((md: string, sourceFileName?: string) => {
+    setUploadError(null);
+    setBodyMd(md);
+    // avoid stale HTML when editing markdown
+    setBodyHtml("");
+    if (sourceFileName) setUploadedFileName(sourceFileName);
+  }, []);
+
+  const handlePickFile = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFile = useCallback(
+    async (file: File | null | undefined) => {
+      if (!file) return;
+      const name = file.name || "";
+      const looksLikeMd = /\.md$/i.test(name) || file.type === "text/markdown";
+      if (!looksLikeMd) {
+        setUploadError("Please upload a Markdown (.md) file.");
+        return;
+      }
+      try {
+        const text = await file.text();
+        applyMarkdown(text, name || "uploaded.md");
+        setEditorMode("markdown");
+      } catch {
+        setUploadError("Could not read the file. Please try again.");
+      }
+    },
+    [applyMarkdown],
+  );
+
   const handleSave = useCallback(async () => {
     if (!data?.id) return;
     setSaving(true);
     const res = await fetch(`/api/knowledge/${data.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, summary, bodyMd, bodyHtml, category, tags }),
+      body: JSON.stringify({
+        title,
+        summary,
+        bodyMd,
+        bodyHtml: editorMode === "markdown" ? "" : bodyHtml,
+        category,
+        tags,
+      }),
     });
     setSaving(false);
     if (res.ok) mutate();
-  }, [data?.id, title, summary, bodyMd, bodyHtml, category, tags, mutate]);
+  }, [data?.id, title, summary, bodyMd, bodyHtml, category, tags, mutate, editorMode]);
 
   const handlePublish = useCallback(async () => {
     if (!data?.id) return;
@@ -102,14 +148,81 @@ function EditKnowledgeArticleInner({ params }: { params: { slug: string } }) {
           onChange={(e) => setTags(e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
         />
 
-        <RichTextEditor
-          valueHtml={bodyHtml}
-          placeholder="Write article…"
-          onChange={(html, md) => {
-            setBodyHtml(html);
-            setBodyMd(md);
-          }}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium">Editor</span>
+          <button
+            type="button"
+            className={`rounded border px-2 py-1 text-sm ${editorMode === "markdown" ? "bg-muted" : ""}`}
+            onClick={() => setEditorMode("markdown")}
+          >
+            Markdown
+          </button>
+          <button
+            type="button"
+            className={`rounded border px-2 py-1 text-sm ${editorMode === "rich" ? "bg-muted" : ""}`}
+            onClick={() => setEditorMode("rich")}
+          >
+            Rich text
+          </button>
+          <span className="text-xs text-muted-foreground">
+            {editorMode === "markdown" ? "Upload or paste Markdown." : "Uses the built-in rich text editor."}
+          </span>
+        </div>
+
+        {editorMode === "markdown" ? (
+          <div className="space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".md,text/markdown"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0])}
+            />
+
+            <div
+              className="rounded border border-dashed px-3 py-3 text-sm"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void handleFile(e.dataTransfer.files?.[0]);
+              }}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">Drop a</span>
+                <span className="font-medium">.md</span>
+                <span className="text-muted-foreground">file here, or</span>
+                <button type="button" className="underline" onClick={handlePickFile}>
+                  choose a file
+                </button>
+                <span className="text-muted-foreground">.</span>
+              </div>
+              {uploadedFileName ? (
+                <div className="mt-2 text-xs text-muted-foreground">Loaded: {uploadedFileName}</div>
+              ) : null}
+              {uploadError ? <div className="mt-2 text-xs text-red-600">{uploadError}</div> : null}
+            </div>
+
+            <textarea
+              className="rounded border px-3 py-2 h-60 font-mono"
+              placeholder="Write Markdown here..."
+              value={bodyMd}
+              onChange={(e) => applyMarkdown(e.target.value)}
+            />
+          </div>
+        ) : (
+          <RichTextEditor
+            valueHtml={bodyHtml}
+            placeholder="Write article…"
+            onChange={(html, md) => {
+              setBodyHtml(html);
+              setBodyMd(md);
+            }}
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -130,37 +243,45 @@ function EditKnowledgeArticleInner({ params }: { params: { slug: string } }) {
 
       <div className="pt-4">
         <h2 className="text-sm font-semibold mb-2">Preview</h2>
-        <article
-          className="prose dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(bodyHtml, {
-              ALLOWED_TAGS: [
-                "p",
-                "br",
-                "h1",
-                "h2",
-                "h3",
-                "h4",
-                "h5",
-                "h6",
-                "strong",
-                "em",
-                "u",
-                "s",
-                "a",
-                "ul",
-                "ol",
-                "li",
-                "blockquote",
-                "pre",
-                "code",
-                "hr",
-                "span",
-              ],
-              ALLOWED_ATTR: ["href", "target", "rel", "class"],
-            }) as string,
-          }}
-        />
+        {editorMode === "markdown" ? (
+          <article className="prose dark:prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+              {bodyMd}
+            </ReactMarkdown>
+          </article>
+        ) : (
+          <article
+            className="prose dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(bodyHtml, {
+                ALLOWED_TAGS: [
+                  "p",
+                  "br",
+                  "h1",
+                  "h2",
+                  "h3",
+                  "h4",
+                  "h5",
+                  "h6",
+                  "strong",
+                  "em",
+                  "u",
+                  "s",
+                  "a",
+                  "ul",
+                  "ol",
+                  "li",
+                  "blockquote",
+                  "pre",
+                  "code",
+                  "hr",
+                  "span",
+                ],
+                ALLOWED_ATTR: ["href", "target", "rel", "class"],
+              }) as string,
+            }}
+          />
+        )}
       </div>
     </div>
   );
