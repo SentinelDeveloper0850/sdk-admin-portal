@@ -46,7 +46,10 @@ const KnowledgeArticleSchema = new Schema(
   { timestamps: true, collection: "knowledge_articles" }
 );
 
-KnowledgeArticleSchema.index({ title: "text", bodyMd: "text", tags: 1 });
+// NOTE: MongoDB compound text indexes cannot include a multikey (array) field as a non-text key.
+// `tags` is an array, so it must be part of the text keys (or indexed separately).
+KnowledgeArticleSchema.index({ title: "text", bodyMd: "text", tags: "text" });
+KnowledgeArticleSchema.index({ tags: 1 });
 KnowledgeArticleSchema.index({ status: 1, publishedAt: -1, _id: -1 });
 KnowledgeArticleSchema.index({ category: 1, publishedAt: -1, _id: -1 });
 
