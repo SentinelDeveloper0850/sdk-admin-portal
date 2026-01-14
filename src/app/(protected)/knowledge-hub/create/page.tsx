@@ -4,79 +4,44 @@ import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Select } from "antd";
-import { useCallback, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeSanitize from "rehype-sanitize";
-import remarkGfm from "remark-gfm";
+import type { OutputData } from "@editorjs/editorjs";
+import { useCallback, useMemo, useState } from "react";
 
+import { editorJsToHtml, editorJsToMarkdown } from "@/app/components/editor/editorjs-converters";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { ERoles } from "../../../../types/roles.enum";
 
-const RichTextEditor = dynamic(() => import("@/app/components/editor/RichTextEditor"), { ssr: false });
+const EditorJsEditor = dynamic(() => import("@/app/components/editor/EditorJsEditor"), { ssr: false });
 
 function CreateKnowledgeArticleInner() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [category, setCategory] = useState("GENERAL");
   const [tags, setTags] = useState<string[]>([]);
-  const [bodyMd, setBodyMd] = useState("");
-  const [bodyHtml, setBodyHtml] = useState("");
-  const [editorMode, setEditorMode] = useState<"markdown" | "rich">("markdown");
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [bodyJson, setBodyJson] = useState<OutputData | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const applyMarkdown = useCallback(
-    (md: string, sourceFileName?: string) => {
-      setUploadError(null);
-      setBodyMd(md);
-      // In markdown mode we intentionally clear HTML to avoid stale/incorrect previews & saves.
-      setBodyHtml("");
-
-      if (sourceFileName) {
-        setUploadedFileName(sourceFileName);
-        if (!title.trim()) {
-          const base = sourceFileName.replace(/\.md$/i, "");
-          const pretty = base.replace(/[_-]+/g, " ").trim();
-          if (pretty) setTitle(pretty);
-        }
-      }
-    },
-    [title],
-  );
-
-  const handlePickFile = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleFile = useCallback(
-    async (file: File | null | undefined) => {
-      if (!file) return;
-      const name = file.name || "";
-      const looksLikeMd = /\.md$/i.test(name) || file.type === "text/markdown";
-      if (!looksLikeMd) {
-        setUploadError("Please upload a Markdown (.md) file.");
-        return;
-      }
-      try {
-        const text = await file.text();
-        applyMarkdown(text, name || "uploaded.md");
-        setEditorMode("markdown");
-      } catch {
-        setUploadError("Could not read the file. Please try again.");
-      }
-    },
-    [applyMarkdown],
-  );
+  const derived = useMemo(() => {
+    const bodyHtml = editorJsToHtml(bodyJson);
+    const bodyMd = editorJsToMarkdown(bodyJson);
+    return { bodyHtml, bodyMd };
+  }, [bodyJson]);
 
   const handleSubmit = useCallback(async () => {
     setSaving(true);
     const res = await fetch("/api/knowledge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, summary, bodyMd, bodyHtml, category, tags }),
+      body: JSON.stringify({
+        title,
+        summary,
+        bodyMd: derived.bodyMd || " ",
+        bodyHtml: derived.bodyHtml || "",
+        bodyJson,
+        category,
+        tags,
+      }),
     });
     if (!res.ok) {
       setSaving(false);
@@ -84,7 +49,7 @@ function CreateKnowledgeArticleInner() {
     }
     const json = await res.json();
     router.push(`/knowledge-hub/${json.slug}`);
-  }, [title, summary, bodyMd, bodyHtml, category, tags, router]);
+  }, [title, summary, derived.bodyMd, derived.bodyHtml, bodyJson, category, tags, router]);
 
   return (
     <div className="p-4 space-y-4">
@@ -123,85 +88,12 @@ function CreateKnowledgeArticleInner() {
           style={{ width: "100%" }}
         />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium">Editor</span>
-          <button
-            type="button"
-            className={`rounded border px-2 py-1 text-sm ${editorMode === "markdown" ? "bg-muted" : ""}`}
-            onClick={() => {
-              setEditorMode("markdown");
-              // ensure markdown saves don't accidentally prefer stale rich HTML
-              setBodyHtml("");
-            }}
-          >
-            Markdown
-          </button>
-          <button
-            type="button"
-            className={`rounded border px-2 py-1 text-sm ${editorMode === "rich" ? "bg-muted" : ""}`}
-            onClick={() => setEditorMode("rich")}
-          >
-            Rich text
-          </button>
-          <span className="text-xs text-muted-foreground">
-            {editorMode === "markdown" ? "Upload or paste Markdown." : "Uses the built-in rich text editor."}
-          </span>
-        </div>
-
-        {editorMode === "markdown" ? (
-          <div className="space-y-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".md,text/markdown"
-              className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0])}
-            />
-
-            <div
-              className="rounded border border-dashed px-3 py-3 text-sm"
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                void handleFile(e.dataTransfer.files?.[0]);
-              }}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-muted-foreground">Drop a</span>
-                <span className="font-medium">.md</span>
-                <span className="text-muted-foreground">file here, or</span>
-                <button type="button" className="underline" onClick={handlePickFile}>
-                  choose a file
-                </button>
-                <span className="text-muted-foreground">.</span>
-              </div>
-              {uploadedFileName ? (
-                <div className="mt-2 text-xs text-muted-foreground">Loaded: {uploadedFileName}</div>
-              ) : null}
-              {uploadError ? <div className="mt-2 text-xs text-red-600">{uploadError}</div> : null}
-            </div>
-
-            <textarea
-              className="rounded border px-3 py-2 h-60 font-mono w-full"
-              placeholder="Write Markdown here..."
-              value={bodyMd}
-              onChange={(e) => applyMarkdown(e.target.value)}
-            />
-          </div>
-        ) : (
-          <RichTextEditor
-            valueHtml={bodyHtml}
-            placeholder="Write article…"
-            onChange={(html, md) => {
-              setBodyHtml(html);
-              setBodyMd(md);
-            }}
-          />
-        )}
+        <EditorJsEditor
+          placeholder="Write article…"
+          onChange={(data) => {
+            setBodyJson(data);
+          }}
+        />
       </div>
 
       <div className="flex gap-2">
@@ -212,17 +104,11 @@ function CreateKnowledgeArticleInner() {
 
       <div className="pt-4">
         <h2 className="text-sm font-semibold mb-2">Preview</h2>
-        {editorMode === "markdown" ? (
-          <article className="prose dark:prose-invert max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
-              {bodyMd}
-            </ReactMarkdown>
-          </article>
-        ) : (
+        {derived.bodyHtml ? (
           <article
             className="prose dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(bodyHtml, {
+              __html: DOMPurify.sanitize(derived.bodyHtml, {
                 ALLOWED_TAGS: [
                   "p",
                   "br",
@@ -250,6 +136,8 @@ function CreateKnowledgeArticleInner() {
               }) as string,
             }}
           />
+        ) : (
+          <div className="text-sm text-muted-foreground">Start writing to see a preview…</div>
         )}
       </div>
     </div>
