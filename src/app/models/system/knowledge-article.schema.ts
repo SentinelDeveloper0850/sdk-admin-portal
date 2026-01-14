@@ -23,6 +23,8 @@ const KnowledgeArticleSchema = new Schema(
 
     bodyMd: { type: String, required: true },
     bodyHtml: { type: String },
+    // Editor.js raw output data (optional)
+    bodyJson: { type: Schema.Types.Mixed },
 
     status: {
       type: String,
@@ -59,6 +61,7 @@ export interface IKnowledgeArticle extends mongoose.Document {
   summary?: string;
   bodyMd: string;
   bodyHtml?: string;
+  bodyJson?: unknown;
   status: KnowledgeArticleStatus;
   category: KnowledgeArticleCategory;
   tags: string[];
