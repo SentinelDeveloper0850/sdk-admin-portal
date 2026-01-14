@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { title, summary, bodyMd, bodyHtml, category, tags } = body ?? {};
+  const { title, summary, bodyMd, bodyHtml, bodyJson, category, tags } = body ?? {};
 
   if (!title || !bodyMd || !category) {
     return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
     summary: typeof summary === "string" ? summary : undefined,
     bodyMd,
     bodyHtml: typeof bodyHtml === "string" ? bodyHtml : undefined,
+    bodyJson,
     category,
     tags: Array.isArray(tags) ? tags : [],
     status: KnowledgeArticleStatus.DRAFT,
