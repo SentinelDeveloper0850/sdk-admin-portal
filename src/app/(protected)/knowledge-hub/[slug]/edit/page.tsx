@@ -3,7 +3,8 @@
 import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Select } from "antd";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
@@ -39,8 +40,6 @@ function EditKnowledgeArticleInner({ params }: { params: { slug: string } }) {
     setBodyMd(data.bodyMd ?? "");
     setBodyHtml(data.bodyHtml ?? "");
   }, [data]);
-
-  const tagsString = useMemo(() => tags.join(","), [tags]);
 
   const applyMarkdown = useCallback((md: string, sourceFileName?: string) => {
     setUploadError(null);
@@ -141,11 +140,13 @@ function EditKnowledgeArticleInner({ params }: { params: { slug: string } }) {
           <option value="GENERAL">General</option>
         </select>
 
-        <input
-          className="rounded border px-3 py-2"
-          placeholder="Tags (comma separated)"
-          value={tagsString}
-          onChange={(e) => setTags(e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
+        <Select
+          mode="tags"
+          value={tags}
+          onChange={(next) => setTags(Array.isArray(next) ? next.map(String) : [])}
+          tokenSeparators={[","]}
+          placeholder="Tags"
+          style={{ width: "100%" }}
         />
 
         <div className="flex flex-wrap items-center gap-2">
@@ -207,7 +208,7 @@ function EditKnowledgeArticleInner({ params }: { params: { slug: string } }) {
             </div>
 
             <textarea
-              className="rounded border px-3 py-2 h-60 font-mono"
+              className="rounded border px-3 py-2 h-60 font-mono w-full"
               placeholder="Write Markdown here..."
               value={bodyMd}
               onChange={(e) => applyMarkdown(e.target.value)}
