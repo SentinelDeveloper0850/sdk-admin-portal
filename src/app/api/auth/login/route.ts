@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import jwt from "jsonwebtoken";
+
 import { connectToDatabase } from "@/lib/db";
 import { loginUser } from "@/services/auth.service";
 
@@ -21,8 +23,14 @@ export async function POST(request: Request) {
 
     const result = await loginUser(email, password);
 
+    const tokenPayload = jwt.decode(result.token) as jwt.JwtPayload | null;
+    const expiresAt = tokenPayload?.exp ? tokenPayload.exp * 1000 : null;
+
     // Return user and set HttpOnly cookie; do not expose token to client
-    const response = NextResponse.json({ user: result.user }, { status: 200 });
+    const response = NextResponse.json(
+      { user: result.user, session: { expiresAt } },
+      { status: 200 }
+    );
     response.cookies.set("auth-token", result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
