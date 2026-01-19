@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -18,8 +17,6 @@ import {
   NavbarMenuToggle
 } from "@nextui-org/react";
 
-import { logout } from "@/utils/auth";
-
 import { useAuth } from "@/context/auth-context";
 
 import { NotificationBell } from "@/app/components/notifications/notification-bell";
@@ -29,13 +26,11 @@ import { TaskBell } from "./tasks/task-bell";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export default function AppBarOnline() {
-  const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout(); // Clear the token
-    router.push("/auth/signin"); // Redirect to login page
+  const handleLogout = async () => {
+    await logout();
   };
 
   const avatarUrl = user?.avatarUrl || "/default-avatar.png";
