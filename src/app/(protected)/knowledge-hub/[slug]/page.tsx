@@ -3,6 +3,9 @@
 import DOMPurify from "dompurify";
 import Link from "next/link";
 import { useCallback } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
 import useSWR from "swr";
 
 import PageHeader from "@/app/components/page-header";
@@ -103,7 +106,11 @@ export default function KnowledgeArticleDetailPage({ params }: { params: { slug:
           }}
         />
       ) : (
-        <article className="prose dark:prose-invert max-w-none whitespace-pre-wrap">{doc.bodyMd}</article>
+        <article className="prose dark:prose-invert max-w-none">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            {doc.bodyMd}
+          </ReactMarkdown>
+        </article>
       )}
     </div>
   );

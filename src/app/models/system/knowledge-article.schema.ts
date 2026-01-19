@@ -23,6 +23,8 @@ const KnowledgeArticleSchema = new Schema(
 
     bodyMd: { type: String, required: true },
     bodyHtml: { type: String },
+    // Editor.js raw output data (optional)
+    bodyJson: { type: Schema.Types.Mixed },
 
     status: {
       type: String,
@@ -46,7 +48,10 @@ const KnowledgeArticleSchema = new Schema(
   { timestamps: true, collection: "knowledge_articles" }
 );
 
-KnowledgeArticleSchema.index({ title: "text", bodyMd: "text", tags: 1 });
+// NOTE: MongoDB compound text indexes cannot include a multikey (array) field as a non-text key.
+// `tags` is an array, so it must be part of the text keys (or indexed separately).
+KnowledgeArticleSchema.index({ title: "text", bodyMd: "text", tags: "text" });
+KnowledgeArticleSchema.index({ tags: 1 });
 KnowledgeArticleSchema.index({ status: 1, publishedAt: -1, _id: -1 });
 KnowledgeArticleSchema.index({ category: 1, publishedAt: -1, _id: -1 });
 
@@ -56,6 +61,7 @@ export interface IKnowledgeArticle extends mongoose.Document {
   summary?: string;
   bodyMd: string;
   bodyHtml?: string;
+  bodyJson?: unknown;
   status: KnowledgeArticleStatus;
   category: KnowledgeArticleCategory;
   tags: string[];

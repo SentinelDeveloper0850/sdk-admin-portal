@@ -65,7 +65,10 @@ const AnnouncementSchema = new Schema(
   { timestamps: true, collection: "announcements" }
 );
 
-AnnouncementSchema.index({ title: "text", bodyMd: "text", tags: 1 });
+// NOTE: MongoDB compound text indexes cannot include a multikey (array) field as a non-text key.
+// `tags` is an array, so it must be part of the text keys (or indexed separately).
+AnnouncementSchema.index({ title: "text", bodyMd: "text", tags: "text" });
+AnnouncementSchema.index({ tags: 1 });
 AnnouncementSchema.index({ isPinned: -1, publishedAt: -1 });
 AnnouncementSchema.index({ category: 1, publishedAt: -1 });
 
