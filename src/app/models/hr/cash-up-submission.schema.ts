@@ -11,6 +11,7 @@ export interface ICashUpSubmissionSubmission {
   bankName?: string;
   depositorName?: string;
   reasonForCashTransactions?: string;
+  receiptType?: "policy" | "funeral" | "sales";
   notes: string;
   submittedAt: string;
 }
@@ -80,6 +81,7 @@ const cashUpSubmissionSchema = new Schema({
       bankName: { type: String, required: false, trim: true, default: null },
       depositorName: { type: String, required: false, trim: true, default: null },
       reasonForCashTransactions: { type: String, required: false, trim: true, default: null },
+      receiptType: { type: String, required: false, enum: ["policy", "funeral", "sales"], default: null },
       notes: { type: String, required: false, trim: true },
       submittedAt: { type: Date, default: Date.now },
     })],

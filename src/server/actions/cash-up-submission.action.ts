@@ -16,6 +16,7 @@ export interface ISubmissionData {
   bankName?: string;
   depositorName?: string;
   reasonForCashTransactions?: string;
+  receiptType?: "policy" | "funeral" | "sales";
   notes: string;
   submittedAt: string;
   userId: string;

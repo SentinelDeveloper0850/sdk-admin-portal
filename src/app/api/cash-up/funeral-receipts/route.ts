@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
       bankDepositReference: pm === "bank_deposit" ? String(bankDepositReference || "").trim() : undefined,
       bankName: pm === "bank_deposit" ? String(bankName || "").trim() : undefined,
       depositorName: pm === "bank_deposit" ? String(depositorName || "").trim() : undefined,
+      receiptType: "funeral",
       notes,
       submittedAt,
       userId: user._id as unknown as string

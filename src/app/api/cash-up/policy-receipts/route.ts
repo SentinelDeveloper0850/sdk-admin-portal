@@ -94,10 +94,11 @@ export async function POST(request: NextRequest) {
       files,
       date,
       submittedAmount: submitted,
-      paymentMethod: pm,
+      paymentMethod: pm as "cash" | "card" | "both" | "bank_deposit",
       cashAmount: pm === "both" ? Number(cashAmount) : pm === "cash" ? submitted : undefined,
       cardAmount: pm === "both" ? Number(cardAmount) : pm === "card" ? submitted : undefined,
       reasonForCashTransactions: ["cash", "both"].includes(pm) ? String(reasonForCashTransactions || "").trim() : undefined,
+      receiptType: "policy",
       notes,
       submittedAt,
       userId: user._id as unknown as string

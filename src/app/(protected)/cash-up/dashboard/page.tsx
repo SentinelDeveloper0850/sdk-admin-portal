@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { AlertOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, PlusOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, DatePicker, Modal, Space, Spin, Table, Tag, Tabs, Typography } from "antd";
+import { AlertOutlined, CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import { Alert, Button, Card, DatePicker, Modal, Space, Spin, Table, Tabs, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 
 import PageHeader from "@/app/components/page-header";
@@ -17,6 +17,7 @@ import PolicyReceiptsDrawer from "@/app/components/cash-up/policy-receipts-drawe
 import SalesReceiptsDrawer from "@/app/components/cash-up/sales-receipts-drawer";
 import WeeklySummaryDrawer from "@/app/components/cash-up/weekly-summary-drawer";
 import { ColumnType } from "antd/es/table";
+import swal from "sweetalert";
 import CashUpCountdown from "./CashUpCountdown";
 
 const { Title, Text } = Typography;
@@ -97,6 +98,11 @@ const CashUpDashboardPage = () => {
       if (json.success) setCashUpSubmissions(json.cashUpSubmissions);
     } catch (e) {
       console.error("Failed to fetch cash up submissions:", e);
+      swal({
+        title: "Error",
+        text: (e as any)?.message || "Failed to fetch cash up submissions",
+        icon: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -112,6 +118,11 @@ const CashUpDashboardPage = () => {
       }
     } catch (error) {
       console.error("Failed to fetch weekly summary:", error);
+      swal({
+        title: "Error",
+        text: (error as any)?.message || "Failed to fetch weekly summary",
+        icon: "error",
+      });
     }
   };
 
@@ -128,9 +139,19 @@ const CashUpDashboardPage = () => {
         // optional toast/notification here
       } else {
         console.error(json.message || "Submit failed");
+        swal({
+          title: "Error",
+          text: json.message || "Submit failed",
+          icon: "error",
+        });
       }
     } catch (e) {
       console.error("Failed to submit Cash-Up submission:", e);
+      swal({
+        title: "Error",
+        text: (e as any)?.message || "Failed to submit Cash-Up submission",
+        icon: "error",
+      });
     }
   };
 
@@ -392,7 +413,7 @@ const CashUpDashboardPage = () => {
     let banking = 0;
 
     for (const s of subs) {
-      const pm = norm(s.paymentMethod);
+      const pm = norm(s.paymentMethod || "") as "cash" | "card" | "both" | "bank_deposit" | "eft" | undefined;
       const submitted = Number(s.submittedAmount ?? 0) || 0;
       const cashAmount = Number(s.cashAmount ?? 0) || 0;
       const cardAmount = Number(s.cardAmount ?? 0) || 0;
@@ -439,39 +460,49 @@ const CashUpDashboardPage = () => {
     default: "text-gray-400",
   };
 
+  const handleRefresh = async () => {
+    setLoading(true);
+    await fetchCashUpSubmissions();
+    setLoading(false);
+  };
+
   return (
     <div className="space-y-6 p-6">
       <PageHeader
-        title="Daily Cash-Up Reconciliation"
-        subtitle="Match today’s collections to ASSIT and resolve variances"
+        title="Daily Cash-Up"
+        subtitle={`Submit your daily cash-up receipts for review and reconciliation`}
         actions={[
           <Space key="actions">
-            <Button onClick={() => setLateModalOpen(true)} type="default">
-              Capture Late Submission
-            </Button>
-            {activeDate !== today && (
-              <Button onClick={() => setActiveDate(today)} type="default">
-                Back to Today
-              </Button>
-            )}
-
-            {!hasSubmittedForActiveDate && <Button onClick={() => setPolicyDrawerOpen(true)} type="dashed">
-              <PlusOutlined className="w-4 h-4" /> Policy Receipts
-            </Button>}
-            {!hasSubmittedForActiveDate && <Button onClick={() => setFuneralDrawerOpen(true)} type="dashed">
-              <PlusOutlined className="w-4 h-4" /> Funeral Receipts
-            </Button>}
-            {!hasSubmittedForActiveDate && <Button onClick={() => setSalesDrawerOpen(true)} type="dashed">
-              <PlusOutlined className="w-4 h-4" /> Sales Receipts
-            </Button>}
-            {/* <Button
-              onClick={() => setSummaryDrawerOpen(true)}
-            >
-              Weekly Summary
-            </Button> */}
+            <Button onClick={handleRefresh} loading={loading} icon={<ReloadOutlined />}>Refresh</Button>
           </Space>
         ]}
       />
+
+      <div className="flex justify-between gap-4">
+        {/* Submission Buttons */}
+        <Space key="actions">
+          <Button onClick={() => setLateModalOpen(true)} type="default">
+            <CalendarOutlined className="w-4 h-4" /> Late Submission
+          </Button>
+          {activeDate !== today && (
+            <Button onClick={() => setActiveDate(today)} type="default">
+              <CalendarOutlined className="w-4 h-4" /> Today
+            </Button>
+          )}
+        </Space>
+        {/* Receipts Buttons */}
+        <Space key="actions">
+          {!hasSubmittedForActiveDate && <Button onClick={() => setPolicyDrawerOpen(true)} type="dashed">
+            <PlusOutlined className="w-4 h-4" /> Policy Receipts
+          </Button>}
+          {!hasSubmittedForActiveDate && <Button onClick={() => setFuneralDrawerOpen(true)} type="dashed">
+            <PlusOutlined className="w-4 h-4" /> Funeral Receipts
+          </Button>}
+          {!hasSubmittedForActiveDate && <Button onClick={() => setSalesDrawerOpen(true)} type="dashed">
+            <PlusOutlined className="w-4 h-4" /> Sales Receipts
+          </Button>}
+        </Space>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
@@ -531,7 +562,7 @@ const CashUpDashboardPage = () => {
             children: (
               <Card
                 size="small"
-                title={<span>Current Submission ({activeDate})</span>}
+                title={<Title className="my-2" level={4}>Current Submission ({activeDate})</Title>}
                 extra={
                   currentSubmission &&
                   ["draft", "needs_changes"].includes(norm(currentSubmission.status)) &&
@@ -596,6 +627,12 @@ const CashUpDashboardPage = () => {
                           render: (v: string) => v || "—",
                         },
                         {
+                          title: "Receipt Type",
+                          dataIndex: "receiptType",
+                          key: "receiptType",
+                          render: (v: string) => v || "—",
+                        },
+                        {
                           title: "Payment",
                           dataIndex: "paymentMethod",
                           key: "paymentMethod",
@@ -642,10 +679,7 @@ const CashUpDashboardPage = () => {
             key: "previous",
             label: "Previous Submissions",
             children: (
-              <Card size="small">
-                <div className="mb-4">
-                  <Title level={4}>Previous Submissions</Title>
-                </div>
+              <Card size="small" title={<Title className="my-2" level={4}>Previous Submissions</Title>}>
                 {loading ? (
                   <div className="flex justify-center py-8">
                     <Spin size="large" />

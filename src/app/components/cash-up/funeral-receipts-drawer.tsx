@@ -145,7 +145,7 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
         date: dayjs(values.date).format("YYYY-MM-DD"),
         invoiceNumber: inv,
         submittedAmount: submitted,
-        paymentMethod: pm,
+        paymentMethod: pm as "cash" | "card" | "both" | "bank_deposit",
         cashAmount: pm === "both" ? cash : pm === "cash" ? submitted : undefined,
         cardAmount: pm === "both" ? card : pm === "card" ? submitted : undefined,
         bankDepositReference: pm === "bank_deposit" ? String(values.bankDepositReference || "").trim() : undefined,
