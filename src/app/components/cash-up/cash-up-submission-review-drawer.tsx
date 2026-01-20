@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 
 import { ClockCircleOutlined, UserOutlined } from "@ant-design/icons";
-import { Alert, Button, Descriptions, Divider, Drawer, Form, Image, Input, Select, Space, Tag, Typography, Upload, message } from "antd";
+import { Alert, Button, Descriptions, Divider, Drawer, Form, Image, Input, Select, Space, Tag, Typography, Upload } from "antd";
 import dayjs from "dayjs";
+import swal from "sweetalert";
 
 import { useAuth } from "@/context/auth-context";
 
@@ -66,14 +67,26 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
       const json = await res.json();
 
       if (json.success) {
-        message.success("Notes added successfully to cash up submission");
+        swal({
+          title: "Success",
+          text: json.message || "Notes added successfully to cash up submission",
+          icon: "success",
+        });
         onUpdated();
         form.resetFields();
       } else {
-        message.error(json.message || "Failed to add notes to cash up submission");
+        swal({
+          title: "Error",
+          text: json.message || "Failed to add notes to cash up submission",
+          icon: "error",
+        });
       }
     } catch (error) {
-      message.error("Please correct the errors in the form to add notes to cash up submission");
+      swal({
+        title: "Error",
+        text: "Please correct the errors in the form to add notes to cash up submission",
+        icon: "error",
+      });
     } finally {
       setSaving(false);
     }
@@ -91,17 +104,33 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
       const json = await res.json();
       if (json.success) {
         setAuditResult(json.audit);
-        message.success(json.message || "Audit report uploaded");
+        swal({
+          title: "Success",
+          text: json.message || "Audit report uploaded",
+          icon: "success",
+        });
         onUpdated();
       } else {
         if (json?.expected && json?.detected) {
-          message.error(`${json.message} (Expected: ${json.expected.employeeName} / ${json.expected.date}, Detected: ${json.detected.employeeName} / ${json.detected.date})`);
+          swal({
+            title: "Error",
+            text: `${json.message} (Expected: ${json.expected.employeeName} / ${json.expected.date}, Detected: ${json.detected.employeeName} / ${json.detected.date})`,
+            icon: "error",
+          });
         } else {
-          message.error(json.message || "Failed to upload audit report");
+          swal({
+            title: "Error",
+            text: json.message || "Failed to upload audit report",
+            icon: "error",
+          });
         }
       }
     } catch (e: any) {
-      message.error(e?.message || "Failed to upload audit report");
+      swal({
+        title: "Error",
+        text: e?.message || "Failed to upload audit report",
+        icon: "error",
+      });
     } finally {
       setAuditUploading(false);
     }
@@ -126,14 +155,26 @@ const CashUpSubmissionReviewDrawer: React.FC<Props> = ({ open, onClose, cashUpSu
       const json = await res.json();
 
       if (json.success) {
-        message.success(json.message || "Updated");
+        swal({
+          title: "Success",
+          text: json.message || "Updated",
+          icon: "success",
+        });
         onUpdated();
         onClose();
       } else {
-        message.error(json.message || "Failed to update");
+        swal({
+          title: "Error",
+          text: json.message || "Failed to update",
+          icon: "error",
+        });
       }
     } catch {
-      message.error("Please add a review note first");
+      swal({
+        title: "Error",
+        text: "Please add a review note first",
+        icon: "error",
+      });
     } finally {
       setSaving(false);
     }

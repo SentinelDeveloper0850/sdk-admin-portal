@@ -3,13 +3,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Button, Card, DatePicker, Drawer, Form, Select, Space, Table, Tag, Tabs, Typography, Upload, message } from "antd";
+import { Button, Card, DatePicker, Drawer, Form, Select, Space, Table, Tabs, Tag, Typography, Upload } from "antd";
 import dayjs from "dayjs";
+import swal from "sweetalert";
 
 import CashUpSubmissionReviewDrawer from "@/app/components/cash-up/cash-up-submission-review-drawer";
 import PageHeader from "@/app/components/page-header";
-import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { ERoles } from "@/types/roles.enum";
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -88,7 +89,11 @@ const CashUpReviewPage = () => {
       if (!json?.success) throw new Error(json?.message || "Failed to fetch");
       setRows(json.cashUpSubmissions || []);
     } catch (e: any) {
-      message.error(e?.message || "Failed to load cashup submissions");
+      swal({
+        title: "Error",
+        text: e?.message || "Failed to load cashup submissions",
+        icon: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -113,7 +118,11 @@ const CashUpReviewPage = () => {
       if (!json?.success) throw new Error(json?.message || "Failed to fetch audit reports");
       setAuditReports(json.reports || []);
     } catch (e: any) {
-      message.error(e?.message || "Failed to load audit reports");
+      swal({
+        title: "Error",
+        text: e?.message || "Failed to load audit reports",
+        icon: "error",
+      });
     } finally {
       setAuditReportsLoading(false);
     }
@@ -248,7 +257,11 @@ const CashUpReviewPage = () => {
     try {
       const values = await auditForm.validateFields();
       if (!auditFile) {
-        message.error("Please choose an Excel file");
+        swal({
+          title: "Error",
+          text: "Please choose an Excel file",
+          icon: "error",
+        });
         return;
       }
       setAuditUploading(true);
@@ -261,21 +274,35 @@ const CashUpReviewPage = () => {
       const json = await res.json();
       if (!json?.success) {
         if (json?.expected && json?.detected) {
-          message.error(
-            `${json.message} (Expected: ${json.expected.employeeName} / ${json.expected.date}, Detected: ${json.detected.employeeName} / ${json.detected.date})`
-          );
+          swal({
+            title: "Error",
+            text: `${json.message} (Expected: ${json.expected.employeeName} / ${json.expected.date}, Detected: ${json.detected.employeeName} / ${json.detected.date})`,
+            icon: "error",
+          });
         } else {
-          message.error(json?.message || "Upload failed");
+          swal({
+            title: "Error",
+            text: json?.message || "Upload failed",
+            icon: "error",
+          });
         }
         return;
       }
-      message.success(json.message || "Audit report uploaded");
+      swal({
+        title: "Success",
+        text: json.message || "Audit report uploaded",
+        icon: "success",
+      });
       setAuditDrawerOpen(false);
       setAuditFile(null);
       auditForm.resetFields();
       fetchAuditReports();
     } catch {
-      message.error("Please fix the form errors");
+      swal({
+        title: "Error",
+        text: "Please fix the form errors",
+        icon: "error",
+      });
     } finally {
       setAuditUploading(false);
     }

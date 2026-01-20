@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { UploadOutlined } from "@ant-design/icons";
 import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, message, Select, Space, Typography, Upload } from "antd";
 import dayjs from "dayjs";
+import swal from "sweetalert";
 
 // import { useAuth } from "@/context/auth-context";
 
@@ -138,15 +139,27 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
       const json = await res.json();
 
       if (json.success) {
-        message.success(json.message || "Receipts submitted successfully!");
+        swal({
+          title: "Success",
+          text: json.message || "Receipts submitted successfully!",
+          icon: "success",
+        });
         onClose();
         resetForm();
         onSubmitted();
       } else {
-        message.error(json.message || "Error submitting receipts");
+        swal({
+          title: "Error",
+          text: json.message || "Error submitting receipts",
+          icon: "error",
+        });
       }
     } catch (error) {
-      message.error("Please correct the errors in the form.");
+      swal({
+        title: "Error",
+        text: "Please correct the errors in the form.",
+        icon: "error",
+      });
     } finally {
       setProcessing(false);
     }
