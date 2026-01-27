@@ -118,15 +118,19 @@ const PolicyReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, def
         return;
       }
 
+      const cashAmount = pm === "both" ? cash : pm === "cash" ? submitted : undefined;
+      const cardAmount = pm === "both" ? card : pm === "card" ? submitted : undefined;
+      const reasonForCashTransactions = ["cash", "both"].includes(pm) ? reason : undefined;
+
       const submissionData = {
         submissionIdSuffix: submissionIdSuffix,
         files: uploadedFiles,
         date: dayjs(values.date).format("YYYY-MM-DD"),
         submittedAmount: submitted,
         paymentMethod: pm,
-        cashAmount: pm === "both" ? cash : pm === "cash" ? submitted : undefined,
-        cardAmount: pm === "both" ? card : pm === "card" ? submitted : undefined,
-        reasonForCashTransactions: ["cash", "both"].includes(pm) ? reason : undefined,
+        cashAmount: cashAmount,
+        cardAmount: cardAmount,
+        reasonForCashTransactions: reasonForCashTransactions,
         notes: values.notes || "",
         submittedAt: new Date().toISOString(),
         userId: user?._id?.toString() || "",
