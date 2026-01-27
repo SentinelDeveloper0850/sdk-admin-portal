@@ -24,7 +24,7 @@ import {
   Edit,
   User
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import sweetAlert from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
@@ -38,8 +38,18 @@ const { TabPane } = Tabs;
 const { Option } = Select;
 const { TextArea } = Input;
 
+interface RegionLite {
+  _id: string;
+  id: string;     // business id
+  name: string;
+  code: string;
+}
+
 interface BranchConfig {
   _id: string;
+  id?: string;        // business id (optional)
+  regionId?: string;  // business FK
+  regionDoc?: RegionLite | null; // if API populates regionDoc
   name: string;
   code: string;
   address: string;
@@ -49,7 +59,6 @@ interface BranchConfig {
   phone: string;
   email: string;
   manager: string;
-  maxStaff: number;
   latitude: number;
   longitude: number;
   isActive: boolean;
@@ -72,8 +81,25 @@ const BranchConfigurationsPage = () => {
   const [originalBranchData, setOriginalBranchData] = useState<Partial<BranchConfig> | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [editDrawerVisible, setEditDrawerVisible] = useState(false);
+  const [regions, setRegions] = useState<RegionLite[]>([]);
+  const [regionFilter, setRegionFilter] = useState<string | null>(null);
 
   const { user } = useAuth();
+
+  const filteredBranches = useMemo(() => {
+    if (!regionFilter) return branches;
+    return branches.filter(b => b.regionId === regionFilter);
+  }, [branches, regionFilter]);
+
+  const fetchRegions = async () => {
+    try {
+      const res = await fetch("/api/configurations/regions");
+      const data = await res.json();
+      if (data?.success && data?.data) setRegions(data.data);
+    } catch (e) {
+      console.error("Error fetching regions:", e);
+    }
+  };
 
   const fetchBranches = async () => {
     try {
@@ -150,11 +176,13 @@ const BranchConfigurationsPage = () => {
   useEffect(() => {
     fetchBranches();
     fetchUsers();
+    fetchRegions();
   }, []);
 
   const handleRefresh = () => {
     fetchBranches();
     fetchUsers();
+    fetchRegions();
   };
 
   const handleSaveBranch = async (values: any) => {
@@ -207,6 +235,7 @@ const BranchConfigurationsPage = () => {
     setOriginalBranchData({
       name: branch.name,
       code: branch.code,
+      regionId: branch.regionId,
       address: branch.address,
       city: branch.city,
       province: branch.province,
@@ -214,7 +243,6 @@ const BranchConfigurationsPage = () => {
       phone: branch.phone,
       email: branch.email,
       manager: branch.manager,
-      maxStaff: branch.maxStaff,
       latitude: branch.latitude,
       longitude: branch.longitude,
       isActive: branch.isActive
@@ -222,6 +250,7 @@ const BranchConfigurationsPage = () => {
     form.setFieldsValue({
       name: branch.name,
       code: branch.code,
+      regionId: branch.regionId,
       address: branch.address,
       city: branch.city,
       province: branch.province,
@@ -229,7 +258,6 @@ const BranchConfigurationsPage = () => {
       phone: branch.phone,
       email: branch.email,
       manager: branch.manager,
-      maxStaff: branch.maxStaff,
       latitude: branch.latitude,
       longitude: branch.longitude,
       isActive: branch.isActive
@@ -351,6 +379,19 @@ const BranchConfigurationsPage = () => {
       render: (text: string) => <Tag color="blue">{text}</Tag>,
     },
     {
+      title: "Region",
+      key: "region",
+      render: (_: any, record: BranchConfig) => {
+        const label =
+          record.regionDoc?.name ||
+          regions.find(r => r.id === record.regionId)?.name ||
+          record.regionId ||
+          "--";
+
+        return <Tag>{label}</Tag>;
+      },
+    },
+    {
       title: 'Location',
       key: 'location',
       render: (_: any, record: BranchConfig) => (
@@ -447,6 +488,22 @@ const BranchConfigurationsPage = () => {
         <Button key="add-branch" type="primary" className="text-black" icon={<PlusOutlined />} onClick={() => setDrawerVisible(true)}>Add New Branch</Button>,
       ]} />
 
+      <div className="flex gap-2 mb-3">
+        <Select
+          allowClear
+          placeholder="Filter by region"
+          style={{ width: 240 }}
+          value={regionFilter ?? undefined}
+          onChange={(v) => setRegionFilter(v ?? null)}
+        >
+          {regions.map((r) => (
+            <Option key={r.id} value={r.id}>
+              {r.name}
+            </Option>
+          ))}
+        </Select>
+      </div>
+
       <Table
         dataSource={branches}
         columns={branchColumns}
@@ -491,6 +548,21 @@ const BranchConfigurationsPage = () => {
           >
             <Input prefix={<NumberOutlined size={16} className="mr-1" />} placeholder="eg: DTY001" allowClear />
           </Form.Item>
+
+          <Form.Item
+            name="regionId"
+            label="Region"
+            rules={[{ required: true, message: "Please select a region" }]}
+          >
+            <Select placeholder="Select region" allowClear>
+              {regions.map((r) => (
+                <Option key={r.id} value={r.id}>
+                  {r.name} ({r.code})
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
 
           <Form.Item
             name="manager"
@@ -640,6 +712,21 @@ const BranchConfigurationsPage = () => {
           >
             <Input prefix={<NumberOutlined size={16} className="mr-1" />} placeholder="eg: DTY001" allowClear />
           </Form.Item>
+
+          <Form.Item
+            name="regionId"
+            label="Region"
+            rules={[{ required: true, message: "Please select a region" }]}
+          >
+            <Select placeholder="Select region" allowClear>
+              {regions.map((r) => (
+                <Option key={r.id} value={r.id}>
+                  {r.name} ({r.code})
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
 
           <Form.Item
             name="manager"
