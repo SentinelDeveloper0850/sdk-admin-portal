@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import ContentLoading from '@/app/components/content-loading';
+import PageHeader from '@/app/components/page-header';
+import { IUser } from '@/app/models/hr/user.schema';
+import { IStaffMember } from '@/app/models/staff-member.schema';
+import { EllipsisOutlined, LinkOutlined, MailOutlined, PlusOutlined } from '@ant-design/icons';
+import { Avatar, Button, Descriptions, Divider, Drawer, Dropdown, Flex, Form, Input, message, Select, Table, Tag } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { Avatar, Button, Drawer, Dropdown, Form, Input, Table, Tag, Divider, Select, Flex, message, Alert, Space, Statistic, Descriptions, Spin } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
 import sweetAlert from 'sweetalert';
-import PageHeader from '@/app/components/page-header';
-import { PhoneOutlined, MailOutlined, PlusOutlined, UserOutlined, EditOutlined, LinkOutlined, EllipsisOutlined, LoadingOutlined } from '@ant-design/icons';
-import { IStaffMember } from '@/app/models/staff-member.schema';
-import { IUser } from '@/app/models/hr/user.schema';
-import Loading from '@/app/components/ui/loading';
-import ContentLoading from '@/app/components/content-loading';
 
 
 dayjs.extend(relativeTime);
@@ -63,7 +62,6 @@ const StaffMemberPage = () => {
     setFetchingStaffMembers(true);
     const response = await fetch('/api/staff');
     const data = await response.json();
-    console.log("🚀 ~ fetchStaffMembers ~ data:", data)
     setStaffMembers(data.staffMembers || []);
     setFetchingStaffMembers(false);
   };
@@ -72,7 +70,6 @@ const StaffMemberPage = () => {
     setFetchingUsers(true);
     const response = await fetch('/api/users?slim=true');
     const data = await response.json();
-    console.log("🚀 ~ fetchUsers ~ data:", data)
     setUsers(data || []);
     setFetchingUsers(false);
   };
@@ -90,7 +87,6 @@ const StaffMemberPage = () => {
       }),
     });
     const data = await response.json();
-    console.log("🚀 ~ handleLinkUser ~ data:", data)
     if (data.success) {
       sweetAlert({
         title: data.message,
@@ -217,7 +213,6 @@ const StaffMemberPage = () => {
                     }
                   ], onClick: (e) => {
                     message.info('Click on menu item.');
-                    console.log('click', member._id);
                     setSelectedStaffMember(member);
                     setLinkDrawerOpen(true);
                   }

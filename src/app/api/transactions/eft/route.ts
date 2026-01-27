@@ -23,11 +23,10 @@ export async function GET(_request: NextRequest) {
     const numberOfTransactions = await EftTransactionModel.countDocuments();
 
     const transactions = await EftTransactionModel.find()
+      // .populate({ path: "allocationRequests", model: "allocation-requests", strictPopulate: false })
       .sort({ date: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
-
-    console.log("🚀 ~ GET ~ transactions:", transactions)
 
     const totalAllocationRequestsCount = await AllocationRequestModel.countDocuments({ type: "EFT" });
     const pendingAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "PENDING", type: "EFT" });

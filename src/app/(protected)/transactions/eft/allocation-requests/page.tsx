@@ -56,17 +56,14 @@ export default function AllocationRequestsPage() {
 
   // Utility function to format transaction date (MM/DD/YYYY) to YYYY/MM/DD format
   const formatTransactionDateToCSVFormat = (transactionDateStr: string): string => {
-    console.log("Transaction Date: ", transactionDateStr);
     try {
       // Parse MM/DD/YYYY format and convert to YYYY/MM/DD
       const parsedDate = dayjs(transactionDateStr, 'MM/DD/YYYY');
       if (!parsedDate.isValid()) {
         throw new Error('Invalid date format');
       }
-      console.log("Parsed Date: ", parsedDate);
       return parsedDate.format('YYYY/MM/DD');
     } catch (error) {
-      console.warn('Failed to parse transaction date:', transactionDateStr, error);
       throw error;
     }
   };

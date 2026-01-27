@@ -11,7 +11,6 @@ export async function POST(
 ) {
   try {
     const currentUser = await getUserFromRequest(request);
-    console.log("🚀 ~ POST ~ currentUser:", currentUser)
 
     if (!currentUser) {
       return NextResponse.json(
@@ -23,13 +22,11 @@ export async function POST(
     await connectToDatabase();
 
     const body = await request.json();
-    console.log("🚀 ~ POST ~ body:", body)
 
     const { consultantId } = body;
     const { id } = await params;
 
     const consultant = await UserModel.findById(consultantId);
-    console.log("🚀 ~ POST ~ consultant:", consultant)
 
     if (!consultant) {
       return NextResponse.json(
@@ -54,18 +51,14 @@ export async function POST(
       },
       { new: true }
     ).catch((err) => {
-      console.error("Error updating signup request:", err);
       return NextResponse.json(
         { success: false, error: err.message },
         { status: 500 }
       );
     });
 
-    console.log("🚀 ~ POST ~ updatedRequest:", updatedRequest)
-
     return NextResponse.json({ success: true, data: updatedRequest });
   } catch (error: any) {
-    console.error("Error updating signup request:", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

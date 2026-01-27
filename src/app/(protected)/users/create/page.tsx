@@ -17,12 +17,10 @@ const CreateUser = () => {
   const handleSubmit = async (values: any) => {
     try {
       // Simulate API call (Replace with actual API integration)
-      console.log("Values:", values);
 
       message.success("User created successfully!");
       router.back(); // Navigate back to the Vehicles page
     } catch (error) {
-      console.error(error);
       message.error("Failed to create user.");
     }
   };

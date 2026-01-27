@@ -89,7 +89,6 @@ const UsersPage = () => {
 
       setUsers(updatedUsers);
     } catch (err) {
-      console.log(err);
       setError("An error occurred while fetching users.");
     } finally {
       setLoading(false);
@@ -145,7 +144,6 @@ const UsersPage = () => {
         timer: 2000,
       });
     } catch (err) {
-      console.log(err);
       sweetAlert({
         title: "Error",
         text: `An error occurred while attempting to execute the action.`,
@@ -171,8 +169,6 @@ const UsersPage = () => {
 
   const handleSubmit = async (values: any) => {
     try {
-      console.log("🚀 ~ handleSubmit ~ values:", values);
-
       const { firstNames, lastname, ...rest } = values;
 
       const name = `${firstNames} ${lastname}`;
@@ -191,7 +187,6 @@ const UsersPage = () => {
       );
 
       if (response.status != 201) {
-        console.log("Create user response", response);
         sweetAlert({
           title: "Failed to create new user!",
           text: response.data.message,
@@ -213,7 +208,6 @@ const UsersPage = () => {
 
       handleCancel(); // Navigate back to the Vehicles page
     } catch (error: any) {
-      console.error(error);
       sweetAlert({
         title: "Failed to create new user!",
         text: error?.response?.data?.message,
@@ -264,7 +258,6 @@ const UsersPage = () => {
       setEditDrawerOpen(false);
       setEditingUser(null);
     } catch (error: any) {
-      console.error(error);
       sweetAlert({
         title: "Failed to update user!",
         text: error?.response?.data?.message,
@@ -319,7 +312,6 @@ const UsersPage = () => {
         });
       }
     } catch (err) {
-      console.error("Reset password error:", err);
       sweetAlert({
         title: "Error resetting password",
         text: "Please try again later.",
@@ -369,7 +361,6 @@ const UsersPage = () => {
       // 🔥 Remove from UI without re-fetching
       setUsers((prevUsers) => prevUsers.filter((u) => u._id !== id));
     } catch (err) {
-      console.error("Delete error:", err);
       sweetAlert({
         title: "Error deleting user",
         text: "Please try again later.",

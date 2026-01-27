@@ -113,7 +113,6 @@ export default function EftTransactionsPage() {
       setTransactions(data.transactions);
       setStats(data.stats);
     } catch (err) {
-      console.log(err);
       setError("An error occurred while fetching transactions.");
     } finally {
       if (showLoader) setLoading(false);
@@ -143,7 +142,6 @@ export default function EftTransactionsPage() {
       const data: IEftImportData[] = await response.json();
       setImports(data);
     } catch (err) {
-      console.log(err);
       notification.error({
         message: "An error occurred while fetching import history.",
       });
@@ -170,7 +168,6 @@ export default function EftTransactionsPage() {
       const data = await response.json();
       setTransactions(data);
     } catch (err) {
-      console.log(err);
       setError("An error occurred while searching transactions.");
     } finally {
       setSearching(false);
@@ -201,7 +198,6 @@ export default function EftTransactionsPage() {
       const data = await response.json();
       setTransactions(data);
     } catch (err) {
-      console.log(err);
       setError("An error occurred while searching transactions.");
     } finally {
       setSearching(false);
@@ -257,7 +253,6 @@ export default function EftTransactionsPage() {
       resetAllocationRequest();
       setShowAllocationRequestDrawer(false);
     } catch (err) {
-      console.log(err);
       setAllocationRequestError("An error occurred while requesting allocation");
     } finally {
       setAllocationRequestLoading(false);
@@ -287,7 +282,6 @@ export default function EftTransactionsPage() {
   };
 
   const handleFileUpload = async (file: any) => {
-    console.log("file", file);
     setEvidenceFileList([...evidenceFileList, file]);
   };
 

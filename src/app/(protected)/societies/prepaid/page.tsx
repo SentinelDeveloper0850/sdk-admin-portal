@@ -7,6 +7,7 @@ import Search from "antd/es/input/Search";
 
 import PageHeader from "@/app/components/page-header";
 import { ISociety } from "@/app/models/scheme/society.schema";
+import { formatToMoneyWithCurrency } from "@/utils/formatters";
 
 export default function PrepaidSocietiesPage() {
   const [societies, setSocieties] = useState<ISociety[]>([]);
@@ -28,7 +29,6 @@ export default function PrepaidSocietiesPage() {
       setSocieties(data.societies);
       setStats({ count: data.count });
     } catch (err) {
-      console.log(err);
       setError("An error occurred while fetching prepaid societies.");
     } finally {
       setLoading(false);
@@ -53,7 +53,6 @@ export default function PrepaidSocietiesPage() {
       setSocieties(data.societies);
       setStats({ count: data.count });
     } catch (err) {
-      console.log(err);
       setError("An error occurred while searching prepaid societies.");
     }
   };
@@ -162,7 +161,7 @@ export default function PrepaidSocietiesPage() {
             title: "Balance",
             dataIndex: "balance",
             render: (value: number) =>
-              value ? `R ${(value / 100).toFixed(2)}` : "-",
+              value ? formatToMoneyWithCurrency(value) : "-",
           },
           {
             title: "Docs",

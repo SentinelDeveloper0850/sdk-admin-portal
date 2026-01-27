@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 
-import { Button, Col, Collapse, Divider, Drawer, Flex, Form, Input, message, Row, Space, Spin, Statistic, Table, Dropdown, Card } from "antd";
+import { Button, Card, Collapse, Drawer, Dropdown, Flex, Form, Input, message, Spin, Statistic, Table } from "antd";
 import Search from "antd/es/input/Search";
 
 import PageHeader from "@/app/components/page-header";
-import { ISchemeSociety } from "@/app/models/scheme/scheme-society.schema";
-import { PlusOutlined, ReloadOutlined, MoreOutlined } from "@ant-design/icons";
-import dayjs from "dayjs";
 import { ISocietyMember } from "@/app/models/scheme/scheme-society-member.schema";
-import { formatToMoney, formatToMoneyWithCurrency } from "@/utils/formatters";
+import { ISchemeSociety } from "@/app/models/scheme/scheme-society.schema";
+import { formatToMoneyWithCurrency } from "@/utils/formatters";
+import { MoreOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 export default function SchemeSocietiesPage() {
   const [societies, setSocieties] = useState<ISchemeSociety[]>([]);
@@ -70,7 +70,6 @@ export default function SchemeSocietiesPage() {
       setSocieties(data.societies);
       setStats({ count: data.count });
     } catch (err) {
-      console.log(err);
       setError("An error occurred while searching scheme societies.");
     }
   };
@@ -99,7 +98,6 @@ export default function SchemeSocietiesPage() {
         timer: 2000,
       });
     } catch (err) {
-      console.log(err);
       message.error("Failed to create society");
       sweetAlert({
         title: "Failed to create society",
@@ -189,7 +187,6 @@ export default function SchemeSocietiesPage() {
       setSelectedSociety(record);
       setSocietyMembersDrawerOpen(true);
     } catch (err) {
-      console.log(err);
       setError("An error occurred while fetching society members");
     }
   };
@@ -239,17 +236,6 @@ export default function SchemeSocietiesPage() {
         <Button type="primary" className="text-black" onClick={() => setCreateDrawerOpen(true)} icon={<PlusOutlined />}>Create Society</Button>,
         <Button onClick={() => fetchSocieties()} icon={<ReloadOutlined />}>Refresh</Button>
       ]}>
-        {/* <Row gutter={16} justify="space-between">
-          <Col>
-            <Space size={32}>
-              <Statistic
-                title="Total Societies"
-                value={stats.count}
-                className="dark:text-white"
-              />
-            </Space>
-          </Col>
-        </Row> */}
       </PageHeader>
 
       {error && (
@@ -514,15 +500,6 @@ export default function SchemeSocietiesPage() {
             { title: "Cell Number", dataIndex: "cellNumber" },
             { title: "Email Address", dataIndex: "emailAddress" },
             { title: "Physical Address", dataIndex: "address" },
-            // {
-            //   title: "Actions",
-            //   dataIndex: "actions",
-            //   render: (value: string, record: ISocietyMember) => (
-            //     <Dropdown menu={{ items: [{ key: "view", label: "View", onClick: () => { } }] }}>
-            //       <Button icon={<MoreOutlined />} />
-            //     </Dropdown>
-            //   ),
-            // }
           ]}
         />
         <Drawer

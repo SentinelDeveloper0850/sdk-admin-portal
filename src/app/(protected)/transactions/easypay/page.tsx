@@ -151,7 +151,6 @@ export default function EasypayTransactionsPage() {
       setSearchResultsCount(0);
       setCurrentSearchParams(null);
     } catch (err) {
-      console.log(err);
       setError("An error occurred while fetching transactions.");
     } finally {
       setLoading(false);
@@ -178,7 +177,6 @@ export default function EasypayTransactionsPage() {
       });
       setShowToSync(true);
     } catch (err) {
-      console.log(err);
       setError("An error occurred while fetching transactions to sync.");
     } finally {
       setLoading(false);
@@ -199,7 +197,6 @@ export default function EasypayTransactionsPage() {
       const data: IEasypayImportData[] = await response.json();
       setImports(data);
     } catch (err) {
-      console.log(err);
       notification.error({
         message: "An error occurred while fetching import history.",
       });
@@ -304,7 +301,6 @@ export default function EasypayTransactionsPage() {
         pageSize: pageSize
       });
     } catch (err) {
-      console.log(err);
       setError("An error occurred while searching transactions.");
     } finally {
       setLoading(false);
@@ -343,7 +339,6 @@ export default function EasypayTransactionsPage() {
         pageSize: pageSize
       });
     } catch (err) {
-      console.log(err);
       setError("An error occurred while searching transactions.");
     } finally {
       setLoading(false);
@@ -408,7 +403,6 @@ export default function EasypayTransactionsPage() {
         pageSize: pageSize
       });
     } catch (err) {
-      console.log(err);
       setError("An error occurred while searching transactions.");
     } finally {
       setLoading(false);
@@ -457,7 +451,6 @@ export default function EasypayTransactionsPage() {
         });
       }
     } catch (err) {
-      console.log(err);
       setError("An error occurred while searching transactions.");
     } finally {
       setLoading(false);
@@ -572,7 +565,6 @@ export default function EasypayTransactionsPage() {
 
       fetchTransactions();
     } catch (err) {
-      console.log(err);
       setError("An error occurred while bulk creating transactions.");
     } finally {
       setLoading(false);
@@ -600,7 +592,6 @@ export default function EasypayTransactionsPage() {
         });
       }
     } catch (error) {
-      console.log("🚀 ~ syncPolicyNumbers ~ error:", error);
     } finally {
       setSyncing(false);
     }
@@ -629,7 +620,6 @@ export default function EasypayTransactionsPage() {
   };
 
   const openAllocationRequestDrawer = (transaction: IEasypayTransaction) => {
-    console.log("🚀 ~ openAllocationRequestDrawer ~ transaction:", transaction)
     resetAllocationRequest();
     setSelectedTransaction(transaction);
     setShowAllocationRequestDrawer(true);
@@ -691,7 +681,6 @@ export default function EasypayTransactionsPage() {
       resetAllocationRequest();
       setShowAllocationRequestDrawer(false);
     } catch (err) {
-      console.log(err);
       setAllocationRequestError("An error occurred while requesting allocation");
     } finally {
       setAllocationRequestLoading(false);
@@ -699,7 +688,6 @@ export default function EasypayTransactionsPage() {
   };
 
   const handleFileUpload = async (file: any) => {
-    console.log("file", file);
     setEvidenceFileList([...evidenceFileList, file]);
   };
 

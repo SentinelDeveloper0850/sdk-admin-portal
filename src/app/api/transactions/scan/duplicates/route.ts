@@ -18,13 +18,13 @@ export async function POST(request: NextRequest) {
       requestsToScan: 0,
       receiptsFromASSIT: 0,
     }
-    
+
     if (!allocationRequests) {
       return NextResponse.json({ message: "Allocation requests are required" }, { status: 400 });
     }
 
     metadata.totalRequests = allocationRequests.length;
-    
+
     if (!receiptsFromASSIT) {
       return NextResponse.json({ message: "Receipts from ASSIT are required" }, { status: 400 });
     }
@@ -48,15 +48,15 @@ export async function POST(request: NextRequest) {
 
     for (const request of requestsToScan) {
       const { duplicate, failed, importToASSIT } = await scanForDuplicates(request, receiptsFromASSIT);
-      
+
       if (duplicate) {
         duplicateRequests.push(request);
         metadata.duplicateRequests++;
-      } 
+      }
       if (importToASSIT) {
         importRequests.push(request);
         metadata.importRequests++;
-      } 
+      }
       if (failed) {
         failedRequests.push(request);
         metadata.failedRequests++;
@@ -65,7 +65,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ message: "Duplicates scanned successfully", failedRequests, duplicateRequests, importRequests, stats: metadata }, { status: 200 });
   } catch (error) {
-    console.error("Error scanning duplicates:", error);
     return NextResponse.json({ message: "Internal Server Error ~ Scan duplicates" }, { status: 500 });
   }
 }
@@ -98,7 +97,6 @@ async function scanForDuplicates(request: IAllocationRequest, receiptsFromASSIT:
 
     return { duplicate: false, failed: false, importToASSIT: true };
   } catch (error) {
-    console.log("🚀 ~ scanForDuplicates ~ error:", error)
     return { duplicate: false, failed: true, importToASSIT: false };
-  } 
+  }
 }

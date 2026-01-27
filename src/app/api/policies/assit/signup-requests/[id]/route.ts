@@ -24,7 +24,6 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: request });
   } catch (error: any) {
-    console.error("Error fetching signup request:", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -51,7 +50,6 @@ export async function PATCH(
     switch (action) {
       case "assign_consultant":
         const consultant = await UserModel.findById(actionData.consultantId);
-        console.log("🚀 ~ PATCH ~ consultant:", consultant)
         if (!consultant) {
           return NextResponse.json(
             { success: false, error: "Consultant not found" },
@@ -217,7 +215,6 @@ export async function PATCH(
       updateData,
       { new: true }
     ).catch((err) => {
-      console.error("Error updating signup request:", err);
       return NextResponse.json(
         { success: false, error: err.message },
         { status: 500 }
