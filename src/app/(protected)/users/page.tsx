@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import {
   DeleteOutlined,
+  LockOutlined,
   MailOutlined,
   MoreOutlined,
   PhoneOutlined,
@@ -21,6 +22,7 @@ import {
   Form,
   Input,
   Row,
+  Select,
   Space,
   Table,
   Tag
@@ -40,6 +42,7 @@ import CoreRoleSelect from "@/app/components/roles/core-role-select";
 import RoleSelect from "@/app/components/roles/role-select";
 import { useAuth } from "@/context/auth-context";
 
+import { ListChecks } from "lucide-react";
 import { ERoles } from "../../../types/roles.enum";
 
 const UsersPage = () => {
@@ -55,7 +58,12 @@ const UsersPage = () => {
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
 
+  const [assignmentDrawerOpen, setAssignmentDrawerOpen] = useState<boolean>(false);
+  const [assignmentUserId, setAssignmentUserId] = useState<string | null>(null);
+
   const [form] = Form.useForm();
+  const [assignmentForm] = Form.useForm();
+
   const { user } = useAuth();
   const [showDeleted, setShowDeleted] = useState<boolean>(false);
 
@@ -369,6 +377,49 @@ const UsersPage = () => {
     }
   };
 
+  const openAssignmentDrawer = (id: string) => {
+    setAssignmentDrawerOpen(true);
+    setAssignmentUserId(id);
+  };
+
+  const handleSubmitAssignment = async (values: any) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/users/assign-region-branch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: assignmentUserId, ...values }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        sweetAlert({
+          title: "Failed to assign region and branch",
+          text: errorData.message,
+          icon: "error",
+        });
+        return;
+      }
+      const data = await response.json();
+      sweetAlert({
+        title: "Region and branch assigned successfully",
+        text: data.message,
+        icon: "success",
+        timer: 2000,
+      });
+      setAssignmentDrawerOpen(false);
+      setAssignmentUserId(null);
+      assignmentForm.resetFields();
+    } catch (err) {
+      sweetAlert({
+        title: "Error assigning region and branch",
+        text: "Please try again later.",
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
@@ -505,10 +556,17 @@ const UsersPage = () => {
                             setEditDrawerOpen(true);
                           }
                         },
+                        // Assign region and branch to the user
+                        ...(record.roles?.includes(ERoles.BranchManager) || record.roles?.includes(ERoles.RegionalManager) ? [{
+                          key: "assign-region-branch",
+                          icon: <ListChecks size={14} />,
+                          label: "Assignments",
+                          onClick: () => openAssignmentDrawer(record._id)
+                        }] : []),
                         // Only show reset password for non-admin users
                         ...(!record.roles?.includes('admin') ? [{
                           key: "reset-password",
-                          icon: <UserOutlined />,
+                          icon: <LockOutlined size={14} />,
                           label: "Reset Password",
                           onClick: () => resetPassword(record._id, record.name)
                         }] : []),
@@ -796,6 +854,33 @@ const UsersPage = () => {
             <Col span={12}>
               <Form.Item label="Additional Roles" name="roles">
                 <RoleSelect />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Drawer>
+
+      <Drawer
+        title="Assign Region and Branch"
+        placement="right"
+        closable={false}
+        onClose={() => {
+          setAssignmentDrawerOpen(false);
+          setAssignmentUserId(null);
+        }}
+        open={assignmentDrawerOpen}
+        width="50%"
+      >
+        <Form form={assignmentForm} layout="vertical" onFinish={handleSubmitAssignment}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Region" name="region">
+                <Select />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Branch" name="branch">
+                <Select />
               </Form.Item>
             </Col>
           </Row>

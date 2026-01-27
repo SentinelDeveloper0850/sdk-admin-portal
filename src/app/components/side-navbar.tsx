@@ -23,7 +23,7 @@ import {
   Shield,
   Users
 } from "lucide-react";
-import { HiOutlineDocumentCurrencyDollar } from "react-icons/hi2";
+import { HiBell, HiBuildingOffice, HiClock, HiCog6Tooth, HiMapPin, HiOutlineDocumentCurrencyDollar, HiUserGroup } from "react-icons/hi2";
 
 import { IconCoffin, IconPigMoney } from "@tabler/icons-react";
 import { ERoles } from "../../types/roles.enum";
@@ -283,57 +283,57 @@ const SideNavBar = () => {
       name: "Configurations",
       icon: <Settings size={18} />,
       url: "/configurations",
-      allowedRoles: [ERoles.Admin],
+      allowedRoles: [ERoles.Admin, ERoles.BranchManager, ERoles.RegionalManager],
       group: "Management",
       children: [
         {
           id: "staff-members",
           name: "Staff Members",
           url: "/configurations/staff-members",
-          allowedRoles: [ERoles.Admin, ERoles.HRManager],
-          icon: <Settings size={18} />,
+          allowedRoles: [ERoles.Admin, ERoles.HRManager, ERoles.BranchManager, ERoles.RegionalManager],
+          icon: <HiUserGroup size={18} />,
         },
         {
           id: "system-config",
           name: "System",
           url: "/configurations/system",
           allowedRoles: [ERoles.Admin],
-          icon: <Settings size={18} />,
+          icon: <HiCog6Tooth size={18} />,
         },
         {
           id: "scheme-config",
           name: "Scheme",
           url: "/configurations/scheme",
           allowedRoles: [ERoles.Admin],
-          icon: <Settings size={18} />,
+          icon: <HiCog6Tooth size={18} />,
+        },
+        {
+          id: "regions-config",
+          name: "Regions",
+          url: "/configurations/regions",
+          allowedRoles: [ERoles.Admin, ERoles.RegionalManager],
+          icon: <HiMapPin size={18} />,
         },
         {
           id: "branches-config",
           name: "Branches",
           url: "/configurations/branches",
-          allowedRoles: [ERoles.Admin],
-          icon: <Settings size={18} />,
-        },
-        {
-          id: "cemeteries-config",
-          name: "Cemeteries",
-          url: "/configurations/cemeteries",
-          allowedRoles: [ERoles.Admin],
-          icon: <Settings size={18} />,
+          allowedRoles: [ERoles.Admin, ERoles.BranchManager, ERoles.RegionalManager],
+          icon: <HiBuildingOffice size={18} />,
         },
         {
           id: "daily-activity-reminders-config",
           name: "Daily Activity Reminders",
           url: "/configurations/daily-activity-reminders",
           allowedRoles: [ERoles.Admin],
-          icon: <Settings size={18} />,
+          icon: <HiBell size={18} />,
         },
         {
           id: "duty-roster-config",
           name: "Duty Roster",
           url: "/configurations/roster",
-          allowedRoles: [ERoles.Admin, ERoles.HRManager],
-          icon: <Settings size={18} />,
+          allowedRoles: [ERoles.Admin, ERoles.HRManager, ERoles.BranchManager, ERoles.RegionalManager],
+          icon: <HiClock size={18} />,
         },
       ],
     },
