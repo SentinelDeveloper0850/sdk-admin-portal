@@ -10,6 +10,7 @@ import {
   FileCheck,
   HardDrive,
   Map,
+  ShieldCheck,
   Truck,
   Users,
 } from "lucide-react";
@@ -18,6 +19,41 @@ import { useTheme } from "next-themes";
 const { OptGroup, Option } = Select;
 
 const groupedRoles = [
+  {
+    category: "Management", // Management roles like Branch Manager, Regional Manager, Department Manager, etc
+    roles: [
+      {
+        key: "branch_manager",
+        label: "Branch Manager",
+        description: "Manages the daily operations of a branch",
+        icon: <ShieldCheck size={16} />,
+      },
+      {
+        key: "regional_manager",
+        label: "Regional Manager",
+        description: "Manages the daily operations of a regional office",
+        icon: <ShieldCheck size={16} />,
+      },
+      {
+        key: "department_manager",
+        label: "Department Manager",
+        description: "Manages the daily operations of a department",
+        icon: <ShieldCheck size={16} />,
+      },
+      {
+        key: "team_leader",
+        label: "Team Leader",
+        description: "Manages the daily operations of a team",
+        icon: <ShieldCheck size={16} />,
+      },
+      {
+        key: "supervisor",
+        label: "Supervisor",
+        description: "Manages the daily operations of a supervisor",
+        icon: <ShieldCheck size={16} />,
+      },
+    ],
+  },
   {
     category: "Claims & Compliance",
     roles: [

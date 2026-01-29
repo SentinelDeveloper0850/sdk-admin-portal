@@ -2,6 +2,13 @@ export const roleLabels: Record<string, string> = {
   admin: "Admin",
   member: "Member",
 
+  // Management
+  branch_manager: "Branch Manager",
+  regional_manager: "Regional Manager",
+  department_manager: "Department Manager",
+  team_leader: "Team Leader",
+  supervisor: "Supervisor",
+
   // Claims & Compliance
   claims_officer: "Claims Officer",
   compliance_officer: "Compliance Officer",
@@ -37,6 +44,16 @@ export const groupedRoles = [
     roles: [
       { key: "admin", label: "Admin", description: "Full system access and configuration" },
       { key: "member", label: "Member", description: "Standard access with limited permissions" },
+    ],
+  },
+  {
+    category: "Management",
+    roles: [
+      { key: "branch_manager", label: "Branch Manager", description: "Manages the daily operations of a branch" },
+      { key: "regional_manager", label: "Regional Manager", description: "Manages the daily operations of a regional office" },
+      { key: "department_manager", label: "Department Manager", description: "Manages the daily operations of a department" },
+      { key: "team_leader", label: "Team Leader", description: "Manages the daily operations of a team" },
+      { key: "supervisor", label: "Supervisor", description: "Manages the daily operations of a supervisor" },
     ],
   },
   {

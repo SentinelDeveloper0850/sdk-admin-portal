@@ -2,6 +2,13 @@ export enum ERoles {
   Admin = "admin",
   Member = "member",
 
+  // Management
+  BranchManager = "branch_manager",
+  RegionalManager = "regional_manager",
+  DepartmentManager = "department_manager",
+  TeamLeader = "team_leader",
+  Supervisor = "supervisor",
+
   // Claims & Compliance
   ClaimsOfficer = "claims_officer",
   ComplianceOfficer = "compliance_officer",

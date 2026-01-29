@@ -16,6 +16,8 @@ const CONSULTANT_ROLES = [
 const ESCALATION_ROLES = [
   ERoles.Admin,
   ERoles.HRManager,
+  ERoles.BranchManager,
+  ERoles.RegionalManager,
   ERoles.SchemeConsultant,
   ERoles.SchemeConsultantOnline,
 ];
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest) {
         .select("_id name email roles")
         .sort({ createdAt: -1 });
     } else {
-      users = await UsersModel.find(query).select("-password -deletedAt -deletedBy -updatedAt -createdAt -mustChangePassword -status").sort({ createdAt: -1 });
+      users = await UsersModel.find(query).select("-password -deletedAt -deletedBy -updatedAt -createdAt -mustChangePassword").sort({ createdAt: -1 });
     }
 
     return NextResponse.json(users, { status: 200 });
