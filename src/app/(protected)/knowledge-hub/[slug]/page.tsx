@@ -39,7 +39,7 @@ export default function KnowledgeArticleDetailPage({ params }: { params: { slug:
   return (
     <div className="p-4 space-y-4">
       <PageHeader
-        title={doc.title}
+        title={doc.title} isChild
         subtitle={doc.summary ? String(doc.summary) : null}
         actions={[
           isAdmin ? (

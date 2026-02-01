@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 
-import { Button } from "antd";
 import {
   ClipboardList,
   FileText,
@@ -17,6 +16,8 @@ import {
 
 import { useRole } from "@/app/hooks/use-role";
 import { ERoles } from "@/types/roles.enum";
+import { StarOutlined } from "@ant-design/icons";
+import KnowledgeHubHeroSection from "./knowledge-hub-hero-section";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -86,84 +87,64 @@ export default function KnowledgeHubListPage() {
 
   return (
     <div className="min-h-screen -m-4">
-      {/* Hero Section */}
-      <div
-        className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-900 dark:via-blue-800 dark:to-indigo-900"
-        style={{
-          backgroundImage: `radial-gradient(circle at 20% 50%, rgba(96, 165, 250, 0.3) 0%, transparent 50%),
-                            radial-gradient(circle at 80% 80%, rgba(147, 197, 253, 0.3) 0%, transparent 50%),
-                            radial-gradient(circle at 40% 20%, rgba(165, 180, 252, 0.2) 0%, transparent 50%)`,
-        }}
-      >
-        {/* Geometric Pattern Overlay */}
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px),
-                              repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)`,
-          }}
-        />
-
-        <div className="relative px-4 py-16 md:py-24">
+      <KnowledgeHubHeroSection>
+        <div className="relative px-4 py-8 md:py-12">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Header with Create Button (Admin only) */}
-            {isAdmin && (
-              <div className="mb-6 flex justify-end">
-                <Link href="/knowledge-hub/create">
-                  <Button type="primary" className="bg-white text-blue-700 hover:bg-gray-100">
-                    Create Article
-                  </Button>
-                </Link>
-              </div>
-            )}
-
-            {/* Main Heading */}
-            <h1 className="mb-6 text-4xl font-bold text-white md:text-5xl lg:text-6xl">
+            <h1 className="mb-6 text-4xl font-bold text-[#050505]/95 md:text-5xl lg:text-6xl">
               Knowledge Hub
             </h1>
-            <p className="mb-8 text-lg text-blue-100 md:text-xl">
+
+            <p className="mb-8 text-lg text-[#050505]/80 md:text-xl">
               Company documents, SOPs, and how-to guides.
             </p>
 
-            {/* Search Bar */}
             <div className="mx-auto max-w-2xl">
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                  <Search className="h-5 w-5 text-gray-400" />
+                  <Search className="h-5 w-5 text-[#050505]/50" />
                 </div>
+
                 <input
                   type="text"
                   placeholder="Search by keyword or phrase..."
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  className="w-full rounded-lg border-0 bg-white py-4 pl-12 pr-4 text-base shadow-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
+                  className="w-full rounded-lg border border-white/10
+                       bg-white/95 py-4 pl-12 pr-4 text-base shadow-lg
+                       placeholder:text-stone-500
+                       focus:outline-none focus:ring-2 focus:ring-[#ffac00]/70
+                       dark:bg-white/95 dark:text-[#050505] dark:placeholder:text-dark/50"
                 />
               </div>
 
-              {/* Additional Filters (Hidden by default, shown when needed) */}
               {(category || (isAdmin && status)) && (
-                <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
                   <select
-                    className="rounded border border-white/30 bg-white/10 px-3 py-2 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 dark:bg-white/5"
+                    className="rounded border border-white/25 bg-white/10 px-3 py-2 text-white
+                         backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#ffac00]/70
+                         dark:bg-white/5"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
                     <option value="">All categories</option>
                     {CATEGORY_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="text-gray-900">
+                      <option key={opt.value} value={opt.value} className="text-stone-900">
                         {opt.label}
                       </option>
                     ))}
                   </select>
+
                   {isAdmin && (
                     <select
-                      className="rounded border border-white/30 bg-white/10 px-3 py-2 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 dark:bg-white/5"
+                      className="rounded border border-white/25 bg-white/10 px-3 py-2 text-white
+                           backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#ffac00]/70
+                           dark:bg-white/5"
                       value={status}
                       onChange={(e) => setStatus(e.target.value)}
                     >
                       <option value="">All statuses</option>
                       {STATUS_OPTIONS.filter((opt) => opt.value).map((opt) => (
-                        <option key={opt.value} value={opt.value} className="text-gray-900">
+                        <option key={opt.value} value={opt.value} className="text-stone-900">
                           {opt.label}
                         </option>
                       ))}
@@ -174,15 +155,15 @@ export default function KnowledgeHubListPage() {
             </div>
           </div>
         </div>
-      </div>
+      </KnowledgeHubHeroSection>
 
       {/* Main Content */}
-      <div className="px-4 py-8 md:px-8">
+      <div className="p-4">
         <div className="mx-auto max-w-7xl">
           {showCategories ? (
             /* Category Cards Grid */
             <>
-              <h2 className="mb-6 text-2xl font-semibold text-blue-600 dark:text-blue-400">
+              <h2 className="mb-6 text-2xl font-semibold text-stone-600 dark:text-stone-400">
                 Browse the Knowledge Hub by category
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -190,17 +171,17 @@ export default function KnowledgeHubListPage() {
                   <button
                     key={cat.value}
                     onClick={() => setCategory(cat.value)}
-                    className="group flex flex-col items-start gap-4 rounded-lg border border-gray-200 bg-white p-6 text-left transition-all hover:border-blue-300 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-600"
+                    className="group flex flex-col items-start gap-4 rounded-lg border border-stone-200 bg-white p-6 text-left transition-all hover:border-stone-300 hover:shadow-lg dark:border-stone-700 dark:bg-stone-800 dark:hover:border-stone-600"
                   >
-                    <div className="text-blue-600 transition-transform group-hover:scale-110 dark:text-blue-400">
+                    <div className="text-stone-600 transition-transform group-hover:scale-110 dark:text-stone-400">
                       {cat.icon}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                      <h3 className="text-lg font-semibold text-stone-900 group-hover:text-stone-600 dark:text-white dark:group-hover:text-stone-400">
                         {cat.label}
                       </h3>
                     </div>
-                    <div className="text-blue-600 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="text-stone-600 opacity-0 transition-opacity group-hover:opacity-100">
                       →
                     </div>
                   </button>
@@ -212,12 +193,12 @@ export default function KnowledgeHubListPage() {
             <>
               {hasActiveFilters && (
                 <div className="mb-6 flex flex-wrap items-center gap-4">
-                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-2xl font-semibold text-stone-900 dark:text-white">
                     {items.length > 0 ? `Search Results (${items.length})` : "Search Results"}
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     <select
-                      className="rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                      className="rounded border border-stone-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 dark:border-stone-600 dark:bg-stone-800 dark:text-white"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
                     >
@@ -230,7 +211,7 @@ export default function KnowledgeHubListPage() {
                     </select>
                     {isAdmin && (
                       <select
-                        className="rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                        className="rounded border border-stone-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 dark:border-stone-600 dark:bg-stone-800 dark:text-white"
                         value={status}
                         onChange={(e) => setStatus(e.target.value)}
                       >
@@ -249,7 +230,7 @@ export default function KnowledgeHubListPage() {
                           setCategory("");
                           setStatus("");
                         }}
-                        className="rounded border border-gray-300 bg-white px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        className="rounded border border-stone-300 bg-white px-3 py-2 text-sm hover:bg-stone-50 dark:border-stone-600 dark:bg-stone-800 dark:hover:bg-stone-700"
                       >
                         Clear Filters
                       </button>
@@ -259,45 +240,45 @@ export default function KnowledgeHubListPage() {
               )}
 
               {items.length > 0 ? (
-                <div className="grid gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {items.map((item) => (
                     <Link
                       key={item.id}
                       href={`/knowledge-hub/${item.slug ?? item.id}`}
-                      className="group rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-600"
+                      className="group rounded-lg border border-stone-200 bg-white p-4 transition-all hover:border-yellow-300 hover:shadow-md dark:border-stone-700 dark:bg-stone-800 dark:hover:border-yellow-600"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="mt-1 text-blue-600 dark:text-blue-400">
-                          {getCategoryIcon(item.category)}
-                        </div>
                         <div className="flex-1">
-                          <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                            <span>{getCategoryLabel(item.category)}</span>
-                            {item.publishedAt && (
-                              <>
-                                <span>•</span>
-                                <span>{new Date(item.publishedAt).toLocaleDateString()}</span>
-                              </>
-                            )}
-                            {isAdmin && item.status !== "PUBLISHED" && (
-                              <>
-                                <span>•</span>
-                                <span className="font-semibold">{item.status}</span>
-                              </>
-                            )}
+                          <div className="flex items-start justify-between">
+                            <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
+                              <span>{getCategoryLabel(item.category)}</span>
+                              {item.publishedAt && (
+                                <>
+                                  <span>•</span>
+                                  <span>{new Date(item.publishedAt).toLocaleDateString()}</span>
+                                </>
+                              )}
+                              {isAdmin && item.status !== "PUBLISHED" && (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-semibold">{item.status}</span>
+                                </>
+                              )}
+                            </div>
+                            <StarOutlined className="text-stone-400 hover:text-[#ffac00]" />
                           </div>
-                          <h3 className="mb-1 text-lg font-semibold text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                          <h3 className="mb-1 text-lg font-semibold text-stone-900 group-hover:text-[#ffac00] dark:text-white dark:group-hover:text-[#ffac00]">
                             {item.title}
                           </h3>
                           {item.summary && (
-                            <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">{item.summary}</p>
+                            <p className="mb-2 text-sm text-stone-600 dark:text-stone-300">{item.summary}</p>
                           )}
                           {item.tags && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {item.tags.map((tag, idx) => (
                                 <span
                                   key={idx}
-                                  className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                  className="rounded bg-stone-100 px-2 py-1 text-xs text-stone-600 dark:bg-stone-700 dark:text-stone-300"
                                 >
                                   {tag}
                                 </span>
@@ -310,10 +291,10 @@ export default function KnowledgeHubListPage() {
                   ))}
                 </div>
               ) : hasActiveFilters ? (
-                <div className="rounded-lg border border-gray-200 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800">
-                  <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                  <p className="text-lg font-medium text-gray-900 dark:text-white">No articles found</p>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="rounded-lg border border-stone-200 bg-white p-12 text-center dark:border-stone-700 dark:bg-stone-800">
+                  <FileText className="mx-auto mb-4 h-12 w-12 text-stone-400" />
+                  <p className="text-lg font-medium text-stone-900 dark:text-white">No articles found</p>
+                  <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
                     Try adjusting your search or filter criteria
                   </p>
                 </div>
@@ -323,7 +304,7 @@ export default function KnowledgeHubListPage() {
               {data && data[data.length - 1]?.nextCursor && (
                 <div className="mt-8 flex justify-center">
                   <button
-                    className="rounded-lg border border-gray-300 bg-white px-6 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                    className="rounded-lg border border-stone-300 bg-white px-6 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50 disabled:opacity-50 dark:border-stone-600 dark:bg-stone-800 dark:text-white dark:hover:bg-stone-700"
                     onClick={() => setSize(size + 1)}
                     disabled={isValidating}
                   >

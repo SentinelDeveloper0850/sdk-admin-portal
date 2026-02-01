@@ -21,6 +21,7 @@ import {
   Server,
   Settings,
   Shield,
+  UserPen,
   Users
 } from "lucide-react";
 import { HiBell, HiBuildingOffice, HiClock, HiCog6Tooth, HiMapPin, HiOutlineDocumentCurrencyDollar, HiUserGroup } from "react-icons/hi2";
@@ -52,29 +53,7 @@ const SideNavBar = () => {
       name: "Tasks",
       icon: <ClipboardList size={18} />,
       url: "/tasks",
-      // No allowedRoles => visible to all logged in users
     },
-    // {
-    //   id: 9,
-    //   name: "Communication",
-    //   icon: <FileText size={18} />,
-    //   url: "/communication",
-    //   group: "Communication",
-    //   children: [
-    //     {
-    //       id: "news",
-    //       name: "News & Announcements",
-    //       icon: <FileText size={18} />,
-    //       url: "/news",
-    //     },
-    //     {
-    //       id: "knowledge-hub",
-    //       name: "Knowledge Hub",
-    //       icon: <FileText size={18} />,
-    //       url: "/knowledge-hub",
-    //     },
-    //   ],
-    // },
     {
       id: 3,
       name: "Operations",
@@ -263,12 +242,10 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 12,
-      name: "Users",
-      icon: <Shield size={18} />,
-      url: "/users",
-      allowedRoles: [ERoles.Admin, ERoles.HRManager],
-      group: "Management",
+      id: 9,
+      name: "Knowledge Hub",
+      icon: <FileText size={18} />,
+      url: "/knowledge-hub",
     },
     {
       id: 13,
@@ -292,6 +269,14 @@ const SideNavBar = () => {
           url: "/configurations/staff-members",
           allowedRoles: [ERoles.Admin, ERoles.HRManager, ERoles.BranchManager, ERoles.RegionalManager],
           icon: <HiUserGroup size={18} />,
+        },
+        {
+          id: "users",
+          name: "Users",
+          icon: <UserPen size={18} />,
+          url: "/users",
+          allowedRoles: [ERoles.Admin, ERoles.HRManager],
+          group: "Management",
         },
         {
           id: "system-config",
