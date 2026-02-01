@@ -15,7 +15,7 @@ import { useAuth } from "@/context/auth-context";
 const LoginForm = () => {
   const [form] = Form.useForm();
 
-  const { setUser } = useAuth();
+  const { setUser, setSessionExpiresAt } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (values: any) => {
@@ -38,6 +38,9 @@ const LoginForm = () => {
       const data = response.data;
       // Update user in context
       setUser(data.user);
+      if (typeof data.session?.expiresAt === "number") {
+        setSessionExpiresAt(data.session.expiresAt);
+      }
 
       router.push("/dashboard"); // Redirect to dashboard
     } catch (error: any) {

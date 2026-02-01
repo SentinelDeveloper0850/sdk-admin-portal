@@ -28,7 +28,7 @@ export async function GET() {
     const decoded = jwt.verify(token, JWT_SECRET, {
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
-    }) as { userId: string };
+    }) as jwt.JwtPayload & { userId: string };
 
     await connectToDatabase();
 
@@ -37,7 +37,12 @@ export async function GET() {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ user }, { status: 200 });
+    const expiresAt = decoded.exp ? decoded.exp * 1000 : null;
+
+    return NextResponse.json(
+      { user, session: { expiresAt } },
+      { status: 200 }
+    );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Error verifying token:", error.message);
