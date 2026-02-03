@@ -42,8 +42,7 @@ import PageHeader from "@/app/components/page-header";
 import CoreRoleSelect from "@/app/components/roles/core-role-select";
 import RoleSelect from "@/app/components/roles/role-select";
 import { useAuth } from "@/context/auth-context";
-
-import { ERoles } from "../../../types/roles.enum";
+import { ERoles } from "@/types/roles.enum";
 
 const UsersPage = () => {
   dayjs.extend(relativeTime);
@@ -426,8 +425,8 @@ const UsersPage = () => {
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
-        title="Manage Portal Users"
-        subtitle="Create, update, and delete users from your system"
+        title="Manage Users"
+        subtitle="Create, update, and delete Users from your system"
         actions={[
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">

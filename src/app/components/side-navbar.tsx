@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { IconCoffin, IconPigMoney } from "@tabler/icons-react";
+import { IconCoffin, IconPigMoney, IconSteeringWheel, IconUserShield } from "@tabler/icons-react";
 import { Tooltip } from "antd";
 import {
   Banknote,
@@ -25,13 +25,11 @@ import {
   Users,
 } from "lucide-react";
 import {
-  HiBell,
   HiBuildingOffice,
   HiClock,
-  HiCog6Tooth,
   HiMapPin,
   HiOutlineDocumentCurrencyDollar,
-  HiUserGroup,
+  HiUserGroup
 } from "react-icons/hi2";
 
 import { ERoles } from "../../types/roles.enum";
@@ -271,22 +269,6 @@ const SideNavBar = () => {
       ],
     },
     {
-      id: 12,
-      name: "Users",
-      icon: <Shield size={18} />,
-      url: "/users",
-      allowedRoles: [ERoles.Admin, ERoles.HRManager],
-      group: "Management",
-    },
-    {
-      id: 13,
-      name: "Status",
-      icon: <Server size={18} />,
-      url: "/status",
-      allowedRoles: [...Object.values(ERoles)],
-      group: "Management",
-    },
-    {
       id: 14,
       name: "Configurations",
       icon: <Settings size={18} />,
@@ -311,19 +293,34 @@ const SideNavBar = () => {
           icon: <HiUserGroup size={18} />,
         },
         {
-          id: "system-config",
-          name: "System",
-          url: "/configurations/system",
-          allowedRoles: [ERoles.Admin],
-          icon: <HiCog6Tooth size={18} />,
+          id: "users-config",
+          name: "Portal Users",
+          icon: <IconUserShield size={18} />,
+          url: "/configurations/users",
+          allowedRoles: [ERoles.Admin, ERoles.HRManager],
+          group: "Management",
         },
         {
-          id: "scheme-config",
-          name: "Scheme",
-          url: "/configurations/scheme",
+          id: "drivers-config",
+          name: "Drivers",
+          url: "/configurations/drivers",
           allowedRoles: [ERoles.Admin],
-          icon: <HiCog6Tooth size={18} />,
+          icon: <IconSteeringWheel size={18} />,
         },
+        // {
+        //   id: "system-config",
+        //   name: "System",
+        //   url: "/configurations/system",
+        //   allowedRoles: [ERoles.Admin],
+        //   icon: <HiCog6Tooth size={18} />,
+        // },
+        // {
+        //   id: "scheme-config",
+        //   name: "Scheme",
+        //   url: "/configurations/scheme",
+        //   allowedRoles: [ERoles.Admin],
+        //   icon: <HiCog6Tooth size={18} />,
+        // },
         {
           id: "regions-config",
           name: "Regions",
@@ -342,13 +339,13 @@ const SideNavBar = () => {
           ],
           icon: <HiBuildingOffice size={18} />,
         },
-        {
-          id: "daily-activity-reminders-config",
-          name: "Daily Activity Reminders",
-          url: "/configurations/daily-activity-reminders",
-          allowedRoles: [ERoles.Admin],
-          icon: <HiBell size={18} />,
-        },
+        // {
+        //   id: "daily-activity-reminders-config",
+        //   name: "Daily Activity Reminders",
+        //   url: "/configurations/daily-activity-reminders",
+        //   allowedRoles: [ERoles.Admin],
+        //   icon: <HiBell size={18} />,
+        // },
         {
           id: "duty-roster-config",
           name: "Duty Roster",
@@ -362,6 +359,14 @@ const SideNavBar = () => {
           icon: <HiClock size={18} />,
         },
       ],
+    },
+    {
+      id: 13,
+      name: "Status",
+      icon: <Server size={18} />,
+      url: "/status",
+      allowedRoles: [...Object.values(ERoles)],
+      group: "Management",
     },
   ];
 
@@ -465,11 +470,10 @@ const SideNavBar = () => {
                     return (
                       <Link key={child.id} href={child.url!}>
                         <div
-                          className={`ml-6 flex items-center gap-2 px-4 py-2 text-sm hover:bg-[#ffe082] ${
-                            childActive
-                              ? "font-semibold text-primary"
-                              : "text-gray-600"
-                          }`}
+                          className={`ml-6 flex items-center gap-2 px-4 py-2 text-sm hover:bg-[#ffe082] ${childActive
+                            ? "font-semibold text-primary"
+                            : "text-gray-600"
+                            }`}
                         >
                           <span className="inline-flex w-5 justify-center">
                             {child.icon ?? null}
