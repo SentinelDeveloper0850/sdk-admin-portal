@@ -1,5 +1,6 @@
-import mongoose, { Model, Schema, Types } from 'mongoose';
-import { ELeaveRequestStatus, ELeaveType } from '../../enums/hr/leave.enum';
+import mongoose, { Model, Schema, Types } from "mongoose";
+
+import { ELeaveRequestStatus, ELeaveType } from "../../enums/hr/leave.enum";
 
 export interface ILeaveRequest {
   _id?: string;
@@ -18,7 +19,7 @@ export interface ILeaveRequest {
 
 const LeaveRequestSchema = new Schema(
   {
-    employee: { type: Types.ObjectId, ref: 'Employee', required: true },
+    employee: { type: Types.ObjectId, ref: "Employee", required: true },
 
     leaveType: {
       type: String,
@@ -39,16 +40,18 @@ const LeaveRequestSchema = new Schema(
       default: ELeaveRequestStatus.PENDING,
     },
 
-    requestedBy: { type: Types.ObjectId, ref: 'User', required: true },
-    approvedBy: { type: Types.ObjectId, ref: 'User' },
+    requestedBy: { type: Types.ObjectId, ref: "User", required: true },
+    approvedBy: { type: Types.ObjectId, ref: "User" },
     approvedAt: { type: Date },
     rejectionReason: { type: String },
   },
   { timestamps: true }
 );
 
-export const LeaveRequest: Model<ILeaveRequest> = mongoose.models.leave_requests || mongoose.model<ILeaveRequest>(
-  "leave_requests",
-  LeaveRequestSchema,
-  "leave_requests"
-);
+export const LeaveRequest: Model<ILeaveRequest> =
+  mongoose.models.leave_requests ||
+  mongoose.model<ILeaveRequest>(
+    "leave_requests",
+    LeaveRequestSchema,
+    "leave_requests"
+  );

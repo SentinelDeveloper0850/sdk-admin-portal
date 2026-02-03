@@ -2,22 +2,44 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { AlertOutlined, CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, DatePicker, Modal, Space, Spin, Table, Tabs, Tag, Typography } from "antd";
+import {
+  AlertOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  ExclamationCircleOutlined,
+  FileTextOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Card,
+  DatePicker,
+  Modal,
+  Space,
+  Spin,
+  Table,
+  Tabs,
+  Tag,
+  Typography,
+} from "antd";
+import { ColumnType } from "antd/es/table";
 import dayjs from "dayjs";
+import swal from "sweetalert";
 
-import PageHeader from "@/app/components/page-header";
-import { useAuth } from "@/context/auth-context";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
-import { ERoles } from "../../../../types/roles.enum";
 
 import CashUpSubmissionReviewDrawer from "@/app/components/cash-up/cash-up-submission-review-drawer";
 import FuneralReceiptsDrawer from "@/app/components/cash-up/funeral-receipts-drawer";
 import PolicyReceiptsDrawer from "@/app/components/cash-up/policy-receipts-drawer";
 import SalesReceiptsDrawer from "@/app/components/cash-up/sales-receipts-drawer";
 import WeeklySummaryDrawer from "@/app/components/cash-up/weekly-summary-drawer";
-import { ColumnType } from "antd/es/table";
-import swal from "sweetalert";
+import PageHeader from "@/app/components/page-header";
+import { useAuth } from "@/context/auth-context";
+
+import { ERoles } from "../../../../types/roles.enum";
 import CashUpCountdown from "./CashUpCountdown";
 
 const { Title, Text } = Typography;
@@ -67,12 +89,16 @@ interface WeeklySummary {
   onTimeSubmissions: number;
 }
 
-const norm = (s?: string) => (s || '').trim().toLowerCase();
+const norm = (s?: string) => (s || "").trim().toLowerCase();
 
 const CashUpDashboardPage = () => {
   const { user } = useAuth();
-  const [cashUpSubmissions, setCashUpSubmissions] = useState<ICashUpSubmission[]>([]);
-  const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null);
+  const [cashUpSubmissions, setCashUpSubmissions] = useState<
+    ICashUpSubmission[]
+  >([]);
+  const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   const [policyDrawerOpen, setPolicyDrawerOpen] = useState(false);
@@ -82,8 +108,11 @@ const CashUpDashboardPage = () => {
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
   const [summaryDrawerOpen, setSummaryDrawerOpen] = useState(false);
 
-  const [selectedCashUpSubmission, setSelectedCashUpSubmission] = useState<ICashUpSubmission | null>(null);
-  const [selectedWeek, setSelectedWeek] = useState(dayjs().format('YYYY-MM-DD'));
+  const [selectedCashUpSubmission, setSelectedCashUpSubmission] =
+    useState<ICashUpSubmission | null>(null);
+  const [selectedWeek, setSelectedWeek] = useState(
+    dayjs().format("YYYY-MM-DD")
+  );
 
   const [activeDate, setActiveDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [lateModalOpen, setLateModalOpen] = useState(false);
@@ -154,7 +183,6 @@ const CashUpDashboardPage = () => {
       });
     }
   };
-
 
   useEffect(() => {
     if (user && selectedWeek) {
@@ -244,29 +272,49 @@ const CashUpDashboardPage = () => {
 
   const getRiskLevelColor = (riskLevel = "") => {
     switch (norm(riskLevel)) {
-      case "high": return "red";
-      case "medium": return "orange";
-      case "low": return "green";
-      default: return "default";
+      case "high":
+        return "red";
+      case "medium":
+        return "orange";
+      case "low":
+        return "green";
+      default:
+        return "default";
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR'
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
     }).format(amount);
   };
 
   // stats
-  const { awaitingReview, draftCount, sentBackCount, approvedCount, lateCount } = useMemo(() => {
+  const {
+    awaitingReview,
+    draftCount,
+    sentBackCount,
+    approvedCount,
+    lateCount,
+  } = useMemo(() => {
     const n = (s?: string) => (s || "").toLowerCase();
     return {
-      awaitingReview: cashUpSubmissions.filter(a => ["pending", "resolved"].includes(n(a.status))).length,
-      draftCount: cashUpSubmissions.filter(a => n(a.status) === "draft").length,
-      sentBackCount: cashUpSubmissions.filter(a => n(a.status) === "needs_changes").length,
-      approvedCount: cashUpSubmissions.filter(a => n(a.status) === "approved").length,
-      lateCount: cashUpSubmissions.filter(a => (a as any).isLateSubmission && ["pending", "resolved", "approved", "rejected"].includes(n(a.status))).length,
+      awaitingReview: cashUpSubmissions.filter((a) =>
+        ["pending", "resolved"].includes(n(a.status))
+      ).length,
+      draftCount: cashUpSubmissions.filter((a) => n(a.status) === "draft")
+        .length,
+      sentBackCount: cashUpSubmissions.filter(
+        (a) => n(a.status) === "needs_changes"
+      ).length,
+      approvedCount: cashUpSubmissions.filter((a) => n(a.status) === "approved")
+        .length,
+      lateCount: cashUpSubmissions.filter(
+        (a) =>
+          (a as any).isLateSubmission &&
+          ["pending", "resolved", "approved", "rejected"].includes(n(a.status))
+      ).length,
     };
   }, [cashUpSubmissions]);
 
@@ -286,36 +334,48 @@ const CashUpDashboardPage = () => {
       title: "Date",
       dataIndex: "date",
       key: "date",
-      render: (date: string) => dayjs(date).format('DD MMM YYYY'),
+      render: (date: string) => dayjs(date).format("DD MMM YYYY"),
     },
     {
       title: "Collections (Cash+Card)",
       dataIndex: "batchReceiptTotal",
       key: "batchReceiptTotal",
       align: "right",
-      sorter: (a: ICashUpSubmission, b: ICashUpSubmission) => (a.batchReceiptTotal ?? 0) - (b.batchReceiptTotal ?? 0),
-      render: (amount: number) => amount === null || amount === undefined ? '--' : formatCurrency(amount),
+      sorter: (a: ICashUpSubmission, b: ICashUpSubmission) =>
+        (a.batchReceiptTotal ?? 0) - (b.batchReceiptTotal ?? 0),
+      render: (amount: number) =>
+        amount === null || amount === undefined ? "--" : formatCurrency(amount),
     },
     {
       title: "ASSIT Total",
       dataIndex: "systemBalance",
       key: "systemBalance",
       align: "right",
-      sorter: (a: ICashUpSubmission, b: ICashUpSubmission) => (a.systemBalance ?? 0) - (b.systemBalance ?? 0),
-      render: (amount: number) => amount === null || amount === undefined ? '--' : formatCurrency(amount),
+      sorter: (a: ICashUpSubmission, b: ICashUpSubmission) =>
+        (a.systemBalance ?? 0) - (b.systemBalance ?? 0),
+      render: (amount: number) =>
+        amount === null || amount === undefined ? "--" : formatCurrency(amount),
     },
     {
       title: "Variance",
       dataIndex: "discrepancy",
       key: "discrepancy",
       align: "right",
-      sorter: (a: ICashUpSubmission, b: ICashUpSubmission) => (a.discrepancy ?? 0) - (b.discrepancy ?? 0),
+      sorter: (a: ICashUpSubmission, b: ICashUpSubmission) =>
+        (a.discrepancy ?? 0) - (b.discrepancy ?? 0),
       render: (_: number, r: ICashUpSubmission) => {
-        const hasTotals = r.batchReceiptTotal !== undefined && r.systemBalance !== undefined;
+        const hasTotals =
+          r.batchReceiptTotal !== undefined && r.systemBalance !== undefined;
         if (!hasTotals) return "--";
-        const variance = (r.discrepancy ?? (r.batchReceiptTotal - r.systemBalance));
-        const color = variance === 0 ? "green" : variance > 0 ? "orange" : "red";
-        return <Tag color={color}>{variance > 0 ? "+" : ""}{formatCurrency(variance)}</Tag>;
+        const variance = r.discrepancy ?? r.batchReceiptTotal - r.systemBalance;
+        const color =
+          variance === 0 ? "green" : variance > 0 ? "orange" : "red";
+        return (
+          <Tag color={color}>
+            {variance > 0 ? "+" : ""}
+            {formatCurrency(variance)}
+          </Tag>
+        );
       },
     },
     {
@@ -413,7 +473,13 @@ const CashUpDashboardPage = () => {
     let banking = 0;
 
     for (const s of subs) {
-      const pm = norm(s.paymentMethod || "") as "cash" | "card" | "both" | "bank_deposit" | "eft" | undefined;
+      const pm = norm(s.paymentMethod || "") as
+        | "cash"
+        | "card"
+        | "both"
+        | "bank_deposit"
+        | "eft"
+        | undefined;
       const submitted = Number(s.submittedAmount ?? 0) || 0;
       const cashAmount = Number(s.cashAmount ?? 0) || 0;
       const cardAmount = Number(s.cardAmount ?? 0) || 0;
@@ -437,17 +503,21 @@ const CashUpDashboardPage = () => {
 
   // Check if the user has the user submitted today?
   const hasSubmittedToday = cashUpSubmissions.some(
-    a => a.date === today && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
+    (a) =>
+      a.date === today &&
+      ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
   );
 
   const hasSubmittedForActiveDate = cashUpSubmissions.some(
-    a => a.date === activeDate && ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
+    (a) =>
+      a.date === activeDate &&
+      ["pending", "resolved", "approved", "rejected"].includes(norm(a.status))
   );
 
   // Calculate the time remaining until the submission deadline in minutes
   const cutoff = dayjs().hour(20).minute(0).second(0);
-  const minutesToCutoff = cutoff.diff(dayjs(), 'minutes'); // positive before cutoff, negative after
-  const minutesLeft = minutesToCutoff;  // already positive before, negative after
+  const minutesToCutoff = cutoff.diff(dayjs(), "minutes"); // positive before cutoff, negative after
+  const minutesLeft = minutesToCutoff; // already positive before, negative after
   const humanMins = Math.max(0, minutesLeft);
   const plural = humanMins === 1 ? "" : "s";
 
@@ -473,8 +543,14 @@ const CashUpDashboardPage = () => {
         subtitle={`Submit your daily cash-up receipts for review and reconciliation`}
         actions={[
           <Space key="actions">
-            <Button onClick={handleRefresh} loading={loading} icon={<ReloadOutlined />}>Refresh</Button>
-          </Space>
+            <Button
+              onClick={handleRefresh}
+              loading={loading}
+              icon={<ReloadOutlined />}
+            >
+              Refresh
+            </Button>
+          </Space>,
         ]}
       />
 
@@ -482,25 +558,31 @@ const CashUpDashboardPage = () => {
         {/* Submission Buttons */}
         <Space key="actions">
           <Button onClick={() => setLateModalOpen(true)} type="default">
-            <CalendarOutlined className="w-4 h-4" /> Late Submission
+            <CalendarOutlined className="h-4 w-4" /> Late Submission
           </Button>
           {activeDate !== today && (
             <Button onClick={() => setActiveDate(today)} type="default">
-              <CalendarOutlined className="w-4 h-4" /> Today
+              <CalendarOutlined className="h-4 w-4" /> Today
             </Button>
           )}
         </Space>
         {/* Receipts Buttons */}
         <Space key="actions">
-          {!hasSubmittedForActiveDate && <Button onClick={() => setPolicyDrawerOpen(true)} type="dashed">
-            <PlusOutlined className="w-4 h-4" /> Policy Receipts
-          </Button>}
-          {!hasSubmittedForActiveDate && <Button onClick={() => setFuneralDrawerOpen(true)} type="dashed">
-            <PlusOutlined className="w-4 h-4" /> Funeral Receipts
-          </Button>}
-          {!hasSubmittedForActiveDate && <Button onClick={() => setSalesDrawerOpen(true)} type="dashed">
-            <PlusOutlined className="w-4 h-4" /> Sales Receipts
-          </Button>}
+          {!hasSubmittedForActiveDate && (
+            <Button onClick={() => setPolicyDrawerOpen(true)} type="dashed">
+              <PlusOutlined className="h-4 w-4" /> Policy Receipts
+            </Button>
+          )}
+          {!hasSubmittedForActiveDate && (
+            <Button onClick={() => setFuneralDrawerOpen(true)} type="dashed">
+              <PlusOutlined className="h-4 w-4" /> Funeral Receipts
+            </Button>
+          )}
+          {!hasSubmittedForActiveDate && (
+            <Button onClick={() => setSalesDrawerOpen(true)} type="dashed">
+              <PlusOutlined className="h-4 w-4" /> Sales Receipts
+            </Button>
+          )}
         </Space>
       </div>
 
@@ -514,7 +596,9 @@ const CashUpDashboardPage = () => {
                   <Text className="text-gray-500">{card.title}</Text>
                   <div className="text-2xl font-bold">{card.value}</div>
                 </div>
-                <div className={`text-2xl ${colorClass[card.color] || colorClass.default}`}>
+                <div
+                  className={`text-2xl ${colorClass[card.color] || colorClass.default}`}
+                >
                   {card.icon}
                 </div>
               </div>
@@ -526,28 +610,85 @@ const CashUpDashboardPage = () => {
       <div className="flex gap-4">
         <div className="flex-1">
           {/* Daily Cash-Up Submitted */}
-          {activeDate === today && hasSubmittedToday && <Alert type="success" showIcon description={<div className="space-y-2 w-full">
-            <h4 className="font-bold">Daily Cash-Up Submitted</h4>
-            <p>You have already submitted your receipts for today. Please wait for the system to process your submissions. If you need to submit more receipts, please contact your manager.</p>
-          </div>} />}
+          {activeDate === today && hasSubmittedToday && (
+            <Alert
+              type="success"
+              showIcon
+              description={
+                <div className="w-full space-y-2">
+                  <h4 className="font-bold">Daily Cash-Up Submitted</h4>
+                  <p>
+                    You have already submitted your receipts for today. Please
+                    wait for the system to process your submissions. If you need
+                    to submit more receipts, please contact your manager.
+                  </p>
+                </div>
+              }
+            />
+          )}
 
           {/* Cash-Up Due */}
-          {(activeDate === today && !hasSubmittedToday && minutesToCutoff >= 60) && <Alert type="info" showIcon description={<div className="space-y-2 w-full">
-            <h4 className="font-bold"><span>Cash-Up Due</span></h4>
-            <p>You have not submitted your receipts for today. Please ensure you submit your receipts before the cut-off time to avoid any penalties.</p>
-          </div>} />}
+          {activeDate === today &&
+            !hasSubmittedToday &&
+            minutesToCutoff >= 60 && (
+              <Alert
+                type="info"
+                showIcon
+                description={
+                  <div className="w-full space-y-2">
+                    <h4 className="font-bold">
+                      <span>Cash-Up Due</span>
+                    </h4>
+                    <p>
+                      You have not submitted your receipts for today. Please
+                      ensure you submit your receipts before the cut-off time to
+                      avoid any penalties.
+                    </p>
+                  </div>
+                }
+              />
+            )}
 
           {/* Cutting It Close */}
-          {(activeDate === today && !hasSubmittedToday && minutesToCutoff >= 0 && minutesToCutoff < 60) && <Alert type="warning" showIcon description={<div className="space-y-2 w-full">
-            <h4 className="font-bold">Cutting It Close</h4>
-            <p>You have not submitted your receipts for today. Please submit your receipts before the cut-off time to avoid any penalties. You have {humanMins} minute{plural} left.</p>
-          </div>} />}
+          {activeDate === today &&
+            !hasSubmittedToday &&
+            minutesToCutoff >= 0 &&
+            minutesToCutoff < 60 && (
+              <Alert
+                type="warning"
+                showIcon
+                description={
+                  <div className="w-full space-y-2">
+                    <h4 className="font-bold">Cutting It Close</h4>
+                    <p>
+                      You have not submitted your receipts for today. Please
+                      submit your receipts before the cut-off time to avoid any
+                      penalties. You have {humanMins} minute{plural} left.
+                    </p>
+                  </div>
+                }
+              />
+            )}
 
           {/* Deadline Missed */}
-          {(activeDate === today && !hasSubmittedToday && minutesToCutoff < 0) && <Alert type="error" showIcon description={<div className="space-y-2 w-full">
-            <h4 className="font-bold">Deadline Missed</h4>
-            <p>You have not submitted your receipts for today. You have missed the submission deadline and will be flagged as a late submission.</p>
-          </div>} />}
+          {activeDate === today &&
+            !hasSubmittedToday &&
+            minutesToCutoff < 0 && (
+              <Alert
+                type="error"
+                showIcon
+                description={
+                  <div className="w-full space-y-2">
+                    <h4 className="font-bold">Deadline Missed</h4>
+                    <p>
+                      You have not submitted your receipts for today. You have
+                      missed the submission deadline and will be flagged as a
+                      late submission.
+                    </p>
+                  </div>
+                }
+              />
+            )}
         </div>
         {activeDate === today && <CashUpCountdown cutOffTime={"20:00:00"} />}
       </div>
@@ -562,12 +703,22 @@ const CashUpDashboardPage = () => {
             children: (
               <Card
                 size="small"
-                title={<Title className="my-2" level={4}>Current Submission ({activeDate})</Title>}
+                title={
+                  <Title className="my-2" level={4}>
+                    Current Submission ({activeDate})
+                  </Title>
+                }
                 extra={
                   currentSubmission &&
-                  ["draft", "needs_changes"].includes(norm(currentSubmission.status)) &&
+                  ["draft", "needs_changes"].includes(
+                    norm(currentSubmission.status)
+                  ) &&
                   isOwner(currentSubmission) && (
-                    <Button type="primary" className="text-black uppercase" onClick={() => submitForReview(currentSubmission)}>
+                    <Button
+                      type="primary"
+                      className="uppercase text-black"
+                      onClick={() => submitForReview(currentSubmission)}
+                    >
                       Submit for Review
                     </Button>
                   )
@@ -595,23 +746,46 @@ const CashUpDashboardPage = () => {
                       />
                     )}
                     <div className="flex flex-wrap gap-3">
-                      <Tag color={getStatusColor(currentSubmission.status)} className="uppercase">
+                      <Tag
+                        color={getStatusColor(currentSubmission.status)}
+                        className="uppercase"
+                      >
                         {getStatusText(currentSubmission.status)}
                       </Tag>
-                      {!!currentSubmission.isLateSubmission && <Tag color="red">LATE</Tag>}
-                      <Tag color="blue">Total Cash: {formatCurrency(currentPaymentBreakdown.cash)}</Tag>
-                      <Tag color="blue">Total Card: {formatCurrency(currentPaymentBreakdown.card)}</Tag>
-                      <Tag color="blue">Banking Total: {formatCurrency(currentPaymentBreakdown.banking)}</Tag>
-                      <Tag color="purple">Grand Total: {formatCurrency(currentSubmission.batchReceiptTotal ?? 0)}</Tag>
+                      {!!currentSubmission.isLateSubmission && (
+                        <Tag color="red">LATE</Tag>
+                      )}
+                      <Tag color="blue">
+                        Total Cash:{" "}
+                        {formatCurrency(currentPaymentBreakdown.cash)}
+                      </Tag>
+                      <Tag color="blue">
+                        Total Card:{" "}
+                        {formatCurrency(currentPaymentBreakdown.card)}
+                      </Tag>
+                      <Tag color="blue">
+                        Banking Total:{" "}
+                        {formatCurrency(currentPaymentBreakdown.banking)}
+                      </Tag>
+                      <Tag color="purple">
+                        Grand Total:{" "}
+                        {formatCurrency(
+                          currentSubmission.batchReceiptTotal ?? 0
+                        )}
+                      </Tag>
                     </div>
 
                     <Table
                       size="small"
                       rowKey={(r) => String(r._idx)}
-                      dataSource={(currentSubmission.submissions || []).map((s) => ({
-                        ...s,
-                        attachmentsCount: Array.isArray(s.files) ? s.files.length : 0,
-                      }))}
+                      dataSource={(currentSubmission.submissions || []).map(
+                        (s) => ({
+                          ...s,
+                          attachmentsCount: Array.isArray(s.files)
+                            ? s.files.length
+                            : 0,
+                        })
+                      )}
                       columns={[
                         {
                           title: "#",
@@ -636,14 +810,18 @@ const CashUpDashboardPage = () => {
                           title: "Payment",
                           dataIndex: "paymentMethod",
                           key: "paymentMethod",
-                          render: (v: string) => (v ? String(v).replace("_", " ") : "—"),
+                          render: (v: string) =>
+                            v ? String(v).replace("_", " ") : "—",
                         },
                         {
                           title: "Amount",
                           dataIndex: "submittedAmount",
                           key: "submittedAmount",
                           align: "right",
-                          render: (v: number) => (v === null || v === undefined ? "—" : formatCurrency(Number(v))),
+                          render: (v: number) =>
+                            v === null || v === undefined
+                              ? "—"
+                              : formatCurrency(Number(v)),
                         },
                         {
                           title: "Notes",
@@ -655,20 +833,22 @@ const CashUpDashboardPage = () => {
                           title: "Submitted",
                           dataIndex: "submittedAt",
                           key: "submittedAt",
-                          render: (v: string) => (v ? dayjs(v).format("DD MMM HH:mm") : "—"),
+                          render: (v: string) =>
+                            v ? dayjs(v).format("DD MMM HH:mm") : "—",
                         },
                         {
                           title: "Files",
                           dataIndex: "attachmentsCount",
                           key: "attachmentsCount",
                           align: "center",
-                          render: (v: number, r: any) => (
-                            <span>{v || 0}</span>
-                          ),
+                          render: (v: number, r: any) => <span>{v || 0}</span>,
                         },
                       ]}
                       pagination={false}
-                      locale={{ emptyText: "No receipt entries yet for the current submission." }}
+                      locale={{
+                        emptyText:
+                          "No receipt entries yet for the current submission.",
+                      }}
                     />
                   </div>
                 )}
@@ -679,7 +859,14 @@ const CashUpDashboardPage = () => {
             key: "previous",
             label: "Previous Submissions",
             children: (
-              <Card size="small" title={<Title className="my-2" level={4}>Previous Submissions</Title>}>
+              <Card
+                size="small"
+                title={
+                  <Title className="my-2" level={4}>
+                    Previous Submissions
+                  </Title>
+                }
+              >
                 {loading ? (
                   <div className="flex justify-center py-8">
                     <Spin size="large" />
@@ -708,7 +895,9 @@ const CashUpDashboardPage = () => {
         open={lateModalOpen}
         onCancel={() => setLateModalOpen(false)}
         onOk={() => {
-          const next = (lateDate || dayjs().subtract(1, "day")).format("YYYY-MM-DD");
+          const next = (lateDate || dayjs().subtract(1, "day")).format(
+            "YYYY-MM-DD"
+          );
           setActiveDate(next);
           setLateModalOpen(false);
         }}
@@ -722,7 +911,9 @@ const CashUpDashboardPage = () => {
             style={{ width: "100%" }}
             value={lateDate}
             onChange={(d) => d && setLateDate(d)}
-            disabledDate={(current) => !!current && current.isAfter(dayjs(), "day")}
+            disabledDate={(current) =>
+              !!current && current.isAfter(dayjs(), "day")
+            }
           />
         </div>
       </Modal>
@@ -773,4 +964,7 @@ const CashUpDashboardPage = () => {
   );
 };
 
-export default withRoleGuard(CashUpDashboardPage, Object.values(ERoles) as unknown as string[]); 
+export default withRoleGuard(
+  CashUpDashboardPage,
+  Object.values(ERoles) as unknown as string[]
+);

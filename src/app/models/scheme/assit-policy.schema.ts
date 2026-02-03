@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+
 import { PolicyModel } from "./policy.schema";
 import { SchemeSocietyModel } from "./scheme-society.schema";
 
@@ -25,37 +26,58 @@ export interface IAssitPolicy {
 }
 
 // Define the schema
-const AssitPolicySchema: Schema = new Schema({
-  membershipID: { type: String, required: true },
+const AssitPolicySchema: Schema = new Schema(
+  {
+    membershipID: { type: String, required: true },
 
-  linkedEasipolPolicyId: { type: Schema.Types.ObjectId, ref: "policies", required: false },
-  linkedEasipolPolicyNumber: { type: String, required: false },
+    linkedEasipolPolicyId: {
+      type: Schema.Types.ObjectId,
+      ref: "policies",
+      required: false,
+    },
+    linkedEasipolPolicyNumber: { type: String, required: false },
 
-  linkedSocietyId: { type: Schema.Types.ObjectId, ref: "scheme-societies", required: false },
-  linkedSocietyName: { type: String, required: false },
+    linkedSocietyId: {
+      type: Schema.Types.ObjectId,
+      ref: "scheme-societies",
+      required: false,
+    },
+    linkedSocietyName: { type: String, required: false },
 
-  lastName: { type: String, required: true },
-  initials: { type: String, required: true },
-  fullName: { type: String, required: false, default: function (this: IAssitPolicy) { return this.initials + " " + this.lastName; } },
-  dateOfBirth: { type: String, required: true },
-  entryDate: { type: Date, required: true },
-  coverDate: { type: Date, required: true },
-  payAtNumber: { type: String, required: true },
-  totalPremium: { type: Number, required: true },
-  totalPremiumString: { type: String, required: true },
-  waitingPeriod: { type: Number, required: true },
-  category: { type: String, required: true },
-  hasLinkedSociety: { type: Boolean, required: false, default: false },
-  hasLinkedEasipolPolicy: { type: Boolean, required: false, default: false },
-}, { timestamps: true });
+    lastName: { type: String, required: true },
+    initials: { type: String, required: true },
+    fullName: {
+      type: String,
+      required: false,
+      default: function (this: IAssitPolicy) {
+        return this.initials + " " + this.lastName;
+      },
+    },
+    dateOfBirth: { type: String, required: true },
+    entryDate: { type: Date, required: true },
+    coverDate: { type: Date, required: true },
+    payAtNumber: { type: String, required: true },
+    totalPremium: { type: Number, required: true },
+    totalPremiumString: { type: String, required: true },
+    waitingPeriod: { type: Number, required: true },
+    category: { type: String, required: true },
+    hasLinkedSociety: { type: Boolean, required: false, default: false },
+    hasLinkedEasipolPolicy: { type: Boolean, required: false, default: false },
+  },
+  { timestamps: true }
+);
 
 // Populate the linkedEasipolPolicyId and linkedSocietyId
 AssitPolicySchema.pre("save", async function (next) {
   if (this.hasLinkedEasipolPolicy) {
-    this.linkedEasipolPolicyId = await PolicyModel.findOne({ policyNumber: this.membershipID });
+    this.linkedEasipolPolicyId = await PolicyModel.findOne({
+      policyNumber: this.membershipID,
+    });
   }
   if (this.hasLinkedSociety) {
-    this.linkedSocietyId = await SchemeSocietyModel.findOne({ societyId: this.membershipID });
+    this.linkedSocietyId = await SchemeSocietyModel.findOne({
+      societyId: this.membershipID,
+    });
   }
   next();
 });
@@ -63,4 +85,8 @@ AssitPolicySchema.pre("save", async function (next) {
 // Export the model
 export const AssitPolicyModel =
   mongoose.models.assit_policies ||
-  mongoose.model<IAssitPolicy>("assit_policies", AssitPolicySchema, "assit_policies");
+  mongoose.model<IAssitPolicy>(
+    "assit_policies",
+    AssitPolicySchema,
+    "assit_policies"
+  );

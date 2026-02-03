@@ -2,7 +2,10 @@
 import dayjs from "dayjs";
 import mongoose from "mongoose";
 
-import { CalendarEventModel, CalendarEventStatus } from "@/app/models/calendar-event.schema";
+import {
+  CalendarEventModel,
+  CalendarEventStatus,
+} from "@/app/models/calendar-event.schema";
 import { FuneralMilestoneType } from "@/app/models/funeral.schema";
 import type { IFuneral } from "@/types/funeral";
 
@@ -17,13 +20,41 @@ const MAPPING: Record<
   FuneralMilestoneType,
   { subType: string; titlePrefix: string; defaultMins: number }
 > = {
-  [FuneralMilestoneType.PICKUP]: { subType: "funeral_pickup", titlePrefix: "Pickup", defaultMins: 60 },
-  [FuneralMilestoneType.BATHING]: { subType: "funeral_bathing", titlePrefix: "Bathing", defaultMins: 90 },
-  [FuneralMilestoneType.TENT_ERECTION]: { subType: "funeral_tent", titlePrefix: "Tent Erection", defaultMins: 180 },
-  [FuneralMilestoneType.DELIVERY]: { subType: "funeral_delivery", titlePrefix: "Delivery", defaultMins: 60 },
-  [FuneralMilestoneType.SERVICE]: { subType: "funeral_service", titlePrefix: "Service", defaultMins: 120 },
-  [FuneralMilestoneType.ESCORT]: { subType: "funeral_escort", titlePrefix: "Escort", defaultMins: 120 },
-  [FuneralMilestoneType.BURIAL]: { subType: "funeral_burial", titlePrefix: "Burial", defaultMins: 90 },
+  [FuneralMilestoneType.PICKUP]: {
+    subType: "funeral_pickup",
+    titlePrefix: "Pickup",
+    defaultMins: 60,
+  },
+  [FuneralMilestoneType.BATHING]: {
+    subType: "funeral_bathing",
+    titlePrefix: "Bathing",
+    defaultMins: 90,
+  },
+  [FuneralMilestoneType.TENT_ERECTION]: {
+    subType: "funeral_tent",
+    titlePrefix: "Tent Erection",
+    defaultMins: 180,
+  },
+  [FuneralMilestoneType.DELIVERY]: {
+    subType: "funeral_delivery",
+    titlePrefix: "Delivery",
+    defaultMins: 60,
+  },
+  [FuneralMilestoneType.SERVICE]: {
+    subType: "funeral_service",
+    titlePrefix: "Service",
+    defaultMins: 120,
+  },
+  [FuneralMilestoneType.ESCORT]: {
+    subType: "funeral_escort",
+    titlePrefix: "Escort",
+    defaultMins: 120,
+  },
+  [FuneralMilestoneType.BURIAL]: {
+    subType: "funeral_burial",
+    titlePrefix: "Burial",
+    defaultMins: 90,
+  },
 };
 
 function buildMilestoneKey(type: FuneralMilestoneType) {
@@ -44,7 +75,10 @@ function getInformantName(funeral: IFuneral) {
  * - If milestone.enabled && milestone.startDateTime => ensure calendar event exists and is published
  * - If milestone disabled or missing startDateTime => cancel related calendar event (if exists)
  */
-export async function upsertFuneralCalendarEvents(funeral: IFuneral, actor: Actor) {
+export async function upsertFuneralCalendarEvents(
+  funeral: IFuneral,
+  actor: Actor
+) {
   const fullName = getFullName(funeral);
   const relatedId = funeral._id as unknown as mongoose.Types.ObjectId;
 
@@ -104,7 +138,9 @@ export async function upsertFuneralCalendarEvents(funeral: IFuneral, actor: Acto
 
     const start = dayjs(m.startDateTime);
     const defaultMins = m.durationMinutes ?? map.defaultMins;
-    const end = m.endDateTime ? dayjs(m.endDateTime) : start.add(defaultMins, "minute");
+    const end = m.endDateTime
+      ? dayjs(m.endDateTime)
+      : start.add(defaultMins, "minute");
 
     // Choose location preference:
     // - milestone location wins
@@ -115,10 +151,13 @@ export async function upsertFuneralCalendarEvents(funeral: IFuneral, actor: Acto
     const eventPayload = {
       name: `${isCompleted ? "✅ " : ""}${map.titlePrefix}: ${fullName}`,
       description: Array.isArray((funeral as any).notes)
-        ? (funeral as any).notes.map((n: any) => n?.note).filter(Boolean).join("\n")
+        ? (funeral as any).notes
+            .map((n: any) => n?.note)
+            .filter(Boolean)
+            .join("\n")
         : (funeral as any).notes || "",
-      type: "funeral",              // keep "funeral" as event.type
-      subType: map.subType,         // actual milestone subtype
+      type: "funeral", // keep "funeral" as event.type
+      subType: map.subType, // actual milestone subtype
       branchId: funeral.branchId,
       isAllDayEvent: false,
       isSingleDayEvent: start.isSame(end, "day"),
@@ -130,12 +169,17 @@ export async function upsertFuneralCalendarEvents(funeral: IFuneral, actor: Acto
       endTime: end.format("HH:mm"),
       durationMinutes: defaultMins,
       location,
-      status: isCompleted ? CalendarEventStatus.COMPLETED : CalendarEventStatus.PUBLISHED,
+      status: isCompleted
+        ? CalendarEventStatus.COMPLETED
+        : CalendarEventStatus.PUBLISHED,
       relatedModel: "funeral",
       relatedId,
       milestone: milestoneKey,
       attendees: [
-        { name: getInformantName(funeral), phone: funeral.informant?.phoneNumber },
+        {
+          name: getInformantName(funeral),
+          phone: funeral.informant?.phoneNumber,
+        },
       ].filter((a) => a.name || a.phone),
     };
 

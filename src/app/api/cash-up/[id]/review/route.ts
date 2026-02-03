@@ -1,7 +1,8 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
 
 type ReviewDecision = "approve" | "reject" | "send_back";
 
@@ -12,13 +13,22 @@ export async function PUT(
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const roles = [(user as any)?.role, ...(((user as any)?.roles as string[]) || [])].filter(Boolean);
+    const roles = [
+      (user as any)?.role,
+      ...(((user as any)?.roles as string[]) || []),
+    ].filter(Boolean);
     const canReview = roles.includes("cashup_reviewer");
     if (!canReview) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
@@ -27,22 +37,33 @@ export async function PUT(
     const note = String(body?.note || "").trim();
 
     if (!["approve", "reject", "send_back"].includes(decision)) {
-      return NextResponse.json({ success: false, message: "Invalid decision" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid decision" },
+        { status: 400 }
+      );
     }
     if (!note) {
-      return NextResponse.json({ success: false, message: "Review note is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Review note is required" },
+        { status: 400 }
+      );
     }
 
     await connectToDatabase();
     const submission = await CashUpSubmissionModel.findById(id);
     if (!submission) {
-      return NextResponse.json({ success: false, message: "Cash up submission not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Cash up submission not found" },
+        { status: 404 }
+      );
     }
 
     const nextStatus =
-      decision === "approve" ? "approved" :
-      decision === "reject" ? "rejected" :
-      "needs_changes";
+      decision === "approve"
+        ? "approved"
+        : decision === "reject"
+          ? "rejected"
+          : "needs_changes";
 
     (submission as any).status = nextStatus;
     (submission as any).reviewedAt = new Date();
@@ -61,7 +82,9 @@ export async function PUT(
     });
   } catch (error) {
     console.error("Error reviewing cash up submission:", error);
-    return NextResponse.json({ success: false, message: "Failed to review cash up submission" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to review cash up submission" },
+      { status: 500 }
+    );
   }
 }
-

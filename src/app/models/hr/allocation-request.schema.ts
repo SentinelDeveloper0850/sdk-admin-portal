@@ -1,5 +1,6 @@
-import { EAllocationRequestStatus } from '@/app/enums/hr/allocation-request-status.enum';
-import mongoose, { Schema, Types } from 'mongoose';
+import mongoose, { Schema, Types } from "mongoose";
+
+import { EAllocationRequestStatus } from "@/app/enums/hr/allocation-request-status.enum";
 
 export interface IAllocationRequest {
   _id?: string;
@@ -53,14 +54,14 @@ const AllocationRequestSchema = new Schema(
     // 👇 tells mongoose which collection this ObjectId belongs to
     transactionModel: {
       type: String,
-      required: true
+      required: true,
     },
 
     // 👇 one id that can point to either model above
     transactionId: {
       type: Types.ObjectId,
       required: true,
-      refPath: 'transactionModel',
+      refPath: "transactionModel",
       index: true,
     },
 
@@ -89,19 +90,19 @@ const AllocationRequestSchema = new Schema(
       default: EAllocationRequestStatus.PENDING,
     },
 
-    requestedBy: { type: Types.ObjectId, ref: 'users', required: true },
-    approvedBy: { type: Types.ObjectId, ref: 'users' },
+    requestedBy: { type: Types.ObjectId, ref: "users", required: true },
+    approvedBy: { type: Types.ObjectId, ref: "users" },
     approvedAt: { type: Date },
     rejectionReason: { type: String },
-    rejectedBy: { type: Types.ObjectId, ref: 'users' },
+    rejectedBy: { type: Types.ObjectId, ref: "users" },
     rejectedAt: { type: Date },
-    cancelledBy: { type: Types.ObjectId, ref: 'users' },
+    cancelledBy: { type: Types.ObjectId, ref: "users" },
     cancelledAt: { type: Date },
-    submittedBy: { type: Types.ObjectId, ref: 'users' },
+    submittedBy: { type: Types.ObjectId, ref: "users" },
     submittedAt: { type: Date },
-    allocatedBy: { type: Types.ObjectId, ref: 'users' },
+    allocatedBy: { type: Types.ObjectId, ref: "users" },
     allocatedAt: { type: Date },
-    markedAsDuplicateBy: { type: Types.ObjectId, ref: 'users' },
+    markedAsDuplicateBy: { type: Types.ObjectId, ref: "users" },
     markedAsDuplicateAt: { type: Date },
   },
   {
@@ -113,7 +114,7 @@ const AllocationRequestSchema = new Schema(
 
 // One nice polymorphic virtual called `transaction`
 AllocationRequestSchema.virtual("transaction", {
-  refPath: "transactionModel",   // <- uses the model name
+  refPath: "transactionModel", // <- uses the model name
   localField: "transactionId",
   foreignField: "_id",
   justOne: true,
@@ -121,6 +122,10 @@ AllocationRequestSchema.virtual("transaction", {
 
 export const AllocationRequestModel =
   mongoose.models.allocation_requests ||
-  mongoose.model<IAllocationRequest>("allocation_requests", AllocationRequestSchema, "allocation_requests");
+  mongoose.model<IAllocationRequest>(
+    "allocation_requests",
+    AllocationRequestSchema,
+    "allocation_requests"
+  );
 
 export default AllocationRequestModel;

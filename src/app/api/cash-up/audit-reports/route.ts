@@ -1,19 +1,29 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import { CashUpAuditReportModel } from "@/app/models/hr/cash-up-audit-report.schema";
 import UserModel from "@/app/models/hr/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const roles = [(user as any)?.role, ...(((user as any)?.roles as string[]) || [])].filter(Boolean);
+    const roles = [
+      (user as any)?.role,
+      ...(((user as any)?.roles as string[]) || []),
+    ].filter(Boolean);
     if (!roles.includes("cashup_reviewer")) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     await connectToDatabase();
@@ -27,10 +37,19 @@ export async function GET(request: NextRequest) {
     if (userId) where.userId = userId;
     if (dateKey) where.dateKey = dateKey;
 
-    const reports = await CashUpAuditReportModel.find(where).sort({ uploadedAt: -1 }).limit(limit).lean();
-    const userIds = Array.from(new Set(reports.map((r: any) => String(r.userId)).filter(Boolean)));
-    const users = await UserModel.find({ _id: { $in: userIds } }).select({ _id: 1, name: 1 }).lean();
-    const nameById = new Map(users.map((u: any) => [String(u._id), String(u.name || "")]));
+    const reports = await CashUpAuditReportModel.find(where)
+      .sort({ uploadedAt: -1 })
+      .limit(limit)
+      .lean();
+    const userIds = Array.from(
+      new Set(reports.map((r: any) => String(r.userId)).filter(Boolean))
+    );
+    const users = await UserModel.find({ _id: { $in: userIds } })
+      .select({ _id: 1, name: 1 })
+      .lean();
+    const nameById = new Map(
+      users.map((u: any) => [String(u._id), String(u.name || "")])
+    );
 
     return NextResponse.json({
       success: true,
@@ -54,9 +73,14 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching audit reports:", error);
     return NextResponse.json(
-      { success: false, message: error instanceof Error ? error.message : "Failed to fetch audit reports" },
+      {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch audit reports",
+      },
       { status: 500 }
     );
   }
 }
-

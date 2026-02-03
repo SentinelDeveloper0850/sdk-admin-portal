@@ -1,7 +1,10 @@
-"use server"
+"use server";
 
 import { UserModel } from "@/app/models/hr/user.schema";
-import { IPolicySignUp, PolicySignUpModel } from "@/app/models/scheme/policy-signup-request.schema";
+import {
+  IPolicySignUp,
+  PolicySignUpModel,
+} from "@/app/models/scheme/policy-signup-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
@@ -10,14 +13,17 @@ export const getPolicySignups = async () => {
     await connectToDatabase();
 
     const numberOfRequests = await PolicySignUpModel.countDocuments();
-    const docs: IPolicySignUp[] = await PolicySignUpModel.find({ deletedBy: { $exists: false }, currentStatus: { $ne: "deleted" } }).sort({ created_at: -1 });
+    const docs: IPolicySignUp[] = await PolicySignUpModel.find({
+      deletedBy: { $exists: false },
+      currentStatus: { $ne: "deleted" },
+    }).sort({ created_at: -1 });
 
     return {
       success: true,
       data: {
         count: numberOfRequests,
         requests: docs,
-      }
+      },
     };
   } catch (error: any) {
     console.error("🚀 ~ getPolicySignups ~ error:", error);
@@ -54,7 +60,11 @@ export const getPolicySignupById = async (id: string) => {
   }
 };
 
-export const assignConsultant = async (requestId: string, consultantId: string, assignedBy: string) => {
+export const assignConsultant = async (
+  requestId: string,
+  consultantId: string,
+  assignedBy: string
+) => {
   try {
     await connectToDatabase();
 
@@ -80,9 +90,9 @@ export const assignConsultant = async (requestId: string, consultantId: string, 
             status: "assigned",
             changedBy: assignedBy,
             changedAt: new Date(),
-            notes: `Assigned to ${consultant.name}`
-          }
-        }
+            notes: `Assigned to ${consultant.name}`,
+          },
+        },
       },
       { new: true }
     );
@@ -107,7 +117,11 @@ export const assignConsultant = async (requestId: string, consultantId: string, 
   }
 };
 
-export const markAsReviewed = async (requestId: string, reviewedBy: string, notes?: string) => {
+export const markAsReviewed = async (
+  requestId: string,
+  reviewedBy: string,
+  notes?: string
+) => {
   try {
     await connectToDatabase();
 
@@ -122,9 +136,9 @@ export const markAsReviewed = async (requestId: string, reviewedBy: string, note
             status: "reviewed",
             changedBy: reviewedBy,
             changedAt: new Date(),
-            notes: notes || "Marked as reviewed"
-          }
-        }
+            notes: notes || "Marked as reviewed",
+          },
+        },
       },
       { new: true }
     );
@@ -149,12 +163,18 @@ export const markAsReviewed = async (requestId: string, reviewedBy: string, note
   }
 };
 
-export const approveRequest = async (requestId: string, approvedBy: string, policyNumber?: string) => {
+export const approveRequest = async (
+  requestId: string,
+  approvedBy: string,
+  policyNumber?: string
+) => {
   try {
     await connectToDatabase();
 
     // Generate policy number if not provided
-    const generatedPolicyNumber = policyNumber || `POL-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const generatedPolicyNumber =
+      policyNumber ||
+      `POL-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
     const request = await PolicySignUpModel.findByIdAndUpdate(
       requestId,
@@ -170,9 +190,9 @@ export const approveRequest = async (requestId: string, approvedBy: string, poli
             status: "approved",
             changedBy: approvedBy,
             changedAt: new Date(),
-            notes: `Approved with policy number: ${generatedPolicyNumber}`
-          }
-        }
+            notes: `Approved with policy number: ${generatedPolicyNumber}`,
+          },
+        },
       },
       { new: true }
     );
@@ -218,7 +238,12 @@ export const approveRequest = async (requestId: string, approvedBy: string, poli
   }
 };
 
-export const rejectRequest = async (requestId: string, rejectedBy: string, reason: string, notes?: string) => {
+export const rejectRequest = async (
+  requestId: string,
+  rejectedBy: string,
+  reason: string,
+  notes?: string
+) => {
   try {
     await connectToDatabase();
 
@@ -235,9 +260,9 @@ export const rejectRequest = async (requestId: string, rejectedBy: string, reaso
             status: "rejected",
             changedBy: rejectedBy,
             changedAt: new Date(),
-            notes: `Rejected: ${reason}`
-          }
-        }
+            notes: `Rejected: ${reason}`,
+          },
+        },
       },
       { new: true }
     );
@@ -262,7 +287,12 @@ export const rejectRequest = async (requestId: string, rejectedBy: string, reaso
   }
 };
 
-export const requestMoreInfo = async (requestId: string, requestedBy: string, field: string, description: string) => {
+export const requestMoreInfo = async (
+  requestId: string,
+  requestedBy: string,
+  field: string,
+  description: string
+) => {
   try {
     await connectToDatabase();
 
@@ -277,15 +307,15 @@ export const requestMoreInfo = async (requestId: string, requestedBy: string, fi
             field,
             description,
             requestedAt: new Date(),
-            requestedBy
+            requestedBy,
           },
           statusHistory: {
             status: "pending_info",
             changedBy: requestedBy,
             changedAt: new Date(),
-            notes: `Requested more info: ${field}`
-          }
-        }
+            notes: `Requested more info: ${field}`,
+          },
+        },
       },
       { new: true }
     );
@@ -310,7 +340,13 @@ export const requestMoreInfo = async (requestId: string, requestedBy: string, fi
   }
 };
 
-export const addNotes = async (requestId: string, author: string, authorName: string, text: string, isPrivate: boolean = true) => {
+export const addNotes = async (
+  requestId: string,
+  author: string,
+  authorName: string,
+  text: string,
+  isPrivate: boolean = true
+) => {
   try {
     await connectToDatabase();
 
@@ -325,9 +361,9 @@ export const addNotes = async (requestId: string, author: string, authorName: st
             authorName,
             text,
             createdAt: new Date(),
-            isPrivate
-          }
-        }
+            isPrivate,
+          },
+        },
       },
       { new: true }
     );
@@ -352,7 +388,12 @@ export const addNotes = async (requestId: string, author: string, authorName: st
   }
 };
 
-export const escalateRequest = async (requestId: string, escalatedBy: string, escalatedTo: string, reason: string) => {
+export const escalateRequest = async (
+  requestId: string,
+  escalatedBy: string,
+  escalatedTo: string,
+  reason: string
+) => {
   try {
     await connectToDatabase();
 
@@ -380,9 +421,9 @@ export const escalateRequest = async (requestId: string, escalatedBy: string, es
             status: "escalated",
             changedBy: escalatedBy,
             changedAt: new Date(),
-            notes: `Escalated to ${escalatedUser.name}: ${reason}`
-          }
-        }
+            notes: `Escalated to ${escalatedUser.name}: ${reason}`,
+          },
+        },
       },
       { new: true }
     );
@@ -407,7 +448,11 @@ export const escalateRequest = async (requestId: string, escalatedBy: string, es
   }
 };
 
-export const archiveRequest = async (requestId: string, archivedBy: string, reason?: string) => {
+export const archiveRequest = async (
+  requestId: string,
+  archivedBy: string,
+  reason?: string
+) => {
   try {
     await connectToDatabase();
 
@@ -422,9 +467,9 @@ export const archiveRequest = async (requestId: string, archivedBy: string, reas
             status: "archived",
             changedBy: archivedBy,
             changedAt: new Date(),
-            notes: reason || "Archived"
-          }
-        }
+            notes: reason || "Archived",
+          },
+        },
       },
       { new: true }
     );
@@ -454,9 +499,15 @@ export const getConsultants = async () => {
     await connectToDatabase();
 
     const consultants = await UserModel.find({
-      roles: { $in: ["scheme_consultant", "scheme_consultant_online", "society_consultant"] },
-      status: "Active"
-    }).select('_id name email');
+      roles: {
+        $in: [
+          "scheme_consultant",
+          "scheme_consultant_online",
+          "society_consultant",
+        ],
+      },
+      status: "Active",
+    }).select("_id name email");
 
     return {
       success: true,
@@ -476,9 +527,16 @@ export const getUsersForEscalation = async () => {
     await connectToDatabase();
 
     const users = await UserModel.find({
-      roles: { $in: ["admin", "hr_manager", "scheme_consultant", "scheme_consultant_online"] },
-      status: "Active"
-    }).select('_id name email roles');
+      roles: {
+        $in: [
+          "admin",
+          "hr_manager",
+          "scheme_consultant",
+          "scheme_consultant_online",
+        ],
+      },
+      status: "Active",
+    }).select("_id name email roles");
 
     return {
       success: true,
@@ -511,7 +569,8 @@ export const deleteRequest = async (requestId: string, deletedBy: string) => {
     if (!deletableStatuses.includes(request.currentStatus || "submitted")) {
       return {
         success: false,
-        error: "Cannot delete request with current status. Only submitted, rejected, or archived requests can be deleted.",
+        error:
+          "Cannot delete request with current status. Only submitted, rejected, or archived requests can be deleted.",
       };
     }
 
@@ -529,9 +588,9 @@ export const deleteRequest = async (requestId: string, deletedBy: string) => {
             status: "deleted",
             changedBy: deletedBy,
             changedAt: new Date(),
-            notes: "Request deleted by admin"
-          }
-        }
+            notes: "Request deleted by admin",
+          },
+        },
       },
       { new: true }
     );

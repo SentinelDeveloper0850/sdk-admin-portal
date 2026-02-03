@@ -1,8 +1,9 @@
 "use client";
 
-import DOMPurify from "dompurify";
 import Link from "next/link";
 import { useCallback } from "react";
+
+import DOMPurify from "dompurify";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
@@ -14,10 +15,17 @@ import { ERoles } from "@/types/roles.enum";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export default function KnowledgeArticleDetailPage({ params }: { params: { slug: string } }) {
+export default function KnowledgeArticleDetailPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const { hasRole } = useRole();
   const isAdmin = hasRole(ERoles.Admin);
-  const { data, isLoading, mutate } = useSWR(`/api/knowledge/${params.slug}`, fetcher);
+  const { data, isLoading, mutate } = useSWR(
+    `/api/knowledge/${params.slug}`,
+    fetcher
+  );
 
   const doc = data;
 
@@ -37,23 +45,35 @@ export default function KnowledgeArticleDetailPage({ params }: { params: { slug:
   if (!doc) return <div className="p-4">Not found</div>;
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       <PageHeader
         title={doc.title}
         subtitle={doc.summary ? String(doc.summary) : null}
         actions={[
           isAdmin ? (
-            <Link key="edit" className="rounded border px-3 py-1 text-sm" href={`/knowledge-hub/${doc.slug}/edit`}>
+            <Link
+              key="edit"
+              className="rounded border px-3 py-1 text-sm"
+              href={`/knowledge-hub/${doc.slug}/edit`}
+            >
               Edit
             </Link>
           ) : null,
           isAdmin ? (
             doc.status === "PUBLISHED" ? (
-              <button key="unpublish" className="rounded border px-3 py-1 text-sm" onClick={handleUnpublish}>
+              <button
+                key="unpublish"
+                className="rounded border px-3 py-1 text-sm"
+                onClick={handleUnpublish}
+              >
                 Unpublish
               </button>
             ) : (
-              <button key="publish" className="rounded border px-3 py-1 text-sm" onClick={handlePublish}>
+              <button
+                key="publish"
+                className="rounded border px-3 py-1 text-sm"
+                onClick={handlePublish}
+              >
                 Publish
               </button>
             )
@@ -62,15 +82,21 @@ export default function KnowledgeArticleDetailPage({ params }: { params: { slug:
         noDivider
       />
 
-      <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
         <span>{doc.category}</span>
-        {doc.publishedAt ? <span>• Published {new Date(doc.publishedAt).toLocaleString()}</span> : null}
-        {doc.updatedAt ? <span>• Updated {new Date(doc.updatedAt).toLocaleString()}</span> : null}
+        {doc.publishedAt ? (
+          <span>• Published {new Date(doc.publishedAt).toLocaleString()}</span>
+        ) : null}
+        {doc.updatedAt ? (
+          <span>• Updated {new Date(doc.updatedAt).toLocaleString()}</span>
+        ) : null}
         {isAdmin ? <span className="font-medium">• {doc.status}</span> : null}
       </div>
 
       {doc.tags && doc.tags.length ? (
-        <div className="text-xs text-muted-foreground">Tags: {doc.tags.join(", ")}</div>
+        <div className="text-muted-foreground text-xs">
+          Tags: {doc.tags.join(", ")}
+        </div>
       ) : null}
 
       {doc.bodyHtml ? (
@@ -107,7 +133,10 @@ export default function KnowledgeArticleDetailPage({ params }: { params: { slug:
         />
       ) : (
         <article className="prose dark:prose-invert max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeSanitize]}
+          >
             {doc.bodyMd}
           </ReactMarkdown>
         </article>
@@ -115,4 +144,3 @@ export default function KnowledgeArticleDetailPage({ params }: { params: { slug:
     </div>
   );
 }
-

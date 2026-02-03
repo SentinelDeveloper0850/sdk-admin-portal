@@ -1,9 +1,11 @@
 "use client";
 
-import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
-import { Button, Drawer, Form, Input, Space } from "antd";
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef } from "react";
+
+import { Button, Drawer, Form, Input, Space } from "antd";
+
+import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
 
 interface Props {
   open: boolean;
@@ -14,7 +16,7 @@ interface Props {
 const CR80_RATIO = 85.6 / 53.98; // ~1.586 (w / h)
 
 // Brand tokens (tweak as needed)
-const GOLD = "#ffac00";        // header band
+const GOLD = "#ffac00"; // header band
 const TEXT = "#121417";
 const SUBTEXT = "rgba(18,20,23,0.68)";
 
@@ -82,7 +84,7 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
   // Preview sizing (keeps CR80 ratio)
   const previewWidth = 340; // px
   const previewHeight = Math.round(previewWidth / CR80_RATIO);
-  const headerH = 48;       // px
+  const headerH = 48; // px
 
   return (
     <Drawer
@@ -104,7 +106,11 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
         {/* ===== Left: Form ===== */}
         <div>
           <Form form={form} layout="vertical">
-            <Form.Item name="membershipID" label="Policy Number" rules={[{ required: true }]}>
+            <Form.Item
+              name="membershipID"
+              label="Policy Number"
+              rules={[{ required: true }]}
+            >
               <Input />
             </Form.Item>
             <Form.Item
@@ -114,7 +120,11 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
             >
               <Input />
             </Form.Item>
-            <Form.Item name="fullName" label="Member Name" rules={[{ required: true }]}>
+            <Form.Item
+              name="fullName"
+              label="Member Name"
+              rules={[{ required: true }]}
+            >
               <Input />
             </Form.Item>
           </Form>
@@ -123,7 +133,7 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
         {/* ===== Right: Live Preview (CR80) ===== */}
         <div>
           <div
-            className="rounded-lg overflow-hidden relative select-none shadow-lg"
+            className="relative select-none overflow-hidden rounded-lg shadow-lg"
             style={{
               width: previewWidth,
               height: previewHeight,
@@ -181,18 +191,27 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
             />
 
             {/* CONTENT */}
-            <div className="relative z-10 h-full w-full flex flex-col" style={{ paddingTop: headerH }}>
+            <div
+              className="relative z-10 flex h-full w-full flex-col"
+              style={{ paddingTop: headerH }}
+            >
               {/* Middle: labels + values */}
-              <div className="flex-1 px-4 py-3 flex flex-col gap-2 justify-center">
+              <div className="flex flex-1 flex-col justify-center gap-2 px-4 py-3">
                 <div>
-                  <div style={{ fontSize: 10, color: SUBTEXT, lineHeight: 1 }}>Policy No.</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.15 }}>
+                  <div style={{ fontSize: 10, color: SUBTEXT, lineHeight: 1 }}>
+                    Policy No.
+                  </div>
+                  <div
+                    style={{ fontSize: 16, fontWeight: 800, lineHeight: 1.15 }}
+                  >
                     {payload.policyNumber || "\u00A0"}
                   </div>
                 </div>
 
                 <div style={{ marginTop: 6 }}>
-                  <div style={{ fontSize: 10, color: SUBTEXT, lineHeight: 1 }}>Member</div>
+                  <div style={{ fontSize: 10, color: SUBTEXT, lineHeight: 1 }}>
+                    Member
+                  </div>
                   <div
                     style={{
                       fontSize: 16,
@@ -212,10 +231,10 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
               </div>
 
               {/* Footer: barcode centered + Pay@ bottom-right */}
-              <div className="px-3 pb-2 relative">
+              <div className="relative px-3 pb-2">
                 <div className="flex flex-col items-center">
                   <svg ref={barcodeRef} style={{ width: "92%", height: 36 }} />
-                  <div className="text-[12px] font-bold mt-1 text-center tracking-wider">
+                  <div className="mt-1 text-center text-[12px] font-bold tracking-wider">
                     {payload.payAtNumber}
                   </div>
                 </div>
@@ -244,8 +263,9 @@ const PolicyPrintCardDrawer: React.FC<Props> = ({ open, onClose, policy }) => {
             />
           </div>
 
-          <div className="text-xs text-muted-foreground mt-2">
-            Preview is to scale (CR80). The PDF print will match this layout exactly.
+          <div className="text-muted-foreground mt-2 text-xs">
+            Preview is to scale (CR80). The PDF print will match this layout
+            exactly.
           </div>
         </div>
       </div>

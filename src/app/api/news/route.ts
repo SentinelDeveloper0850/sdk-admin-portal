@@ -1,5 +1,6 @@
-import { Types } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+
+import { Types } from "mongoose";
 
 import { AnnouncementModel } from "@/app/models/system/announcement.schema";
 import { getUserFromRequest } from "@/lib/auth";
@@ -37,7 +38,9 @@ export async function GET(req: NextRequest) {
 
   const nextCursor = items.length > take ? String(items[take]._id) : undefined;
   return NextResponse.json({
-    items: items.slice(0, take).map(({ _id, ...doc }) => ({ id: String(_id), ...doc })),
+    items: items
+      .slice(0, take)
+      .map(({ _id, ...doc }) => ({ id: String(_id), ...doc })),
     nextCursor,
   });
 }
@@ -47,14 +50,33 @@ export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
 
   if (!user || !user._id) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   const body = await req.json();
-  const { title, bodyMd, bodyHtml, category, tags, isPinned, requiresAck, version, publishAt, pushDiscord, pushWhatsapp, pushEmail } = body ?? {};
+  const {
+    title,
+    bodyMd,
+    bodyHtml,
+    category,
+    tags,
+    isPinned,
+    requiresAck,
+    version,
+    publishAt,
+    pushDiscord,
+    pushWhatsapp,
+    pushEmail,
+  } = body ?? {};
 
   if (!title || !bodyMd || !category) {
-    return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
+    return NextResponse.json(
+      { success: false, message: "Missing required fields" },
+      { status: 400 }
+    );
   }
 
   const slug = body.slug ? String(body.slug) : slugify(String(title));
@@ -80,7 +102,8 @@ export async function POST(req: NextRequest) {
     updatedAt: now,
   });
 
-  return NextResponse.json({ id: String(doc._id), slug: doc.slug }, { status: 201 });
+  return NextResponse.json(
+    { id: String(doc._id), slug: doc.slug },
+    { status: 201 }
+  );
 }
-
-

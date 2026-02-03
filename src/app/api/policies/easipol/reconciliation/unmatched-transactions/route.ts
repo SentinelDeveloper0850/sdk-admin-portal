@@ -1,13 +1,15 @@
+import { NextResponse } from "next/server";
+
+import { parsePolicyData } from "@/utils/policy-parser";
+
 import { fetchAllPolicies } from "@/server/actions/easipol-policies";
 import { fetchAll } from "@/server/actions/easypay-transactions";
-import { parsePolicyData } from "@/utils/policy-parser";
-import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('pageSize') || '50');
+    const page = parseInt(searchParams.get("page") || "1");
+    const pageSize = parseInt(searchParams.get("pageSize") || "50");
     const skip = (page - 1) * pageSize;
 
     // Fetch EasyPay transactions without policy numbers with pagination
@@ -21,15 +23,20 @@ export async function GET(request: Request) {
 
     const easypayTransactions = easypayResponse.data?.transactions || [];
     const unmatchedTransactions = easypayTransactions.filter(
-      (tx: any) => !tx.policyNumber || tx.policyNumber.trim() === ''
+      (tx: any) => !tx.policyNumber || tx.policyNumber.trim() === ""
     );
 
     // Apply pagination to unmatched transactions
     const totalUnmatched = unmatchedTransactions.length;
-    const paginatedUnmatched = unmatchedTransactions.slice(skip, skip + pageSize);
+    const paginatedUnmatched = unmatchedTransactions.slice(
+      skip,
+      skip + pageSize
+    );
 
     // Fetch policy data from file
-    const fileResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/file.txt`);
+    const fileResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/file.txt`
+    );
     if (!fileResponse.ok) {
       return NextResponse.json(
         { message: "Failed to load policy file" },
@@ -54,58 +61,58 @@ export async function GET(request: Request) {
     const filePolicyMap = new Map();
     const dbPolicyMap = new Map();
 
-    filePolicyData.forEach(item => {
+    filePolicyData.forEach((item) => {
       filePolicyMap.set(item.easyPayNumber, item.policyNumber);
     });
 
-    dbPolicies.forEach(policy => {
+    dbPolicies.forEach((policy) => {
       if (policy.easypayNumber) {
         dbPolicyMap.set(policy.easypayNumber, {
           policyNumber: policy.policyNumber,
           fullname: policy.fullname,
           productName: policy.productName,
-          memberID: policy.memberID
+          memberID: policy.memberID,
         });
       }
     });
 
     // Attempt to match paginated unmatched transactions
-    const matchedResults = paginatedUnmatched.map(transaction => {
+    const matchedResults = paginatedUnmatched.map((transaction) => {
       const easypayNumber = transaction.easypayNumber;
       const fileMatch = filePolicyMap.get(easypayNumber);
       const dbMatch = dbPolicyMap.get(easypayNumber);
 
-      let matchStatus = 'no_match';
+      let matchStatus = "no_match";
       let matchedPolicy = null;
       let matchSource = null;
 
       if (fileMatch && dbMatch) {
-        matchStatus = 'both_match';
+        matchStatus = "both_match";
         matchedPolicy = {
           policyNumber: fileMatch,
           fullname: dbMatch.fullname,
           productName: dbMatch.productName,
-          memberID: dbMatch.memberID
+          memberID: dbMatch.memberID,
         };
-        matchSource = 'file_and_database';
+        matchSource = "file_and_database";
       } else if (fileMatch) {
-        matchStatus = 'file_match';
+        matchStatus = "file_match";
         matchedPolicy = {
           policyNumber: fileMatch,
           fullname: null,
           productName: null,
-          memberID: null
+          memberID: null,
         };
-        matchSource = 'file_only';
+        matchSource = "file_only";
       } else if (dbMatch) {
-        matchStatus = 'database_match';
+        matchStatus = "database_match";
         matchedPolicy = {
           policyNumber: dbMatch.policyNumber,
           fullname: dbMatch.fullname,
           productName: dbMatch.productName,
-          memberID: dbMatch.memberID
+          memberID: dbMatch.memberID,
         };
-        matchSource = 'database_only';
+        matchSource = "database_only";
       }
 
       return {
@@ -115,12 +122,12 @@ export async function GET(request: Request) {
           date: transaction.date,
           amount: transaction.amount,
           easypayNumber: transaction.easypayNumber,
-          description: transaction.description || '',
-          additionalInformation: transaction.additionalInformation || ''
+          description: transaction.description || "",
+          additionalInformation: transaction.additionalInformation || "",
         },
         matchStatus,
         matchedPolicy,
-        matchSource
+        matchSource,
       };
     });
 
@@ -128,32 +135,49 @@ export async function GET(request: Request) {
     const results = {
       unmatchedTransactions: {
         total: totalUnmatched,
-        withFileMatch: matchedResults.filter(r => r.matchStatus === 'file_match' || r.matchStatus === 'both_match').length,
-        withDatabaseMatch: matchedResults.filter(r => r.matchStatus === 'database_match' || r.matchStatus === 'both_match').length,
-        withBothMatches: matchedResults.filter(r => r.matchStatus === 'both_match').length,
-        noMatch: matchedResults.filter(r => r.matchStatus === 'no_match').length,
+        withFileMatch: matchedResults.filter(
+          (r) =>
+            r.matchStatus === "file_match" || r.matchStatus === "both_match"
+        ).length,
+        withDatabaseMatch: matchedResults.filter(
+          (r) =>
+            r.matchStatus === "database_match" || r.matchStatus === "both_match"
+        ).length,
+        withBothMatches: matchedResults.filter(
+          (r) => r.matchStatus === "both_match"
+        ).length,
+        noMatch: matchedResults.filter((r) => r.matchStatus === "no_match")
+          .length,
       },
-      matches: matchedResults.filter(r => r.matchStatus !== 'no_match'),
-      noMatches: matchedResults.filter(r => r.matchStatus === 'no_match'),
+      matches: matchedResults.filter((r) => r.matchStatus !== "no_match"),
+      noMatches: matchedResults.filter((r) => r.matchStatus === "no_match"),
       allResults: matchedResults,
       pagination: {
         current: page,
         pageSize: pageSize,
         total: totalUnmatched,
-        totalPages: Math.ceil(totalUnmatched / pageSize)
-      }
+        totalPages: Math.ceil(totalUnmatched / pageSize),
+      },
     };
 
-    return NextResponse.json({
-      success: true,
-      data: results
-    }, { status: 200 });
-
-  } catch (error: any) {
-    console.error("Error in unmatched transactions reconciliation:", error.message);
     return NextResponse.json(
-      { message: "Internal Server Error ~ Error in unmatched transactions reconciliation" },
+      {
+        success: true,
+        data: results,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error(
+      "Error in unmatched transactions reconciliation:",
+      error.message
+    );
+    return NextResponse.json(
+      {
+        message:
+          "Internal Server Error ~ Error in unmatched transactions reconciliation",
+      },
       { status: 500 }
     );
   }
-} 
+}

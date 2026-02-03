@@ -3,125 +3,131 @@
 <p>Hello {{applicantName}},</p>
 
 {{#ifEquals status "approved"}}
-<div class="alert alert-success">
+  <div class="alert alert-success">
     <h3>🎉 Congratulations! Your application has been approved!</h3>
-    <p>We are pleased to inform you that your policy signup request has been approved and your policy has been created.</p>
-</div>
+    <p>We are pleased to inform you that your policy signup request has been
+      approved and your policy has been created.</p>
+  </div>
 
-<div class="info-box">
+  <div class="info-box">
     <h3>Policy Information</h3>
     <table class="info-table">
-        <tr>
-            <td>Policy Number:</td>
-            <td><strong>{{policyNumber}}</strong></td>
-        </tr>
-        <tr>
-            <td>Plan Name:</td>
-            <td>{{planName}}</td>
-        </tr>
-        <tr>
-            <td>Effective Date:</td>
-            <td>{{formatDate effectiveDate}}</td>
-        </tr>
-        <tr>
-            <td>Created By:</td>
-            <td>{{createdBy}}</td>
-        </tr>
+      <tr>
+        <td>Policy Number:</td>
+        <td><strong>{{policyNumber}}</strong></td>
+      </tr>
+      <tr>
+        <td>Plan Name:</td>
+        <td>{{planName}}</td>
+      </tr>
+      <tr>
+        <td>Effective Date:</td>
+        <td>{{formatDate effectiveDate}}</td>
+      </tr>
+      <tr>
+        <td>Created By:</td>
+        <td>{{createdBy}}</td>
+      </tr>
     </table>
-</div>
+  </div>
 
-<div class="alert alert-info">
+  <div class="alert alert-info">
     <h4>Next Steps</h4>
     <ol>
-        <li>Your policy is now active and you can start using your benefits</li>
-        <li>You will receive your policy documents shortly</li>
-        <li>Please keep your policy number for future reference</li>
-        <li>Contact us if you have any questions about your policy</li>
+      <li>Your policy is now active and you can start using your benefits</li>
+      <li>You will receive your policy documents shortly</li>
+      <li>Please keep your policy number for future reference</li>
+      <li>Contact us if you have any questions about your policy</li>
     </ol>
-</div>
+  </div>
 
 {{else ifEquals status "rejected"}}
-<div class="alert alert-danger">
+  <div class="alert alert-danger">
     <h3>Application Status Update</h3>
-    <p>We regret to inform you that your policy signup request has been rejected.</p>
-</div>
+    <p>We regret to inform you that your policy signup request has been
+      rejected.</p>
+  </div>
 
-<div class="info-box">
+  <div class="info-box">
     <h3>Application Details</h3>
     <table class="info-table">
-        <tr>
-            <td>Request ID:</td>
-            <td>{{requestId}}</td>
-        </tr>
-        <tr>
-            <td>Plan Name:</td>
-            <td>{{planName}}</td>
-        </tr>
-        <tr>
-            <td>Rejection Date:</td>
-            <td>{{formatDate processedAt}}</td>
-        </tr>
-        <tr>
-            <td>Processed By:</td>
-            <td>{{processedBy}}</td>
-        </tr>
+      <tr>
+        <td>Request ID:</td>
+        <td>{{requestId}}</td>
+      </tr>
+      <tr>
+        <td>Plan Name:</td>
+        <td>{{planName}}</td>
+      </tr>
+      <tr>
+        <td>Rejection Date:</td>
+        <td>{{formatDate processedAt}}</td>
+      </tr>
+      <tr>
+        <td>Processed By:</td>
+        <td>{{processedBy}}</td>
+      </tr>
     </table>
-</div>
+  </div>
 
-{{#if rejectionReason}}
-<div class="alert alert-warning">
-    <h4>Reason for Rejection</h4>
-    <p>{{rejectionReason}}</p>
-</div>
-{{/if}}
+  {{#if rejectionReason}}
+    <div class="alert alert-warning">
+      <h4>Reason for Rejection</h4>
+      <p>{{rejectionReason}}</p>
+    </div>
+  {{/if}}
 
-{{#if rejectionNotes}}
-<div class="alert alert-info">
-    <h4>Additional Notes</h4>
-    <p>{{rejectionNotes}}</p>
-</div>
-{{/if}}
+  {{#if rejectionNotes}}
+    <div class="alert alert-info">
+      <h4>Additional Notes</h4>
+      <p>{{rejectionNotes}}</p>
+    </div>
+  {{/if}}
 
 {{else ifEquals status "pending_info"}}
-<div class="alert alert-warning">
+  <div class="alert alert-warning">
     <h3>Additional Information Required</h3>
-    <p>Your policy signup request requires additional information before we can proceed.</p>
-</div>
+    <p>Your policy signup request requires additional information before we can
+      proceed.</p>
+  </div>
 
-<div class="info-box">
+  <div class="info-box">
     <h3>Required Information</h3>
     {{#each requestedInfo}}
-    <div style="margin-bottom: 15px;">
-        <strong>{{field}}:</strong> {{description}}
-    </div>
+      <div style="margin-bottom: 15px;">
+        <strong>{{field}}:</strong>
+        {{description}}
+      </div>
     {{/each}}
-</div>
+  </div>
 
-<div class="alert alert-info">
+  <div class="alert alert-info">
     <h4>How to Provide Additional Information</h4>
     <ol>
-        <li>Log into the SDK Admin Portal</li>
-        <li>Navigate to your application</li>
-        <li>Provide the requested information</li>
-        <li>Submit the updated application</li>
+      <li>Log into the SDK Admin Portal</li>
+      <li>Navigate to your application</li>
+      <li>Provide the requested information</li>
+      <li>Submit the updated application</li>
     </ol>
-</div>
+  </div>
 
 {{else}}
-<div class="alert alert-info">
+  <div class="alert alert-info">
     <h3>Application Status Update</h3>
-    <p>Your policy signup request status has been updated to: <strong>{{status}}</strong></p>
-</div>
+    <p>Your policy signup request status has been updated to:
+      <strong>{{status}}</strong></p>
+  </div>
 {{/ifEquals}}
 
 {{#if notes}}
-<div class="alert alert-info">
+  <div class="alert alert-info">
     <h4>Additional Notes</h4>
     <p>{{notes}}</p>
-</div>
+  </div>
 {{/if}}
 
-<p>If you have any questions about this decision or need assistance, please contact our support team.</p>
+<p>If you have any questions about this decision or need assistance, please
+  contact our support team.</p>
 
-<p>Best regards,<br>
-<strong>SDK Admin Portal Team</strong></p> 
+<p>Best regards,<br />
+  <strong>SDK Admin Portal Team</strong></p>

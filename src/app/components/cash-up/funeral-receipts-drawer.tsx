@@ -3,7 +3,20 @@
 import React, { useEffect, useState } from "react";
 
 import { UploadOutlined } from "@ant-design/icons";
-import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, message, Select, Space, Typography, Upload } from "antd";
+import {
+  Alert,
+  Button,
+  DatePicker,
+  Drawer,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Space,
+  Typography,
+  Upload,
+  message,
+} from "antd";
 import dayjs from "dayjs";
 import swal from "sweetalert";
 
@@ -22,7 +35,12 @@ interface Props {
 
 // OCR removed for now
 
-const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defaultDate }) => {
+const FuneralReceiptsDrawer: React.FC<Props> = ({
+  open,
+  onClose,
+  onSubmitted,
+  defaultDate,
+}) => {
   // const { user } = useAuth();
   const [form] = Form.useForm();
   const [uploading, setUploading] = useState(false);
@@ -59,9 +77,13 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
   };
 
   const pmWatch = String(wPaymentMethod || "").toLowerCase();
-  const invoiceOk = typeof wInvoiceNumber === "string" && wInvoiceNumber.trim().length > 0;
+  const invoiceOk =
+    typeof wInvoiceNumber === "string" && wInvoiceNumber.trim().length > 0;
   const dateOk = !!wDate;
-  const amountOk = wSubmittedAmount !== undefined && wSubmittedAmount !== null && Number(wSubmittedAmount) >= 0;
+  const amountOk =
+    wSubmittedAmount !== undefined &&
+    wSubmittedAmount !== null &&
+    Number(wSubmittedAmount) >= 0;
   const paymentOk = ["cash", "card", "both", "bank_deposit"].includes(pmWatch);
   const splitOk =
     pmWatch !== "both" ||
@@ -69,10 +91,12 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
       wCashAmount !== null &&
       wCardAmount !== undefined &&
       wCardAmount !== null &&
-      Math.round((Number(wCashAmount) + Number(wCardAmount)) * 100) === Math.round(Number(wSubmittedAmount) * 100));
+      Math.round((Number(wCashAmount) + Number(wCardAmount)) * 100) ===
+        Math.round(Number(wSubmittedAmount) * 100));
   const bankDepositOk =
     pmWatch !== "bank_deposit" ||
-    (typeof wBankDepositReference === "string" && wBankDepositReference.trim().length > 0);
+    (typeof wBankDepositReference === "string" &&
+      wBankDepositReference.trim().length > 0);
 
   const attachmentsOk = pmWatch === "cash" ? true : fileList.length > 0;
 
@@ -116,7 +140,9 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
       const inv = String(values.invoiceNumber || "").trim();
 
       if (!["cash", "card", "both", "bank_deposit"].includes(pm)) {
-        message.error("Please select a payment method (cash, card, both, or bank deposit).");
+        message.error(
+          "Please select a payment method (cash, card, both, or bank deposit)."
+        );
         return;
       }
       if (!inv) {
@@ -126,7 +152,10 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
 
       const cash = Number(values.cashAmount ?? 0);
       const card = Number(values.cardAmount ?? 0);
-      if (pm === "both" && Math.round((cash + card) * 100) !== Math.round(submitted * 100)) {
+      if (
+        pm === "both" &&
+        Math.round((cash + card) * 100) !== Math.round(submitted * 100)
+      ) {
         message.error("Cash + card must equal the submitted amount.");
         return;
       }
@@ -146,11 +175,22 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
         invoiceNumber: inv,
         submittedAmount: submitted,
         paymentMethod: pm as "cash" | "card" | "both" | "bank_deposit",
-        cashAmount: pm === "both" ? cash : pm === "cash" ? submitted : undefined,
-        cardAmount: pm === "both" ? card : pm === "card" ? submitted : undefined,
-        bankDepositReference: pm === "bank_deposit" ? String(values.bankDepositReference || "").trim() : undefined,
-        bankName: pm === "bank_deposit" ? String(values.bankName || "").trim() : undefined,
-        depositorName: pm === "bank_deposit" ? String(values.depositorName || "").trim() : undefined,
+        cashAmount:
+          pm === "both" ? cash : pm === "cash" ? submitted : undefined,
+        cardAmount:
+          pm === "both" ? card : pm === "card" ? submitted : undefined,
+        bankDepositReference:
+          pm === "bank_deposit"
+            ? String(values.bankDepositReference || "").trim()
+            : undefined,
+        bankName:
+          pm === "bank_deposit"
+            ? String(values.bankName || "").trim()
+            : undefined,
+        depositorName:
+          pm === "bank_deposit"
+            ? String(values.depositorName || "").trim()
+            : undefined,
         notes: values.notes || "",
         submittedAt: new Date().toISOString(),
       };
@@ -195,7 +235,7 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
     const now = dayjs();
     const submissionDate = date || now;
     const cutoff = submissionDate.hour(20).minute(0).second(0);
-    const gracePeriod = cutoff.add(30, 'minute');
+    const gracePeriod = cutoff.add(30, "minute");
 
     setIsLateSubmission(now.isAfter(gracePeriod));
   };
@@ -242,10 +282,12 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
       }}
       footer={
         <Space>
-          <Button onClick={() => {
-            resetForm();
-            onClose();
-          }}>
+          <Button
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
+          >
             Cancel
           </Button>
           <Button
@@ -282,11 +324,15 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
           <Form.Item
             name="date"
             label="Receipt Date"
-            rules={[{ required: true, message: "Please select the receipt date" }]}
+            rules={[
+              { required: true, message: "Please select the receipt date" },
+            ]}
           >
             <DatePicker
               style={{ width: "100%" }}
-              disabledDate={(current) => current && current.isAfter(dayjs(), "day")}
+              disabledDate={(current) =>
+                current && current.isAfter(dayjs(), "day")
+              }
               onChange={checkSubmissionTiming}
               defaultValue={dayjs()}
             />
@@ -296,7 +342,11 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
             name="invoiceNumber"
             label="Invoice Number"
             rules={[
-              { required: true, whitespace: true, message: "Please enter the invoice number" },
+              {
+                required: true,
+                whitespace: true,
+                message: "Please enter the invoice number",
+              },
               {
                 validator: async (_, value) => {
                   const v = String(value ?? "").trim();
@@ -308,14 +358,27 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
             <Input placeholder="Enter invoice number" disabled={processing} />
           </Form.Item>
 
-          <Form.Item name="submittedAmount" label="Submitted Amount" rules={[{ required: true, message: "Please enter the submitted amount" }]}>
-            <InputNumber prefix="R" min={0} step={100} style={{ width: "100%" }} />
+          <Form.Item
+            name="submittedAmount"
+            label="Submitted Amount"
+            rules={[
+              { required: true, message: "Please enter the submitted amount" },
+            ]}
+          >
+            <InputNumber
+              prefix="R"
+              min={0}
+              step={100}
+              style={{ width: "100%" }}
+            />
           </Form.Item>
 
           <Form.Item
             name="paymentMethod"
             label="Payment Method"
-            rules={[{ required: true, message: "Please select a payment method" }]}
+            rules={[
+              { required: true, message: "Please select a payment method" },
+            ]}
           >
             <Select placeholder="Select payment method" disabled={processing}>
               <Option value="cash">Cash</Option>
@@ -325,9 +388,16 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
             </Select>
           </Form.Item>
 
-          <Form.Item shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod || prev.submittedAmount !== cur.submittedAmount}>
+          <Form.Item
+            shouldUpdate={(prev, cur) =>
+              prev.paymentMethod !== cur.paymentMethod ||
+              prev.submittedAmount !== cur.submittedAmount
+            }
+          >
             {() => {
-              const pm = String(form.getFieldValue("paymentMethod") || "").toLowerCase();
+              const pm = String(
+                form.getFieldValue("paymentMethod") || ""
+              ).toLowerCase();
               if (pm !== "both") return null;
               return (
                 <div className="grid grid-cols-2 gap-4">
@@ -336,46 +406,26 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
                     label="Cash Amount"
                     rules={[{ required: true, message: "Enter cash amount" }]}
                   >
-                    <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
+                    <InputNumber
+                      prefix="R"
+                      min={0}
+                      step={50}
+                      style={{ width: "100%" }}
+                      disabled={processing}
+                    />
                   </Form.Item>
                   <Form.Item
                     name="cardAmount"
                     label="Card Amount"
                     rules={[{ required: true, message: "Enter card amount" }]}
                   >
-                    <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
-                  </Form.Item>
-                </div>
-              );
-            }}
-          </Form.Item>
-
-          <Form.Item shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod}>
-            {() => {
-              const pm = String(form.getFieldValue("paymentMethod") || "").toLowerCase();
-              if (pm !== "bank_deposit") return null;
-              return (
-                <div className="grid grid-cols-1 gap-4">
-                  <Form.Item
-                    name="bankDepositReference"
-                    label="Deposit Reference"
-                    rules={[
-                      { required: true, whitespace: true, message: "Please enter the deposit reference" },
-                      {
-                        validator: async (_, value) => {
-                          const v = String(value ?? "").trim();
-                          if (!v) throw new Error("Please enter the deposit reference");
-                        },
-                      },
-                    ]}
-                  >
-                    <Input placeholder="e.g. bank ref / receipt ref" disabled={processing} />
-                  </Form.Item>
-                  <Form.Item name="bankName" label="Bank (Optional)">
-                    <Input placeholder="e.g. ABSA / FNB / Standard Bank" disabled={processing} />
-                  </Form.Item>
-                  <Form.Item name="depositorName" label="Depositor Name (Optional)">
-                    <Input placeholder="Name on the deposit slip" disabled={processing} />
+                    <InputNumber
+                      prefix="R"
+                      min={0}
+                      step={50}
+                      style={{ width: "100%" }}
+                      disabled={processing}
+                    />
                   </Form.Item>
                 </div>
               );
@@ -383,9 +433,63 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
           </Form.Item>
 
           <Form.Item
-            name="notes"
-            label="Notes (Optional)"
+            shouldUpdate={(prev, cur) =>
+              prev.paymentMethod !== cur.paymentMethod
+            }
           >
+            {() => {
+              const pm = String(
+                form.getFieldValue("paymentMethod") || ""
+              ).toLowerCase();
+              if (pm !== "bank_deposit") return null;
+              return (
+                <div className="grid grid-cols-1 gap-4">
+                  <Form.Item
+                    name="bankDepositReference"
+                    label="Deposit Reference"
+                    rules={[
+                      {
+                        required: true,
+                        whitespace: true,
+                        message: "Please enter the deposit reference",
+                      },
+                      {
+                        validator: async (_, value) => {
+                          const v = String(value ?? "").trim();
+                          if (!v)
+                            throw new Error(
+                              "Please enter the deposit reference"
+                            );
+                        },
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder="e.g. bank ref / receipt ref"
+                      disabled={processing}
+                    />
+                  </Form.Item>
+                  <Form.Item name="bankName" label="Bank (Optional)">
+                    <Input
+                      placeholder="e.g. ABSA / FNB / Standard Bank"
+                      disabled={processing}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="depositorName"
+                    label="Depositor Name (Optional)"
+                  >
+                    <Input
+                      placeholder="Name on the deposit slip"
+                      disabled={processing}
+                    />
+                  </Form.Item>
+                </div>
+              );
+            }}
+          </Form.Item>
+
+          <Form.Item name="notes" label="Notes (Optional)">
             <TextArea
               rows={3}
               placeholder="Add any notes about today's receipts..."
@@ -415,8 +519,10 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
               </Upload.Dragger>
 
               {uploading && (
-                <div className="text-center py-4">
-                  <div className="text-blue-500">Uploading and processing...</div>
+                <div className="py-4 text-center">
+                  <div className="text-blue-500">
+                    Uploading and processing...
+                  </div>
                 </div>
               )}
             </div>
@@ -427,4 +533,4 @@ const FuneralReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, de
   );
 };
 
-export default FuneralReceiptsDrawer; 
+export default FuneralReceiptsDrawer;

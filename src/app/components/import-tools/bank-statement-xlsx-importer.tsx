@@ -65,7 +65,11 @@ export const BankStatementExcelImporter = () => {
 
   const handleBeforeUpload = async (file: File) => {
     try {
-      if (!acceptableFileTypes.includes(`.${file.name.split('.').pop()?.toLowerCase()}`)) {
+      if (
+        !acceptableFileTypes.includes(
+          `.${file.name.split(".").pop()?.toLowerCase()}`
+        )
+      ) {
         notification.error({
           message: "Invalid File Type",
           description: "Please upload xlsx or xls files only",
@@ -104,12 +108,16 @@ export const BankStatementExcelImporter = () => {
         picker="month"
       />
       <Upload
-        accept={acceptableFileTypes.join(',')}
+        accept={acceptableFileTypes.join(",")}
         showUploadList={false}
         beforeUpload={handleBeforeUpload}
         disabled={statementMonth === undefined || loading}
       >
-        <Button icon={<UploadOutlined />} loading={loading} disabled={statementMonth === undefined}>
+        <Button
+          icon={<UploadOutlined />}
+          loading={loading}
+          disabled={statementMonth === undefined}
+        >
           Import Bank Statement (XLSX)
         </Button>
       </Upload>

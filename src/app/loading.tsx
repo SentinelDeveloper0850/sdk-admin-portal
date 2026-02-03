@@ -12,7 +12,7 @@ interface LoadingProps {
 export default function Loading({
   type = "fullscreen",
   message = "Loading...",
-  size = "large"
+  size = "large",
 }: LoadingProps) {
   if (type === "skeleton") {
     return <SkeletonLoading />;
@@ -31,13 +31,18 @@ export default function Loading({
   }
 
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="text-center">
         <div className="mb-6">
           <Spin
             size={size}
             tip={message}
-            indicator={<LoadingOutlined style={{ fontSize: 48, color: '#1890ff' }} spin />}
+            indicator={
+              <LoadingOutlined
+                style={{ fontSize: 48, color: "#1890ff" }}
+                spin
+              />
+            }
           />
         </div>
         <h1 className="mb-4 text-3xl font-bold text-gray-800 dark:text-white">
@@ -65,12 +70,28 @@ function SkeletonLoading() {
           <Col span={12}>
             <Space size={32}>
               <div>
-                <Skeleton.Input active size="small" style={{ width: 120, height: 20, marginBottom: 8 }} />
-                <Skeleton.Input active size="large" style={{ width: 80, height: 32 }} />
+                <Skeleton.Input
+                  active
+                  size="small"
+                  style={{ width: 120, height: 20, marginBottom: 8 }}
+                />
+                <Skeleton.Input
+                  active
+                  size="large"
+                  style={{ width: 80, height: 32 }}
+                />
               </div>
               <div>
-                <Skeleton.Input active size="small" style={{ width: 120, height: 20, marginBottom: 8 }} />
-                <Skeleton.Input active size="large" style={{ width: 80, height: 32 }} />
+                <Skeleton.Input
+                  active
+                  size="small"
+                  style={{ width: 120, height: 20, marginBottom: 8 }}
+                />
+                <Skeleton.Input
+                  active
+                  size="large"
+                  style={{ width: 80, height: 32 }}
+                />
               </div>
             </Space>
           </Col>
@@ -82,7 +103,7 @@ function SkeletonLoading() {
         <Skeleton.Input
           active
           size="large"
-          style={{ width: '100%', height: 48, borderRadius: 6 }}
+          style={{ width: "100%", height: 48, borderRadius: 6 }}
         />
       </div>
 
@@ -90,19 +111,39 @@ function SkeletonLoading() {
       <Card className="mb-4">
         <Row gutter={16}>
           <Col span={6}>
-            <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
+            <Skeleton.Input
+              active
+              size="large"
+              style={{ width: "100%", height: 40 }}
+            />
           </Col>
           <Col span={4}>
-            <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
+            <Skeleton.Input
+              active
+              size="large"
+              style={{ width: "100%", height: 40 }}
+            />
           </Col>
           <Col span={4}>
-            <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
+            <Skeleton.Input
+              active
+              size="large"
+              style={{ width: "100%", height: 40 }}
+            />
           </Col>
           <Col span={4}>
-            <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
+            <Skeleton.Input
+              active
+              size="large"
+              style={{ width: "100%", height: 40 }}
+            />
           </Col>
           <Col span={6}>
-            <Skeleton.Button active size="large" style={{ width: '100%', height: 40 }} />
+            <Skeleton.Button
+              active
+              size="large"
+              style={{ width: "100%", height: 40 }}
+            />
           </Col>
         </Row>
       </Card>
@@ -113,7 +154,11 @@ function SkeletonLoading() {
           <Row gutter={16}>
             {Array.from({ length: 7 }).map((_, index) => (
               <Col key={index} span={24 / 7}>
-                <Skeleton.Input active size="small" style={{ width: '100%', height: 20 }} />
+                <Skeleton.Input
+                  active
+                  size="small"
+                  style={{ width: "100%", height: 20 }}
+                />
               </Col>
             ))}
           </Row>
@@ -129,16 +174,16 @@ function SkeletonLoading() {
                     active
                     size="small"
                     style={{
-                      width: colIndex === 0 ? '80%' : '60%',
+                      width: colIndex === 0 ? "80%" : "60%",
                       height: 16,
-                      marginBottom: 4
+                      marginBottom: 4,
                     }}
                   />
                   {colIndex === 2 && (
                     <Skeleton.Input
                       active
                       size="small"
-                      style={{ width: '40%', height: 12 }}
+                      style={{ width: "40%", height: 12 }}
                     />
                   )}
                 </Col>

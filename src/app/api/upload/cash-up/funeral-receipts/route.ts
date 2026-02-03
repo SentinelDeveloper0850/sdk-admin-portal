@@ -1,6 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import { getUserFromRequest } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,7 +56,10 @@ export async function POST(request: NextRequest) {
       stream.end(buffer);
     });
 
-    console.log("🚀 ~ POST ~ funeral uploadResult to cash up submission:", uploadResult)
+    console.log(
+      "🚀 ~ POST ~ funeral uploadResult to cash up submission:",
+      uploadResult
+    );
 
     return NextResponse.json({
       success: true,
@@ -64,10 +68,11 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error("Funeral receipt upload failed to cash up submission:", err);
     return NextResponse.json(
-      { success: false, message: "Internal Server Error to cash up submission" },
+      {
+        success: false,
+        message: "Internal Server Error to cash up submission",
+      },
       { status: 500 }
     );
   }
 }
-
-

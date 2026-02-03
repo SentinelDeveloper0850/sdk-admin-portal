@@ -2,15 +2,29 @@
 
 import { useEffect, useState } from "react";
 
-import { Button, Card, Collapse, Drawer, Dropdown, Flex, Form, Input, message, Spin, Statistic, Table } from "antd";
+import { MoreOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Card,
+  Collapse,
+  Drawer,
+  Dropdown,
+  Flex,
+  Form,
+  Input,
+  Spin,
+  Statistic,
+  Table,
+  message,
+} from "antd";
 import Search from "antd/es/input/Search";
+import dayjs from "dayjs";
+
+import { formatToMoneyWithCurrency } from "@/utils/formatters";
 
 import PageHeader from "@/app/components/page-header";
 import { ISocietyMember } from "@/app/models/scheme/scheme-society-member.schema";
 import { ISchemeSociety } from "@/app/models/scheme/scheme-society.schema";
-import { formatToMoneyWithCurrency } from "@/utils/formatters";
-import { MoreOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
-import dayjs from "dayjs";
 
 export default function SchemeSocietiesPage() {
   const [societies, setSocieties] = useState<ISchemeSociety[]>([]);
@@ -19,17 +33,23 @@ export default function SchemeSocietiesPage() {
   const [stats, setStats] = useState<{ count: number }>({ count: 0 });
   const [createDrawerOpen, setCreateDrawerOpen] = useState<boolean>(false);
   const [editDrawerOpen, setEditDrawerOpen] = useState<boolean>(false);
-  const [societyMembersDrawerOpen, setSocietyMembersDrawerOpen] = useState<boolean>(false);
+  const [societyMembersDrawerOpen, setSocietyMembersDrawerOpen] =
+    useState<boolean>(false);
 
   const [viewDrawerForm] = Form.useForm();
   const [editDrawerForm] = Form.useForm();
   const [createDrawerForm] = Form.useForm();
 
-  const [selectedSociety, setSelectedSociety] = useState<ISchemeSociety | null>(null);
-  const [selectedSocietyMembers, setSelectedSocietyMembers] = useState<ISocietyMember[]>([]);
+  const [selectedSociety, setSelectedSociety] = useState<ISchemeSociety | null>(
+    null
+  );
+  const [selectedSocietyMembers, setSelectedSocietyMembers] = useState<
+    ISocietyMember[]
+  >([]);
   const [viewDrawerOpen, setViewDrawerOpen] = useState<boolean>(false);
 
-  const [createSocietyMemberDrawerOpen, setCreateSocietyMemberDrawerOpen] = useState<boolean>(false);
+  const [createSocietyMemberDrawerOpen, setCreateSocietyMemberDrawerOpen] =
+    useState<boolean>(false);
   const [createSocietyMemberDrawerForm] = Form.useForm();
 
   const fetchSocieties = async () => {
@@ -124,7 +144,9 @@ export default function SchemeSocietiesPage() {
       setError(errorData.message || "Failed to update society");
     }
     const data = await response.json();
-    setSocieties(societies.map((society) => society._id === data._id ? data : society));
+    setSocieties(
+      societies.map((society) => (society._id === data._id ? data : society))
+    );
     setError(false);
     setEditDrawerOpen(false);
     sweetAlert({
@@ -173,10 +195,13 @@ export default function SchemeSocietiesPage() {
 
   const handleManageMembers = async (record: ISchemeSociety) => {
     try {
-      const response = await fetch(`/api/societies/scheme/${record._id}/members`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(
+        `/api/societies/scheme/${record._id}/members`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch society members");
@@ -206,7 +231,7 @@ export default function SchemeSocietiesPage() {
     );
   }
 
-  const formItemStyles = "w-full"
+  const formItemStyles = "w-full";
 
   const handleCreateSocietyMember = async (values: any) => {
     const response = await fetch(`/api/societies/scheme/members`, {
@@ -232,11 +257,22 @@ export default function SchemeSocietiesPage() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <PageHeader title="Scheme Societies" actions={[
-        <Button type="primary" className="text-black" onClick={() => setCreateDrawerOpen(true)} icon={<PlusOutlined />}>Create Society</Button>,
-        <Button onClick={() => fetchSocieties()} icon={<ReloadOutlined />}>Refresh</Button>
-      ]}>
-      </PageHeader>
+      <PageHeader
+        title="Scheme Societies"
+        actions={[
+          <Button
+            type="primary"
+            className="text-black"
+            onClick={() => setCreateDrawerOpen(true)}
+            icon={<PlusOutlined />}
+          >
+            Create Society
+          </Button>,
+          <Button onClick={() => fetchSocieties()} icon={<ReloadOutlined />}>
+            Refresh
+          </Button>,
+        ]}
+      ></PageHeader>
 
       {error && (
         <div style={{ color: "red", marginBottom: "20px" }}>{error}</div>
@@ -344,59 +380,119 @@ export default function SchemeSocietiesPage() {
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={() => setCreateDrawerOpen(false)}>Cancel</Button>
-            <Button type="primary" className="text-black" onClick={() => createDrawerForm.submit()}>Create Society</Button>
+            <Button
+              type="primary"
+              className="text-black"
+              onClick={() => createDrawerForm.submit()}
+            >
+              Create Society
+            </Button>
           </div>
         }
       >
-        <Form layout="vertical" form={createDrawerForm} onFinish={handleCreateSociety}>
+        <Form
+          layout="vertical"
+          form={createDrawerForm}
+          onFinish={handleCreateSociety}
+        >
           <Flex gap={16}>
-            <Form.Item className={formItemStyles} label="Society Name" name="name" rules={[{ required: true, message: "Please enter society name" }]}>
+            <Form.Item
+              className={formItemStyles}
+              label="Society Name"
+              name="name"
+              rules={[{ required: true, message: "Please enter society name" }]}
+            >
               <Input />
             </Form.Item>
 
-            <Form.Item className={formItemStyles} label="ID on ASSIT" name="assitID">
+            <Form.Item
+              className={formItemStyles}
+              label="ID on ASSIT"
+              name="assitID"
+            >
               <Input />
             </Form.Item>
-            <Form.Item className={formItemStyles} label="Plan" name="planName" rules={[{ required: true, message: "Please enter plan" }]}>
+            <Form.Item
+              className={formItemStyles}
+              label="Plan"
+              name="planName"
+              rules={[{ required: true, message: "Please enter plan" }]}
+            >
               <Input />
             </Form.Item>
           </Flex>
           <Collapse accordion>
             <Collapse.Panel header="Chairman" key="1">
               <Flex gap={16}>
-                <Form.Item className={formItemStyles} label="Name" name="chairman">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Name"
+                  name="chairman"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Email" name="chairmanEmail">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Email"
+                  name="chairmanEmail"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Phone" name="chairmanPhone">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Phone"
+                  name="chairmanPhone"
+                >
                   <Input />
                 </Form.Item>
               </Flex>
             </Collapse.Panel>
             <Collapse.Panel header="Secretary" key="2">
               <Flex gap={16}>
-                <Form.Item className={formItemStyles} label="Name" name="secretary">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Name"
+                  name="secretary"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Email" name="secretaryEmail">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Email"
+                  name="secretaryEmail"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Phone" name="secretaryPhone">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Phone"
+                  name="secretaryPhone"
+                >
                   <Input />
                 </Form.Item>
               </Flex>
             </Collapse.Panel>
             <Collapse.Panel header="Treasurer" key="3">
               <Flex gap={16}>
-                <Form.Item className={formItemStyles} label="Name" name="treasurer">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Name"
+                  name="treasurer"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Email" name="treasurerEmail">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Email"
+                  name="treasurerEmail"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Phone" name="treasurerPhone">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Phone"
+                  name="treasurerPhone"
+                >
                   <Input />
                 </Form.Item>
               </Flex>
@@ -414,59 +510,119 @@ export default function SchemeSocietiesPage() {
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={() => setEditDrawerOpen(false)}>Cancel</Button>
-            <Button type="primary" className="text-black" onClick={() => editDrawerForm.submit()}>Save Changes</Button>
+            <Button
+              type="primary"
+              className="text-black"
+              onClick={() => editDrawerForm.submit()}
+            >
+              Save Changes
+            </Button>
           </div>
         }
       >
-        <Form layout="vertical" form={editDrawerForm} onFinish={updateSocietyDetails}>
+        <Form
+          layout="vertical"
+          form={editDrawerForm}
+          onFinish={updateSocietyDetails}
+        >
           <Flex gap={16}>
-            <Form.Item className={formItemStyles} label="Society Name" name="name" rules={[{ required: true, message: "Please enter society name" }]}>
+            <Form.Item
+              className={formItemStyles}
+              label="Society Name"
+              name="name"
+              rules={[{ required: true, message: "Please enter society name" }]}
+            >
               <Input />
             </Form.Item>
 
-            <Form.Item className={formItemStyles} label="ID on ASSIT" name="assitID">
+            <Form.Item
+              className={formItemStyles}
+              label="ID on ASSIT"
+              name="assitID"
+            >
               <Input />
             </Form.Item>
-            <Form.Item className={formItemStyles} label="Plan" name="planName" rules={[{ required: true, message: "Please enter plan" }]}>
+            <Form.Item
+              className={formItemStyles}
+              label="Plan"
+              name="planName"
+              rules={[{ required: true, message: "Please enter plan" }]}
+            >
               <Input />
             </Form.Item>
           </Flex>
           <Collapse accordion>
             <Collapse.Panel header="Chairman" key="1">
               <Flex gap={16}>
-                <Form.Item className={formItemStyles} label="Name" name="chairman">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Name"
+                  name="chairman"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Email" name="chairmanEmail">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Email"
+                  name="chairmanEmail"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Phone" name="chairmanPhone">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Phone"
+                  name="chairmanPhone"
+                >
                   <Input />
                 </Form.Item>
               </Flex>
             </Collapse.Panel>
             <Collapse.Panel header="Secretary" key="2">
               <Flex gap={16}>
-                <Form.Item className={formItemStyles} label="Name" name="secretary">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Name"
+                  name="secretary"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Email" name="secretaryEmail">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Email"
+                  name="secretaryEmail"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Phone" name="secretaryPhone">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Phone"
+                  name="secretaryPhone"
+                >
                   <Input />
                 </Form.Item>
               </Flex>
             </Collapse.Panel>
             <Collapse.Panel header="Treasurer" key="3">
               <Flex gap={16}>
-                <Form.Item className={formItemStyles} label="Name" name="treasurer">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Name"
+                  name="treasurer"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Email" name="treasurerEmail">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Email"
+                  name="treasurerEmail"
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className={formItemStyles} label="Phone" name="treasurerPhone">
+                <Form.Item
+                  className={formItemStyles}
+                  label="Phone"
+                  name="treasurerPhone"
+                >
                   <Input />
                 </Form.Item>
               </Flex>
@@ -482,21 +638,62 @@ export default function SchemeSocietiesPage() {
         onClose={() => setSocietyMembersDrawerOpen(false)}
         destroyOnClose
         extra={
-          <Button type="primary" className="text-black" onClick={() => setCreateSocietyMemberDrawerOpen(true)}>Add Member</Button>
+          <Button
+            type="primary"
+            className="text-black"
+            onClick={() => setCreateSocietyMemberDrawerOpen(true)}
+          >
+            Add Member
+          </Button>
         }
       >
         <div className="grid grid-cols-4 gap-4">
-          <Card><Statistic title="ASSIT ID" value={selectedSociety?.assitID} className="text-sm" /></Card>
-          <Card><Statistic title="Society Name" value={selectedSociety?.name} className="text-sm" /></Card>
-          <Card><Statistic title="Default Plan" value={selectedSociety?.planName} className="text-sm" /></Card>
-          <Card><Statistic title="Number of Members" value={selectedSociety?.numberOfMembers} className="text-sm" /></Card>
+          <Card>
+            <Statistic
+              title="ASSIT ID"
+              value={selectedSociety?.assitID}
+              className="text-sm"
+            />
+          </Card>
+          <Card>
+            <Statistic
+              title="Society Name"
+              value={selectedSociety?.name}
+              className="text-sm"
+            />
+          </Card>
+          <Card>
+            <Statistic
+              title="Default Plan"
+              value={selectedSociety?.planName}
+              className="text-sm"
+            />
+          </Card>
+          <Card>
+            <Statistic
+              title="Number of Members"
+              value={selectedSociety?.numberOfMembers}
+              className="text-sm"
+            />
+          </Card>
         </div>
-        <Table className="mt-4" size="small"
+        <Table
+          className="mt-4"
+          size="small"
           dataSource={selectedSocietyMembers}
           columns={[
-            { title: "Member Name", dataIndex: "fullNames", render: (value: string, record: ISocietyMember) => `${record.initials} ${record.lastName}` },
+            {
+              title: "Member Name",
+              dataIndex: "fullNames",
+              render: (value: string, record: ISocietyMember) =>
+                `${record.initials} ${record.lastName}`,
+            },
             { title: "ID Number", dataIndex: "idNumber" },
-            { title: "Premium", dataIndex: "premium", render: (value: number) => `${formatToMoneyWithCurrency(value)}` },
+            {
+              title: "Premium",
+              dataIndex: "premium",
+              render: (value: number) => `${formatToMoneyWithCurrency(value)}`,
+            },
             { title: "Cell Number", dataIndex: "cellNumber" },
             { title: "Email Address", dataIndex: "emailAddress" },
             { title: "Physical Address", dataIndex: "address" },
@@ -510,26 +707,73 @@ export default function SchemeSocietiesPage() {
           destroyOnClose
           footer={
             <div className="flex justify-end gap-2">
-              <Button onClick={() => setCreateSocietyMemberDrawerOpen(false)}>Cancel</Button>
-              <Button type="primary" className="text-black" onClick={() => createSocietyMemberDrawerForm.submit()}>Add Member</Button>
+              <Button onClick={() => setCreateSocietyMemberDrawerOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                className="text-black"
+                onClick={() => createSocietyMemberDrawerForm.submit()}
+              >
+                Add Member
+              </Button>
             </div>
           }
         >
-          <Form layout="vertical" form={createSocietyMemberDrawerForm} onFinish={handleCreateSocietyMember} className="space-y-2">
+          <Form
+            layout="vertical"
+            form={createSocietyMemberDrawerForm}
+            onFinish={handleCreateSocietyMember}
+            className="space-y-2"
+          >
             <Card title="Personal Details" size="small">
               <Flex gap={16}>
-                <Form.Item className="w-1/6" label="Initials" name="initials" rules={[{ required: true, message: "Please enter member initials" }]}>
+                <Form.Item
+                  className="w-1/6"
+                  label="Initials"
+                  name="initials"
+                  rules={[
+                    { required: true, message: "Please enter member initials" },
+                  ]}
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className="w-full" label="First Names" name="firstNames" rules={[{ required: true, message: "Please enter member first names" }]}>
+                <Form.Item
+                  className="w-full"
+                  label="First Names"
+                  name="firstNames"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please enter member first names",
+                    },
+                  ]}
+                >
                   <Input />
                 </Form.Item>
               </Flex>
               <Flex gap={16}>
-                <Form.Item className="w-full" label="Surname" name="lastName" rules={[{ required: true, message: "Please enter member surname" }]}>
+                <Form.Item
+                  className="w-full"
+                  label="Surname"
+                  name="lastName"
+                  rules={[
+                    { required: true, message: "Please enter member surname" },
+                  ]}
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item className="w-full" label="ID Number" name="idNumber" rules={[{ required: true, message: "Please enter member ID number" }]}>
+                <Form.Item
+                  className="w-full"
+                  label="ID Number"
+                  name="idNumber"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please enter member ID number",
+                    },
+                  ]}
+                >
                   <Input />
                 </Form.Item>
               </Flex>
@@ -537,10 +781,24 @@ export default function SchemeSocietiesPage() {
 
             <Card title="Contact Details" size="small">
               <Flex gap={16}>
-                <Form.Item className="w-full" label="Cell Number" name="cellNumber" rules={[{ required: true, message: "Please enter member cell number" }]}>
+                <Form.Item
+                  className="w-full"
+                  label="Cell Number"
+                  name="cellNumber"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please enter member cell number",
+                    },
+                  ]}
+                >
                   <Input prefix="+27" maxLength={9} />
                 </Form.Item>
-                <Form.Item className="w-full" label="Email Address" name="emailAddress">
+                <Form.Item
+                  className="w-full"
+                  label="Email Address"
+                  name="emailAddress"
+                >
                   <Input />
                 </Form.Item>
               </Flex>
@@ -551,10 +809,22 @@ export default function SchemeSocietiesPage() {
 
             <Card title="Policy Details" size="small">
               <Flex gap={16}>
-                <Form.Item label="Plan" name="plan" rules={[{ required: true, message: "Please enter member plan" }]}>
+                <Form.Item
+                  label="Plan"
+                  name="plan"
+                  rules={[
+                    { required: true, message: "Please enter member plan" },
+                  ]}
+                >
                   <Input />
                 </Form.Item>
-                <Form.Item label="Premium" name="premium" rules={[{ required: true, message: "Please enter member premium" }]}>
+                <Form.Item
+                  label="Premium"
+                  name="premium"
+                  rules={[
+                    { required: true, message: "Please enter member premium" },
+                  ]}
+                >
                   <Input prefix="R" />
                 </Form.Item>
               </Flex>
@@ -562,6 +832,6 @@ export default function SchemeSocietiesPage() {
           </Form>
         </Drawer>
       </Drawer>
-    </div >
+    </div>
   );
 }

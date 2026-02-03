@@ -2,11 +2,25 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Button, Card, DatePicker, Drawer, Form, Select, Space, Spin, Table, Typography, Upload, message } from "antd";
+import {
+  Button,
+  Card,
+  DatePicker,
+  Drawer,
+  Form,
+  Select,
+  Space,
+  Spin,
+  Table,
+  Typography,
+  Upload,
+  message,
+} from "antd";
 import dayjs from "dayjs";
 
-import PageHeader from "@/app/components/page-header";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
+import PageHeader from "@/app/components/page-header";
 import { ERoles } from "@/types/roles.enum";
 
 const { Title, Text } = Typography;
@@ -28,7 +42,10 @@ type AuditReportRow = {
 };
 
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(amount ?? 0);
+  return new Intl.NumberFormat("en-ZA", {
+    style: "currency",
+    currency: "ZAR",
+  }).format(amount ?? 0);
 }
 
 function AuditReportsPage() {
@@ -44,9 +61,12 @@ function AuditReportsPage() {
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/cash-up/audit-reports?limit=100", { cache: "no-store" });
+      const res = await fetch("/api/cash-up/audit-reports?limit=100", {
+        cache: "no-store",
+      });
       const json = await res.json();
-      if (!json?.success) throw new Error(json?.message || "Failed to fetch reports");
+      if (!json?.success)
+        throw new Error(json?.message || "Failed to fetch reports");
       setReports(json.reports || []);
     } catch (e: any) {
       message.error(e?.message || "Failed to load audit reports");
@@ -61,7 +81,13 @@ function AuditReportsPage() {
       const json = await res.json();
       // users endpoint returns array
       const list = Array.isArray(json) ? json : [];
-      setUsers(list.map((u: any) => ({ _id: String(u._id), name: String(u.name || ""), email: u.email })));
+      setUsers(
+        list.map((u: any) => ({
+          _id: String(u._id),
+          name: String(u.name || ""),
+          email: u.email,
+        }))
+      );
     } catch {
       // non-fatal
     }
@@ -72,7 +98,10 @@ function AuditReportsPage() {
     fetchUsers();
   }, []);
 
-  const userOptions = useMemo(() => users.sort((a, b) => a.name.localeCompare(b.name)), [users]);
+  const userOptions = useMemo(
+    () => users.sort((a, b) => a.name.localeCompare(b.name)),
+    [users]
+  );
 
   const handleUpload = async () => {
     try {
@@ -88,7 +117,10 @@ function AuditReportsPage() {
       fd.append("userId", String(values.userId));
       fd.append("dateKey", dayjs(values.date).format("YYYY-MM-DD"));
 
-      const res = await fetch("/api/cash-up/audit-report", { method: "POST", body: fd });
+      const res = await fetch("/api/cash-up/audit-report", {
+        method: "POST",
+        body: fd,
+      });
       const json = await res.json();
       if (!json?.success) {
         if (json?.expected && json?.detected) {
@@ -226,8 +258,16 @@ function AuditReportsPage() {
         <div className="space-y-4">
           <AlertBox />
           <Form form={form} layout="vertical" initialValues={{ date: dayjs() }}>
-            <Form.Item name="userId" label="Employee" rules={[{ required: true, message: "Select an employee" }]}>
-              <Select showSearch optionFilterProp="children" placeholder="Select employee">
+            <Form.Item
+              name="userId"
+              label="Employee"
+              rules={[{ required: true, message: "Select an employee" }]}
+            >
+              <Select
+                showSearch
+                optionFilterProp="children"
+                placeholder="Select employee"
+              >
                 {userOptions.map((u) => (
                   <Option key={u._id} value={u._id}>
                     {u.name}
@@ -235,7 +275,11 @@ function AuditReportsPage() {
                 ))}
               </Select>
             </Form.Item>
-            <Form.Item name="date" label="Report Date" rules={[{ required: true, message: "Select a date" }]}>
+            <Form.Item
+              name="date"
+              label="Report Date"
+              rules={[{ required: true, message: "Select a date" }]}
+            >
               <DatePicker style={{ width: "100%" }} />
             </Form.Item>
 
@@ -249,11 +293,14 @@ function AuditReportsPage() {
                 }}
                 fileList={file ? ([{ uid: "1", name: file.name }] as any) : []}
               >
-                <p className="ant-upload-text">Click or drag the Excel report here</p>
+                <p className="ant-upload-text">
+                  Click or drag the Excel report here
+                </p>
                 <p className="ant-upload-hint">Supported: .xlsx, .xls, .csv</p>
               </Upload.Dragger>
-              <Text type="secondary" className="block mt-2">
-                The employee name and report date must match the spreadsheet header, otherwise upload will be rejected.
+              <Text type="secondary" className="mt-2 block">
+                The employee name and report date must match the spreadsheet
+                header, otherwise upload will be rejected.
               </Text>
             </Form.Item>
           </Form>
@@ -269,12 +316,14 @@ function AlertBox() {
       <Title level={5} style={{ marginTop: 0 }}>
         Notes
       </Title>
-      <ul className="list-disc pl-5 space-y-1">
+      <ul className="list-disc space-y-1 pl-5">
         <li>
-          This expects the exported “Income & Expense Transaction Report” Excel format (TransactionType + Amount columns).
+          This expects the exported “Income & Expense Transaction Report” Excel
+          format (TransactionType + Amount columns).
         </li>
         <li>
-          We ignore the Balance column; we compare <strong>Income − Expense</strong> to the cashup totals.
+          We ignore the Balance column; we compare{" "}
+          <strong>Income − Expense</strong> to the cashup totals.
         </li>
       </ul>
     </Card>
@@ -282,4 +331,3 @@ function AlertBox() {
 }
 
 export default withRoleGuard(AuditReportsPage, [ERoles.CashupReviewer]);
-

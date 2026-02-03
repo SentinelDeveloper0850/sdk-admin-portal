@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { getUserFromRequest } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 
@@ -9,11 +10,17 @@ export async function POST(req: NextRequest) {
     const user = await getUserFromRequest(req);
 
     if (!user || !user._id) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     if (!file) {
-      return NextResponse.json({ success: false, message: "No file provided" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "No file provided" },
+        { status: 400 }
+      );
     }
 
     const arrayBuffer = await file.arrayBuffer();

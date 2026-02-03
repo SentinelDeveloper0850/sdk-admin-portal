@@ -43,5 +43,8 @@ cashUpAuditReportSchema.index({ userId: 1, dateKey: 1 }, { unique: true });
 
 export const CashUpAuditReportModel =
   mongoose.models.cashup_audit_reports ||
-  mongoose.model("cashup_audit_reports", cashUpAuditReportSchema, "cashup_audit_reports");
-
+  mongoose.model(
+    "cashup_audit_reports",
+    cashUpAuditReportSchema,
+    "cashup_audit_reports"
+  );

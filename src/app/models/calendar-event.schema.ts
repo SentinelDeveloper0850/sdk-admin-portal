@@ -58,16 +58,23 @@ export interface IVirtualEventDetails {
 
 export interface ICalendarEvent extends Document {
   // Core
-  name: string;                 // <-- will be exposed via virtual "title" for FullCalendar
+  name: string; // <-- will be exposed via virtual "title" for FullCalendar
   description: string;
-  type: string;                 // "funeral" | "meeting" | "shift" | ...
-  subType?: string;             // "funeral_pickup" | "funeral_bathing" | "funeral_tent" | "funeral_delivery" | "funeral_service" | "funeral_burial"
-  branchId?: string;            // <-- added; your GET uses this
+  type: string; // "funeral" | "meeting" | "shift" | ...
+  subType?: string; // "funeral_pickup" | "funeral_bathing" | "funeral_tent" | "funeral_delivery" | "funeral_service" | "funeral_burial"
+  branchId?: string; // <-- added; your GET uses this
 
   // Related models
   relatedModel?: "funeral" | "none" | string; // future-proof
-  relatedId?: mongoose.Types.ObjectId;        // e.g., funeral _id
-  milestone?: "funeral_pickup" | "funeral_bathing" | "funeral_tent" | "funeral_delivery" | "funeral_service" | "funeral_burial" | string;
+  relatedId?: mongoose.Types.ObjectId; // e.g., funeral _id
+  milestone?:
+    | "funeral_pickup"
+    | "funeral_bathing"
+    | "funeral_tent"
+    | "funeral_delivery"
+    | "funeral_service"
+    | "funeral_burial"
+    | string;
 
   // Meeting style
   isVirtualEvent?: boolean;
@@ -80,12 +87,12 @@ export interface ICalendarEvent extends Document {
 
   // Time (Date fields are source of truth)
   startDateTime?: Date;
-  startTime?: string;           // "HH:mm" (optional, kept for legacy UI)
-  start: string;                // ISO string (kept & auto-synced)
+  startTime?: string; // "HH:mm" (optional, kept for legacy UI)
+  start: string; // ISO string (kept & auto-synced)
 
   endDateTime?: Date;
   endTime?: string;
-  end: string;                  // ISO string (kept & auto-synced)
+  end: string; // ISO string (kept & auto-synced)
 
   durationHours?: number;
   durationMinutes?: number;
@@ -106,8 +113,8 @@ export interface ICalendarEvent extends Document {
   updatedAt?: Date;
 
   // Virtuals
-  title?: string;               // alias of name for FullCalendar
-  allDay?: boolean;             // alias of isAllDayEvent for FullCalendar
+  title?: string; // alias of name for FullCalendar
+  allDay?: boolean; // alias of isAllDayEvent for FullCalendar
 }
 
 const NoteSchema = new Schema<INote>(
@@ -197,12 +204,12 @@ const CalendarEventSchema = new Schema<ICalendarEvent>(
 
     // Time (Dates are canonical; string fields are synced for clients)
     startDateTime: { type: Date },
-    start: { type: String },        // ISO; auto-filled from startDateTime
-    startTime: { type: String },    // "HH:mm" (optional UI helper)
+    start: { type: String }, // ISO; auto-filled from startDateTime
+    startTime: { type: String }, // "HH:mm" (optional UI helper)
 
     endDateTime: { type: Date },
-    end: { type: String },          // ISO; auto-filled from endDateTime
-    endTime: { type: String },      // "HH:mm"
+    end: { type: String }, // ISO; auto-filled from endDateTime
+    endTime: { type: String }, // "HH:mm"
 
     durationHours: { type: Number },
     durationMinutes: { type: Number },
@@ -269,7 +276,11 @@ CalendarEventSchema.pre("save", function (next) {
   }
 
   // Derive endDateTime from duration if missing
-  if (this.startDateTime && !this.endDateTime && (this.durationHours || this.durationMinutes)) {
+  if (
+    this.startDateTime &&
+    !this.endDateTime &&
+    (this.durationHours || this.durationMinutes)
+  ) {
     const ms =
       (this.durationHours ? this.durationHours * 60 : 0) * 60 * 1000 +
       (this.durationMinutes ? this.durationMinutes : 0) * 60 * 1000;
@@ -311,6 +322,12 @@ CalendarEventSchema.index({ branchId: 1, startDateTime: 1 });
 CalendarEventSchema.index({ createdById: 1, startDateTime: 1 });
 CalendarEventSchema.index({ type: 1, startDateTime: 1 });
 
-export const CalendarEventModel = mongoose.models?.calendar_events || mongoose.model<ICalendarEvent>("calendar_events", CalendarEventSchema, "calendar_events");
+export const CalendarEventModel =
+  mongoose.models?.calendar_events ||
+  mongoose.model<ICalendarEvent>(
+    "calendar_events",
+    CalendarEventSchema,
+    "calendar_events"
+  );
 
 export default CalendarEventModel;

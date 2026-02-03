@@ -20,12 +20,19 @@ const EftTransactionSchema: Schema = new Schema({
   additionalInformation: { type: String, default: "--" },
   description: { type: String, default: "--" },
   amount: { type: Number, required: true },
-  created_at: { type: Date, default: Date.now },            // <- function, not call
-  allocationRequests: [{ type: Schema.Types.ObjectId, ref: "AllocationRequest", default: [] }], // <- ObjectId + ref works
+  created_at: { type: Date, default: Date.now }, // <- function, not call
+  allocationRequests: [
+    { type: Schema.Types.ObjectId, ref: "AllocationRequest", default: [] },
+  ], // <- ObjectId + ref works
 });
 
 // Check if the model is already compiled
 export const EftTransactionModel =
-  mongoose.models?.eft_transactions || mongoose.model<IEftTransaction>("eft_transactions", EftTransactionSchema, "eft_transactions");
+  mongoose.models?.eft_transactions ||
+  mongoose.model<IEftTransaction>(
+    "eft_transactions",
+    EftTransactionSchema,
+    "eft_transactions"
+  );
 
 export default EftTransactionModel;

@@ -12,13 +12,22 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { message: "Internal Server Error ~ Error linking Easipol policy to ASSIT policy" },
+      {
+        message:
+          "Internal Server Error ~ Error linking Easipol policy to ASSIT policy",
+      },
       { status: 500 }
     );
   } catch (error: any) {
-    console.error("Error linking Easipol policy to ASSIT policy:", error.message);
+    console.error(
+      "Error linking Easipol policy to ASSIT policy:",
+      error.message
+    );
     return NextResponse.json(
-      { message: "Internal Server Error ~ Error linking Easipol policy to ASSIT policy" },
+      {
+        message:
+          "Internal Server Error ~ Error linking Easipol policy to ASSIT policy",
+      },
       { status: 500 }
     );
   }

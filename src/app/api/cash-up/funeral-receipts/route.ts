@@ -1,5 +1,6 @@
-import { getUserFromRequest } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+
+import { getUserFromRequest } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +34,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
-    if (!date || submittedAmount === undefined || !submissionIdSuffix || !files) {
+    if (
+      !date ||
+      submittedAmount === undefined ||
+      !submissionIdSuffix ||
+      !files
+    ) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
@@ -51,7 +57,11 @@ export async function POST(request: NextRequest) {
     const pm = String(paymentMethod || "").toLowerCase();
     if (!["cash", "card", "both", "bank_deposit"].includes(pm)) {
       return NextResponse.json(
-        { success: false, message: "Payment method is required (cash, card, both, or bank deposit)" },
+        {
+          success: false,
+          message:
+            "Payment method is required (cash, card, both, or bank deposit)",
+        },
         { status: 400 }
       );
     }
@@ -69,7 +79,11 @@ export async function POST(request: NextRequest) {
       const card = Number(cardAmount);
       if (!Number.isFinite(cash) || !Number.isFinite(card)) {
         return NextResponse.json(
-          { success: false, message: "Cash and card amounts are required when payment method is both" },
+          {
+            success: false,
+            message:
+              "Cash and card amounts are required when payment method is both",
+          },
           { status: 400 }
         );
       }
@@ -81,7 +95,10 @@ export async function POST(request: NextRequest) {
       }
       if (Math.round((cash + card) * 100) !== Math.round(submitted * 100)) {
         return NextResponse.json(
-          { success: false, message: "Cash + card must equal the submitted amount" },
+          {
+            success: false,
+            message: "Cash + card must equal the submitted amount",
+          },
           { status: 400 }
         );
       }
@@ -99,7 +116,9 @@ export async function POST(request: NextRequest) {
 
     const submissionIdentifier = `${user._id}-${submissionIdSuffix}`;
 
-    const { submitCashUpSubmissionData } = await import("@/server/actions/cash-up-submission.action");
+    const { submitCashUpSubmissionData } = await import(
+      "@/server/actions/cash-up-submission.action"
+    );
     const { success, message } = await submitCashUpSubmissionData({
       submissionIdentifier,
       files,
@@ -107,15 +126,30 @@ export async function POST(request: NextRequest) {
       invoiceNumber: inv,
       submittedAmount: submitted,
       paymentMethod: pm as "cash" | "card" | "both" | "bank_deposit",
-      cashAmount: pm === "both" ? Number(cashAmount) : pm === "cash" ? submitted : undefined,
-      cardAmount: pm === "both" ? Number(cardAmount) : pm === "card" ? submitted : undefined,
-      bankDepositReference: pm === "bank_deposit" ? String(bankDepositReference || "").trim() : undefined,
-      bankName: pm === "bank_deposit" ? String(bankName || "").trim() : undefined,
-      depositorName: pm === "bank_deposit" ? String(depositorName || "").trim() : undefined,
+      cashAmount:
+        pm === "both"
+          ? Number(cashAmount)
+          : pm === "cash"
+            ? submitted
+            : undefined,
+      cardAmount:
+        pm === "both"
+          ? Number(cardAmount)
+          : pm === "card"
+            ? submitted
+            : undefined,
+      bankDepositReference:
+        pm === "bank_deposit"
+          ? String(bankDepositReference || "").trim()
+          : undefined,
+      bankName:
+        pm === "bank_deposit" ? String(bankName || "").trim() : undefined,
+      depositorName:
+        pm === "bank_deposit" ? String(depositorName || "").trim() : undefined,
       receiptType: "funeral",
       notes,
       submittedAt,
-      userId: user._id as unknown as string
+      userId: user._id as unknown as string,
     });
 
     if (!success) {
@@ -136,4 +170,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

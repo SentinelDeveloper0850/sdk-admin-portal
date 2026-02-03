@@ -1,5 +1,6 @@
-import { processDailyActivityReminders } from "@/server/actions/daily-activity-reminders";
 import { NextRequest, NextResponse } from "next/server";
+
+import { processDailyActivityReminders } from "@/server/actions/daily-activity-reminders";
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,9 +28,8 @@ export async function GET(request: NextRequest) {
         errors: result.errors,
         nextRunAt: result.nextRunAt,
         timestamp: new Date().toISOString(),
-      }
+      },
     });
-
   } catch (error: any) {
     console.error("Error in daily activity reminders cron:", error);
     return NextResponse.json(
@@ -47,4 +47,4 @@ export async function GET(request: NextRequest) {
 // Also support POST for compatibility
 export async function POST(request: NextRequest) {
   return GET(request);
-} 
+}

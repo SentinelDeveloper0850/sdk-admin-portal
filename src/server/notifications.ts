@@ -6,22 +6,22 @@ import { connectToDatabase } from "@/lib/db";
 export type NotificationSeverity = "INFO" | "SUCCESS" | "WARNING" | "ERROR";
 
 interface CreateNotificationInput {
-    recipientUserId: string;
-    type: string;
-    title: string;
-    message: string;
-    link?: string;
-    severity?: NotificationSeverity;
-    data?: Record<string, any>;
+  recipientUserId: string;
+  type: string;
+  title: string;
+  message: string;
+  link?: string;
+  severity?: NotificationSeverity;
+  data?: Record<string, any>;
 }
 
 export async function createNotification(input: CreateNotificationInput) {
-    const { severity = "INFO", ...rest } = input;
+  const { severity = "INFO", ...rest } = input;
 
-    await connectToDatabase();
+  await connectToDatabase();
 
-    return NotificationModel.create({
-        ...rest,
-        severity,
-    });
+  return NotificationModel.create({
+    ...rest,
+    severity,
+  });
 }

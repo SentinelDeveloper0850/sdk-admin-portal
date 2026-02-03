@@ -1,14 +1,19 @@
 "use client";
 
-import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
+import DOMPurify from "dompurify";
+
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
 import { ERoles } from "../../../../types/roles.enum";
 
-const RichTextEditor = dynamic(() => import("@/app/components/editor/RichTextEditor"), { ssr: false });
+const RichTextEditor = dynamic(
+  () => import("@/app/components/editor/RichTextEditor"),
+  { ssr: false }
+);
 
 function CreateAnnouncementInner() {
   const router = useRouter();
@@ -29,7 +34,16 @@ function CreateAnnouncementInner() {
     const res = await fetch("/api/news", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, bodyMd, bodyHtml, category, version, tags, isPinned, requiresAck }),
+      body: JSON.stringify({
+        title,
+        bodyMd,
+        bodyHtml,
+        category,
+        version,
+        tags,
+        isPinned,
+        requiresAck,
+      }),
     });
     if (!res.ok) {
       setSaving(false);
@@ -37,10 +51,20 @@ function CreateAnnouncementInner() {
     }
     const json = await res.json();
     router.push(`/news/${json.slug}`);
-  }, [title, bodyMd, bodyHtml, category, version, tags, isPinned, requiresAck, router]);
+  }, [
+    title,
+    bodyMd,
+    bodyHtml,
+    category,
+    version,
+    tags,
+    isPinned,
+    requiresAck,
+    router,
+  ]);
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       <h1 className="text-xl font-semibold">Create Announcement</h1>
 
       <div className="grid gap-3">
@@ -52,7 +76,11 @@ function CreateAnnouncementInner() {
         />
 
         <div className="flex gap-2">
-          <select className="rounded border px-3 py-2" value={category} onChange={(e) => setCategory(e.target.value)}>
+          <select
+            className="rounded border px-3 py-2"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
             <option value="SYSTEM_UPDATE">System Update</option>
             <option value="POLICY_CHANGE">Policy Change</option>
             <option value="TRAINING">Training</option>
@@ -71,16 +99,31 @@ function CreateAnnouncementInner() {
           className="rounded border px-3 py-2"
           placeholder="Tags (comma separated)"
           value={tagsString}
-          onChange={(e) => setTags(e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
+          onChange={(e) =>
+            setTags(
+              e.target.value
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            )
+          }
         />
 
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={isPinned} onChange={(e) => setIsPinned(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={isPinned}
+            onChange={(e) => setIsPinned(e.target.checked)}
+          />
           Pinned
         </label>
 
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={requiresAck} onChange={(e) => setRequiresAck(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={requiresAck}
+            onChange={(e) => setRequiresAck(e.target.checked)}
+          />
           Requires Acknowledgement
         </label>
 
@@ -95,13 +138,17 @@ function CreateAnnouncementInner() {
       </div>
 
       <div className="flex gap-2">
-        <button className="rounded border px-3 py-1 text-sm" onClick={handleSubmit} disabled={saving}>
+        <button
+          className="rounded border px-3 py-1 text-sm"
+          onClick={handleSubmit}
+          disabled={saving}
+        >
           {saving ? "Saving..." : "Save Draft"}
         </button>
       </div>
 
       <div className="pt-4">
-        <h2 className="text-sm font-semibold mb-2">Preview</h2>
+        <h2 className="mb-2 text-sm font-semibold">Preview</h2>
         <article
           className="prose dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{
@@ -138,7 +185,8 @@ function CreateAnnouncementInner() {
   );
 }
 
-const CreateAnnouncementPage = withRoleGuard(CreateAnnouncementInner as unknown as React.FC, [ERoles.Admin]);
+const CreateAnnouncementPage = withRoleGuard(
+  CreateAnnouncementInner as unknown as React.FC,
+  [ERoles.Admin]
+);
 export default CreateAnnouncementPage;
-
-

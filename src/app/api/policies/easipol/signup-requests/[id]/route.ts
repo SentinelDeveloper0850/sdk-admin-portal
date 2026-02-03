@@ -45,7 +45,16 @@ export async function PATCH(
 
     let updateData: any = {
       updated_at: new Date(),
-      updated_by: actionData.userId || actionData.assignedBy || actionData.reviewedBy || actionData.approvedBy || actionData.rejectedBy || actionData.requestedBy || actionData.author || actionData.escalatedBy || actionData.archivedBy
+      updated_by:
+        actionData.userId ||
+        actionData.assignedBy ||
+        actionData.reviewedBy ||
+        actionData.approvedBy ||
+        actionData.rejectedBy ||
+        actionData.requestedBy ||
+        actionData.author ||
+        actionData.escalatedBy ||
+        actionData.archivedBy,
     };
 
     switch (action) {
@@ -68,9 +77,9 @@ export async function PATCH(
               status: "assigned",
               changedBy: updateData.updated_by,
               changedAt: new Date(),
-              notes: `Assigned to ${consultant.name}`
-            }
-          }
+              notes: `Assigned to ${consultant.name}`,
+            },
+          },
         };
         break;
 
@@ -83,14 +92,16 @@ export async function PATCH(
               status: "reviewed",
               changedBy: updateData.updated_by,
               changedAt: new Date(),
-              notes: actionData.notes || "Marked as reviewed"
-            }
-          }
+              notes: actionData.notes || "Marked as reviewed",
+            },
+          },
         };
         break;
 
       case "approve":
-        const generatedPolicyNumber = actionData.policyNumber || `POL-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const generatedPolicyNumber =
+          actionData.policyNumber ||
+          `POL-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
         updateData = {
           ...updateData,
@@ -103,9 +114,9 @@ export async function PATCH(
               status: "approved",
               changedBy: updateData.updated_by,
               changedAt: new Date(),
-              notes: `Approved with policy number: ${generatedPolicyNumber}`
-            }
-          }
+              notes: `Approved with policy number: ${generatedPolicyNumber}`,
+            },
+          },
         };
         break;
 
@@ -120,9 +131,9 @@ export async function PATCH(
               status: "rejected",
               changedBy: updateData.updated_by,
               changedAt: new Date(),
-              notes: `Rejected: ${actionData.reason}`
-            }
-          }
+              notes: `Rejected: ${actionData.reason}`,
+            },
+          },
         };
         break;
 
@@ -135,15 +146,15 @@ export async function PATCH(
               field: actionData.field,
               description: actionData.description,
               requestedAt: new Date(),
-              requestedBy: updateData.updated_by
+              requestedBy: updateData.updated_by,
             },
             statusHistory: {
               status: "pending_info",
               changedBy: updateData.updated_by,
               changedAt: new Date(),
-              notes: `Requested more info: ${actionData.field}`
-            }
-          }
+              notes: `Requested more info: ${actionData.field}`,
+            },
+          },
         };
         break;
 
@@ -156,9 +167,9 @@ export async function PATCH(
               authorName: actionData.authorName,
               text: actionData.text,
               createdAt: new Date(),
-              isPrivate: actionData.isPrivate !== false
-            }
-          }
+              isPrivate: actionData.isPrivate !== false,
+            },
+          },
         };
         break;
 
@@ -183,9 +194,9 @@ export async function PATCH(
               status: "escalated",
               changedBy: updateData.updated_by,
               changedAt: new Date(),
-              notes: `Escalated to ${escalatedUser.name}: ${actionData.reason}`
-            }
-          }
+              notes: `Escalated to ${escalatedUser.name}: ${actionData.reason}`,
+            },
+          },
         };
         break;
 
@@ -198,9 +209,9 @@ export async function PATCH(
               status: "archived",
               changedBy: updateData.updated_by,
               changedAt: new Date(),
-              notes: actionData.reason || "Archived"
-            }
-          }
+              notes: actionData.reason || "Archived",
+            },
+          },
         };
         break;
 

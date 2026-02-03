@@ -1,8 +1,20 @@
 "use client";
 
-import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
-import { Card, Collapse, Descriptions, Image, Modal, Space, Tag, Timeline, Typography } from "antd";
 import { useState } from "react";
+
+import {
+  Card,
+  Collapse,
+  Descriptions,
+  Image,
+  Modal,
+  Space,
+  Tag,
+  Timeline,
+  Typography,
+} from "antd";
+
+import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 
 const { Text, Title } = Typography;
 
@@ -15,16 +27,20 @@ interface PolicySignupViewModalProps {
 export const PolicySignupViewModal = ({
   visible,
   onClose,
-  record
+  record,
 }: PolicySignupViewModalProps) => {
   const [filePreviewVisible, setFilePreviewVisible] = useState(false);
-  const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    name: string;
+    type: string;
+  } | null>(null);
 
   const handleFilePreview = (file: any) => {
     setPreviewFile({
       url: file.cloudinaryUrl,
       name: file.originalName,
-      type: file.type
+      type: file.type,
     });
     setFilePreviewVisible(true);
   };
@@ -35,36 +51,36 @@ export const PolicySignupViewModal = ({
   };
 
   const getFileExtension = (filename: string) => {
-    return filename.split('.').pop()?.toLowerCase() || '';
+    return filename.split(".").pop()?.toLowerCase() || "";
   };
 
   const isImageFile = (filename: string) => {
     const ext = getFileExtension(filename);
-    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext);
+    return ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext);
   };
 
   const isPdfFile = (filename: string) => {
-    return getFileExtension(filename) === 'pdf';
+    return getFileExtension(filename) === "pdf";
   };
 
   const getFileIcon = (filename: string, type: string) => {
     const ext = getFileExtension(filename);
 
     if (isImageFile(filename)) {
-      return '🖼️';
+      return "🖼️";
     }
 
     switch (ext) {
-      case 'pdf':
-        return '📄';
-      case 'doc':
-      case 'docx':
-        return '📝';
-      case 'xls':
-      case 'xlsx':
-        return '📊';
+      case "pdf":
+        return "📄";
+      case "doc":
+      case "docx":
+        return "📝";
+      case "xls":
+      case "xlsx":
+        return "📊";
       default:
-        return '📎';
+        return "📎";
     }
   };
 
@@ -73,9 +89,9 @@ export const PolicySignupViewModal = ({
   // Prepare collapse items
   const collapseItems = [
     {
-      key: 'basic-info',
+      key: "basic-info",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           📋 Basic Information
         </span>
       ),
@@ -85,12 +101,17 @@ export const PolicySignupViewModal = ({
             <Tag color="blue">{record.requestId}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Status">
-            <Tag color={
-              record.currentStatus === 'approved' ? 'green' :
-                record.currentStatus === 'rejected' ? 'red' :
-                  record.currentStatus === 'escalated' ? 'orange' :
-                    'default'
-            }>
+            <Tag
+              color={
+                record.currentStatus === "approved"
+                  ? "green"
+                  : record.currentStatus === "rejected"
+                    ? "red"
+                    : record.currentStatus === "escalated"
+                      ? "orange"
+                      : "default"
+              }
+            >
               {record.currentStatus?.toUpperCase()}
             </Tag>
           </Descriptions.Item>
@@ -101,19 +122,17 @@ export const PolicySignupViewModal = ({
             {record.surname}
           </Descriptions.Item>
           <Descriptions.Item label="Email">
-            {record.email || 'Not provided'}
+            {record.email || "Not provided"}
           </Descriptions.Item>
-          <Descriptions.Item label="Phone">
-            {record.phone}
-          </Descriptions.Item>
+          <Descriptions.Item label="Phone">{record.phone}</Descriptions.Item>
           <Descriptions.Item label="Address">
-            {record.address || 'Not provided'}
+            {record.address || "Not provided"}
           </Descriptions.Item>
           <Descriptions.Item label="ID Number">
             {record.identificationNumber}
           </Descriptions.Item>
           <Descriptions.Item label="Plan">
-            <Tag color="purple">{record.plan?.name || 'Unknown Plan'}</Tag>
+            <Tag color="purple">{record.plan?.name || "Unknown Plan"}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Number of Dependents">
             {record.numberOfDependents}
@@ -122,16 +141,16 @@ export const PolicySignupViewModal = ({
             {new Date(record.created_at).toLocaleString()}
           </Descriptions.Item>
         </Descriptions>
-      )
-    }
+      ),
+    },
   ];
 
   // Add dependents section if exists
   if (record.dependents && record.dependents.length > 0) {
     collapseItems.push({
-      key: 'dependents',
+      key: "dependents",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           👥 Dependents ({record.dependents.length})
         </span>
       ),
@@ -147,124 +166,142 @@ export const PolicySignupViewModal = ({
                   {dependent.surname}
                 </Descriptions.Item>
                 <Descriptions.Item label="ID Number">
-                  {dependent.identificationNumber || 'Not provided'}
+                  {dependent.identificationNumber || "Not provided"}
                 </Descriptions.Item>
                 <Descriptions.Item label="Date of Birth">
-                  {dependent.dateOfBirth || 'Not provided'}
+                  {dependent.dateOfBirth || "Not provided"}
                 </Descriptions.Item>
                 <Descriptions.Item label="Type">
-                  <Tag color={dependent.isChild ? 'green' : 'blue'}>
-                    {dependent.isChild ? 'Child' : 'Adult'}
+                  <Tag color={dependent.isChild ? "green" : "blue"}>
+                    {dependent.isChild ? "Child" : "Adult"}
                   </Tag>
                 </Descriptions.Item>
               </Descriptions>
             </Card>
           ))}
         </Space>
-      )
+      ),
     });
   }
 
   // Add uploaded files section if exists
   if (record.uploadedFiles && record.uploadedFiles.length > 0) {
     collapseItems.push({
-      key: 'uploaded-files',
+      key: "uploaded-files",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           📎 Uploaded Files ({record.uploadedFiles.length})
         </span>
       ),
       children: (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "12px",
+          }}
+        >
           {record.uploadedFiles.map((file, index) => (
-            <div key={index} style={{
-              border: '1px solid #d9d9d9',
-              borderRadius: '8px',
-              padding: '12px',
-              backgroundColor: '#fafafa',
-              cursor: file.cloudinaryUrl ? 'pointer' : 'default',
-              transition: 'all 0.2s ease'
-            }}
+            <div
+              key={index}
+              style={{
+                border: "1px solid #d9d9d9",
+                borderRadius: "8px",
+                padding: "12px",
+                backgroundColor: "#fafafa",
+                cursor: file.cloudinaryUrl ? "pointer" : "default",
+                transition: "all 0.2s ease",
+              }}
               onClick={() => file.cloudinaryUrl && handleFilePreview(file)}
               onMouseEnter={(e) => {
                 if (file.cloudinaryUrl) {
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (file.cloudinaryUrl) {
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }
               }}
             >
               {/* File Thumbnail */}
-              <div style={{
-                width: '100%',
-                aspectRatio: '1 / 1',
-                backgroundColor: '#fff',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '8px',
-                border: '1px solid #e8e8e8',
-                overflow: 'hidden',
-                position: 'relative'
-              }}>
+              <div
+                style={{
+                  width: "100%",
+                  aspectRatio: "1 / 1",
+                  backgroundColor: "#fff",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "8px",
+                  border: "1px solid #e8e8e8",
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+              >
                 {isImageFile(file.originalName) && file.cloudinaryUrl ? (
                   <Image
                     src={file.cloudinaryUrl}
                     alt={file.originalName}
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center'
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: "center",
                     }}
                     preview={false}
                   />
                 ) : (
-                  <div style={{
-                    fontSize: '48px',
-                    color: '#666',
-                    textAlign: 'center',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: '100%'
-                  }}>
+                  <div
+                    style={{
+                      fontSize: "48px",
+                      color: "#666",
+                      textAlign: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
                     {getFileIcon(file.originalName, file.type)}
                   </div>
                 )}
               </div>
 
               {/* File Info */}
-              <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
+              <div
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                }}
+              >
                 {file.originalName}
               </div>
-              <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
-                <span style={{ textTransform: 'capitalize' }}>
-                  {file.personType.replace('-', ' ')}
+              <div
+                style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}
+              >
+                <span style={{ textTransform: "capitalize" }}>
+                  {file.personType.replace("-", " ")}
                 </span>
-                {' • '}
-                <span style={{ textTransform: 'capitalize' }}>
-                  {file.type.replace('-', ' ')}
+                {" • "}
+                <span style={{ textTransform: "capitalize" }}>
+                  {file.type.replace("-", " ")}
                 </span>
               </div>
               {file.cloudinaryUrl && (
-                <div style={{ fontSize: '11px', color: '#666' }}>
-                  <span style={{ color: '#52c41a' }}>
-                    ✓ Uploaded
-                  </span>
-                  {' • '}
+                <div style={{ fontSize: "11px", color: "#666" }}>
+                  <span style={{ color: "#52c41a" }}>✓ Uploaded</span>
+                  {" • "}
                   <a
                     href={file.cloudinaryUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: '#1890ff' }}
+                    style={{ color: "#1890ff" }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     📥 Download
@@ -274,16 +311,16 @@ export const PolicySignupViewModal = ({
             </div>
           ))}
         </div>
-      )
+      ),
     });
   }
 
   // Add assignment section if exists
   if (record.assignedConsultantName) {
     collapseItems.push({
-      key: 'assignment',
+      key: "assignment",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           👤 Assignment
         </span>
       ),
@@ -293,19 +330,21 @@ export const PolicySignupViewModal = ({
             {record.assignedConsultantName}
           </Descriptions.Item>
           <Descriptions.Item label="Assigned At">
-            {record.assignedAt ? new Date(record.assignedAt).toLocaleString() : 'Unknown'}
+            {record.assignedAt
+              ? new Date(record.assignedAt).toLocaleString()
+              : "Unknown"}
           </Descriptions.Item>
         </Descriptions>
-      )
+      ),
     });
   }
 
   // Add policy information section if exists
   if (record.generatedPolicyNumber) {
     collapseItems.push({
-      key: 'policy-info',
+      key: "policy-info",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           📋 Policy Information
         </span>
       ),
@@ -315,22 +354,24 @@ export const PolicySignupViewModal = ({
             <Tag color="green">{record.generatedPolicyNumber}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Created At">
-            {record.policyCreatedAt ? new Date(record.policyCreatedAt).toLocaleString() : 'Unknown'}
+            {record.policyCreatedAt
+              ? new Date(record.policyCreatedAt).toLocaleString()
+              : "Unknown"}
           </Descriptions.Item>
           <Descriptions.Item label="Created By">
-            {record.policyCreatedBy || 'Unknown'}
+            {record.policyCreatedBy || "Unknown"}
           </Descriptions.Item>
         </Descriptions>
-      )
+      ),
     });
   }
 
   // Add rejection information section if exists
   if (record.rejectionReason) {
     collapseItems.push({
-      key: 'rejection',
+      key: "rejection",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           ❌ Rejection Details
         </span>
       ),
@@ -345,16 +386,16 @@ export const PolicySignupViewModal = ({
             </Descriptions.Item>
           )}
         </Descriptions>
-      )
+      ),
     });
   }
 
   // Add escalation information section if exists
   if (record.escalatedToName) {
     collapseItems.push({
-      key: 'escalation',
+      key: "escalation",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           ⚠️ Escalation Details
         </span>
       ),
@@ -364,7 +405,9 @@ export const PolicySignupViewModal = ({
             {record.escalatedToName}
           </Descriptions.Item>
           <Descriptions.Item label="Escalated At">
-            {record.escalatedAt ? new Date(record.escalatedAt).toLocaleString() : 'Unknown'}
+            {record.escalatedAt
+              ? new Date(record.escalatedAt).toLocaleString()
+              : "Unknown"}
           </Descriptions.Item>
           {record.escalationReason && (
             <Descriptions.Item label="Reason" span={2}>
@@ -372,7 +415,7 @@ export const PolicySignupViewModal = ({
             </Descriptions.Item>
           )}
         </Descriptions>
-      )
+      ),
     });
   }
 
@@ -382,34 +425,34 @@ export const PolicySignupViewModal = ({
       key: index,
       children: (
         <div>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+          <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
             {info.field}
           </div>
-          <div style={{ color: '#666', marginBottom: '4px' }}>
+          <div style={{ color: "#666", marginBottom: "4px" }}>
             {info.description}
           </div>
-          <div style={{ fontSize: '12px', color: '#999' }}>
+          <div style={{ fontSize: "12px", color: "#999" }}>
             Requested on {new Date(info.requestedAt).toLocaleDateString()}
           </div>
           {info.providedAt && (
-            <div style={{ fontSize: '12px', color: '#52c41a', marginTop: '4px' }}>
+            <div
+              style={{ fontSize: "12px", color: "#52c41a", marginTop: "4px" }}
+            >
               ✓ Provided on {new Date(info.providedAt).toLocaleDateString()}
             </div>
           )}
         </div>
-      )
+      ),
     }));
 
     collapseItems.push({
-      key: 'requested-info',
+      key: "requested-info",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           ❓ Requested Information ({record.requestedInfo.length})
         </span>
       ),
-      children: (
-        <Timeline items={timelineItems} />
-      )
+      children: <Timeline items={timelineItems} />,
     });
   }
 
@@ -419,32 +462,30 @@ export const PolicySignupViewModal = ({
       key: index,
       children: (
         <div>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+          <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
             {note.authorName}
             {note.isPrivate && (
-              <Tag color="orange" style={{ marginLeft: '8px' }}>Private</Tag>
+              <Tag color="orange" style={{ marginLeft: "8px" }}>
+                Private
+              </Tag>
             )}
           </div>
-          <div style={{ color: '#666', marginBottom: '4px' }}>
-            {note.text}
-          </div>
-          <div style={{ fontSize: '12px', color: '#999' }}>
+          <div style={{ color: "#666", marginBottom: "4px" }}>{note.text}</div>
+          <div style={{ fontSize: "12px", color: "#999" }}>
             {new Date(note.createdAt).toLocaleString()}
           </div>
         </div>
-      )
+      ),
     }));
 
     collapseItems.push({
-      key: 'internal-notes',
+      key: "internal-notes",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           📝 Internal Notes ({record.internalNotes.length})
         </span>
       ),
-      children: (
-        <Timeline items={timelineItems} />
-      )
+      children: <Timeline items={timelineItems} />,
     });
   }
 
@@ -454,63 +495,64 @@ export const PolicySignupViewModal = ({
       key: index,
       children: (
         <div>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            <Tag color={
-              status.status === 'approved' ? 'green' :
-                status.status === 'rejected' ? 'red' :
-                  status.status === 'escalated' ? 'orange' :
-                    'default'
-            }>
+          <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+            <Tag
+              color={
+                status.status === "approved"
+                  ? "green"
+                  : status.status === "rejected"
+                    ? "red"
+                    : status.status === "escalated"
+                      ? "orange"
+                      : "default"
+              }
+            >
               {status.status.toUpperCase()}
             </Tag>
           </div>
-          <div style={{ color: '#666', marginBottom: '4px' }}>
+          <div style={{ color: "#666", marginBottom: "4px" }}>
             Changed by: {status.changedBy}
           </div>
           {status.notes && (
-            <div style={{ color: '#666', marginBottom: '4px' }}>
+            <div style={{ color: "#666", marginBottom: "4px" }}>
               {status.notes}
             </div>
           )}
-          <div style={{ fontSize: '12px', color: '#999' }}>
+          <div style={{ fontSize: "12px", color: "#999" }}>
             {new Date(status.changedAt).toLocaleString()}
           </div>
         </div>
-      )
+      ),
     }));
 
     collapseItems.push({
-      key: 'status-history',
+      key: "status-history",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           📊 Status History ({record.statusHistory.length})
         </span>
       ),
-      children: (
-        <Timeline items={timelineItems} />
-      )
+      children: <Timeline items={timelineItems} />,
     });
   }
 
   // Add original message section if exists
   if (record.message) {
     collapseItems.push({
-      key: 'original-message',
+      key: "original-message",
       label: (
-        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
           💬 Original Message
         </span>
       ),
-      children: (
-        <Text>{record.message}</Text>
-      )
+      children: <Text>{record.message}</Text>,
     });
   }
 
   return (
     <>
       <Collapse
-        defaultActiveKey={['basic-info']}
+        defaultActiveKey={["basic-info"]}
         bordered
         size="small"
         style={{ width: "100%" }}
@@ -527,37 +569,37 @@ export const PolicySignupViewModal = ({
         centered
       >
         {previewFile && (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: "center" }}>
             {isImageFile(previewFile.name) ? (
               <Image
                 src={previewFile.url}
                 alt={previewFile.name}
-                style={{ maxWidth: '100%', maxHeight: '60vh' }}
+                style={{ maxWidth: "100%", maxHeight: "60vh" }}
                 preview={false}
               />
             ) : isPdfFile(previewFile.name) ? (
               <iframe
                 src={`${previewFile.url}#toolbar=1&navpanes=0`}
-                style={{ width: '100%', height: '70vh', border: 'none' }}
+                style={{ width: "100%", height: "70vh", border: "none" }}
                 title={previewFile.name}
               />
             ) : (
-              <div style={{ padding: '40px' }}>
-                <div style={{ fontSize: '64px', marginBottom: '16px' }}>
+              <div style={{ padding: "40px" }}>
+                <div style={{ fontSize: "64px", marginBottom: "16px" }}>
                   {getFileIcon(previewFile.name, previewFile.type)}
                 </div>
-                <div style={{ fontSize: '18px', marginBottom: '8px' }}>
+                <div style={{ fontSize: "18px", marginBottom: "8px" }}>
                   {previewFile.name}
                 </div>
-                <div style={{ color: '#666' }}>
+                <div style={{ color: "#666" }}>
                   This file type cannot be previewed
                 </div>
-                <div style={{ marginTop: '16px' }}>
+                <div style={{ marginTop: "16px" }}>
                   <a
                     href={previewFile.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: '#1890ff' }}
+                    style={{ color: "#1890ff" }}
                   >
                     📥 Download File
                   </a>

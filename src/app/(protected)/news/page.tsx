@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import useSWRInfinite from "swr/infinite";
 
 import { Button } from "antd";
+import useSWRInfinite from "swr/infinite";
 
 import PageHeader from "@/app/components/page-header";
 import { useRole } from "@/app/hooks/use-role";
@@ -16,7 +16,8 @@ export default function NewsListPage() {
   const { hasRole } = useRole();
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && !previousPageData.nextCursor) return null;
-    const cursor = pageIndex === 0 ? "" : `&cursor=${previousPageData.nextCursor}`;
+    const cursor =
+      pageIndex === 0 ? "" : `&cursor=${previousPageData.nextCursor}`;
     return `/api/news?take=20${cursor}`;
   };
 
@@ -36,7 +37,7 @@ export default function NewsListPage() {
   }, [data]);
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       <PageHeader
         title="News & Announcements"
         subtitle="Company updates, operational alerts, and staff announcements."
@@ -57,19 +58,29 @@ export default function NewsListPage() {
           <Link
             key={item.id}
             href={`/news/${item.slug ?? item.id}`}
-            className="rounded border p-3 hover:bg-muted"
+            className="hover:bg-muted rounded border p-3"
           >
             <div className="flex items-center gap-2">
-              {item.isPinned ? <span className="text-xs font-semibold">[PIN]</span> : null}
-              <span className="text-sm text-muted-foreground">{item.category}</span>
-              {item.version ? <span className="text-xs">• {item.version}</span> : null}
+              {item.isPinned ? (
+                <span className="text-xs font-semibold">[PIN]</span>
+              ) : null}
+              <span className="text-muted-foreground text-sm">
+                {item.category}
+              </span>
+              {item.version ? (
+                <span className="text-xs">• {item.version}</span>
+              ) : null}
               {item.publishedAt ? (
-                <span className="text-xs text-muted-foreground">• {new Date(item.publishedAt).toLocaleDateString()}</span>
+                <span className="text-muted-foreground text-xs">
+                  • {new Date(item.publishedAt).toLocaleDateString()}
+                </span>
               ) : null}
             </div>
             <div className="text-base font-medium">{item.title}</div>
             {item.tags && item.tags.length ? (
-              <div className="text-xs text-muted-foreground">Tags: {item.tags.join(", ")}</div>
+              <div className="text-muted-foreground text-xs">
+                Tags: {item.tags.join(", ")}
+              </div>
             ) : null}
           </Link>
         ))}
@@ -89,5 +100,3 @@ export default function NewsListPage() {
     </div>
   );
 }
-
-

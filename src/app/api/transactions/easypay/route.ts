@@ -10,8 +10,8 @@ import {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('pageSize') || '50');
+    const page = parseInt(searchParams.get("page") || "1");
+    const pageSize = parseInt(searchParams.get("pageSize") || "50");
 
     const response = await fetchAll(pageSize, page);
 
@@ -39,8 +39,12 @@ export async function POST(request: NextRequest) {
     // Audit log
     try {
       const user = await getUserFromRequest(request);
-      const ipHeader = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
-      const ip = (ipHeader ? ipHeader.split(",")[0].trim() : null) as string | null;
+      const ipHeader =
+        request.headers.get("x-forwarded-for") ||
+        request.headers.get("x-real-ip");
+      const ip = (ipHeader ? ipHeader.split(",")[0].trim() : null) as
+        | string
+        | null;
       const userAgent = request.headers.get("user-agent") || null;
 
       await createAuditLog({
@@ -49,11 +53,11 @@ export async function POST(request: NextRequest) {
         resourceId: payload?.uuid,
         performedBy: user
           ? {
-            id: user._id?.toString?.(),
-            name: (user as any).name,
-            email: (user as any).email,
-            role: (user as any).role,
-          }
+              id: user._id?.toString?.(),
+              name: (user as any).name,
+              email: (user as any).email,
+              role: (user as any).role,
+            }
           : {},
         ip,
         userAgent,
@@ -68,7 +72,10 @@ export async function POST(request: NextRequest) {
         tags: ["import"],
       });
     } catch (e) {
-      console.error("Failed to write audit log for Easypay import:", (e as any)?.message);
+      console.error(
+        "Failed to write audit log for Easypay import:",
+        (e as any)?.message
+      );
     }
 
     if (response.success) {

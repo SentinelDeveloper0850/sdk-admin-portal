@@ -1,9 +1,10 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import {
   createSystemNotification,
   getDiscordWebhookUrl,
-  sendDiscordNotification
+  sendDiscordNotification,
 } from "@/lib/discord";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     const payload = createSystemNotification(
       "Test Notification",
       message || "This is a test notification from SDK Admin Portal",
-      type as 'info' | 'warning' | 'error' | 'success'
+      type as "info" | "warning" | "error" | "success"
     );
 
     const result = await sendDiscordNotification(
@@ -34,9 +35,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: result.success,
       message: result.message,
-      error: result.error
+      error: result.error,
     });
-
   } catch (error) {
     console.error("Error in test Discord endpoint:", error);
     return NextResponse.json(
@@ -44,4 +44,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

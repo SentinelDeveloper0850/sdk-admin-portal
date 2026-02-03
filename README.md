@@ -10,6 +10,7 @@ The SDK Admin Portal is the operations hub for Somdaka’s funeral insurance and
 - Coordinate **branch and staff operations** – shifts, daily activity compliance, cash‑ups, and daily audits per employee and branch.
 - Track **financial flows** – bank statement imports, Easypay/EFT transactions, allocations to policies, and exception handling.
 - Provide **communication and oversight** – news/announcements, notifications, tasks, and (future) audit logs for sensitive actions.
+- Support **field staff (drivers)** via a dedicated Driver App, with secure PIN-based authentication and device trust, without exposing full portal user accounts.
 
 Most business entities are represented as Mongoose models in:
 
@@ -116,6 +117,15 @@ This portal is organized around major operational domains. Each module combines 
 - **Relationships:**
   - Many other models reference users via IDs (e.g. `submittedBy` on claims, `createdByUserId` / `assigneeUserId` on tasks, `authorId` on announcements, `createdBy` / `updatedBy` on branches).
   - Auth flows issue JWTs (via `src/services/auth.service.ts` and `src/lib/auth.ts`) that are consumed by `middleware.ts`, presence, and notifications.
+
+### Drivers and Driver App Support (field operations)
+
+- **Drivers vs Users:** drivers authenticate separately from portal users using PIN-based auth and trusted devices. They are modeled as staff-linked operational entities, not system users.
+- **Admin management:** drivers are created and managed in the Admin Portal and linked to existing staff members.
+
+## Related applications
+
+- **Driver App (Expo / React Native)** – mobile app for field staff (drivers), authenticating against `/api/driverapp/*` endpoints and consuming a restricted operational API surface.
 
 ### Policies & signup / cancellation workflows
 

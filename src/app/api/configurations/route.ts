@@ -1,12 +1,16 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import { ConfigurationModel } from "@/app/models/system/configuration.schema";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   try {
     await connectToDatabase();
 
-    const configurations = await ConfigurationModel.find({ deletedBy: { $exists: false }, isActive: true }).sort({ created_at: -1 });
+    const configurations = await ConfigurationModel.find({
+      deletedBy: { $exists: false },
+      isActive: true,
+    }).sort({ created_at: -1 });
 
     return NextResponse.json({
       success: true,
@@ -38,7 +42,8 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: {
-            message: "Missing required fields: key, value, category, description",
+            message:
+              "Missing required fields: key, value, category, description",
           },
         },
         { status: 400 }
@@ -48,7 +53,9 @@ export async function POST(request: NextRequest) {
     await connectToDatabase();
 
     // Check if configuration with same key already exists
-    const existingConfig = await ConfigurationModel.findOne({ key: key.toUpperCase() });
+    const existingConfig = await ConfigurationModel.findOne({
+      key: key.toUpperCase(),
+    });
 
     if (existingConfig) {
       return NextResponse.json(

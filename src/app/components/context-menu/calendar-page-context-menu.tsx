@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 
-import {
-  Building2,
-  Building,
-  User2,
-  ChevronsRight,
-  ChevronsLeft,
-} from "lucide-react";
 import { Tooltip } from "antd";
+import {
+  Building,
+  Building2,
+  ChevronsLeft,
+  ChevronsRight,
+  User2,
+} from "lucide-react";
 
-
-const CalendarPageContextMenu = ({ selectedCalendar, setSelectedCalendar }: { selectedCalendar: string, setSelectedCalendar: (calendar: string) => void }) => {
+const CalendarPageContextMenu = ({
+  selectedCalendar,
+  setSelectedCalendar,
+}: {
+  selectedCalendar: string;
+  setSelectedCalendar: (calendar: string) => void;
+}) => {
   const [collapsed, setCollapsed] = useState(true);
 
   const menuItems = [
@@ -40,13 +45,25 @@ const CalendarPageContextMenu = ({ selectedCalendar, setSelectedCalendar }: { se
   ];
 
   return (
-    <section className={`h-full ${collapsed ? "w-14" : "w-64"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}>
-      <div className={`flex ${collapsed ? "justify-center" : "justify-start ml-3"} p-2`}>
-        <Tooltip title={collapsed ? "Expand Context Menu" : "Collapse Context Menu"} placement="left">
+    <section
+      className={`h-full ${collapsed ? "w-14" : "w-64"} overflow-hidden bg-white transition-all duration-200 dark:bg-zinc-900`}
+    >
+      <div
+        className={`flex ${collapsed ? "justify-center" : "ml-3 justify-start"} p-2`}
+      >
+        <Tooltip
+          title={collapsed ? "Expand Context Menu" : "Collapse Context Menu"}
+          placement="left"
+        >
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="text-zinc-500 hover:text-black dark:hover:text-white">
-            {collapsed ? <ChevronsLeft size={20} /> : <ChevronsRight size={20} />}
+            className="text-zinc-500 hover:text-black dark:hover:text-white"
+          >
+            {collapsed ? (
+              <ChevronsLeft size={20} />
+            ) : (
+              <ChevronsRight size={20} />
+            )}
           </button>
         </Tooltip>
       </div>
@@ -55,8 +72,11 @@ const CalendarPageContextMenu = ({ selectedCalendar, setSelectedCalendar }: { se
         {menuItems.map((item) => {
           // Items should be rendered flipped 90% so that they read vertically instead of horizontally
           const isActive = selectedCalendar === item.value;
-          const baseClass = "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
-          const borderClass = isActive ? "border-l-4 border-l-primary text-primary" : "border-l-4 border-l-transparent";
+          const baseClass =
+            "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
+          const borderClass = isActive
+            ? "border-l-4 border-l-primary text-primary"
+            : "border-l-4 border-l-transparent";
 
           const content = (
             <div className={`${baseClass} ${borderClass}`}>
@@ -70,9 +90,19 @@ const CalendarPageContextMenu = ({ selectedCalendar, setSelectedCalendar }: { se
           );
 
           if (collapsed) {
-            return <Tooltip title={item.name} placement="left"><div key={item.id} onClick={item.onClick}>{content}</div></Tooltip>
+            return (
+              <Tooltip title={item.name} placement="left">
+                <div key={item.id} onClick={item.onClick}>
+                  {content}
+                </div>
+              </Tooltip>
+            );
           } else {
-            return <div key={item.id} onClick={item.onClick}>{content}</div>
+            return (
+              <div key={item.id} onClick={item.onClick}>
+                {content}
+              </div>
+            );
           }
         })}
       </div>

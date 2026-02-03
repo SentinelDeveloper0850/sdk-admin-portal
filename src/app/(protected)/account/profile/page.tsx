@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 
 import {
@@ -16,11 +17,11 @@ import {
 import { App, Drawer, Tag } from "antd";
 import dayjs from "dayjs";
 
+import { roleLabels } from "@/utils/helpers/roles";
+
 import PageHeader from "@/app/components/page-header";
 import { ThemeSwitcher } from "@/app/components/theme-switcher";
 import { useAuth } from "@/context/auth-context";
-import { roleLabels } from "@/utils/helpers/roles";
-import Image from "next/image";
 
 const MAX_FILE_SIZE_MB = 2;
 

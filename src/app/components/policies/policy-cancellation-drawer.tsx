@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { CloseOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button, Drawer, Form, Input, Select, Space, message } from "antd";
-import { useEffect, useState } from "react";
 import sweetAlert from "sweetalert";
 
 const { TextArea } = Input;
@@ -30,7 +31,7 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
   onClose,
   policyId,
   policyNumber,
-  memberName
+  memberName,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -42,7 +43,7 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
         policyNumber,
         memberName,
         cancellationType: "immediate",
-        effectiveDate: new Date().toISOString().split('T')[0]
+        effectiveDate: new Date().toISOString().split("T")[0],
       });
     }
   }, [open, policyId, policyNumber, memberName, form]);
@@ -62,17 +63,22 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
 
       setLoading(true);
 
-      const response = await fetch("/api/policies/easipol/cancellation-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
+      const response = await fetch(
+        "/api/policies/easipol/cancellation-request",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to submit cancellation request");
+        throw new Error(
+          errorData.message || "Failed to submit cancellation request"
+        );
       }
 
       const data = await response.json();
@@ -88,11 +94,17 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
         form.resetFields();
         onClose();
       } else {
-        throw new Error(data.message || "Failed to submit cancellation request");
+        throw new Error(
+          data.message || "Failed to submit cancellation request"
+        );
       }
     } catch (error) {
       console.error("Cancellation request error:", error);
-      message.error(error instanceof Error ? error.message : "Failed to submit cancellation request");
+      message.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit cancellation request"
+      );
     } finally {
       setLoading(false);
     }
@@ -140,7 +152,7 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
         >
           <Input disabled aria-describedby="policy-id-help" />
         </Form.Item>
-        <div id="policy-id-help" className="text-xs text-gray-500 mb-4">
+        <div id="policy-id-help" className="mb-4 text-xs text-gray-500">
           This is the unique identifier for the policy being cancelled.
         </div>
 
@@ -151,7 +163,7 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
         >
           <Input disabled aria-describedby="policy-number-help" />
         </Form.Item>
-        <div id="policy-number-help" className="text-xs text-gray-500 mb-4">
+        <div id="policy-number-help" className="mb-4 text-xs text-gray-500">
           This is the policy number that will be cancelled.
         </div>
 
@@ -162,23 +174,31 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
         >
           <Input disabled aria-describedby="member-name-help" />
         </Form.Item>
-        <div id="member-name-help" className="text-xs text-gray-500 mb-4">
+        <div id="member-name-help" className="mb-4 text-xs text-gray-500">
           This is the name of the policy holder.
         </div>
 
         <Form.Item
           name="cancellationType"
           label="Cancellation Type"
-          rules={[{ required: true, message: "Please select cancellation type" }]}
+          rules={[
+            { required: true, message: "Please select cancellation type" },
+          ]}
         >
           <Select aria-describedby="cancellation-type-help">
-            <Select.Option value="immediate">Immediate Cancellation</Select.Option>
-            <Select.Option value="end_of_period">End of Current Period</Select.Option>
+            <Select.Option value="immediate">
+              Immediate Cancellation
+            </Select.Option>
+            <Select.Option value="end_of_period">
+              End of Current Period
+            </Select.Option>
             <Select.Option value="specific_date">Specific Date</Select.Option>
           </Select>
         </Form.Item>
-        <div id="cancellation-type-help" className="text-xs text-gray-500 mb-4">
-          Choose when the cancellation should take effect. Immediate means right away, End of Period means at the end of the current billing cycle, and Specific Date allows you to choose a custom date.
+        <div id="cancellation-type-help" className="mb-4 text-xs text-gray-500">
+          Choose when the cancellation should take effect. Immediate means right
+          away, End of Period means at the end of the current billing cycle, and
+          Specific Date allows you to choose a custom date.
         </div>
 
         <Form.Item
@@ -195,49 +215,68 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
                 const cancellationType = form.getFieldValue("cancellationType");
 
                 if (cancellationType === "immediate" && selectedDate < today) {
-                  throw new Error("Immediate cancellation effective date must be today or in the future");
+                  throw new Error(
+                    "Immediate cancellation effective date must be today or in the future"
+                  );
                 }
 
-                if (cancellationType !== "immediate" && selectedDate <= new Date()) {
-                  throw new Error("Effective date must be in the future for non-immediate cancellations");
+                if (
+                  cancellationType !== "immediate" &&
+                  selectedDate <= new Date()
+                ) {
+                  throw new Error(
+                    "Effective date must be in the future for non-immediate cancellations"
+                  );
                 }
-              }
-            }
+              },
+            },
           ]}
         >
           <Input
             type="date"
             aria-describedby="effective-date-help"
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toISOString().split("T")[0]}
           />
         </Form.Item>
-        <div id="effective-date-help" className="text-xs text-gray-500 mb-4">
-          For immediate cancellation, select today or a future date. For other types, select a future date.
+        <div id="effective-date-help" className="mb-4 text-xs text-gray-500">
+          For immediate cancellation, select today or a future date. For other
+          types, select a future date.
         </div>
 
         <Form.Item
           name="reason"
           label="Reason for Cancellation"
-          rules={[{ required: true, message: "Please provide a reason for cancellation" }]}
+          rules={[
+            {
+              required: true,
+              message: "Please provide a reason for cancellation",
+            },
+          ]}
         >
           <Select placeholder="Select a reason" aria-describedby="reason-help">
-            <Select.Option value="financial_hardship">Financial Hardship</Select.Option>
-            <Select.Option value="found_better_cover">Found Better Cover</Select.Option>
-            <Select.Option value="no_longer_needed">No Longer Needed</Select.Option>
-            <Select.Option value="dissatisfied_service">Dissatisfied with Service</Select.Option>
+            <Select.Option value="financial_hardship">
+              Financial Hardship
+            </Select.Option>
+            <Select.Option value="found_better_cover">
+              Found Better Cover
+            </Select.Option>
+            <Select.Option value="no_longer_needed">
+              No Longer Needed
+            </Select.Option>
+            <Select.Option value="dissatisfied_service">
+              Dissatisfied with Service
+            </Select.Option>
             <Select.Option value="moving_abroad">Moving Abroad</Select.Option>
             <Select.Option value="deceased">Deceased</Select.Option>
             <Select.Option value="other">Other</Select.Option>
           </Select>
         </Form.Item>
-        <div id="reason-help" className="text-xs text-gray-500 mb-4">
-          Please select the primary reason for requesting cancellation. This helps us process your request more efficiently.
+        <div id="reason-help" className="mb-4 text-xs text-gray-500">
+          Please select the primary reason for requesting cancellation. This
+          helps us process your request more efficiently.
         </div>
 
-        <Form.Item
-          name="additionalNotes"
-          label="Additional Notes"
-        >
+        <Form.Item name="additionalNotes" label="Additional Notes">
           <TextArea
             rows={4}
             placeholder="Please provide any additional information that might help us process your request..."
@@ -246,12 +285,13 @@ const PolicyCancellationDrawer: React.FC<Props> = ({
             showCount
           />
         </Form.Item>
-        <div id="additional-notes-help" className="text-xs text-gray-500 mb-4">
-          Optional: Provide any additional context or information that might help us process your cancellation request. Maximum 1000 characters.
+        <div id="additional-notes-help" className="mb-4 text-xs text-gray-500">
+          Optional: Provide any additional context or information that might
+          help us process your cancellation request. Maximum 1000 characters.
         </div>
       </Form>
     </Drawer>
   );
 };
 
-export default PolicyCancellationDrawer; 
+export default PolicyCancellationDrawer;

@@ -16,22 +16,29 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type');
+    const type = searchParams.get("type");
 
     let users;
 
-    if (type === 'consultants') {
+    if (type === "consultants") {
       // Get consultants for assignment
       users = await UserModel.find({
         roles: { $in: SIGNUP_REQUEST_ACCESS_ROLES },
-        status: "Active"
-      }).select('_id name email');
-    } else if (type === 'escalation') {
+        status: "Active",
+      }).select("_id name email");
+    } else if (type === "escalation") {
       // Get users for escalation
       users = await UserModel.find({
-        roles: { $in: ["admin", "hr_manager", "scheme_consultant", "scheme_consultant_online"] },
-        status: "Active"
-      }).select('_id name email roles');
+        roles: {
+          $in: [
+            "admin",
+            "hr_manager",
+            "scheme_consultant",
+            "scheme_consultant_online",
+          ],
+        },
+        status: "Active",
+      }).select("_id name email roles");
     } else {
       return NextResponse.json(
         { success: false, error: "Invalid type parameter" },
@@ -41,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: users
+      data: users,
     });
   } catch (error: any) {
     console.error("Error fetching users:", error);

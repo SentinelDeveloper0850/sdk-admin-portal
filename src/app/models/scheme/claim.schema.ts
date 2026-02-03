@@ -94,4 +94,5 @@ const claimSchema = new Schema<IClaim>(
 );
 
 export const ClaimModel =
-  mongoose.models.claims || mongoose.model<IClaim>("claims", claimSchema, "claims");
+  mongoose.models.claims ||
+  mongoose.model<IClaim>("claims", claimSchema, "claims");

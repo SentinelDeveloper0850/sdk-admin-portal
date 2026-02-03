@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { fetchAllPolicies, importPolicy } from "@/server/actions/easipol-policies";
+import {
+  fetchAllPolicies,
+  importPolicy,
+} from "@/server/actions/easipol-policies";
 
 export async function GET(request: Request) {
   try {
@@ -23,15 +26,18 @@ export async function GET(request: Request) {
     if (branchName) filters.branchName = branchName;
     if (searchText) filters.searchText = searchText;
 
-    const response = await fetchAllPolicies(page, limit, sortBy, sortOrder, filters);
+    const response = await fetchAllPolicies(
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      filters
+    );
 
     if (response.success) {
       return NextResponse.json(response.data, { status: 200 });
     } else {
-      return NextResponse.json(
-        { message: response.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ message: response.message }, { status: 500 });
     }
   } catch (error: any) {
     console.error("Error fetching policies:", error.message);

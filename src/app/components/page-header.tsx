@@ -18,7 +18,9 @@ export default function PageHeader({
       <Flex className="mb-6" justify="space-between">
         <div>
           <h2 className="text-large font-semibold">{title}</h2>
-          {subtitle && <p className="text-small dark:text-gray-400">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-small dark:text-gray-400">{subtitle}</p>
+          )}
         </div>
         <Space>{...actions}</Space>
       </Flex>

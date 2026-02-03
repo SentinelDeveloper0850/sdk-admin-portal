@@ -14,12 +14,19 @@ function startOfDay(date: Date) {
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
-    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!user)
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
 
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get("date"); // YYYY-MM-DD
     if (!dateParam) {
-      return NextResponse.json({ success: false, message: "Missing date" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Missing date" },
+        { status: 400 }
+      );
     }
 
     const d = startOfDay(new Date(dateParam));
@@ -28,14 +35,25 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
-    const roster = await DutyRosterModel.findOne({ date: { $gte: d, $lt: end } }).lean();
+    const roster = await DutyRosterModel.findOne({
+      date: { $gte: d, $lt: end },
+    }).lean();
     if (!roster) {
       return NextResponse.json({ success: true, roster: null });
     }
 
-    const staffIds = Array.isArray((roster as any).staffMemberIds) ? (roster as any).staffMemberIds : [];
+    const staffIds = Array.isArray((roster as any).staffMemberIds)
+      ? (roster as any).staffMemberIds
+      : [];
     const staff = await StaffMemberModel.find({ _id: { $in: staffIds } })
-      .select({ _id: 1, firstNames: 1, lastName: 1, initials: 1, userId: 1, employment: 1 })
+      .select({
+        _id: 1,
+        firstNames: 1,
+        lastName: 1,
+        initials: 1,
+        userId: 1,
+        employment: 1,
+      })
       .lean();
 
     return NextResponse.json({
@@ -58,7 +76,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching duty roster:", error);
     return NextResponse.json(
-      { success: false, message: error instanceof Error ? error.message : "Failed to fetch roster" },
+      {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to fetch roster",
+      },
       { status: 500 }
     );
   }
@@ -67,15 +89,24 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
-    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!user)
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
 
     const body = await request.json();
     const dateParam = String(body?.date || "").trim(); // YYYY-MM-DD
-    const staffMemberIds = Array.isArray(body?.staffMemberIds) ? body.staffMemberIds.map(String) : [];
+    const staffMemberIds = Array.isArray(body?.staffMemberIds)
+      ? body.staffMemberIds.map(String)
+      : [];
     const note = String(body?.note || "");
 
     if (!dateParam) {
-      return NextResponse.json({ success: false, message: "Missing date" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Missing date" },
+        { status: 400 }
+      );
     }
 
     await connectToDatabase();
@@ -102,9 +133,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error saving duty roster:", error);
     return NextResponse.json(
-      { success: false, message: error instanceof Error ? error.message : "Failed to save roster" },
+      {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to save roster",
+      },
       { status: 500 }
     );
   }
 }
-

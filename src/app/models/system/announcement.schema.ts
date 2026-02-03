@@ -59,7 +59,12 @@ const AnnouncementSchema = new Schema(
 
     viewCount: { type: Number, default: 0 },
 
-    authorId: { type: Types.ObjectId, ref: "users", required: true, index: true },
+    authorId: {
+      type: Types.ObjectId,
+      ref: "users",
+      required: true,
+      index: true,
+    },
     attachments: { type: [AttachmentSchema], default: [] },
   },
   { timestamps: true, collection: "announcements" }
@@ -74,17 +79,30 @@ AnnouncementSchema.index({ category: 1, publishedAt: -1 });
 
 const AnnouncementReadSchema = new Schema(
   {
-    announcementId: { type: Types.ObjectId, ref: "announcements", required: true, index: true },
+    announcementId: {
+      type: Types.ObjectId,
+      ref: "announcements",
+      required: true,
+      index: true,
+    },
     userId: { type: Types.ObjectId, ref: "users", required: true, index: true },
     readAt: { type: Date, default: Date.now },
   },
   { timestamps: false, collection: "announcement_reads" }
 );
-AnnouncementReadSchema.index({ announcementId: 1, userId: 1 }, { unique: true });
+AnnouncementReadSchema.index(
+  { announcementId: 1, userId: 1 },
+  { unique: true }
+);
 
 const AnnouncementAckSchema = new Schema(
   {
-    announcementId: { type: Types.ObjectId, ref: "announcements", required: true, index: true },
+    announcementId: {
+      type: Types.ObjectId,
+      ref: "announcements",
+      required: true,
+      index: true,
+    },
     userId: { type: Types.ObjectId, ref: "users", required: true, index: true },
     ackAt: { type: Date, default: Date.now },
     method: String, // web, mobile, api
@@ -113,7 +131,12 @@ export interface IAnnouncement extends mongoose.Document {
   pushEmail: boolean;
   viewCount: number;
   authorId: Types.ObjectId;
-  attachments: Array<{ label: string; url: string; contentType?: string; sizeBytes?: number }>;
+  attachments: Array<{
+    label: string;
+    url: string;
+    contentType?: string;
+    sizeBytes?: number;
+  }>;
 }
 
 export interface IAnnouncementRead extends mongoose.Document {
@@ -135,10 +158,16 @@ export const AnnouncementModel =
 
 export const AnnouncementReadModel =
   mongoose.models.announcement_reads ||
-  model<IAnnouncementRead>("announcement_reads", AnnouncementReadSchema, "announcement_reads");
+  model<IAnnouncementRead>(
+    "announcement_reads",
+    AnnouncementReadSchema,
+    "announcement_reads"
+  );
 
 export const AnnouncementAckModel =
   mongoose.models.announcement_acks ||
-  model<IAnnouncementAck>("announcement_acks", AnnouncementAckSchema, "announcement_acks");
-
-
+  model<IAnnouncementAck>(
+    "announcement_acks",
+    AnnouncementAckSchema,
+    "announcement_acks"
+  );

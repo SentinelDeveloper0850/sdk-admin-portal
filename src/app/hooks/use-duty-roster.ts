@@ -30,7 +30,10 @@ export function useDutyRoster(dateKey: string) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/roster?date=${encodeURIComponent(dateKey)}`, { cache: "no-store" });
+      const res = await fetch(
+        `/api/roster?date=${encodeURIComponent(dateKey)}`,
+        { cache: "no-store" }
+      );
       const json = (await res.json()) as DutyRosterResponse;
       if (!json?.success) {
         throw new Error(json?.message || "Failed to load roster");
@@ -50,4 +53,3 @@ export function useDutyRoster(dateKey: string) {
 
   return { loading, roster, error, refresh };
 }
-

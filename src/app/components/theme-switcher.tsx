@@ -13,7 +13,11 @@ interface IProps {
   type?: "button" | "switch";
 }
 
-export function ThemeSwitcher({ showLabel, onThemeChange, type = "switch" }: IProps) {
+export function ThemeSwitcher({
+  showLabel,
+  onThemeChange,
+  type = "switch",
+}: IProps) {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useSystemTheme();
 
@@ -40,9 +44,20 @@ export function ThemeSwitcher({ showLabel, onThemeChange, type = "switch" }: IPr
           endContent={<IconMoon />}
         >
           {showLabel && "Theme"}
-        </Switch>) : (
+        </Switch>
+      ) : (
         <>
-          {theme === "light" ? <IconSun className="text-xs h-5 w-6 cursor-pointer" onClick={() => setTheme("dark")} /> : <IconMoon className="text-white text-xs h-4 w-4 cursor-pointer" onClick={() => setTheme("light")} />}
+          {theme === "light" ? (
+            <IconSun
+              className="h-5 w-6 cursor-pointer text-xs"
+              onClick={() => setTheme("dark")}
+            />
+          ) : (
+            <IconMoon
+              className="h-4 w-4 cursor-pointer text-xs text-white"
+              onClick={() => setTheme("light")}
+            />
+          )}
         </>
       )}
     </>

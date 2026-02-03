@@ -9,7 +9,7 @@ export interface PolicyData {
  * @returns Array of objects containing policy number and EasyPay number
  */
 export function parsePolicyData(fileContent: string): PolicyData[] {
-  const lines = fileContent.split('\n');
+  const lines = fileContent.split("\n");
   const policyData: PolicyData[] = [];
 
   for (const line of lines) {
@@ -19,7 +19,7 @@ export function parsePolicyData(fileContent: string): PolicyData[] {
     }
 
     // Skip header lines that contain "Policy_Number" or "EasyPayNumber"
-    if (line.includes('Policy_Number') || line.includes('EasyPayNumber')) {
+    if (line.includes("Policy_Number") || line.includes("EasyPayNumber")) {
       continue;
     }
 
@@ -31,10 +31,10 @@ export function parsePolicyData(fileContent: string): PolicyData[] {
       const easyPayNumber = match[2].trim();
 
       // Validate that the EasyPay number starts with 9225 and is 18 digits
-      if (easyPayNumber.startsWith('9225') && easyPayNumber.length === 18) {
+      if (easyPayNumber.startsWith("9225") && easyPayNumber.length === 18) {
         policyData.push({
           policyNumber,
-          easyPayNumber
+          easyPayNumber,
         });
       }
     }
@@ -49,11 +49,11 @@ export function parsePolicyData(fileContent: string): PolicyData[] {
  */
 export async function loadPolicyData(): Promise<PolicyData[]> {
   try {
-    const response = await fetch('/file.txt');
+    const response = await fetch("/file.txt");
     const fileContent = await response.text();
     return parsePolicyData(fileContent);
   } catch (error) {
-    console.error('Error loading policy data:', error);
+    console.error("Error loading policy data:", error);
     return [];
   }
 }
@@ -66,10 +66,10 @@ export async function loadPolicyData(): Promise<PolicyData[]> {
 export function validatePolicyData(data: PolicyData): boolean {
   return (
     Boolean(data.policyNumber) &&
-    data.policyNumber.trim() !== '' &&
+    data.policyNumber.trim() !== "" &&
     Boolean(data.easyPayNumber) &&
     data.easyPayNumber.length === 18 &&
-    data.easyPayNumber.startsWith('9225') &&
+    data.easyPayNumber.startsWith("9225") &&
     /^\d{18}$/.test(data.easyPayNumber)
   );
 }
@@ -81,7 +81,7 @@ export function validatePolicyData(data: PolicyData): boolean {
  */
 export function getPolicyDataAsArray(fileContent: string): [string, string][] {
   const policyData = parsePolicyData(fileContent);
-  return policyData.map(item => [item.policyNumber, item.easyPayNumber]);
+  return policyData.map((item) => [item.policyNumber, item.easyPayNumber]);
 }
 
 /**
@@ -93,9 +93,9 @@ export function getPolicyDataAsMap(fileContent: string): Map<string, string> {
   const policyData = parsePolicyData(fileContent);
   const policyMap = new Map<string, string>();
 
-  policyData.forEach(item => {
+  policyData.forEach((item) => {
     policyMap.set(item.policyNumber, item.easyPayNumber);
   });
 
   return policyMap;
-} 
+}

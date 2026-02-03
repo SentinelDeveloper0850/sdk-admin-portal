@@ -9,10 +9,7 @@ export async function GET() {
     if (response.success) {
       return NextResponse.json(response.data, { status: 200 });
     } else {
-      return NextResponse.json(
-        { message: response.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ message: response.message }, { status: 500 });
     }
   } catch (error: any) {
     console.error("Error fetching filter options:", error.message);
@@ -21,4 +18,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}

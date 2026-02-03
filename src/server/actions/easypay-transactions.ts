@@ -26,38 +26,40 @@ export const fetchAll = async (pageSize: number = 50, page: number = 1) => {
       $or: [
         { policyNumber: { $exists: false } },
         { policyNumber: null },
-        { policyNumber: "" }
-      ]
+        { policyNumber: "" },
+      ],
     });
 
     // Count unique EasyPay numbers without Policy numbers
-    const uniqueEasyPayWithoutPolicyPromise = EasypayTransactionModel.aggregate([
-      {
-        $match: {
-          $or: [
-            { policyNumber: { $exists: false } },
-            { policyNumber: null },
-            { policyNumber: "" }
-          ]
-        }
-      },
-      {
-        $group: {
-          _id: "$easypayNumber"
-        }
-      },
-      {
-        $count: "uniqueCount"
-      }
-    ]);
+    const uniqueEasyPayWithoutPolicyPromise = EasypayTransactionModel.aggregate(
+      [
+        {
+          $match: {
+            $or: [
+              { policyNumber: { $exists: false } },
+              { policyNumber: null },
+              { policyNumber: "" },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: "$easypayNumber",
+          },
+        },
+        {
+          $count: "uniqueCount",
+        },
+      ]
+    );
 
     // Count transactions without Policy numbers (for backward compatibility)
     const withoutPolicyCountPromise = EasypayTransactionModel.countDocuments({
       $or: [
         { policyNumber: { $exists: false } },
         { policyNumber: null },
-        { policyNumber: "" }
-      ]
+        { policyNumber: "" },
+      ],
     });
 
     // Fetch transactions with pagination
@@ -66,12 +68,18 @@ export const fetchAll = async (pageSize: number = 50, page: number = 1) => {
       .skip(skip)
       .limit(pageSize);
 
-    const [count, toSync, withoutPolicy, uniqueEasyPayWithoutPolicy, transactions] = await Promise.all([
+    const [
+      count,
+      toSync,
+      withoutPolicy,
+      uniqueEasyPayWithoutPolicy,
+      transactions,
+    ] = await Promise.all([
       totalCountPromise,
       toSyncCountPromise,
       withoutPolicyCountPromise,
       uniqueEasyPayWithoutPolicyPromise,
-      transactionsPromise
+      transactionsPromise,
     ]);
 
     return {
@@ -80,14 +88,15 @@ export const fetchAll = async (pageSize: number = 50, page: number = 1) => {
         count,
         toSync,
         withoutPolicy,
-        uniqueEasyPayWithoutPolicy: uniqueEasyPayWithoutPolicy[0]?.uniqueCount || 0,
+        uniqueEasyPayWithoutPolicy:
+          uniqueEasyPayWithoutPolicy[0]?.uniqueCount || 0,
         transactions,
         pagination: {
           current: page,
           pageSize: pageSize,
           total: count,
-          totalPages: Math.ceil(count / pageSize)
-        }
+          totalPages: Math.ceil(count / pageSize),
+        },
       },
     };
   } catch (error: any) {
@@ -113,38 +122,40 @@ export const fetchToSync = async (pageSize: number = 50, page: number = 1) => {
       $or: [
         { policyNumber: { $exists: false } },
         { policyNumber: null },
-        { policyNumber: "" }
-      ]
+        { policyNumber: "" },
+      ],
     });
 
     // Count unique EasyPay numbers without Policy numbers
-    const uniqueEasyPayWithoutPolicyPromise = EasypayTransactionModel.aggregate([
-      {
-        $match: {
-          $or: [
-            { policyNumber: { $exists: false } },
-            { policyNumber: null },
-            { policyNumber: "" }
-          ]
-        }
-      },
-      {
-        $group: {
-          _id: "$easypayNumber"
-        }
-      },
-      {
-        $count: "uniqueCount"
-      }
-    ]);
+    const uniqueEasyPayWithoutPolicyPromise = EasypayTransactionModel.aggregate(
+      [
+        {
+          $match: {
+            $or: [
+              { policyNumber: { $exists: false } },
+              { policyNumber: null },
+              { policyNumber: "" },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: "$easypayNumber",
+          },
+        },
+        {
+          $count: "uniqueCount",
+        },
+      ]
+    );
 
     // Count transactions without Policy numbers (for backward compatibility)
     const withoutPolicyCountPromise = EasypayTransactionModel.countDocuments({
       $or: [
         { policyNumber: { $exists: false } },
         { policyNumber: null },
-        { policyNumber: "" }
-      ]
+        { policyNumber: "" },
+      ],
     });
 
     // Fetch transactions to sync with pagination
@@ -152,19 +163,25 @@ export const fetchToSync = async (pageSize: number = 50, page: number = 1) => {
       $or: [
         { policyNumber: { $exists: false } },
         { policyNumber: null },
-        { policyNumber: "" }
-      ]
+        { policyNumber: "" },
+      ],
     })
       .sort({ date: -1 })
       .skip(skip)
       .limit(pageSize);
 
-    const [count, toSync, withoutPolicy, uniqueEasyPayWithoutPolicy, transactions] = await Promise.all([
+    const [
+      count,
+      toSync,
+      withoutPolicy,
+      uniqueEasyPayWithoutPolicy,
+      transactions,
+    ] = await Promise.all([
       totalCountPromise,
       toSyncCountPromise,
       withoutPolicyCountPromise,
       uniqueEasyPayWithoutPolicyPromise,
-      transactionsPromise
+      transactionsPromise,
     ]);
 
     return {
@@ -173,14 +190,15 @@ export const fetchToSync = async (pageSize: number = 50, page: number = 1) => {
         count,
         toSync,
         withoutPolicy,
-        uniqueEasyPayWithoutPolicy: uniqueEasyPayWithoutPolicy[0]?.uniqueCount || 0,
+        uniqueEasyPayWithoutPolicy:
+          uniqueEasyPayWithoutPolicy[0]?.uniqueCount || 0,
         transactions,
         pagination: {
           current: page,
           pageSize: pageSize,
           total: toSync,
-          totalPages: Math.ceil(toSync / pageSize)
-        }
+          totalPages: Math.ceil(toSync / pageSize),
+        },
       },
     };
   } catch (error: any) {
@@ -192,7 +210,11 @@ export const fetchToSync = async (pageSize: number = 50, page: number = 1) => {
   }
 };
 
-export const searchTransactions = async (searchText: string, page = 1, pageSize = 50) => {
+export const searchTransactions = async (
+  searchText: string,
+  page = 1,
+  pageSize = 50
+) => {
   try {
     await connectToDatabase();
 
@@ -203,7 +225,7 @@ export const searchTransactions = async (searchText: string, page = 1, pageSize 
       $or: [
         { easypayNumber: { $regex: searchText, $options: "i" } },
         { policyNumber: { $regex: searchText, $options: "i" } },
-        { uuid: { $regex: searchText, $options: "i" } }
+        { uuid: { $regex: searchText, $options: "i" } },
       ],
     });
 
@@ -212,7 +234,7 @@ export const searchTransactions = async (searchText: string, page = 1, pageSize 
       $or: [
         { easypayNumber: { $regex: searchText, $options: "i" } },
         { policyNumber: { $regex: searchText, $options: "i" } },
-        { uuid: { $regex: searchText, $options: "i" } }
+        { uuid: { $regex: searchText, $options: "i" } },
       ],
     })
       .sort({ date: -1 })
@@ -228,8 +250,8 @@ export const searchTransactions = async (searchText: string, page = 1, pageSize 
           current: page,
           pageSize: pageSize,
           total: totalCount,
-          totalPages: Math.ceil(totalCount / pageSize)
-        }
+          totalPages: Math.ceil(totalCount / pageSize),
+        },
       },
     };
   } catch (error: any) {
@@ -245,7 +267,11 @@ export const searchTransactions = async (searchText: string, page = 1, pageSize 
   }
 };
 
-export const searchTransactionsByPolicyNumber = async (searchText: string, page = 1, pageSize = 50) => {
+export const searchTransactionsByPolicyNumber = async (
+  searchText: string,
+  page = 1,
+  pageSize = 50
+) => {
   try {
     await connectToDatabase();
 
@@ -253,12 +279,12 @@ export const searchTransactionsByPolicyNumber = async (searchText: string, page 
 
     // Count total matching documents - only search policyNumber field
     const totalCount = await EasypayTransactionModel.countDocuments({
-      policyNumber: { $regex: searchText, $options: "i" }
+      policyNumber: { $regex: searchText, $options: "i" },
     });
 
     // Get paginated results - only search policyNumber field
     const transactions = await EasypayTransactionModel.find({
-      policyNumber: { $regex: searchText, $options: "i" }
+      policyNumber: { $regex: searchText, $options: "i" },
     })
       .sort({ date: -1 })
       .skip(skip)
@@ -273,8 +299,8 @@ export const searchTransactionsByPolicyNumber = async (searchText: string, page 
           current: page,
           pageSize: pageSize,
           total: totalCount,
-          totalPages: Math.ceil(totalCount / pageSize)
-        }
+          totalPages: Math.ceil(totalCount / pageSize),
+        },
       },
     };
   } catch (error: any) {
@@ -295,30 +321,38 @@ export const syncPolicyNumbers = async (shouldResync: boolean = false) => {
     await connectToDatabase();
 
     // Step 1: Build map of easypayNumber -> policyNumber
-    const policies = await PolicyModel.find({}, 'policyNumber easypayNumber');
-    const assitPoliciesWithLinkedEasipolPolicies = await AssitPolicyModel.find({
-      hasLinkedEasipolPolicy: true
-    }, 'membershipID linkedEasipolPolicyNumber');
-    const policyMap = new Map(policies.map(p => {
-      const linkedAssitPolicy = assitPoliciesWithLinkedEasipolPolicies.find(ap => ap.linkedEasipolPolicyNumber === p.policyNumber);
-      if (linkedAssitPolicy) {
-        return [p.easypayNumber, linkedAssitPolicy.membershipID];
-      }
-      return [p.easypayNumber, p.policyNumber];
-    }));
-
+    const policies = await PolicyModel.find({}, "policyNumber easypayNumber");
+    const assitPoliciesWithLinkedEasipolPolicies = await AssitPolicyModel.find(
+      {
+        hasLinkedEasipolPolicy: true,
+      },
+      "membershipID linkedEasipolPolicyNumber"
+    );
+    const policyMap = new Map(
+      policies.map((p) => {
+        const linkedAssitPolicy = assitPoliciesWithLinkedEasipolPolicies.find(
+          (ap) => ap.linkedEasipolPolicyNumber === p.policyNumber
+        );
+        if (linkedAssitPolicy) {
+          return [p.easypayNumber, linkedAssitPolicy.membershipID];
+        }
+        return [p.easypayNumber, p.policyNumber];
+      })
+    );
 
     // Step 2: Find only transactions missing a policyNumber unless we should resync
-    const filter = shouldResync ? {} : {
-      $or: [
-        { policyNumber: { $exists: false } },
-        { policyNumber: null },
-        { policyNumber: "" }
-      ]
-    };
+    const filter = shouldResync
+      ? {}
+      : {
+          $or: [
+            { policyNumber: { $exists: false } },
+            { policyNumber: null },
+            { policyNumber: "" },
+          ],
+        };
     const transactions = await EasypayTransactionModel.find(
       filter,
-      'easypayNumber policyNumber'
+      "easypayNumber policyNumber"
     );
 
     // console.log("🚀 ~ syncPolicyNumbers ~ transaction count:", transactions.length)
@@ -415,8 +449,8 @@ export const searchTransactionsByAmount = async (
           current: page,
           pageSize: pageSize,
           total: totalCount,
-          totalPages: Math.ceil(totalCount / pageSize)
-        }
+          totalPages: Math.ceil(totalCount / pageSize),
+        },
       },
     };
   } catch (error: any) {
@@ -460,8 +494,8 @@ export const searchTransactionsByDate = async (
           current: page,
           pageSize: pageSize,
           total: totalCount,
-          totalPages: Math.ceil(totalCount / pageSize)
-        }
+          totalPages: Math.ceil(totalCount / pageSize),
+        },
       },
     };
   } catch (error: any) {
@@ -604,10 +638,12 @@ export const importTransactions = async (payload: any) => {
   }
 };
 
-export const updateTransactionPolicyNumbers = async (transactions: Array<{
-  transactionId: string;
-  policyNumber: string;
-}>) => {
+export const updateTransactionPolicyNumbers = async (
+  transactions: Array<{
+    transactionId: string;
+    policyNumber: string;
+  }>
+) => {
   await connectToDatabase();
 
   try {
@@ -620,7 +656,7 @@ export const updateTransactionPolicyNumbers = async (transactions: Array<{
           item.transactionId,
           {
             policyNumber: item.policyNumber,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
           { new: true }
         );
@@ -630,14 +666,14 @@ export const updateTransactionPolicyNumbers = async (transactions: Array<{
           results.push({
             transactionId: item.transactionId,
             policyNumber: item.policyNumber,
-            success: true
+            success: true,
           });
         } else {
           results.push({
             transactionId: item.transactionId,
             policyNumber: item.policyNumber,
             success: false,
-            error: 'Transaction not found'
+            error: "Transaction not found",
           });
         }
       } catch (error: any) {
@@ -645,7 +681,7 @@ export const updateTransactionPolicyNumbers = async (transactions: Array<{
           transactionId: item.transactionId,
           policyNumber: item.policyNumber,
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -655,15 +691,16 @@ export const updateTransactionPolicyNumbers = async (transactions: Array<{
       data: {
         updatedCount,
         totalProcessed: transactions.length,
-        results
+        results,
       },
-      message: `Successfully updated ${updatedCount} out of ${transactions.length} transactions`
+      message: `Successfully updated ${updatedCount} out of ${transactions.length} transactions`,
     };
   } catch (error: any) {
     console.error("Error updating transaction policy numbers:", error.message);
     return {
       success: false,
-      message: "Internal Server Error ~ Error updating transaction policy numbers",
+      message:
+        "Internal Server Error ~ Error updating transaction policy numbers",
     };
   }
 };

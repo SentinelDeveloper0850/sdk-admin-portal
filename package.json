@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier src/ --write"
+    "format": "prettier src/ --write",
+    "precommit": "npm run lint && npm run format && git diff --exit-code && npm run build",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
@@ -148,6 +150,7 @@
     "eslint-config-next": "^15.0.5",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-check-file": "^2.8.0",
+    "husky": "^9.1.7",
     "node-cron": "^4.2.1",
     "postcss": "^8.4.49",
     "prettier": "^3.3.3",

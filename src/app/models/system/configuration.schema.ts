@@ -1,4 +1,4 @@
-import { model, models, Schema } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 export interface IConfiguration {
   _id?: string;
@@ -30,7 +30,14 @@ const configurationSchema = new Schema<IConfiguration>(
       type: String,
       required: true,
       lowercase: true,
-      enum: ["system", "security", "email", "notification", "payment", "policy"],
+      enum: [
+        "system",
+        "security",
+        "email",
+        "notification",
+        "payment",
+        "policy",
+      ],
     },
     description: {
       type: String,
@@ -72,4 +79,10 @@ configurationSchema.pre("save", function (next) {
   next();
 });
 
-export const ConfigurationModel = models.configurations || model<IConfiguration>("configurations", configurationSchema, "configurations");
+export const ConfigurationModel =
+  models.configurations ||
+  model<IConfiguration>(
+    "configurations",
+    configurationSchema,
+    "configurations"
+  );

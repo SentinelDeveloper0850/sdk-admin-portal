@@ -1,6 +1,11 @@
-import { createSystemNotification, getDiscordWebhookUrl, sendDiscordNotification } from "@/lib/discord";
-import { sendPolicySignupConfirmationEmail } from "@/lib/email";
 import mongoose, { Schema } from "mongoose";
+
+import {
+  createSystemNotification,
+  getDiscordWebhookUrl,
+  sendDiscordNotification,
+} from "@/lib/discord";
+import { sendPolicySignupConfirmationEmail } from "@/lib/email";
 
 // Define interfaces for the new data structure
 interface IDependent {
@@ -14,9 +19,9 @@ interface IDependent {
 
 interface IFileUpload {
   originalName: string;
-  type: 'id' | 'passport' | 'birth-certificate';
+  type: "id" | "passport" | "birth-certificate";
   personName: string;
-  personType: 'main-member' | 'dependent';
+  personType: "main-member" | "dependent";
   cloudinaryUrl?: string;
   cloudinaryPublicId?: string;
   tempPath?: string;
@@ -62,7 +67,15 @@ export interface IPolicySignUp extends Document {
   assignedAt?: Date;
 
   // Status and workflow
-  currentStatus: "submitted" | "reviewed" | "approved" | "rejected" | "pending_info" | "escalated" | "archived" | "deleted";
+  currentStatus:
+    | "submitted"
+    | "reviewed"
+    | "approved"
+    | "rejected"
+    | "pending_info"
+    | "escalated"
+    | "archived"
+    | "deleted";
   statusHistory: Array<{
     status: string;
     changedBy: string;
@@ -128,45 +141,49 @@ const PolicySignUpSchema: Schema = new Schema({
   // Plan information (updated structure)
   plan: {
     name: { type: String, required: true },
-    id: { type: String, required: true }
+    id: { type: String, required: true },
   },
 
   // Dependents information (new detailed structure)
-  dependents: [{
-    id: { type: String, required: true },
-    fullNames: { type: String, required: true },
-    surname: { type: String, required: true },
-    identificationNumber: { type: String, required: false }, // For adults
-    dateOfBirth: { type: String, required: false }, // For children
-    isChild: { type: Boolean, required: true }
-  }],
+  dependents: [
+    {
+      id: { type: String, required: true },
+      fullNames: { type: String, required: true },
+      surname: { type: String, required: true },
+      identificationNumber: { type: String, required: false }, // For adults
+      dateOfBirth: { type: String, required: false }, // For children
+      isChild: { type: Boolean, required: true },
+    },
+  ],
   numberOfDependents: { type: Number, required: true },
 
   // File uploads (new structure)
-  uploadedFiles: [{
-    originalName: { type: String, required: true },
-    type: {
-      type: String,
-      enum: ['id', 'passport', 'birth-certificate'],
-      required: true
+  uploadedFiles: [
+    {
+      originalName: { type: String, required: true },
+      type: {
+        type: String,
+        enum: ["id", "passport", "birth-certificate"],
+        required: true,
+      },
+      personName: { type: String, required: true },
+      personType: {
+        type: String,
+        enum: ["main-member", "dependent"],
+        required: true,
+      },
+      cloudinaryUrl: { type: String, required: false },
+      cloudinaryPublicId: { type: String, required: false },
+      tempPath: { type: String, required: false },
     },
-    personName: { type: String, required: true },
-    personType: {
-      type: String,
-      enum: ['main-member', 'dependent'],
-      required: true
-    },
-    cloudinaryUrl: { type: String, required: false },
-    cloudinaryPublicId: { type: String, required: false },
-    tempPath: { type: String, required: false }
-  }],
+  ],
 
   // Request tracking
   requestId: { type: String, required: true, unique: true },
   status: { type: String, required: false, default: "Submitted" },
   created_by: {
     type: String,
-    required: false
+    required: false,
   },
   created_at: {
     type: Date,
@@ -181,24 +198,37 @@ const PolicySignUpSchema: Schema = new Schema({
   // Status and workflow
   currentStatus: {
     type: String,
-    enum: ["submitted", "reviewed", "approved", "rejected", "pending_info", "escalated", "archived", "deleted"],
-    default: "submitted"
+    enum: [
+      "submitted",
+      "reviewed",
+      "approved",
+      "rejected",
+      "pending_info",
+      "escalated",
+      "archived",
+      "deleted",
+    ],
+    default: "submitted",
   },
-  statusHistory: [{
-    status: { type: String, required: true },
-    changedBy: { type: String, required: true },
-    changedAt: { type: Date, default: Date.now },
-    notes: { type: String, required: false }
-  }],
+  statusHistory: [
+    {
+      status: { type: String, required: true },
+      changedBy: { type: String, required: true },
+      changedAt: { type: Date, default: Date.now },
+      notes: { type: String, required: false },
+    },
+  ],
 
   // Notes and comments
-  internalNotes: [{
-    author: { type: String, required: true },
-    authorName: { type: String, required: true },
-    text: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-    isPrivate: { type: Boolean, default: true }
-  }],
+  internalNotes: [
+    {
+      author: { type: String, required: true },
+      authorName: { type: String, required: true },
+      text: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now },
+      isPrivate: { type: Boolean, default: true },
+    },
+  ],
 
   // Rejection and escalation details
   rejectionReason: { type: String, required: false },
@@ -214,14 +244,16 @@ const PolicySignUpSchema: Schema = new Schema({
   policyCreatedBy: { type: String, required: false },
 
   // Request for more info
-  requestedInfo: [{
-    field: { type: String, required: true },
-    description: { type: String, required: true },
-    requestedAt: { type: Date, default: Date.now },
-    requestedBy: { type: String, required: true },
-    providedAt: { type: Date, required: false },
-    providedValue: { type: String, required: false }
-  }],
+  requestedInfo: [
+    {
+      field: { type: String, required: true },
+      description: { type: String, required: true },
+      requestedAt: { type: Date, default: Date.now },
+      requestedBy: { type: String, required: true },
+      providedAt: { type: Date, required: false },
+      providedValue: { type: String, required: false },
+    },
+  ],
 
   // Deletion details
   deletedAt: { type: Date, required: false },
@@ -229,53 +261,77 @@ const PolicySignUpSchema: Schema = new Schema({
 
   // Timestamps
   updated_at: { type: Date, default: Date.now },
-  updated_by: { type: String, required: false }
+  updated_by: { type: String, required: false },
 });
 
 // Instance method: send notifications on creation
-PolicySignUpSchema.methods.sendCreationNotifications = async function (): Promise<void> {
-  try {
-    const doc = this as any as IPolicySignUp & { _id: string };
+PolicySignUpSchema.methods.sendCreationNotifications =
+  async function (): Promise<void> {
+    try {
+      const doc = this as any as IPolicySignUp & { _id: string };
 
-    // Send applicant confirmation email if email provided
-    if (doc.email) {
-      await sendPolicySignupConfirmationEmail({
-        to: doc.email,
-        applicantName: `${doc.fullNames} ${doc.surname}`.trim(),
-        requestId: doc.requestId,
-        planName: (doc as any).plan?.name || (doc as any).plan,
-        numberOfDependents: doc.numberOfDependents || (Array.isArray(doc.dependents) ? doc.dependents.length : 0),
-        submittedAt: doc.created_at || new Date(),
-        status: doc.currentStatus || "submitted",
-        message: doc.message,
-      });
-    }
+      // Send applicant confirmation email if email provided
+      if (doc.email) {
+        await sendPolicySignupConfirmationEmail({
+          to: doc.email,
+          applicantName: `${doc.fullNames} ${doc.surname}`.trim(),
+          requestId: doc.requestId,
+          planName: (doc as any).plan?.name || (doc as any).plan,
+          numberOfDependents:
+            doc.numberOfDependents ||
+            (Array.isArray(doc.dependents) ? doc.dependents.length : 0),
+          submittedAt: doc.created_at || new Date(),
+          status: doc.currentStatus || "submitted",
+          message: doc.message,
+        });
+      }
 
-    // Send Discord notification to team channel
-    const webhookUrl = getDiscordWebhookUrl();
-    if (webhookUrl) {
-      const fields = [
-        { name: "Applicant", value: `${doc.fullNames} ${doc.surname}`.trim(), inline: true },
-        { name: "Request ID", value: doc.requestId, inline: true },
-        { name: "Plan", value: ((doc as any).plan?.name || (doc as any).plan || "-") as string, inline: true },
-        { name: "Dependents", value: `${doc.numberOfDependents || (Array.isArray(doc.dependents) ? doc.dependents.length : 0)}`, inline: true },
-        { name: "Phone", value: doc.phone || "-", inline: true },
-        { name: "Email", value: doc.email || "-", inline: true },
-      ];
+      // Send Discord notification to team channel
+      const webhookUrl = getDiscordWebhookUrl();
+      if (webhookUrl) {
+        const fields = [
+          {
+            name: "Applicant",
+            value: `${doc.fullNames} ${doc.surname}`.trim(),
+            inline: true,
+          },
+          { name: "Request ID", value: doc.requestId, inline: true },
+          {
+            name: "Plan",
+            value: ((doc as any).plan?.name ||
+              (doc as any).plan ||
+              "-") as string,
+            inline: true,
+          },
+          {
+            name: "Dependents",
+            value: `${doc.numberOfDependents || (Array.isArray(doc.dependents) ? doc.dependents.length : 0)}`,
+            inline: true,
+          },
+          { name: "Phone", value: doc.phone || "-", inline: true },
+          { name: "Email", value: doc.email || "-", inline: true },
+        ];
 
-      const payload = createSystemNotification(
-        "📝 New Policy Signup Request",
-        "A new policy signup request has been submitted.",
-        "success",
-        fields as any
+        const payload = createSystemNotification(
+          "📝 New Policy Signup Request",
+          "A new policy signup request has been submitted.",
+          "success",
+          fields as any
+        );
+
+        await sendDiscordNotification(
+          webhookUrl,
+          payload,
+          "policy-signup-create"
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Error sending policy signup creation notifications:",
+        error
       );
-
-      await sendDiscordNotification(webhookUrl, payload, "policy-signup-create");
     }
-  } catch (error) {
-    console.error("Error sending policy signup creation notifications:", error);
-  }
-};
+  };
 
 // Track if document is new across hooks
 PolicySignUpSchema.pre("save", function (next) {
@@ -286,7 +342,10 @@ PolicySignUpSchema.pre("save", function (next) {
 // Post-save hook to trigger notifications only on creation
 PolicySignUpSchema.post("save", async function (doc) {
   try {
-    if ((this as any)._wasNew && typeof (doc as any).sendCreationNotifications === "function") {
+    if (
+      (this as any)._wasNew &&
+      typeof (doc as any).sendCreationNotifications === "function"
+    ) {
       await (doc as any).sendCreationNotifications();
     }
   } catch (err) {
@@ -296,4 +355,8 @@ PolicySignUpSchema.post("save", async function (doc) {
 
 export const PolicySignUpModel =
   mongoose.models.policy_signup_requests ||
-  mongoose.model<IPolicySignUp>("policy_signup_requests", PolicySignUpSchema, "policy_signup_requests");
+  mongoose.model<IPolicySignUp>(
+    "policy_signup_requests",
+    PolicySignUpSchema,
+    "policy_signup_requests"
+  );

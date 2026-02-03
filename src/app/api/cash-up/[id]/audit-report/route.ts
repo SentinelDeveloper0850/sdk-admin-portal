@@ -1,12 +1,14 @@
-import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
+import { NextRequest, NextResponse } from "next/server";
+
+import * as XLSX from "xlsx";
+
 import { CashUpAuditReportModel } from "@/app/models/hr/cash-up-audit-report.schema";
-import { NotificationModel } from "@/app/models/notification.schema";
+import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
 import UserModel from "@/app/models/hr/user.schema";
+import { NotificationModel } from "@/app/models/notification.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
-import * as XLSX from "xlsx";
 
 function toNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -27,10 +29,7 @@ function normHeaderCell(value: unknown) {
 }
 
 function normName(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function dateKeyFrom(value: unknown): string | null {
@@ -51,7 +50,10 @@ function extractTotalsFromWorkbook(buffer: Buffer) {
     throw new Error("No worksheet found in the uploaded file.");
   }
   const ws = wb.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true }) as unknown[][];
+  const rows = XLSX.utils.sheet_to_json(ws, {
+    header: 1,
+    raw: true,
+  }) as unknown[][];
 
   // Find header row that contains "TransactionType" and "Amount"
   let headerRowIdx = -1;
@@ -64,18 +66,28 @@ function extractTotalsFromWorkbook(buffer: Buffer) {
     }
   }
   if (headerRowIdx === -1) {
-    throw new Error("Could not find the TransactionType/Amount header row in the spreadsheet.");
+    throw new Error(
+      "Could not find the TransactionType/Amount header row in the spreadsheet."
+    );
   }
 
-  const headerRow = Array.isArray(rows[headerRowIdx]) ? (rows[headerRowIdx] as unknown[]) : [];
+  const headerRow = Array.isArray(rows[headerRowIdx])
+    ? (rows[headerRowIdx] as unknown[])
+    : [];
   const headerNorm = headerRow.map((c) => normHeaderCell(c));
-  const idxTransactionType = headerNorm.findIndex((h) => h === "transactiontype");
+  const idxTransactionType = headerNorm.findIndex(
+    (h) => h === "transactiontype"
+  );
   const idxAmount = headerNorm.findIndex((h) => h === "amount");
   if (idxTransactionType === -1 || idxAmount === -1) {
-    throw new Error("Spreadsheet headers are missing TransactionType or Amount columns.");
+    throw new Error(
+      "Spreadsheet headers are missing TransactionType or Amount columns."
+    );
   }
 
-  const idxEffDate = headerNorm.findIndex((h) => h === "effdate" || h === "eff-date");
+  const idxEffDate = headerNorm.findIndex(
+    (h) => h === "effdate" || h === "eff-date"
+  );
 
   let incomeTotal = 0;
   let expenseTotal = 0;
@@ -84,7 +96,9 @@ function extractTotalsFromWorkbook(buffer: Buffer) {
 
   for (let i = headerRowIdx + 1; i < rows.length; i++) {
     const row = rows[i] || [];
-    const t = String(row[idxTransactionType] ?? "").trim().toUpperCase();
+    const t = String(row[idxTransactionType] ?? "")
+      .trim()
+      .toUpperCase();
     const n = toNumber(row[idxAmount]);
     if (!t && n === null) continue;
     if (!t) continue;
@@ -103,7 +117,14 @@ function extractTotalsFromWorkbook(buffer: Buffer) {
   }
 
   const netTotal = incomeTotal - expenseTotal;
-  return { incomeTotal, expenseTotal, netTotal, rowsParsed, sheetName, firstDateKey };
+  return {
+    incomeTotal,
+    expenseTotal,
+    netTotal,
+    rowsParsed,
+    sheetName,
+    firstDateKey,
+  };
 }
 
 function extractMetaFromWorkbook(buffer: Buffer) {
@@ -111,7 +132,10 @@ function extractMetaFromWorkbook(buffer: Buffer) {
   const sheetName = wb.SheetNames[0];
   if (!sheetName) throw new Error("No worksheet found in the uploaded file.");
   const ws = wb.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true }) as unknown[][];
+  const rows = XLSX.utils.sheet_to_json(ws, {
+    header: 1,
+    raw: true,
+  }) as unknown[][];
 
   let employeeNameFromReport: string | null = null;
   let reportFromDateKey: string | null = null;
@@ -119,7 +143,10 @@ function extractMetaFromWorkbook(buffer: Buffer) {
 
   for (let i = 0; i < Math.min(rows.length, 30); i++) {
     const row = Array.isArray(rows[i]) ? (rows[i] as unknown[]) : [];
-    const line = row.map((c) => String(c ?? "").trim()).filter(Boolean).join(" ");
+    const line = row
+      .map((c) => String(c ?? "").trim())
+      .filter(Boolean)
+      .join(" ");
     const upper = line.toUpperCase();
 
     const nameMatch = upper.match(/TRANSACTION REPORT\s+FOR\s+(.+)$/i);
@@ -127,15 +154,23 @@ function extractMetaFromWorkbook(buffer: Buffer) {
       employeeNameFromReport = String(nameMatch[1]).trim();
     }
 
-    const fromToMatch = upper.match(/FROM\s+(\d{4}[\/-]\d{2}[\/-]\d{2})\s+TO\s+(\d{4}[\/-]\d{2}[\/-]\d{2})/i);
-    if (!reportFromDateKey && fromToMatch?.[1]) reportFromDateKey = dateKeyFrom(fromToMatch[1]);
-    if (!reportToDateKey && fromToMatch?.[2]) reportToDateKey = dateKeyFrom(fromToMatch[2]);
+    const fromToMatch = upper.match(
+      /FROM\s+(\d{4}[\/-]\d{2}[\/-]\d{2})\s+TO\s+(\d{4}[\/-]\d{2}[\/-]\d{2})/i
+    );
+    if (!reportFromDateKey && fromToMatch?.[1])
+      reportFromDateKey = dateKeyFrom(fromToMatch[1]);
+    if (!reportToDateKey && fromToMatch?.[2])
+      reportToDateKey = dateKeyFrom(fromToMatch[2]);
   }
 
   return { employeeNameFromReport, reportFromDateKey, reportToDateKey };
 }
 
-async function uploadToCloudinaryRaw(params: { buffer: Buffer; folder: string; fileName: string }) {
+async function uploadToCloudinaryRaw(params: {
+  buffer: Buffer;
+  folder: string;
+  fileName: string;
+}) {
   const { buffer, folder, fileName } = params;
   const uploadResult = await new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -163,20 +198,32 @@ export async function POST(
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const roles = [(user as any)?.role, ...(((user as any)?.roles as string[]) || [])].filter(Boolean);
+    const roles = [
+      (user as any)?.role,
+      ...(((user as any)?.roles as string[]) || []),
+    ].filter(Boolean);
     const canReview = roles.includes("cashup_reviewer");
     if (!canReview) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     if (!file) {
-      return NextResponse.json({ success: false, message: "No file provided" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "No file provided" },
+        { status: 400 }
+      );
     }
 
     const fileName = String(file.name || "audit-report.xlsx");
@@ -189,12 +236,19 @@ export async function POST(
     await connectToDatabase();
     const submission = await CashUpSubmissionModel.findById(id);
     if (!submission) {
-      return NextResponse.json({ success: false, message: "Cash up submission not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Cash up submission not found" },
+        { status: 404 }
+      );
     }
 
-    const submissionDateKey = new Date((submission as any).date).toISOString().slice(0, 10);
+    const submissionDateKey = new Date((submission as any).date)
+      .toISOString()
+      .slice(0, 10);
     const submissionUserId = String((submission as any).userId);
-    const submissionUser = await UserModel.findById(submissionUserId).select({ name: 1 }).lean();
+    const submissionUser = await UserModel.findById(submissionUserId)
+      .select({ name: 1 })
+      .lean();
     const expectedName = String((submissionUser as any)?.name || "").trim();
 
     const reportName = String(meta.employeeNameFromReport || "").trim();
@@ -206,7 +260,8 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          message: "Could not detect employee name and/or report date from the spreadsheet.",
+          message:
+            "Could not detect employee name and/or report date from the spreadsheet.",
         },
         { status: 400 }
       );
@@ -215,14 +270,17 @@ export async function POST(
     // Validate report belongs to this cashier and date
     const expectedTokens = normName(expectedName).split(" ").filter(Boolean);
     const reportNorm = normName(reportName);
-    const nameMatches = expectedTokens.length ? expectedTokens.every((t) => reportNorm.includes(t)) : false;
+    const nameMatches = expectedTokens.length
+      ? expectedTokens.every((t) => reportNorm.includes(t))
+      : false;
     const dateMatches = reportDateKey === submissionDateKey;
 
     if (!nameMatches || !dateMatches) {
       return NextResponse.json(
         {
           success: false,
-          message: "Uploaded report does not match the selected employee/date. Please upload the correct report.",
+          message:
+            "Uploaded report does not match the selected employee/date. Please upload the correct report.",
           expected: { employeeName: expectedName, date: submissionDateKey },
           detected: { employeeName: reportName, date: reportDateKey },
         },
@@ -358,10 +416,12 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Failed to upload audit report",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to upload audit report",
       },
       { status: 500 }
     );
   }
 }
-

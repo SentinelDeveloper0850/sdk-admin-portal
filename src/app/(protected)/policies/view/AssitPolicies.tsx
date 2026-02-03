@@ -1,29 +1,62 @@
+import { useEffect, useState } from "react";
+
+import {
+  LinkOutlined,
+  MoreOutlined,
+  PrinterOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  UploadOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Col,
+  Drawer,
+  Dropdown,
+  Form,
+  Input,
+  Row,
+  Select,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Upload,
+  UploadProps,
+  message,
+} from "antd";
+import Papa from "papaparse";
+import sweetAlert from "sweetalert";
+
+import { formatToMoneyWithCurrency } from "@/utils/formatters";
+import { hasRole } from "@/utils/helpers/hasRole";
+
 import LinkPolicyDrawer from "@/app/components/policies/link-policy-drawer";
 import PolicyPrintCardDrawer from "@/app/components/policies/policy-print-card-drawer";
 import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
 import { useAuth } from "@/context/auth-context";
-import { formatToMoneyWithCurrency } from "@/utils/formatters";
-import { hasRole } from "@/utils/helpers/hasRole";
-import { LinkOutlined, MoreOutlined, PrinterOutlined, ReloadOutlined, SearchOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons";
-import { Alert, Button, Col, Drawer, Dropdown, Form, Input, message, Row, Select, Space, Statistic, Table, Tag, Upload, UploadProps } from "antd";
-import Papa from "papaparse";
-import { useEffect, useState } from "react";
-import sweetAlert from "sweetalert";
 
 const AssitPoliciesPage = () => {
   const [policies, setPolicies] = useState<IAssitPolicy[]>([]);
-  const [stats, setStats] = useState<{ count: number; totalPages: number }>({ count: 0, totalPages: 0 });
+  const [stats, setStats] = useState<{ count: number; totalPages: number }>({
+    count: 0,
+    totalPages: 0,
+  });
   const [bootstrapping, setBootstrapping] = useState<boolean>(true);
   const [tableLoading, setTableLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
-  const [filterOptionsLoading, setFilterOptionsLoading] = useState<boolean>(true);
+  const [filterOptionsLoading, setFilterOptionsLoading] =
+    useState<boolean>(true);
   const [searchInput, setSearchInput] = useState("");
-  const [selectedPolicyForPrintCard, setSelectedPolicyForPrintCard] = useState<IAssitPolicy | null>(null);
-  
+  const [selectedPolicyForPrintCard, setSelectedPolicyForPrintCard] =
+    useState<IAssitPolicy | null>(null);
+
   const [printCardDrawerOpen, setPrintCardDrawerOpen] = useState(false);
   const [linkPolicyDrawerOpen, setLinkPolicyDrawerOpen] = useState(false);
-  const [selectedPolicyForLinkPolicy, setSelectedPolicyForLinkPolicy] = useState<IAssitPolicy | null>(null);
-
+  const [selectedPolicyForLinkPolicy, setSelectedPolicyForLinkPolicy] =
+    useState<IAssitPolicy | null>(null);
 
   const { user } = useAuth();
 
@@ -55,8 +88,10 @@ const AssitPoliciesPage = () => {
       params.set("withFilters", "true");
 
       if (filters.status) params.set("status", filters.status);
-      if (filters.productName) params.set("productName", String(filters.productName));
-      if (filters.branchName) params.set("branchName", String(filters.branchName));
+      if (filters.productName)
+        params.set("productName", String(filters.productName));
+      if (filters.branchName)
+        params.set("branchName", String(filters.branchName));
       if (filters.searchText) params.set("searchText", filters.searchText);
 
       const response = await fetch(`/api/policies/assit?${params.toString()}`);
@@ -78,16 +113,16 @@ const AssitPoliciesPage = () => {
       setTableLoading(false);
       setBootstrapping(false);
     }
-  }
+  };
 
   const handleSearch = (value: string) => {
     setSearchInput(value || "");
-    setFilters(prev => ({ ...prev, searchText: value || "" }));
+    setFilters((prev) => ({ ...prev, searchText: value || "" }));
     setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value || "" }));
+    setFilters((prev) => ({ ...prev, [key]: value || "" }));
     setCurrentPage(1); // Reset to first page when filtering
   };
 
@@ -106,8 +141,6 @@ const AssitPoliciesPage = () => {
     setCurrentPage(page);
     if (size) setPageSize(size);
   };
-
-
 
   const printCard = (policy: IAssitPolicy) => {
     setSelectedPolicyForPrintCard(policy);
@@ -131,11 +164,13 @@ const AssitPoliciesPage = () => {
           return;
         }
 
-        const _importColumns = results.meta.fields.filter((field: string) => field !== "").map((field: string) => ({
-          title: field,
-          dataIndex: field,
-          key: field,
-        }));
+        const _importColumns = results.meta.fields
+          .filter((field: string) => field !== "")
+          .map((field: string) => ({
+            title: field,
+            dataIndex: field,
+            key: field,
+          }));
 
         setImportColumns(_importColumns);
         setImportData(results.data);
@@ -185,22 +220,22 @@ const AssitPoliciesPage = () => {
   }, [currentPage, pageSize, sortBy, sortOrder, filters]);
 
   const uploadProps: UploadProps = {
-    name: 'file',
-    action: '/api/policies/assit/import',
+    name: "file",
+    action: "/api/policies/assit/import",
     headers: {
-      authorization: 'authorization-text',
+      authorization: "authorization-text",
     },
     beforeUpload: (file: File) => {
       parseCsv(file);
       return false;
     },
     onChange(info: any) {
-      if (info.file.status !== 'uploading') {
+      if (info.file.status !== "uploading") {
         console.log(info.file, info.fileList);
       }
-      if (info.file.status === 'done') {
+      if (info.file.status === "done") {
         message.success(`${info.file.name} file uploaded successfully`);
-      } else if (info.file.status === 'error') {
+      } else if (info.file.status === "error") {
         message.error(`${info.file.name} file upload failed.`);
       }
     },
@@ -208,7 +243,7 @@ const AssitPoliciesPage = () => {
 
   return (
     <div className="w-full">
-      <div className="w-full flex justify-between mb-8">
+      <div className="mb-8 flex w-full justify-between">
         <Space size={32}>
           <Statistic title="Total Policies" value={stats.count} />
           <Statistic
@@ -217,10 +252,16 @@ const AssitPoliciesPage = () => {
           />
         </Space>
         <div className="flex items-center gap-2">
-          {user && hasRole(user, "admin") && <Upload {...uploadProps} accept=".csv">
-            <Button icon={<UploadOutlined />} onClick={importPolicies}>Import</Button>
-          </Upload>}
-          <Button icon={<ReloadOutlined />} onClick={fetchPolicies}>Refresh</Button>
+          {user && hasRole(user, "admin") && (
+            <Upload {...uploadProps} accept=".csv">
+              <Button icon={<UploadOutlined />} onClick={importPolicies}>
+                Import
+              </Button>
+            </Upload>
+          )}
+          <Button icon={<ReloadOutlined />} onClick={fetchPolicies}>
+            Refresh
+          </Button>
         </div>
       </div>
 
@@ -240,7 +281,12 @@ const AssitPoliciesPage = () => {
                   }
                 }}
                 onPressEnter={() => handleSearch(searchInput)}
-                addonAfter={<SearchOutlined style={{ cursor: "pointer" }} onClick={() => handleSearch(searchInput)} />}
+                addonAfter={
+                  <SearchOutlined
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleSearch(searchInput)}
+                  />
+                }
               />
             </Form.Item>
           </Col>
@@ -266,7 +312,12 @@ const AssitPoliciesPage = () => {
               <Space>
                 <Button
                   onClick={handleClearFilters}
-                  disabled={!filters.status && !filters.productName && !filters.branchName && !filters.searchText}
+                  disabled={
+                    !filters.status &&
+                    !filters.productName &&
+                    !filters.branchName &&
+                    !filters.searchText
+                  }
                 >
                   Clear Filters
                 </Button>
@@ -277,23 +328,53 @@ const AssitPoliciesPage = () => {
       </Form>
 
       {/* Search Results Indicator */}
-      {(filters.status || filters.productName || filters.branchName || filters.searchText) && (
-        <div style={{
-          backgroundColor: "#f0f9ff",
-          border: "1px solid #0ea5e9",
-          borderRadius: "6px",
-          padding: "12px 16px",
-          marginBottom: "16px",
-          color: "#0c4a6e"
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {(filters.status ||
+        filters.productName ||
+        filters.branchName ||
+        filters.searchText) && (
+        <div
+          style={{
+            backgroundColor: "#f0f9ff",
+            border: "1px solid #0ea5e9",
+            borderRadius: "6px",
+            padding: "12px 16px",
+            marginBottom: "16px",
+            color: "#0c4a6e",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <div>
-              <strong>Search Results:</strong> Showing ASSIT policies matching your filters
-              {filters.status && <span style={{ marginLeft: "8px" }}>• Status: {filters.status}</span>}
-              {filters.productName && <span style={{ marginLeft: "8px" }}>• Product: {filters.productName}</span>}
-              {filters.branchName && <span style={{ marginLeft: "8px" }}>• Branch: {filters.branchName}</span>}
-              {filters.searchText && <span style={{ marginLeft: "8px" }}>• Search: "{filters.searchText}"</span>}
-              <span style={{ marginLeft: "8px" }}>• {policies.length} results</span>
+              <strong>Search Results:</strong> Showing ASSIT policies matching
+              your filters
+              {filters.status && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Status: {filters.status}
+                </span>
+              )}
+              {filters.productName && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Product: {filters.productName}
+                </span>
+              )}
+              {filters.branchName && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Branch: {filters.branchName}
+                </span>
+              )}
+              {filters.searchText && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Search: "{filters.searchText}"
+                </span>
+              )}
+              <span style={{ marginLeft: "8px" }}>
+                • {policies.length} results
+              </span>
             </div>
             <Button
               type="link"
@@ -314,7 +395,10 @@ const AssitPoliciesPage = () => {
         rowClassName="cursor-pointer hover:bg-gray-50"
         onChange={(pagination: any, filters: any, sorter: any) => {
           if (sorter && sorter.field) {
-            handleSort(sorter.field, sorter.order === "descend" ? "desc" : "asc");
+            handleSort(
+              sorter.field,
+              sorter.order === "descend" ? "desc" : "asc"
+            );
           }
         }}
         pagination={{
@@ -327,7 +411,7 @@ const AssitPoliciesPage = () => {
             `${range[0]}-${range[1]} of ${total} ASSIT policies`,
           onChange: handlePageChange,
           onShowSizeChange: handlePageChange,
-          position: ['bottomCenter'],
+          position: ["bottomCenter"],
         }}
         columns={[
           {
@@ -335,7 +419,8 @@ const AssitPoliciesPage = () => {
             dataIndex: "membershipID",
             key: "membershipID",
             sorter: true,
-            sortOrder: sortBy === "membershipID" ? (sortOrder as any) : undefined,
+            sortOrder:
+              sortBy === "membershipID" ? (sortOrder as any) : undefined,
             render: (policyNumber: string) => (
               <span className="font-mono font-semibold">{policyNumber}</span>
             ),
@@ -346,7 +431,9 @@ const AssitPoliciesPage = () => {
             key: "linkedEasipolPolicyNumber",
             // sorter: (a: IAssitPolicy, b: IAssitPolicy) => a.linkedEasipolPolicyNumber?.localeCompare(b.linkedEasipolPolicyNumber || "") || 0,
             render: (linkedEasipolPolicyNumber: any) => (
-              <span className="font-mono font-semibold">{linkedEasipolPolicyNumber?.toString() ?? "--"}</span>
+              <span className="font-mono font-semibold">
+                {linkedEasipolPolicyNumber?.toString() ?? "--"}
+              </span>
             ),
           },
           {
@@ -359,7 +446,8 @@ const AssitPoliciesPage = () => {
             title: "Main Member",
             dataIndex: "fullName",
             key: "fullName",
-            sorter: (a: IAssitPolicy, b: IAssitPolicy) => a.fullName?.localeCompare(b.fullName || "") || 0,
+            sorter: (a: IAssitPolicy, b: IAssitPolicy) =>
+              a.fullName?.localeCompare(b.fullName || "") || 0,
             render: (fullName: string, record: IAssitPolicy) => (
               <div className="flex items-center gap-2">
                 <UserOutlined className="text-gray-400" />
@@ -382,7 +470,8 @@ const AssitPoliciesPage = () => {
             title: "Premium",
             dataIndex: "totalPremium",
             key: "totalPremium",
-            sorter: (a: IAssitPolicy, b: IAssitPolicy) => a.totalPremium - b.totalPremium,
+            sorter: (a: IAssitPolicy, b: IAssitPolicy) =>
+              a.totalPremium - b.totalPremium,
             render: (totalPremium: number) => (
               <span>{formatToMoneyWithCurrency(totalPremium)}</span>
             ),
@@ -439,17 +528,31 @@ const AssitPoliciesPage = () => {
         ]}
       />
       <Drawer
-        title="Import Polices" width="93%" placement="right"
+        title="Import Polices"
+        width="93%"
+        placement="right"
         open={importDrawerOpen}
         onClose={() => setImportDrawerOpen(false)}
         footer={
           <Space>
             <Button onClick={() => setImportDrawerOpen(false)}>Cancel</Button>
-            <Button type="primary" className="text-black" onClick={() => importPolicies()}>Import</Button>
+            <Button
+              type="primary"
+              className="text-black"
+              onClick={() => importPolicies()}
+            >
+              Import
+            </Button>
           </Space>
         }
       >
-        <Alert showIcon className="mb-4 rounded-md" banner message="Import the following policies from ASSIT. Please review the policies and make sure they are correct." type="info" />
+        <Alert
+          showIcon
+          className="mb-4 rounded-md"
+          banner
+          message="Import the following policies from ASSIT. Please review the policies and make sure they are correct."
+          type="info"
+        />
         <Table columns={importColumns} dataSource={importData} />
       </Drawer>
 
@@ -476,7 +579,7 @@ const AssitPoliciesPage = () => {
         />
       )}
     </div>
-  )
-}
+  );
+};
 
 export default AssitPoliciesPage;

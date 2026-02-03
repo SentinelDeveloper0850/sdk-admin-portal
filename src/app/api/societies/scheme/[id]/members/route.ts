@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from "next/server";
 
 import { fetchSocietyMembersById } from "@/server/actions/societies";
@@ -34,7 +32,10 @@ export async function GET(
   } catch (error: any) {
     console.error("Error fetching society members:", error.message);
     return NextResponse.json(
-      { success: false, message: "Internal Server Error ~ Error fetching society members" },
+      {
+        success: false,
+        message: "Internal Server Error ~ Error fetching society members",
+      },
       { status: 500 }
     );
   }

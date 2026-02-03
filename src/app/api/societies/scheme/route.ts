@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { fetchAllSocieties } from "@/server/actions/societies/scheme";
 import { SchemeSocietyModel } from "@/app/models/scheme/scheme-society.schema";
 import { connectToDatabase } from "@/lib/db";
 import { createAuditLog } from "@/server/actions/audit";
+import { fetchAllSocieties } from "@/server/actions/societies/scheme";
 
 export async function GET() {
   try {
@@ -28,11 +28,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const payload = await request.json();
-  
+
   // Check if society with same name already exists
-  const existingSociety = await SchemeSocietyModel.findOne({ name: payload.name });
+  const existingSociety = await SchemeSocietyModel.findOne({
+    name: payload.name,
+  });
   if (existingSociety) {
-    return NextResponse.json({ message: "Society with same name already exists" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Society with same name already exists" },
+      { status: 400 }
+    );
   }
 
   await connectToDatabase();
@@ -73,7 +78,9 @@ export async function PUT(request: Request) {
 
   await connectToDatabase();
 
-  const response = await SchemeSocietyModel.findByIdAndUpdate(id, rest, { new: true });
+  const response = await SchemeSocietyModel.findByIdAndUpdate(id, rest, {
+    new: true,
+  });
 
   if (!response) {
     return NextResponse.json({ message: "Society not found" }, { status: 404 });

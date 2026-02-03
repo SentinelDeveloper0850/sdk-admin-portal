@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Spinner } from "@nextui-org/react";
 import dayjs from "dayjs";
 
-import { IClaimComment } from "@/app/models/scheme/claim.schema";
 import { IUser } from "@/app/models/hr/user.schema";
+import { IClaimComment } from "@/app/models/scheme/claim.schema";
 import { useAuth } from "@/context/auth-context";
 
 interface IProps {

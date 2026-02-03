@@ -81,7 +81,9 @@ export const importSociety = async (data: any) => {
   await connectToDatabase();
 
   try {
-    const existingSociety = await SchemeSocietyModel.findOne({ name: data.name });
+    const existingSociety = await SchemeSocietyModel.findOne({
+      name: data.name,
+    });
 
     if (existingSociety) {
       return {

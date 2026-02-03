@@ -1,12 +1,13 @@
 // api/cash-up/submit-for-review/route.ts
+import { NextRequest, NextResponse } from "next/server";
 
-import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
+import dayjs from "dayjs";
+
 import { CashUpAuditReportModel } from "@/app/models/hr/cash-up-audit-report.schema";
+import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
 import { NotificationModel } from "@/app/models/notification.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
-import dayjs from "dayjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,26 +15,38 @@ export async function POST(request: NextRequest) {
     const { submissionId } = body;
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
     }
 
     await connectToDatabase();
 
     const submission = await CashUpSubmissionModel.findById(submissionId);
     if (!submission) {
-      return NextResponse.json({ success: false, message: "Cash up submission not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Cash up submission not found" },
+        { status: 404 }
+      );
     }
 
     // Only owners can submit their own cashup
     const ownerId = String((submission as any).userId);
     if (ownerId !== String((user as any)._id)) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const currentStatus = String((submission as any).status || "draft");
     if (!["draft", "needs_changes"].includes(currentStatus)) {
       return NextResponse.json(
-        { success: false, message: `Cannot submit when status is '${currentStatus}'` },
+        {
+          success: false,
+          message: `Cannot submit when status is '${currentStatus}'`,
+        },
         { status: 400 }
       );
     }
@@ -44,7 +57,8 @@ export async function POST(request: NextRequest) {
     const gracePeriod = cutoff.add(30, "minute");
     const isLate = dayjs().isAfter(gracePeriod);
 
-    (submission as any).status = currentStatus === "needs_changes" ? "resolved" : "pending";
+    (submission as any).status =
+      currentStatus === "needs_changes" ? "resolved" : "pending";
     (submission as any).isLateSubmission = isLate;
     (submission as any).submittedAt = new Date();
     (submission as any).submittedById = String((user as any)._id);
@@ -53,8 +67,13 @@ export async function POST(request: NextRequest) {
 
     // If an audit report was uploaded earlier for this user+date, auto-run the balance check now.
     try {
-      const dateKey = new Date((submission as any).date).toISOString().slice(0, 10);
-      const report = await CashUpAuditReportModel.findOne({ userId: ownerId, dateKey }).lean();
+      const dateKey = new Date((submission as any).date)
+        .toISOString()
+        .slice(0, 10);
+      const report = await CashUpAuditReportModel.findOne({
+        userId: ownerId,
+        dateKey,
+      }).lean();
       if (report) {
         const cashupTotal = Number((submission as any).totalAmount ?? 0) || 0;
         const netTotal = Number((report as any).netTotal ?? 0) || 0;
@@ -99,7 +118,10 @@ export async function POST(request: NextRequest) {
               readAt: null,
             });
           } catch (e) {
-            console.error("Failed to create cashup mismatch notification (auto-run):", e);
+            console.error(
+              "Failed to create cashup mismatch notification (auto-run):",
+              e
+            );
           }
         }
 
@@ -115,6 +137,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error submitting cash up submission for review:", error);
-    return NextResponse.json({ success: false, message: "Error submitting cash up submission for review" }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Error submitting cash up submission for review",
+      },
+      { status: 500 }
+    );
   }
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 
-import sweetAlert from 'sweetalert';
-import CompanyCalendar from './company-calendar';
-import { getEventPalette, paletteToFullCalendarColors } from './event-palette';
+import sweetAlert from "sweetalert";
+
+import CompanyCalendar from "./company-calendar";
+import { getEventPalette, paletteToFullCalendarColors } from "./event-palette";
 
 const CalendarPage = () => {
   const [companyEvents, setCompanyEvents] = useState<any[]>([]);
@@ -13,20 +14,24 @@ const CalendarPage = () => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const result = await fetch('/api/calendar/events?type=company');
+      const result = await fetch("/api/calendar/events?type=company");
       const data = await result.json();
 
-      const events = data.events?.map((event: any) => ({
-        ...event,
-        id: event._id ?? event.id,
-      })) || [];
+      const events =
+        data.events?.map((event: any) => ({
+          ...event,
+          id: event._id ?? event.id,
+        })) || [];
 
       setCompanyEvents(events);
     } catch (error) {
       console.error("Error loading company events:", error);
       sweetAlert({
         title: "Error loading company events",
-        text: error instanceof Error ? error.message : "Failed to load company events",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to load company events",
         icon: "error",
         timer: 2000,
       });
@@ -76,7 +81,7 @@ const CalendarPage = () => {
     let data: any = null;
     try {
       data = await res.json();
-      console.log("🚀 ~ markMilestoneComplete ~ data:", data)
+      console.log("🚀 ~ markMilestoneComplete ~ data:", data);
     } catch (error) {
       console.error("Error marking milestone as completed:", error);
       return false;
@@ -93,14 +98,18 @@ const CalendarPage = () => {
 
   const fcEvents = useMemo(() => {
     return companyEvents
-      .map(e => {
+      .map((e) => {
         const startISO = e.startDateTime
           ? new Date(e.startDateTime).toISOString()
-          : (e.start && !Number.isNaN(Date.parse(e.start)) ? new Date(e.start).toISOString() : null);
+          : e.start && !Number.isNaN(Date.parse(e.start))
+            ? new Date(e.start).toISOString()
+            : null;
 
         const endISO = e.endDateTime
           ? new Date(e.endDateTime).toISOString()
-          : (e.end && !Number.isNaN(Date.parse(e.end)) ? new Date(e.end).toISOString() : null);
+          : e.end && !Number.isNaN(Date.parse(e.end))
+            ? new Date(e.end).toISOString()
+            : null;
 
         if (!startISO) return null;
 
@@ -120,7 +129,7 @@ const CalendarPage = () => {
           },
         };
       })
-      .filter(e => e !== null)
+      .filter((e) => e !== null);
   }, [companyEvents]);
 
   return (
@@ -139,7 +148,7 @@ const CalendarPage = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CalendarPage
+export default CalendarPage;

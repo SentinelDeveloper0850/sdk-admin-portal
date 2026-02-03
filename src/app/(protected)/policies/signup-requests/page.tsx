@@ -3,7 +3,23 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { ReloadOutlined } from "@ant-design/icons";
-import { Button, Col, Drawer, Form, Image, Input, Modal, Row, Select, Space, Spin, Statistic, Table, Tag, message } from "antd";
+import {
+  Button,
+  Col,
+  Drawer,
+  Form,
+  Image,
+  Input,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Tag,
+  message,
+} from "antd";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
@@ -11,10 +27,10 @@ import PageHeader from "@/app/components/page-header";
 import { PolicySignupActionModals } from "@/app/components/policy-signup-action-modals";
 import { PolicySignupActions } from "@/app/components/policy-signup-actions";
 import { PolicySignupViewModal } from "@/app/components/policy-signup-view-modal";
+import { IUser } from "@/app/models/hr/user.schema";
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
 
-import { IUser } from "@/app/models/hr/user.schema";
 import { ERoles } from "../../../../types/roles.enum";
 
 const getStatusColor = (status: string) => {
@@ -81,19 +97,25 @@ const SignupRequestsPage = () => {
   // Drawer states
   const [viewDrawerVisible, setViewDrawerVisible] = useState(false);
   const [actionDrawerVisible, setActionDrawerVisible] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<IPolicySignUp | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<IPolicySignUp | null>(
+    null
+  );
   const [currentAction, setCurrentAction] = useState<string | null>(null);
 
   // File preview modal state (only modal)
   const [filePreviewVisible, setFilePreviewVisible] = useState(false);
-  const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    name: string;
+    type: string;
+  } | null>(null);
 
   const { user } = useAuth();
 
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/policies/easipol/signup-requests');
+      const response = await fetch("/api/policies/easipol/signup-requests");
       const data = await response.json();
 
       if (data.success && data.data) {
@@ -117,7 +139,7 @@ const SignupRequestsPage = () => {
   const fetchUsers = async () => {
     try {
       setConsultantsLoading(true);
-      const response = await fetch('/api/users?type=consultants&slim=true');
+      const response = await fetch("/api/users?type=consultants&slim=true");
       const data = await response.json();
 
       if (Array.isArray(data)) {
@@ -170,10 +192,16 @@ const SignupRequestsPage = () => {
     const loweredSearch = searchTerm.trim().toLowerCase();
 
     return requests.filter((request) => {
-      const status = (request.currentStatus || request.status || "").toLowerCase();
+      const status = (
+        request.currentStatus ||
+        request.status ||
+        ""
+      ).toLowerCase();
       const planName = request.plan?.name;
       const consultantName = request.assignedConsultantName;
-      const consultantId = request.assignedConsultant ? String(request.assignedConsultant) : undefined;
+      const consultantId = request.assignedConsultant
+        ? String(request.assignedConsultant)
+        : undefined;
 
       const matchesStatus = statusFilter ? status === statusFilter : true;
       const matchesPlan = planFilter ? planName === planFilter : true;
@@ -197,7 +225,9 @@ const SignupRequestsPage = () => {
         .map((value) => String(value).toLowerCase())
         .join(" ");
 
-      const matchesSearch = loweredSearch ? searchContent.includes(loweredSearch) : true;
+      const matchesSearch = loweredSearch
+        ? searchContent.includes(loweredSearch)
+        : true;
 
       return matchesStatus && matchesPlan && matchesConsultant && matchesSearch;
     });
@@ -275,31 +305,31 @@ const SignupRequestsPage = () => {
 
   const handleDelete = async (record: IPolicySignUp) => {
     try {
-      const response = await fetch('/api/policies/easipol/signup-requests', {
-        method: 'DELETE',
+      const response = await fetch("/api/policies/easipol/signup-requests", {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           id: record._id,
-          deletedBy: user?._id
+          deletedBy: user?._id,
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        message.success('Request deleted successfully');
+        message.success("Request deleted successfully");
         // Remove from local state
-        setRequests(prev => prev.filter(req => req._id !== record._id));
+        setRequests((prev) => prev.filter((req) => req._id !== record._id));
         // Update stats
-        setStats(prev => ({ count: prev.count - 1 }));
+        setStats((prev) => ({ count: prev.count - 1 }));
       } else {
-        message.error(data.error || 'Failed to delete request');
+        message.error(data.error || "Failed to delete request");
       }
     } catch (error) {
-      console.error('Error deleting request:', error);
-      message.error('An error occurred while deleting the request');
+      console.error("Error deleting request:", error);
+      message.error("An error occurred while deleting the request");
     }
   };
 
@@ -325,7 +355,7 @@ const SignupRequestsPage = () => {
       setPreviewFile({
         url: file.cloudinaryUrl,
         name: file.originalName,
-        type: file.type
+        type: file.type,
       });
       setFilePreviewVisible(true);
     }
@@ -338,12 +368,12 @@ const SignupRequestsPage = () => {
 
   // Helper function to get file extension
   const getFileExtension = (filename: string) => {
-    return filename.split('.').pop()?.toLowerCase() || '';
+    return filename.split(".").pop()?.toLowerCase() || "";
   };
 
   // Helper function to check if file is image
   const isImageFile = (filename: string) => {
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
     return imageExtensions.includes(getFileExtension(filename));
   };
 
@@ -352,22 +382,22 @@ const SignupRequestsPage = () => {
     const ext = getFileExtension(filename);
 
     if (isImageFile(filename)) {
-      return '🖼️';
+      return "🖼️";
     }
 
     switch (ext) {
-      case 'pdf':
-        return '📄';
-      case 'doc':
-      case 'docx':
-        return '📝';
-      case 'xls':
-      case 'xlsx':
-        return '📊';
-      case 'txt':
-        return '📄';
+      case "pdf":
+        return "📄";
+      case "doc":
+      case "docx":
+        return "📝";
+      case "xls":
+      case "xlsx":
+        return "📊";
+      case "txt":
+        return "📄";
       default:
-        return '📎';
+        return "📎";
     }
   };
 
@@ -468,7 +498,8 @@ const SignupRequestsPage = () => {
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((consultant) => ({
                       label: consultant.name,
-                      value: consultant._id?.toString() ?? String(consultant._id),
+                      value:
+                        consultant._id?.toString() ?? String(consultant._id),
                     })),
                 ]}
                 loading={consultantsLoading}
@@ -479,11 +510,10 @@ const SignupRequestsPage = () => {
         <Row justify="space-between" align="middle">
           <Col flex="auto">
             {hasActiveFilters && (
-              <div
-                className="mb-3 mt-1 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-600"
-              >
-                Showing {filteredRequests.length} request{filteredRequests.length === 1 ? "" : "s"}{" "}
-                matching current filters.
+              <div className="mb-3 mt-1 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-600">
+                Showing {filteredRequests.length} request
+                {filteredRequests.length === 1 ? "" : "s"} matching current
+                filters.
               </div>
             )}
           </Col>
@@ -508,7 +538,7 @@ const SignupRequestsPage = () => {
             key: "requestId",
             width: 150,
             render: (value) => (
-              <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+              <span style={{ fontFamily: "monospace", fontSize: "12px" }}>
                 {value}
               </span>
             ),
@@ -519,10 +549,10 @@ const SignupRequestsPage = () => {
             key: "fullNames",
             render: (value, record) => (
               <>
-                <p style={{ fontWeight: 'bold' }}>
+                <p style={{ fontWeight: "bold" }}>
                   {record.fullNames} {record.surname}
                 </p>
-                <p style={{ fontSize: '12px', color: '#666' }}>
+                <p style={{ fontSize: "12px", color: "#666" }}>
                   ID: {record.identificationNumber}
                 </p>
               </>
@@ -534,7 +564,7 @@ const SignupRequestsPage = () => {
             key: "email",
             render: (value, record) => (
               <>
-                <p>{record.email || 'No email'}</p>
+                <p>{record.email || "No email"}</p>
                 <p>{record.phone}</p>
               </>
             ),
@@ -545,12 +575,10 @@ const SignupRequestsPage = () => {
             key: "plan",
             render: (value, record) => (
               <>
-                <p style={{ fontWeight: 'bold' }}>
-                  {record.plan?.name || 'Unknown Plan'}
+                <p style={{ fontWeight: "bold" }}>
+                  {record.plan?.name || "Unknown Plan"}
                 </p>
-                <p>
-                  {record.numberOfDependents} Deps
-                </p>
+                <p>{record.numberOfDependents} Deps</p>
               </>
             ),
           },
@@ -559,7 +587,8 @@ const SignupRequestsPage = () => {
             dataIndex: "address",
             key: "address",
             render: (value: string, record) => {
-              if (!value) return <span style={{ color: "#999" }}>Not provided</span>;
+              if (!value)
+                return <span style={{ color: "#999" }}>Not provided</span>;
               const addressLines = value.split(",");
               return (
                 <>
@@ -603,10 +632,10 @@ const SignupRequestsPage = () => {
         ]}
         expandable={{
           expandedRowRender: (record: IPolicySignUp) => (
-            <div style={{ padding: '16px' }}>
+            <div style={{ padding: "16px" }}>
               {/* Message */}
               {record.message && (
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: "16px" }}>
                   <h4>💬 Message:</h4>
                   <div className="whitespace-pre-wrap text-gray-700 dark:text-gray-400">
                     {record.message}
@@ -616,21 +645,37 @@ const SignupRequestsPage = () => {
 
               {/* Dependents */}
               {record.dependents && record.dependents.length > 0 && (
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: "16px" }}>
                   <h4>👥 Dependents ({record.dependents.length}):</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '8px' }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(250px, 1fr))",
+                      gap: "8px",
+                    }}
+                  >
                     {record.dependents.map((dependent, index) => (
-                      <div key={dependent.id || index} style={{
-                        border: '1px solid #d9d9d9',
-                        borderRadius: '6px',
-                        padding: '8px',
-                        backgroundColor: '#fafafa'
-                      }}>
-                        <div><strong>{dependent.fullNames} {dependent.surname}</strong></div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>
-                          {dependent.isChild ? 'Child' : 'Adult'}
-                          {dependent.identificationNumber && ` • ID: ${dependent.identificationNumber}`}
-                          {dependent.dateOfBirth && ` • DOB: ${dependent.dateOfBirth}`}
+                      <div
+                        key={dependent.id || index}
+                        style={{
+                          border: "1px solid #d9d9d9",
+                          borderRadius: "6px",
+                          padding: "8px",
+                          backgroundColor: "#fafafa",
+                        }}
+                      >
+                        <div>
+                          <strong>
+                            {dependent.fullNames} {dependent.surname}
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#666" }}>
+                          {dependent.isChild ? "Child" : "Adult"}
+                          {dependent.identificationNumber &&
+                            ` • ID: ${dependent.identificationNumber}`}
+                          {dependent.dateOfBirth &&
+                            ` • DOB: ${dependent.dateOfBirth}`}
                         </div>
                       </div>
                     ))}
@@ -640,92 +685,123 @@ const SignupRequestsPage = () => {
 
               {/* Uploaded Files */}
               {record.uploadedFiles && record.uploadedFiles.length > 0 && (
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: "16px" }}>
                   <h4>📎 Uploaded Files ({record.uploadedFiles.length}):</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(5, 1fr)",
+                      gap: "12px",
+                    }}
+                  >
                     {record.uploadedFiles.map((file, index) => (
-                      <div key={index} style={{
-                        border: '1px solid #d9d9d9',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        backgroundColor: '#fafafa',
-                        cursor: file.cloudinaryUrl ? 'pointer' : 'default',
-                        transition: 'all 0.2s ease'
-                      }}
-                        onClick={() => file.cloudinaryUrl && handleFilePreview(file)}
+                      <div
+                        key={index}
+                        style={{
+                          border: "1px solid #d9d9d9",
+                          borderRadius: "8px",
+                          padding: "12px",
+                          backgroundColor: "#fafafa",
+                          cursor: file.cloudinaryUrl ? "pointer" : "default",
+                          transition: "all 0.2s ease",
+                        }}
+                        onClick={() =>
+                          file.cloudinaryUrl && handleFilePreview(file)
+                        }
                         onMouseEnter={(e) => {
                           if (file.cloudinaryUrl) {
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow =
+                              "0 2px 8px rgba(0,0,0,0.1)";
+                            e.currentTarget.style.transform =
+                              "translateY(-1px)";
                           }
                         }}
                         onMouseLeave={(e) => {
                           if (file.cloudinaryUrl) {
-                            e.currentTarget.style.boxShadow = 'none';
-                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = "none";
+                            e.currentTarget.style.transform = "translateY(0)";
                           }
                         }}
                       >
                         {/* File Thumbnail */}
-                        <div style={{
-                          width: '100%',
-                          aspectRatio: '1 / 1',
-                          backgroundColor: '#fff',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginBottom: '8px',
-                          border: '1px solid #e8e8e8',
-                          overflow: 'hidden',
-                          position: 'relative'
-                        }}>
-                          {isImageFile(file.originalName) && file.cloudinaryUrl ? (
+                        <div
+                          style={{
+                            width: "100%",
+                            aspectRatio: "1 / 1",
+                            backgroundColor: "#fff",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginBottom: "8px",
+                            border: "1px solid #e8e8e8",
+                            overflow: "hidden",
+                            position: "relative",
+                          }}
+                        >
+                          {isImageFile(file.originalName) &&
+                          file.cloudinaryUrl ? (
                             <Image
                               src={file.cloudinaryUrl}
                               alt={file.originalName}
                               style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                objectPosition: 'center'
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                objectPosition: "center",
                               }}
                               preview={false}
                             />
                           ) : (
-                            <div style={{
-                              fontSize: '48px',
-                              color: '#666',
-                              textAlign: 'center',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              width: '100%',
-                              height: '100%'
-                            }}>
+                            <div
+                              style={{
+                                fontSize: "48px",
+                                color: "#666",
+                                textAlign: "center",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "100%",
+                                height: "100%",
+                              }}
+                            >
                               {getFileIcon(file.originalName, file.type)}
                             </div>
                           )}
                         </div>
 
                         {/* File Info */}
-                        <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            marginBottom: "4px",
+                          }}
+                        >
                           {file.originalName}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
+                        <div
+                          style={{
+                            fontSize: "11px",
+                            color: "#666",
+                            marginBottom: "4px",
+                          }}
+                        >
                           {file.type} • {file.personType} • {file.personName}
                         </div>
                         {file.cloudinaryUrl && (
-                          <div style={{ fontSize: '11px' }}>
-                            <span style={{ color: '#1890ff', cursor: 'pointer' }}>
+                          <div style={{ fontSize: "11px" }}>
+                            <span
+                              style={{ color: "#1890ff", cursor: "pointer" }}
+                            >
                               👁️ Preview
                             </span>
-                            {' • '}
+                            {" • "}
                             <a
                               href={file.cloudinaryUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              style={{ color: '#1890ff' }}
+                              style={{ color: "#1890ff" }}
                               onClick={(e) => e.stopPropagation()}
                             >
                               📥 Download
@@ -740,12 +816,13 @@ const SignupRequestsPage = () => {
 
               {/* Assigned Consultant */}
               {record.assignedConsultantName && (
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: "16px" }}>
                   <h4>👤 Assigned Consultant:</h4>
                   <div>{record.assignedConsultantName}</div>
                   {record.assignedAt && (
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      Assigned on: {new Date(record.assignedAt).toLocaleDateString()}
+                    <div style={{ fontSize: "12px", color: "#666" }}>
+                      Assigned on:{" "}
+                      {new Date(record.assignedAt).toLocaleDateString()}
                     </div>
                   )}
                 </div>
@@ -753,24 +830,35 @@ const SignupRequestsPage = () => {
 
               {/* Generated Policy Number */}
               {record.generatedPolicyNumber && (
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: "16px" }}>
                   <h4>📋 Policy Number:</h4>
-                  <div style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#52c41a' }}>
+                  <div
+                    style={{
+                      fontFamily: "monospace",
+                      fontWeight: "bold",
+                      color: "#52c41a",
+                    }}
+                  >
                     {record.generatedPolicyNumber}
                   </div>
                   {record.policyCreatedAt && (
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      Created on: {new Date(record.policyCreatedAt).toLocaleDateString()}
+                    <div style={{ fontSize: "12px", color: "#666" }}>
+                      Created on:{" "}
+                      {new Date(record.policyCreatedAt).toLocaleDateString()}
                     </div>
                   )}
                 </div>
               )}
 
               {/* No additional info message */}
-              {!record.message && (!record.dependents || record.dependents.length === 0) &&
+              {!record.message &&
+                (!record.dependents || record.dependents.length === 0) &&
                 (!record.uploadedFiles || record.uploadedFiles.length === 0) &&
-                !record.assignedConsultantName && !record.generatedPolicyNumber && (
-                  <i className="text-gray-400">No additional information available.</i>
+                !record.assignedConsultantName &&
+                !record.generatedPolicyNumber && (
+                  <i className="text-gray-400">
+                    No additional information available.
+                  </i>
                 )}
             </div>
           ),
@@ -830,37 +918,41 @@ const SignupRequestsPage = () => {
             href={previewFile?.url}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ marginRight: '8px' }}
+            style={{ marginRight: "8px" }}
           >
             Download
-          </a>
+          </a>,
         ]}
         width={800}
         centered
       >
         {previewFile && (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: "center" }}>
             {isImageFile(previewFile.name) ? (
               <Image
                 src={previewFile.url}
                 alt={previewFile.name}
-                style={{ maxWidth: '100%', maxHeight: '500px' }}
+                style={{ maxWidth: "100%", maxHeight: "500px" }}
                 preview={false}
               />
             ) : (
-              <div style={{
-                padding: '40px',
-                backgroundColor: '#f5f5f5',
-                borderRadius: '8px',
-                margin: '20px 0'
-              }}>
-                <div style={{ fontSize: '64px', marginBottom: '16px' }}>
+              <div
+                style={{
+                  padding: "40px",
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: "8px",
+                  margin: "20px 0",
+                }}
+              >
+                <div style={{ fontSize: "64px", marginBottom: "16px" }}>
                   {getFileIcon(previewFile.name, previewFile.type)}
                 </div>
-                <div style={{ fontSize: '16px', color: '#666' }}>
+                <div style={{ fontSize: "16px", color: "#666" }}>
                   {previewFile.name}
                 </div>
-                <div style={{ fontSize: '14px', color: '#999', marginTop: '8px' }}>
+                <div
+                  style={{ fontSize: "14px", color: "#999", marginTop: "8px" }}
+                >
                   Click "Download" to view this file
                 </div>
               </div>

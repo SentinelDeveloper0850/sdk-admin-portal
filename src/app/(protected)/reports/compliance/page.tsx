@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Card, Spin, Table, Tabs, Typography } from "antd";
 
-import PageHeader from "@/app/components/page-header";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
+import PageHeader from "@/app/components/page-header";
 import { ERoles } from "@/types/roles.enum";
 
 const { Text } = Typography;
@@ -72,7 +73,11 @@ function UsersTable(props: { users: ComplianceUser[] }) {
   );
 }
 
-function ComplianceSection(props: { title: string; subtitle: string; block?: ComplianceBlock }) {
+function ComplianceSection(props: {
+  title: string;
+  subtitle: string;
+  block?: ComplianceBlock;
+}) {
   const b = props.block;
   if (!b) return null;
 
@@ -83,17 +88,19 @@ function ComplianceSection(props: { title: string; subtitle: string; block?: Com
 
   return (
     <Card size="small" className="bg-white dark:bg-zinc-900">
-      <div className="flex flex-col gap-1 mb-3">
+      <div className="mb-3 flex flex-col gap-1">
         <div className="text-base font-semibold">{props.title}</div>
         <Text type="secondary">
           {props.subtitle} • {sourceText}
         </Text>
       </div>
 
-      <div className="flex flex-wrap gap-6 mb-4">
+      <div className="mb-4 flex flex-wrap gap-6">
         <div>
           <div className="text-xs text-gray-500">Compliance rate</div>
-          <div className="text-2xl font-bold">{b.complianceRate.toFixed(1)}%</div>
+          <div className="text-2xl font-bold">
+            {b.complianceRate.toFixed(1)}%
+          </div>
           <div className="text-xs text-gray-500">
             {b.compliantCount} of {b.totalUsers} users
           </div>
@@ -129,7 +136,9 @@ function ComplianceSection(props: { title: string; subtitle: string; block?: Com
 
 function ComplianceReportingPage() {
   const [loading, setLoading] = useState(true);
-  const [dailyActivity, setDailyActivity] = useState<ComplianceBlock | undefined>(undefined);
+  const [dailyActivity, setDailyActivity] = useState<
+    ComplianceBlock | undefined
+  >(undefined);
   const [cashup, setCashup] = useState<ComplianceBlock | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
@@ -169,7 +178,9 @@ function ComplianceReportingPage() {
         </div>
       ) : error ? (
         <Card size="small">
-          <div className="text-red-600 font-medium mb-1">Failed to load compliance data</div>
+          <div className="mb-1 font-medium text-red-600">
+            Failed to load compliance data
+          </div>
           <Text type="secondary">{error}</Text>
         </Card>
       ) : (
@@ -191,5 +202,7 @@ function ComplianceReportingPage() {
   );
 }
 
-export default withRoleGuard(ComplianceReportingPage, [ERoles.Admin, ERoles.ComplianceOfficer]);
-
+export default withRoleGuard(ComplianceReportingPage, [
+  ERoles.Admin,
+  ERoles.ComplianceOfficer,
+]);

@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-import { InboxOutlined, MoreOutlined, ReloadOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  InboxOutlined,
+  MoreOutlined,
+  ReloadOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import {
   Alert,
   App,
@@ -29,11 +34,11 @@ import { formatToMoneyWithCurrency, formatUCTtoISO } from "@/utils/formatters";
 
 // BankStatementExcelImporter moved to EFT Importer page
 import PageHeader from "@/app/components/page-header";
+import Loading2 from "@/app/components/ui/loading2";
 import { useRole } from "@/app/hooks/use-role";
+import { IAllocationRequest } from "@/app/models/hr/allocation-request.schema";
 import { useAuth } from "@/context/auth-context";
 
-import Loading2 from "@/app/components/ui/loading2";
-import { IAllocationRequest } from "@/app/models/hr/allocation-request.schema";
 import { ERoles } from "../../../../types/roles.enum";
 
 export interface IEftTransaction {
@@ -78,18 +83,34 @@ export default function EftTransactionsPage() {
 
   const { message, notification } = App.useApp();
 
-  const [stats, setStats] = useState<IEftStats>({ count: 0, totalAllocationRequestsCount: 0, pendingAllocationRequestsCount: 0, submittedAllocationRequestsCount: 0, approvedAllocationRequestsCount: 0, rejectedAllocationRequestsCount: 0, cancelledAllocationRequestsCount: 0, duplicateAllocationRequestsCount: 0 });
+  const [stats, setStats] = useState<IEftStats>({
+    count: 0,
+    totalAllocationRequestsCount: 0,
+    pendingAllocationRequestsCount: 0,
+    submittedAllocationRequestsCount: 0,
+    approvedAllocationRequestsCount: 0,
+    rejectedAllocationRequestsCount: 0,
+    cancelledAllocationRequestsCount: 0,
+    duplicateAllocationRequestsCount: 0,
+  });
 
   const [imports, setImports] = useState<IEftImportData[]>([]);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
 
-  const [showAllocationRequestDrawer, setShowAllocationRequestDrawer] = useState<boolean>(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<IEftTransaction | null>(null);
+  const [showAllocationRequestDrawer, setShowAllocationRequestDrawer] =
+    useState<boolean>(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<IEftTransaction | null>(null);
   const [allocationRequestForm] = Form.useForm();
   const [evidenceFileList, setEvidenceFileList] = useState<any[]>([]);
-  const [allocationRequestLoading, setAllocationRequestLoading] = useState<boolean>(false);
-  const [allocationRequestError, setAllocationRequestError] = useState<string | null>(null);
-  const [allocationRequestSuccess, setAllocationRequestSuccess] = useState<string | null>(null);
+  const [allocationRequestLoading, setAllocationRequestLoading] =
+    useState<boolean>(false);
+  const [allocationRequestError, setAllocationRequestError] = useState<
+    string | null
+  >(null);
+  const [allocationRequestSuccess, setAllocationRequestSuccess] = useState<
+    string | null
+  >(null);
 
   const [search, setSearch] = useState("");
   const [amountFilterType, setAmountFilterType] = useState("=");
@@ -245,7 +266,9 @@ export default function EftTransactionsPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        setAllocationRequestError(errorData.message || "Failed to request allocation");
+        setAllocationRequestError(
+          errorData.message || "Failed to request allocation"
+        );
         return;
       }
 
@@ -253,7 +276,9 @@ export default function EftTransactionsPage() {
       resetAllocationRequest();
       setShowAllocationRequestDrawer(false);
     } catch (err) {
-      setAllocationRequestError("An error occurred while requesting allocation");
+      setAllocationRequestError(
+        "An error occurred while requesting allocation"
+      );
     } finally {
       setAllocationRequestLoading(false);
     }
@@ -299,7 +324,13 @@ export default function EftTransactionsPage() {
         title="EFT Transactions"
         actions={[
           <Space>
-            <Button onClick={handleRefresh} loading={refreshing} icon={<ReloadOutlined />}>Refresh</Button>
+            <Button
+              onClick={handleRefresh}
+              loading={refreshing}
+              icon={<ReloadOutlined />}
+            >
+              Refresh
+            </Button>
             <Button
               onClick={async () => {
                 await fetchImportHistory();
@@ -322,7 +353,10 @@ export default function EftTransactionsPage() {
                 title="Selected Transactions"
                 value={transactions?.length || 0}
               />
-              <Statistic title="Allocation Requests" value={stats?.totalAllocationRequestsCount || 0} />
+              <Statistic
+                title="Allocation Requests"
+                value={stats?.totalAllocationRequestsCount || 0}
+              />
             </Space>
           </Col>
           <Col
@@ -346,10 +380,12 @@ export default function EftTransactionsPage() {
           onClose={() => setError(false)}
         />
       )}
-      <Form layout="vertical" className="w-full mb-8">
+      <Form layout="vertical" className="mb-8 w-full">
         <Space size={32} wrap className="flex w-full">
           <Form.Item className="mb-0">
-            <p className="mb-2 dark:text-white font-medium">Search for reference</p>
+            <p className="mb-2 font-medium dark:text-white">
+              Search for reference
+            </p>
             <Search
               allowClear
               value={search}
@@ -365,7 +401,9 @@ export default function EftTransactionsPage() {
             />
           </Form.Item>
           <Form.Item style={{ marginBottom: "0" }}>
-            <p className="mb-2 dark:text-white font-medium">Search for Amount</p>
+            <p className="mb-2 font-medium dark:text-white">
+              Search for Amount
+            </p>
             <Space>
               <Search
                 allowClear
@@ -419,85 +457,99 @@ export default function EftTransactionsPage() {
         </Space>
       </Form>
 
-      {searching ? <Loading2 text="Searching transactions..." /> : (<Table
-        rowKey="_id"
-        bordered
-        dataSource={transactions}
-        rowClassName={(record: IEftTransaction) => "cursor-pointer hover:bg-gray-100"}
-        columns={[
-          {
-            title: "Transaction Date",
-            dataIndex: "date",
-            key: "date",
-            sorter: (a, b) =>
-              new Date(a.date).getTime() - new Date(b.date).getTime(),
-          },
-          {
-            title: "File ID",
-            dataIndex: "uuid",
-            key: "uuid",
-          },
-          {
-            title: "Description",
-            dataIndex: "description",
-            key: "description",
-            sorter: (a, b) => a.description.localeCompare(b.description),
-          },
-          {
-            title: "Additional Information",
-            dataIndex: "additionalInformation",
-            key: "additionalInformation",
-            sorter: (a, b) =>
-              a.additionalInformation.localeCompare(b.additionalInformation),
-          },
-          {
-            title: "Amount",
-            dataIndex: "amount",
-            key: "amount",
-            render: (value: number) => formatToMoneyWithCurrency(value),
-            sorter: (a, b) => a.amount - b.amount,
-          },
-          {
-            title: "Allocation",
-            dataIndex: "allocationRequests",
-            key: "allocationRequests",
-            sorter: (a, b) => (a.allocationRequests?.length || 0) - (b.allocationRequests?.length || 0),
-            render: (requests: IAllocationRequest[]) => {
-              if (requests.length === 0) return;
-              return (
-                <Space>
-                  <Tag>{requests.length > 1 ? `${requests.length} requests` : requests[0].status}</Tag>
-                </Space>
-              );
+      {searching ? (
+        <Loading2 text="Searching transactions..." />
+      ) : (
+        <Table
+          rowKey="_id"
+          bordered
+          dataSource={transactions}
+          rowClassName={(record: IEftTransaction) =>
+            "cursor-pointer hover:bg-gray-100"
+          }
+          columns={[
+            {
+              title: "Transaction Date",
+              dataIndex: "date",
+              key: "date",
+              sorter: (a, b) =>
+                new Date(a.date).getTime() - new Date(b.date).getTime(),
             },
-          },
-          {
-            title: "Actions",
-            key: "actions",
-            render: (_: any, record: IEftTransaction) => {
-              const hasAllocationRequests = record.allocationRequests && record.allocationRequests.length > 0;
-              return (
-                <Dropdown
-                  menu={{
-                    items: [
-                      {
-                        key: "request-allocation",
-                        icon: <InboxOutlined />,
-                        label: "Request Allocation",
-                        onClick: () => openAllocationRequestDrawer(record),
-                        disabled: hasAllocationRequests,
-                      },
-                    ]
-                  }}
-                  trigger={["click"]}
-                >
-                  <Button icon={<MoreOutlined />} />
-                </Dropdown>
-              )
+            {
+              title: "File ID",
+              dataIndex: "uuid",
+              key: "uuid",
             },
-          },
-        ]}
-      />)}
+            {
+              title: "Description",
+              dataIndex: "description",
+              key: "description",
+              sorter: (a, b) => a.description.localeCompare(b.description),
+            },
+            {
+              title: "Additional Information",
+              dataIndex: "additionalInformation",
+              key: "additionalInformation",
+              sorter: (a, b) =>
+                a.additionalInformation.localeCompare(b.additionalInformation),
+            },
+            {
+              title: "Amount",
+              dataIndex: "amount",
+              key: "amount",
+              render: (value: number) => formatToMoneyWithCurrency(value),
+              sorter: (a, b) => a.amount - b.amount,
+            },
+            {
+              title: "Allocation",
+              dataIndex: "allocationRequests",
+              key: "allocationRequests",
+              sorter: (a, b) =>
+                (a.allocationRequests?.length || 0) -
+                (b.allocationRequests?.length || 0),
+              render: (requests: IAllocationRequest[]) => {
+                if (requests.length === 0) return;
+                return (
+                  <Space>
+                    <Tag>
+                      {requests.length > 1
+                        ? `${requests.length} requests`
+                        : requests[0].status}
+                    </Tag>
+                  </Space>
+                );
+              },
+            },
+            {
+              title: "Actions",
+              key: "actions",
+              render: (_: any, record: IEftTransaction) => {
+                const hasAllocationRequests =
+                  record.allocationRequests &&
+                  record.allocationRequests.length > 0;
+                return (
+                  <Dropdown
+                    menu={{
+                      items: [
+                        {
+                          key: "request-allocation",
+                          icon: <InboxOutlined />,
+                          label: "Request Allocation",
+                          onClick: () => openAllocationRequestDrawer(record),
+                          disabled: hasAllocationRequests,
+                        },
+                      ],
+                    }}
+                    trigger={["click"]}
+                  >
+                    <Button icon={<MoreOutlined />} />
+                  </Dropdown>
+                );
+              },
+            },
+          ]}
+        />
+      )}
       <Drawer
         title="EFT Import History"
         placement="right"
@@ -532,8 +584,10 @@ export default function EftTransactionsPage() {
       <Drawer
         title={
           <div>
-            <h3 className="mb-0 text-md font-semibold">Allocation Request</h3>
-            <p className="mb-0 text-sm text-gray-500 font-normal">Request allocation of the selected transaction on ASSIT</p>
+            <h3 className="text-md mb-0 font-semibold">Allocation Request</h3>
+            <p className="mb-0 text-sm font-normal text-gray-500">
+              Request allocation of the selected transaction on ASSIT
+            </p>
           </div>
         }
         placement="right"
@@ -543,8 +597,16 @@ export default function EftTransactionsPage() {
         open={showAllocationRequestDrawer}
         footer={
           <Space>
-            <Button onClick={() => setShowAllocationRequestDrawer(false)}>Cancel</Button>
-            <Button onClick={requestAllocation} loading={allocationRequestLoading} type="primary">Submit Request</Button>
+            <Button onClick={() => setShowAllocationRequestDrawer(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={requestAllocation}
+              loading={allocationRequestLoading}
+              type="primary"
+            >
+              Submit Request
+            </Button>
           </Space>
         }
       >
@@ -554,14 +616,29 @@ export default function EftTransactionsPage() {
           message="Please note that the allocation request will be reviewed. If approved, it will be submitted for allocation on ASSIT."
           style={{ marginBottom: 16 }}
         />
-        <h3 className="mb-4 text-md font-semibold">Transaction Information</h3>
+        <h3 className="text-md mb-4 font-semibold">Transaction Information</h3>
         {selectedTransaction && (
-          <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
-            <Descriptions.Item label="Date">{formatUCTtoISO(selectedTransaction.date)}</Descriptions.Item>
-            <Descriptions.Item label="File ID">{selectedTransaction.uuid}</Descriptions.Item>
-            <Descriptions.Item label="Description">{selectedTransaction.description}</Descriptions.Item>
-            <Descriptions.Item label="Amount">{formatToMoneyWithCurrency(selectedTransaction.amount)}</Descriptions.Item>
-            <Descriptions.Item label="Additional Info">{selectedTransaction.additionalInformation}</Descriptions.Item>
+          <Descriptions
+            size="small"
+            bordered
+            column={2}
+            style={{ marginBottom: 16 }}
+          >
+            <Descriptions.Item label="Date">
+              {formatUCTtoISO(selectedTransaction.date)}
+            </Descriptions.Item>
+            <Descriptions.Item label="File ID">
+              {selectedTransaction.uuid}
+            </Descriptions.Item>
+            <Descriptions.Item label="Description">
+              {selectedTransaction.description}
+            </Descriptions.Item>
+            <Descriptions.Item label="Amount">
+              {formatToMoneyWithCurrency(selectedTransaction.amount)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Additional Info">
+              {selectedTransaction.additionalInformation}
+            </Descriptions.Item>
           </Descriptions>
         )}
         {allocationRequestError && (
@@ -585,7 +662,11 @@ export default function EftTransactionsPage() {
           />
         )}
         <Form layout="vertical" form={allocationRequestForm}>
-          <Form.Item label="Policy Number" name="policyNumber" rules={[{ required: true, message: "Policy number is required" }]}>
+          <Form.Item
+            label="Policy Number"
+            name="policyNumber"
+            rules={[{ required: true, message: "Policy number is required" }]}
+          >
             <Input />
           </Form.Item>
           <Form.Item label="Notes" name="notes">
@@ -596,8 +677,12 @@ export default function EftTransactionsPage() {
               <p className="ant-upload-drag-icon">
                 <UploadOutlined className="h-6 w-6" />
               </p>
-              <p className="ant-upload-text">Click or drag supporting documents to upload</p>
-              <p className="ant-upload-hint">Support for JPG, PNG, PDF files. Max file size: 10MB</p>
+              <p className="ant-upload-text">
+                Click or drag supporting documents to upload
+              </p>
+              <p className="ant-upload-hint">
+                Support for JPG, PNG, PDF files. Max file size: 10MB
+              </p>
             </Upload.Dragger>
           </Form.Item>
         </Form>

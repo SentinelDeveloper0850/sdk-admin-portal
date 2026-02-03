@@ -1,8 +1,9 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
 import UserModel from "@/app/models/hr/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +24,10 @@ export async function GET(request: NextRequest) {
     const query: any = {};
 
     // Non-admins can only see their own
-    const roles = [(user as any)?.role, ...(((user as any)?.roles as string[]) || [])].filter(Boolean);
+    const roles = [
+      (user as any)?.role,
+      ...(((user as any)?.roles as string[]) || []),
+    ].filter(Boolean);
     const canReviewAll = roles.includes("cashup_reviewer");
 
     if (canReviewAll) {
@@ -41,27 +45,39 @@ export async function GET(request: NextRequest) {
       query.date = { $gte: start, $lt: end };
     }
 
-    const docs = await CashUpSubmissionModel.find(query).sort({ createdAt: -1 }).lean();
+    const docs = await CashUpSubmissionModel.find(query)
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const userIds = Array.from(new Set(docs.map((d: any) => String(d.userId)).filter(Boolean)));
-    const users = await UserModel.find({ _id: { $in: userIds } }).select({ _id: 1, name: 1 }).lean();
-    const userNameById = new Map(users.map((u: any) => [String(u._id), String(u.name || "")]));
+    const userIds = Array.from(
+      new Set(docs.map((d: any) => String(d.userId)).filter(Boolean))
+    );
+    const users = await UserModel.find({ _id: { $in: userIds } })
+      .select({ _id: 1, name: 1 })
+      .lean();
+    const userNameById = new Map(
+      users.map((u: any) => [String(u._id), String(u.name || "")])
+    );
 
     // Map DB docs to UI shape expected by table
     const cashUpSubmissions = docs.map((doc: any) => {
-      const latestSubmission = Array.isArray(doc.submissions) && doc.submissions.length > 0
-        ? doc.submissions[doc.submissions.length - 1]
-        : null;
+      const latestSubmission =
+        Array.isArray(doc.submissions) && doc.submissions.length > 0
+          ? doc.submissions[doc.submissions.length - 1]
+          : null;
 
       const allAttachments = Array.isArray(doc.submissions)
-        ? doc.submissions.flatMap((s: any) => (Array.isArray(s?.files) ? s.files : [])).filter(Boolean)
+        ? doc.submissions
+            .flatMap((s: any) => (Array.isArray(s?.files) ? s.files : []))
+            .filter(Boolean)
         : [];
 
       return {
         _id: String(doc._id),
         date: new Date(doc.date).toISOString().slice(0, 10),
         employeeId: doc.userId,
-        employeeName: userNameById.get(String(doc.userId)) || String(doc.userId),
+        employeeName:
+          userNameById.get(String(doc.userId)) || String(doc.userId),
         batchReceiptTotal: doc.totalAmount ?? null,
         totalAmount: doc.totalAmount ?? null,
         systemBalance: null,
@@ -69,29 +85,35 @@ export async function GET(request: NextRequest) {
         status: doc.status || "draft",
         submissionStatus: doc.status || "draft",
         riskLevel: "low",
-        submittedAt: doc.submittedAt ?? latestSubmission?.submittedAt ?? doc.createdAt,
+        submittedAt:
+          doc.submittedAt ?? latestSubmission?.submittedAt ?? doc.createdAt,
         reviewedBy: doc.reviewedByName ?? doc.reviewedById ?? null,
         reviewedAt: doc.reviewedAt ?? null,
         isResolved: false,
-        notes: (doc.reviewNotes && doc.reviewNotes.length ? doc.reviewNotes.join("\n\n") : null),
-        attachments: allAttachments.length ? allAttachments : (latestSubmission?.files || []),
+        notes:
+          doc.reviewNotes && doc.reviewNotes.length
+            ? doc.reviewNotes.join("\n\n")
+            : null,
+        attachments: allAttachments.length
+          ? allAttachments
+          : latestSubmission?.files || [],
         isLateSubmission: !!doc.isLateSubmission,
         submissions: Array.isArray(doc.submissions)
           ? doc.submissions.map((s: any, idx: number) => ({
-            _idx: idx,
-            invoiceNumber: s?.invoiceNumber ?? null,
-            paymentMethod: s?.paymentMethod ?? null,
-            submittedAmount: s?.submittedAmount ?? null,
-            cashAmount: s?.cashAmount ?? null,
-            cardAmount: s?.cardAmount ?? null,
-            bankDepositReference: s?.bankDepositReference ?? null,
-            bankName: s?.bankName ?? null,
-            depositorName: s?.depositorName ?? null,
-            receiptType: s?.receiptType ?? null,
-            notes: s?.notes ?? null,
-            submittedAt: s?.submittedAt ?? null,
-            files: Array.isArray(s?.files) ? s.files : [],
-          }))
+              _idx: idx,
+              invoiceNumber: s?.invoiceNumber ?? null,
+              paymentMethod: s?.paymentMethod ?? null,
+              submittedAmount: s?.submittedAmount ?? null,
+              cashAmount: s?.cashAmount ?? null,
+              cardAmount: s?.cardAmount ?? null,
+              bankDepositReference: s?.bankDepositReference ?? null,
+              bankName: s?.bankName ?? null,
+              depositorName: s?.depositorName ?? null,
+              receiptType: s?.receiptType ?? null,
+              notes: s?.notes ?? null,
+              submittedAt: s?.submittedAt ?? null,
+              files: Array.isArray(s?.files) ? s.files : [],
+            }))
           : [],
       };
     });
@@ -153,4 +175,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

@@ -1,10 +1,12 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import * as XLSX from "xlsx";
+
 import { CashUpAuditReportModel } from "@/app/models/hr/cash-up-audit-report.schema";
 import UserModel from "@/app/models/hr/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
-import * as XLSX from "xlsx";
 
 function dateKeyFrom(value: unknown): string | null {
   if (value instanceof Date && !isNaN(value.getTime())) {
@@ -25,7 +27,10 @@ function extractMetaAndTotals(buffer: Buffer) {
   const sheetName = wb.SheetNames[0];
   if (!sheetName) throw new Error("No worksheet found in the uploaded file.");
   const ws = wb.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true }) as unknown[][];
+  const rows = XLSX.utils.sheet_to_json(ws, {
+    header: 1,
+    raw: true,
+  }) as unknown[][];
 
   let employeeNameFromReport: string | null = null;
   let reportFromDateKey: string | null = null;
@@ -33,7 +38,10 @@ function extractMetaAndTotals(buffer: Buffer) {
 
   for (let i = 0; i < Math.min(rows.length, 30); i++) {
     const row = Array.isArray(rows[i]) ? (rows[i] as unknown[]) : [];
-    const line = row.map((c) => String(c ?? "").trim()).filter(Boolean).join(" ");
+    const line = row
+      .map((c) => String(c ?? "").trim())
+      .filter(Boolean)
+      .join(" ");
     const upper = line.toUpperCase();
 
     const nameMatch = upper.match(/TRANSACTION REPORT\s+FOR\s+(.+)$/i);
@@ -41,9 +49,13 @@ function extractMetaAndTotals(buffer: Buffer) {
       employeeNameFromReport = String(nameMatch[1]).trim();
     }
 
-    const fromToMatch = upper.match(/FROM\s+(\d{4}[\/-]\d{2}[\/-]\d{2})\s+TO\s+(\d{4}[\/-]\d{2}[\/-]\d{2})/i);
-    if (!reportFromDateKey && fromToMatch?.[1]) reportFromDateKey = dateKeyFrom(fromToMatch[1]);
-    if (!reportToDateKey && fromToMatch?.[2]) reportToDateKey = dateKeyFrom(fromToMatch[2]);
+    const fromToMatch = upper.match(
+      /FROM\s+(\d{4}[\/-]\d{2}[\/-]\d{2})\s+TO\s+(\d{4}[\/-]\d{2}[\/-]\d{2})/i
+    );
+    if (!reportFromDateKey && fromToMatch?.[1])
+      reportFromDateKey = dateKeyFrom(fromToMatch[1]);
+    if (!reportToDateKey && fromToMatch?.[2])
+      reportToDateKey = dateKeyFrom(fromToMatch[2]);
   }
 
   // Totals: find TransactionType + Amount header row
@@ -52,7 +64,11 @@ function extractMetaAndTotals(buffer: Buffer) {
   let idxAmount = -1;
   let idxEffDate = -1;
 
-  const normHeaderCell = (v: unknown) => String(v ?? "").trim().toLowerCase().replace(/[\s_-]+/g, "");
+  const normHeaderCell = (v: unknown) =>
+    String(v ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, "");
 
   for (let i = 0; i < Math.min(rows.length, 50); i++) {
     const row = Array.isArray(rows[i]) ? (rows[i] as unknown[]) : [];
@@ -84,13 +100,16 @@ function extractMetaAndTotals(buffer: Buffer) {
   if (headerRowIdx !== -1 && idxTransactionType !== -1 && idxAmount !== -1) {
     for (let i = headerRowIdx + 1; i < rows.length; i++) {
       const row = Array.isArray(rows[i]) ? (rows[i] as unknown[]) : [];
-      const t = String(row[idxTransactionType] ?? "").trim().toUpperCase();
+      const t = String(row[idxTransactionType] ?? "")
+        .trim()
+        .toUpperCase();
       const n = toNumber(row[idxAmount]);
       if (!t || n === null) continue;
       const amtAbs = Math.abs(n);
       if (t === "INCOME") incomeTotal += amtAbs;
       else if (t === "EXPENSE") expenseTotal += amtAbs;
-      if (!firstDateKey && idxEffDate !== -1) firstDateKey = dateKeyFrom(row[idxEffDate]);
+      if (!firstDateKey && idxEffDate !== -1)
+        firstDateKey = dateKeyFrom(row[idxEffDate]);
     }
   }
 
@@ -106,7 +125,11 @@ function extractMetaAndTotals(buffer: Buffer) {
   };
 }
 
-async function uploadToCloudinaryRaw(params: { buffer: Buffer; folder: string; fileName: string }) {
+async function uploadToCloudinaryRaw(params: {
+  buffer: Buffer;
+  folder: string;
+  fileName: string;
+}) {
   const { buffer, folder, fileName } = params;
   const uploadResult = await new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -131,19 +154,31 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const roles = [(user as any)?.role, ...(((user as any)?.roles as string[]) || [])].filter(Boolean);
+    const roles = [
+      (user as any)?.role,
+      ...(((user as any)?.roles as string[]) || []),
+    ].filter(Boolean);
     const canReview = roles.includes("cashup_reviewer");
     if (!canReview) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     if (!file) {
-      return NextResponse.json({ success: false, message: "No file provided" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "No file provided" },
+        { status: 400 }
+      );
     }
 
     const targetUserIdFromForm = String(formData.get("userId") || "").trim();
@@ -158,7 +193,10 @@ export async function POST(request: NextRequest) {
 
     if (!reportName || !reportDateKey) {
       return NextResponse.json(
-        { success: false, message: "Could not detect employee name/date from the spreadsheet." },
+        {
+          success: false,
+          message: "Could not detect employee name/date from the spreadsheet.",
+        },
         { status: 400 }
       );
     }
@@ -171,32 +209,48 @@ export async function POST(request: NextRequest) {
     let expectedDateKey = "";
 
     if (targetUserIdFromForm && targetDateKeyFromForm) {
-      const userDoc = await UserModel.findById(targetUserIdFromForm).select({ _id: 1, name: 1 }).lean();
+      const userDoc = await UserModel.findById(targetUserIdFromForm)
+        .select({ _id: 1, name: 1 })
+        .lean();
       if (!userDoc) {
-        return NextResponse.json({ success: false, message: "Selected user not found" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, message: "Selected user not found" },
+          { status: 400 }
+        );
       }
       targetUserId = String((userDoc as any)._id);
       expectedUserName = String((userDoc as any).name || "").trim();
       expectedDateKey = targetDateKeyFromForm;
 
-      const expectedTokens = normName(expectedUserName).split(" ").filter(Boolean);
+      const expectedTokens = normName(expectedUserName)
+        .split(" ")
+        .filter(Boolean);
       const reportNorm = normName(reportName);
-      const nameMatches = expectedTokens.length ? expectedTokens.every((t) => reportNorm.includes(t)) : false;
+      const nameMatches = expectedTokens.length
+        ? expectedTokens.every((t) => reportNorm.includes(t))
+        : false;
       const dateMatches = reportDateKey === expectedDateKey;
 
       // If the report declares a FROM/TO range and it's not exactly the selected date, reject.
       const fromKey = parsed.reportFromDateKey || reportDateKey;
       const toKey = parsed.reportToDateKey || reportDateKey;
       const rangeSingleDay = !fromKey || !toKey || fromKey === toKey;
-      const rangeMatchesDate = rangeSingleDay && (fromKey || reportDateKey) === expectedDateKey;
+      const rangeMatchesDate =
+        rangeSingleDay && (fromKey || reportDateKey) === expectedDateKey;
 
       if (!nameMatches || !dateMatches || !rangeMatchesDate) {
         return NextResponse.json(
           {
             success: false,
-            message: "Uploaded report does not match the selected employee/date. Please upload the correct report.",
+            message:
+              "Uploaded report does not match the selected employee/date. Please upload the correct report.",
             expected: { employeeName: expectedUserName, date: expectedDateKey },
-            detected: { employeeName: reportName, date: reportDateKey, from: fromKey, to: toKey },
+            detected: {
+              employeeName: reportName,
+              date: reportDateKey,
+              from: fromKey,
+              to: toKey,
+            },
           },
           { status: 400 }
         );
@@ -204,7 +258,12 @@ export async function POST(request: NextRequest) {
     } else {
       // Backwards-compatible behavior: match user by name (must be unique)
       const candidates = await UserModel.find({
-        name: { $regex: new RegExp(`^${reportName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+        name: {
+          $regex: new RegExp(
+            `^${reportName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+            "i"
+          ),
+        },
       })
         .select({ _id: 1, name: 1 })
         .lean();
@@ -213,7 +272,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: "Could not uniquely match the report employee to a user. Please select the user and date when uploading.",
+            message:
+              "Could not uniquely match the report employee to a user. Please select the user and date when uploading.",
             detected: { employeeName: reportName, date: reportDateKey },
             matches: candidates.length,
           },
@@ -272,10 +332,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Failed to upload audit report",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to upload audit report",
       },
       { status: 500 }
     );
   }
 }
-

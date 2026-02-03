@@ -1,29 +1,43 @@
 // /api/calendar/events/[id]/route.ts
-import { CalendarEventModel, CalendarEventStatus } from "@/app/models/calendar-event.schema";
+import { NextRequest, NextResponse } from "next/server";
+
+import mongoose from "mongoose";
+
+import {
+  CalendarEventModel,
+  CalendarEventStatus,
+} from "@/app/models/calendar-event.schema";
 import { FuneralModel } from "@/app/models/funeral.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import mongoose from "mongoose";
-import { NextRequest, NextResponse } from "next/server";
 
 type UpdatePayload = {
   start?: string | null; // ISO
-  end?: string | null;   // ISO
+  end?: string | null; // ISO
   allDay?: boolean;
   extendedProps?: Record<string, any>;
   action?: "move" | "resize" | "receive";
 };
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const { id } = params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ success: false, message: "Invalid event id" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid event id" },
+        { status: 400 }
+      );
     }
 
     const body = (await request.json()) as UpdatePayload;
@@ -33,7 +47,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Load the event first (for auth/ownership checks if needed)
     const existing = await CalendarEventModel.findById(id);
     if (!existing) {
-      return NextResponse.json({ success: false, message: "Event not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Event not found" },
+        { status: 404 }
+      );
     }
 
     // Optional: authorization checks. For example:
@@ -44,10 +61,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // }
 
     const update: Record<string, any> = {};
-    if (body.start !== undefined) update.startDateTime = body.start ? new Date(body.start) : null;
+    if (body.start !== undefined)
+      update.startDateTime = body.start ? new Date(body.start) : null;
     if (body.start !== undefined) update.start = body.start;
 
-    if (body.end !== undefined) update.endDateTime = body.end ? new Date(body.end) : null;
+    if (body.end !== undefined)
+      update.endDateTime = body.end ? new Date(body.end) : null;
     if (body.end !== undefined) update.end = body.end;
 
     if (typeof body.allDay === "boolean") update.allDay = body.allDay;
@@ -62,13 +81,24 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       };
     }
 
-    const updated = await CalendarEventModel.findByIdAndUpdate(id, update, { new: true });
+    const updated = await CalendarEventModel.findByIdAndUpdate(id, update, {
+      new: true,
+    });
 
     // 3) If this event is linked to a funeral milestone, update that milestone too
-    if (updated?.relatedModel === "funeral" && updated.relatedId && updated.milestone) {
+    if (
+      updated?.relatedModel === "funeral" &&
+      updated.relatedId &&
+      updated.milestone
+    ) {
       const funeralId = updated.relatedId;
       const ms = String(updated.milestone) as
-        | "pickUp" | "bathing" | "tentErection" | "delivery" | "serviceEscort" | "burial";
+        | "pickUp"
+        | "bathing"
+        | "tentErection"
+        | "delivery"
+        | "serviceEscort"
+        | "burial";
 
       // Build the $set paths for the milestone
       const set: Record<string, any> = {};
@@ -83,7 +113,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
       // Only write if we actually changed something
       if (Object.keys(set).length > 0) {
-        await FuneralModel.findByIdAndUpdate(funeralId as mongoose.Types.ObjectId, { $set: set });
+        await FuneralModel.findByIdAndUpdate(
+          funeralId as mongoose.Types.ObjectId,
+          { $set: set }
+        );
       }
     }
 
@@ -93,41 +126,70 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     );
   } catch (error) {
     console.error("Error updating event:", error);
-    return NextResponse.json({ success: false, message: "Failed to update event" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to update event" },
+      { status: 500 }
+    );
   }
 }
 
 // Patch request to mark a milestone as completed
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const { id } = params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ success: false, message: "Invalid event id" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid event id" },
+        { status: 400 }
+      );
     }
 
     await connectToDatabase();
 
     const event = await CalendarEventModel.findById(id);
     if (!event) {
-      return NextResponse.json({ success: false, message: "Event not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Event not found" },
+        { status: 404 }
+      );
     }
 
     if (event.relatedModel !== "funeral" || !event.milestone) {
-      return NextResponse.json({ success: false, message: "Event is not a funeral milestone" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Event is not a funeral milestone" },
+        { status: 400 }
+      );
     }
 
-    await CalendarEventModel.findByIdAndUpdate(id, { $set: { status: CalendarEventStatus.COMPLETED } });
+    await CalendarEventModel.findByIdAndUpdate(id, {
+      $set: { status: CalendarEventStatus.COMPLETED },
+    });
 
-    await FuneralModel.findByIdAndUpdate(event.relatedId as mongoose.Types.ObjectId, { $set: { [`${event.milestone}.status`]: "completed" } });
+    await FuneralModel.findByIdAndUpdate(
+      event.relatedId as mongoose.Types.ObjectId,
+      { $set: { [`${event.milestone}.status`]: "completed" } }
+    );
 
-    return NextResponse.json({ success: true, message: "Milestone marked as completed" }, { status: 200 });
+    return NextResponse.json(
+      { success: true, message: "Milestone marked as completed" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error marking milestone as completed:", error);
-    return NextResponse.json({ success: false, message: "Failed to mark milestone as completed" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to mark milestone as completed" },
+      { status: 500 }
+    );
   }
 }

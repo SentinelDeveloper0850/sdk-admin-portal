@@ -386,8 +386,8 @@ a:hover {
 }
 
 .ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
-    background: #e69b00;
-    color: black;
+  background: #e69b00;
+  color: black;
 }
 
 /* Default Button */
@@ -625,8 +625,12 @@ a:hover {
 }
 
 .dark .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
-.dark .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
-.dark .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+.dark
+  .ant-picker-cell-in-view.ant-picker-cell-range-start
+  .ant-picker-cell-inner,
+.dark
+  .ant-picker-cell-in-view.ant-picker-cell-range-end
+  .ant-picker-cell-inner {
   background-color: #ffac00;
   color: black;
 }
@@ -677,5 +681,5 @@ a:hover {
 }
 
 .ant-input-outlined.ant-input-status-error:not(.ant-input-disabled) {
-    background: unset !important;
+  background: unset !important;
 }

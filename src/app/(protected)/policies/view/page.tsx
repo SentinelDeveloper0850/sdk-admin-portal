@@ -26,18 +26,19 @@ import {
   Space,
   Statistic,
   Table,
+  Tabs,
   Tag,
-  Tabs
 } from "antd";
+import sweetAlert from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
 import PolicyCancellationDrawer from "@/app/components/policies/policy-cancellation-drawer";
 import PolicyDetailsDrawer from "@/app/components/policies/policy-details-drawer";
 import PolicyPrintCardDrawer from "@/app/components/policies/policy-print-card-drawer";
 import Loading from "@/app/components/ui/loading";
-import sweetAlert from "sweetalert";
-import EasipolPoliciesPage from "./EasipolPolicies";
+
 import AssitPoliciesPage from "./AssitPolicies";
+import EasipolPoliciesPage from "./EasipolPolicies";
 
 export interface IMemberPolicy {
   _id: string;
@@ -63,23 +64,25 @@ export interface IMemberPolicy {
 }
 
 export default function PoliciesPage() {
-
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader title="All Policies" actions={[]} noDivider />
 
-      <Tabs defaultActiveKey="easipol" items={[
-        {
-          key: "easipol",
-          label: "Easipol Policies",
-          children: <EasipolPoliciesPage />,
-        },
-        {
-          key: "assit",
-          label: "ASSIT Policies",
-          children: <AssitPoliciesPage />,
-        },
-      ]} />
-    </div >
+      <Tabs
+        defaultActiveKey="easipol"
+        items={[
+          {
+            key: "easipol",
+            label: "Easipol Policies",
+            children: <EasipolPoliciesPage />,
+          },
+          {
+            key: "assit",
+            label: "ASSIT Policies",
+            children: <AssitPoliciesPage />,
+          },
+        ]}
+      />
+    </div>
   );
 }

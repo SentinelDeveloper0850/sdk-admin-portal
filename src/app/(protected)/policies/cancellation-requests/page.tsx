@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import {
   CheckOutlined,
   CloseOutlined,
@@ -26,14 +28,14 @@ import {
   Table,
   Tag,
   Tooltip,
-  Typography
+  Typography,
 } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
 import sweetAlert from "sweetalert";
 
-import PageHeader from "@/app/components/page-header";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
+import PageHeader from "@/app/components/page-header";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -68,7 +70,8 @@ function CancellationRequestsPage() {
   const [requests, setRequests] = useState<CancellationRequest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | boolean>(false);
-  const [selectedRequest, setSelectedRequest] = useState<CancellationRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] =
+    useState<CancellationRequest | null>(null);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [reviewForm] = Form.useForm();
@@ -91,10 +94,14 @@ function CancellationRequestsPage() {
 
       const queryParams = new URLSearchParams();
       if (filters.status) queryParams.append("status", filters.status);
-      if (filters.policyNumber) queryParams.append("policyNumber", filters.policyNumber);
-      if (filters.memberName) queryParams.append("memberName", filters.memberName);
+      if (filters.policyNumber)
+        queryParams.append("policyNumber", filters.policyNumber);
+      if (filters.memberName)
+        queryParams.append("memberName", filters.memberName);
 
-      const response = await fetch(`/api/policies/easipol/cancellation-request?${queryParams}`);
+      const response = await fetch(
+        `/api/policies/easipol/cancellation-request?${queryParams}`
+      );
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch cancellation requests");
@@ -106,9 +113,15 @@ function CancellationRequestsPage() {
         setRequests(data.data.requests);
         // Calculate stats
         const total = data.data.requests.length;
-        const pending = data.data.requests.filter((r: CancellationRequest) => r.status === "pending").length;
-        const approved = data.data.requests.filter((r: CancellationRequest) => r.status === "approved").length;
-        const rejected = data.data.requests.filter((r: CancellationRequest) => r.status === "rejected").length;
+        const pending = data.data.requests.filter(
+          (r: CancellationRequest) => r.status === "pending"
+        ).length;
+        const approved = data.data.requests.filter(
+          (r: CancellationRequest) => r.status === "approved"
+        ).length;
+        const rejected = data.data.requests.filter(
+          (r: CancellationRequest) => r.status === "rejected"
+        ).length;
         setStats({ total, pending, approved, rejected });
       } else {
         setError(data.message || "Failed to fetch cancellation requests");
@@ -125,20 +138,26 @@ function CancellationRequestsPage() {
     fetchRequests();
   }, [filters]);
 
-  const handleReview = async (values: { action: string; reviewNotes: string }) => {
+  const handleReview = async (values: {
+    action: string;
+    reviewNotes: string;
+  }) => {
     if (!selectedRequest) return;
 
     try {
-      const response = await fetch(`/api/policies/easipol/cancellation-request/${selectedRequest._id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: values.action,
-          reviewNotes: values.reviewNotes,
-        }),
-      });
+      const response = await fetch(
+        `/api/policies/easipol/cancellation-request/${selectedRequest._id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: values.action,
+            reviewNotes: values.reviewNotes,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -155,7 +174,8 @@ function CancellationRequestsPage() {
       } else {
         sweetAlert({
           title: "Failed to process request",
-          text: data.message || "An error occurred while processing the request.",
+          text:
+            data.message || "An error occurred while processing the request.",
           icon: "error",
         });
       }
@@ -180,9 +200,12 @@ function CancellationRequestsPage() {
 
     if (result === "Yes, delete it!") {
       try {
-        const response = await fetch(`/api/policies/easipol/cancellation-request/${requestId}`, {
-          method: "DELETE",
-        });
+        const response = await fetch(
+          `/api/policies/easipol/cancellation-request/${requestId}`,
+          {
+            method: "DELETE",
+          }
+        );
 
         const data = await response.json();
 
@@ -196,7 +219,8 @@ function CancellationRequestsPage() {
         } else {
           sweetAlert({
             title: "Failed to delete request",
-            text: data.message || "An error occurred while deleting the request.",
+            text:
+              data.message || "An error occurred while deleting the request.",
             icon: "error",
           });
         }
@@ -229,11 +253,11 @@ function CancellationRequestsPage() {
   };
 
   const handleSearch = (value: string) => {
-    setFilters(prev => ({ ...prev, policyNumber: value }));
+    setFilters((prev) => ({ ...prev, policyNumber: value }));
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   if (loading) {
@@ -275,29 +299,37 @@ function CancellationRequestsPage() {
       </PageHeader>
 
       {error && (
-        <div className="mb-5 p-3 border rounded-md" style={{
-          color: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          borderColor: 'rgba(239, 68, 68, 0.3)'
-        }}>
+        <div
+          className="mb-5 rounded-md border p-3"
+          style={{
+            color: "#ef4444",
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            borderColor: "rgba(239, 68, 68, 0.3)",
+          }}
+        >
           {error}
         </div>
       )}
 
       {/* Search Results Indicator */}
       {(filters.status || filters.policyNumber || filters.memberName) && (
-        <div className="mb-5 p-3 border rounded-md flex justify-between items-center" style={{
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          borderColor: 'rgba(59, 130, 246, 0.3)'
-        }}>
-          <div style={{ color: '#3b82f6' }}>
+        <div
+          className="mb-5 flex items-center justify-between rounded-md border p-3"
+          style={{
+            backgroundColor: "rgba(59, 130, 246, 0.1)",
+            borderColor: "rgba(59, 130, 246, 0.3)",
+          }}
+        >
+          <div style={{ color: "#3b82f6" }}>
             Search results for: "
             {filters.policyNumber && `Policy: ${filters.policyNumber}`}
             {filters.policyNumber && filters.memberName && " & "}
             {filters.memberName && `Member: ${filters.memberName}`}
-            {filters.status && (filters.policyNumber || filters.memberName) && " & "}
-            {filters.status && `Status: ${filters.status}`}
-            " ({requests.length} results)
+            {filters.status &&
+              (filters.policyNumber || filters.memberName) &&
+              " & "}
+            {filters.status && `Status: ${filters.status}`}" ({requests.length}{" "}
+            results)
           </div>
           <Button
             type="text"
@@ -307,8 +339,8 @@ function CancellationRequestsPage() {
               setFilters({ status: "", policyNumber: "", memberName: "" });
             }}
             style={{
-              border: '1px solid #ef4444',
-              color: '#ef4444'
+              border: "1px solid #ef4444",
+              color: "#ef4444",
             }}
           >
             CLEAR SEARCH
@@ -333,7 +365,9 @@ function CancellationRequestsPage() {
                 allowClear
                 placeholder="All Statuses"
                 value={filters.status || undefined}
-                onChange={(value: string) => handleFilterChange("status", value)}
+                onChange={(value: string) =>
+                  handleFilterChange("status", value)
+                }
               >
                 <Option value="pending">Pending</Option>
                 <Option value="approved">Approved</Option>
@@ -346,7 +380,9 @@ function CancellationRequestsPage() {
               <Input
                 placeholder="Search by member name"
                 value={filters.memberName}
-                onChange={(e) => handleFilterChange("memberName", e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("memberName", e.target.value)
+                }
               />
             </Form.Item>
           </Col>
@@ -362,7 +398,11 @@ function CancellationRequestsPage() {
                 </Button>
                 <Button
                   onClick={() => {
-                    setFilters({ status: "", policyNumber: "", memberName: "" });
+                    setFilters({
+                      status: "",
+                      policyNumber: "",
+                      memberName: "",
+                    });
                   }}
                 >
                   Clear Filters
@@ -429,7 +469,11 @@ function CancellationRequestsPage() {
             ellipsis: true,
             render: (reason: string) => (
               <Tooltip title={reason}>
-                <span>{reason.length > 30 ? `${reason.substring(0, 30)}...` : reason}</span>
+                <span>
+                  {reason.length > 30
+                    ? `${reason.substring(0, 30)}...`
+                    : reason}
+                </span>
               </Tooltip>
             ),
           },
@@ -447,7 +491,8 @@ function CancellationRequestsPage() {
               { text: "Approved", value: "approved" },
               { text: "Rejected", value: "rejected" },
             ],
-            onFilter: (value: any, record: CancellationRequest) => record.status === value,
+            onFilter: (value: any, record: CancellationRequest) =>
+              record.status === value,
           },
           {
             title: "Submitted By",
@@ -478,35 +523,37 @@ function CancellationRequestsPage() {
                         setViewModalVisible(true);
                       },
                     },
-                    ...(record.status === "pending" ? [
-                      {
-                        key: "approve",
-                        icon: <CheckOutlined />,
-                        label: "Approve",
-                        onClick: () => {
-                          setSelectedRequest(record);
-                          setReviewModalVisible(true);
-                          reviewForm.setFieldsValue({ action: "approve" });
-                        },
-                      },
-                      {
-                        key: "reject",
-                        icon: <CloseOutlined />,
-                        label: "Reject",
-                        onClick: () => {
-                          setSelectedRequest(record);
-                          setReviewModalVisible(true);
-                          reviewForm.setFieldsValue({ action: "reject" });
-                        },
-                      },
-                      {
-                        key: "delete",
-                        icon: <DeleteOutlined />,
-                        label: "Delete",
-                        danger: true,
-                        onClick: () => handleDelete(record._id),
-                      },
-                    ] : []),
+                    ...(record.status === "pending"
+                      ? [
+                          {
+                            key: "approve",
+                            icon: <CheckOutlined />,
+                            label: "Approve",
+                            onClick: () => {
+                              setSelectedRequest(record);
+                              setReviewModalVisible(true);
+                              reviewForm.setFieldsValue({ action: "approve" });
+                            },
+                          },
+                          {
+                            key: "reject",
+                            icon: <CloseOutlined />,
+                            label: "Reject",
+                            onClick: () => {
+                              setSelectedRequest(record);
+                              setReviewModalVisible(true);
+                              reviewForm.setFieldsValue({ action: "reject" });
+                            },
+                          },
+                          {
+                            key: "delete",
+                            icon: <DeleteOutlined />,
+                            label: "Delete",
+                            danger: true,
+                            onClick: () => handleDelete(record._id),
+                          },
+                        ]
+                      : []),
                   ],
                 }}
                 trigger={["click"]}
@@ -554,10 +601,7 @@ function CancellationRequestsPage() {
         {selectedRequest && (
           <div className="space-y-6">
             {/* Request Information Card */}
-            <Card
-              title="Request Information"
-              size="small"
-            >
+            <Card title="Request Information" size="small">
               <Row gutter={24}>
                 <Col span={12}>
                   <Descriptions column={1} size="small">
@@ -565,10 +609,18 @@ function CancellationRequestsPage() {
                       <Text strong>{selectedRequest.memberName}</Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="Cancellation Type">
-                      <Tag color="blue">{getCancellationTypeText(selectedRequest.cancellationType)}</Tag>
+                      <Tag color="blue">
+                        {getCancellationTypeText(
+                          selectedRequest.cancellationType
+                        )}
+                      </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="Effective Date">
-                      <Text>{dayjs(selectedRequest.effectiveDate).format("DD/MM/YYYY")}</Text>
+                      <Text>
+                        {dayjs(selectedRequest.effectiveDate).format(
+                          "DD/MM/YYYY"
+                        )}
+                      </Text>
                     </Descriptions.Item>
                   </Descriptions>
                 </Col>
@@ -578,7 +630,11 @@ function CancellationRequestsPage() {
                       <Text strong>{selectedRequest.submittedBy.name}</Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="Submitted At">
-                      <Text>{dayjs(selectedRequest.submittedAt).format("DD/MM/YYYY HH:mm")}</Text>
+                      <Text>
+                        {dayjs(selectedRequest.submittedAt).format(
+                          "DD/MM/YYYY HH:mm"
+                        )}
+                      </Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="Reason">
                       <Tag color="orange">{selectedRequest.reason}</Tag>
@@ -590,10 +646,7 @@ function CancellationRequestsPage() {
 
             {/* Additional Notes Card */}
             {selectedRequest.additionalNotes && (
-              <Card
-                title="Additional Notes"
-                size="small"
-              >
+              <Card title="Additional Notes" size="small">
                 <Text>{selectedRequest.additionalNotes}</Text>
               </Card>
             )}
@@ -601,10 +654,7 @@ function CancellationRequestsPage() {
             <Divider />
 
             {/* Review Form Card */}
-            <Card
-              title="Review Decision"
-              size="small"
-            >
+            <Card title="Review Decision" size="small">
               <Form
                 form={reviewForm}
                 onFinish={handleReview}
@@ -616,7 +666,9 @@ function CancellationRequestsPage() {
                     <Form.Item
                       name="action"
                       label="Action"
-                      rules={[{ required: true, message: "Please select an action" }]}
+                      rules={[
+                        { required: true, message: "Please select an action" },
+                      ]}
                     >
                       <Select placeholder="Select action">
                         <Option value="approve">Approve</Option>
@@ -629,7 +681,9 @@ function CancellationRequestsPage() {
                 <Form.Item
                   name="reviewNotes"
                   label="Review Notes"
-                  rules={[{ required: true, message: "Please provide review notes" }]}
+                  rules={[
+                    { required: true, message: "Please provide review notes" },
+                  ]}
                 >
                   <TextArea
                     rows={4}
@@ -659,28 +713,36 @@ function CancellationRequestsPage() {
         {selectedRequest && (
           <div className="space-y-6">
             {/* Request Information Card */}
-            <Card
-              title="Request Information"
-              size="small"
-            >
+            <Card title="Request Information" size="small">
               <Row gutter={24}>
                 <Col span={12}>
                   <Descriptions column={1} size="small">
                     <Descriptions.Item label="Policy Number">
-                      <Text strong className="font-mono">{selectedRequest.policyNumber}</Text>
+                      <Text strong className="font-mono">
+                        {selectedRequest.policyNumber}
+                      </Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="Member Name">
                       <Text strong>{selectedRequest.memberName}</Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="Cancellation Type">
-                      <Tag color="blue">{getCancellationTypeText(selectedRequest.cancellationType)}</Tag>
+                      <Tag color="blue">
+                        {getCancellationTypeText(
+                          selectedRequest.cancellationType
+                        )}
+                      </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="Effective Date">
-                      <Text>{dayjs(selectedRequest.effectiveDate).format("DD/MM/YYYY")}</Text>
+                      <Text>
+                        {dayjs(selectedRequest.effectiveDate).format(
+                          "DD/MM/YYYY"
+                        )}
+                      </Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="Status">
                       <Tag color={getStatusColor(selectedRequest.status)}>
-                        {selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}
+                        {selectedRequest.status.charAt(0).toUpperCase() +
+                          selectedRequest.status.slice(1)}
                       </Tag>
                     </Descriptions.Item>
                   </Descriptions>
@@ -694,7 +756,11 @@ function CancellationRequestsPage() {
                       <Text>{selectedRequest.submittedBy.email}</Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="Submitted At">
-                      <Text>{dayjs(selectedRequest.submittedAt).format("DD/MM/YYYY HH:mm")}</Text>
+                      <Text>
+                        {dayjs(selectedRequest.submittedAt).format(
+                          "DD/MM/YYYY HH:mm"
+                        )}
+                      </Text>
                     </Descriptions.Item>
                     {selectedRequest.reviewedBy && (
                       <>
@@ -702,7 +768,11 @@ function CancellationRequestsPage() {
                           <Text strong>{selectedRequest.reviewedBy.name}</Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Reviewed At">
-                          <Text>{dayjs(selectedRequest.reviewedAt).format("DD/MM/YYYY HH:mm")}</Text>
+                          <Text>
+                            {dayjs(selectedRequest.reviewedAt).format(
+                              "DD/MM/YYYY HH:mm"
+                            )}
+                          </Text>
                         </Descriptions.Item>
                       </>
                     )}
@@ -712,13 +782,10 @@ function CancellationRequestsPage() {
             </Card>
 
             {/* Reason Card */}
-            <Card
-              title="Reason for Cancellation"
-              size="small"
-            >
+            <Card title="Reason for Cancellation" size="small">
               <Tag
                 color="orange"
-                style={{ fontSize: '16px', padding: '8px 12px' }}
+                style={{ fontSize: "16px", padding: "8px 12px" }}
               >
                 {selectedRequest.reason}
               </Tag>
@@ -726,20 +793,14 @@ function CancellationRequestsPage() {
 
             {/* Additional Notes Card */}
             {selectedRequest.additionalNotes && (
-              <Card
-                title="Additional Notes"
-                size="small"
-              >
+              <Card title="Additional Notes" size="small">
                 <Text>{selectedRequest.additionalNotes}</Text>
               </Card>
             )}
 
             {/* Review Notes Card */}
             {selectedRequest.reviewNotes && (
-              <Card
-                title="Review Notes"
-                size="small"
-              >
+              <Card title="Review Notes" size="small">
                 <Text>{selectedRequest.reviewNotes}</Text>
               </Card>
             )}
@@ -750,4 +811,4 @@ function CancellationRequestsPage() {
   );
 }
 
-export default withRoleGuard(CancellationRequestsPage, ["admin"]); 
+export default withRoleGuard(CancellationRequestsPage, ["admin"]);

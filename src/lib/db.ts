@@ -3,8 +3,7 @@ import mongoose, { ConnectionStates } from "mongoose";
 import { AnnouncementModel } from "@/app/models/system/announcement.schema";
 import { KnowledgeArticleModel } from "@/app/models/system/knowledge-article.schema";
 
-const connectionString =
-  process.env.MONGODB_ATLAS_URI;
+const connectionString = process.env.MONGODB_ATLAS_URI;
 
 let cachedConnection: typeof mongoose | null = null;
 let ensuredIndexes = false;
@@ -34,13 +33,17 @@ async function ensureSearchIndexesOnce() {
         await collection.dropIndex(bad.name);
       }
 
-      const hasDesiredText = indexes.some((idx: any) => idx?.name === desiredTextName);
+      const hasDesiredText = indexes.some(
+        (idx: any) => idx?.name === desiredTextName
+      );
       if (!hasDesiredText) {
         await collection.createIndex(desiredTextKey, { name: desiredTextName });
       }
 
       // ensure a separate tags index exists (fast filtering)
-      const hasTags = indexes.some((idx: any) => idx?.key?.tags === 1 && idx?.name !== bad?.name);
+      const hasTags = indexes.some(
+        (idx: any) => idx?.key?.tags === 1 && idx?.name !== bad?.name
+      );
       if (!hasTags) {
         await collection.createIndex({ tags: 1 }, { name: "tags_1" });
       }
@@ -64,7 +67,9 @@ async function ensureSearchIndexesOnce() {
 
 export async function connectToDatabase() {
   if (!connectionString) {
-    throw new Error("Please define MONGODB_ATLAS_URI in the environment variables.");
+    throw new Error(
+      "Please define MONGODB_ATLAS_URI in the environment variables."
+    );
   }
 
   if (mongoose.connection.readyState != ConnectionStates.connected) {

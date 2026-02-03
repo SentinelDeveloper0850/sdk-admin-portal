@@ -1,16 +1,26 @@
-import { Types } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
-import { AnnouncementModel, AnnouncementReadModel } from "@/app/models/system/announcement.schema";
+import { Types } from "mongoose";
+
+import {
+  AnnouncementModel,
+  AnnouncementReadModel,
+} from "@/app/models/system/announcement.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   await connectToDatabase();
   const user = await getUserFromRequest(req);
 
   if (!user || !user._id) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   const { id } = await params;
@@ -21,7 +31,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   // ObjectId requests: return raw document for admin edit flows, no view increment
   if (isObjectId) {
     const ann = await AnnouncementModel.findById(idOrSlug).lean();
-    if (!ann) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+    if (!ann)
+      return NextResponse.json(
+        { success: false, message: "Not found" },
+        { status: 404 }
+      );
     const { _id, ...doc } = ann as any;
     return NextResponse.json({ id: String(_id), ...doc });
   }
@@ -31,28 +45,47 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!isAdmin) query.status = "PUBLISHED";
 
   let ann = await AnnouncementModel.findOne(query).lean();
-  if (!ann) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+  if (!ann)
+    return NextResponse.json(
+      { success: false, message: "Not found" },
+      { status: 404 }
+    );
 
   if (!isAdmin) {
-    await AnnouncementModel.updateOne({ _id: ann._id }, { $inc: { viewCount: 1 } });
+    await AnnouncementModel.updateOne(
+      { _id: ann._id },
+      { $inc: { viewCount: 1 } }
+    );
     ann.viewCount = (ann.viewCount ?? 0) + 1;
   }
 
-  const hasRead = !!(await AnnouncementReadModel.exists({ announcementId: ann._id, userId: user._id }));
+  const hasRead = !!(await AnnouncementReadModel.exists({
+    announcementId: ann._id,
+    userId: user._id,
+  }));
   const { _id, ...doc } = ann as any;
   return NextResponse.json({ id: String(_id), ...doc, hasRead });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   await connectToDatabase();
   const user = await getUserFromRequest(req);
 
   if (!user || !user._id) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   if (user.role !== "admin") {
-    return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+    return NextResponse.json(
+      { success: false, message: "Forbidden" },
+      { status: 403 }
+    );
   }
 
   const body = await req.json();
@@ -77,10 +110,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const { id } = await params;
-  const updated = await AnnouncementModel.findByIdAndUpdate(id, update, { new: true });
-  if (!updated) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+  const updated = await AnnouncementModel.findByIdAndUpdate(id, update, {
+    new: true,
+  });
+  if (!updated)
+    return NextResponse.json(
+      { success: false, message: "Not found" },
+      { status: 404 }
+    );
 
   return NextResponse.json({ id: String(updated._id) });
 }
-
-

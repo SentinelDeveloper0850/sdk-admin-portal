@@ -43,7 +43,12 @@ const KnowledgeArticleSchema = new Schema(
     viewCount: { type: Number, default: 0 },
     publishedAt: { type: Date },
 
-    authorId: { type: Types.ObjectId, ref: "users", required: true, index: true },
+    authorId: {
+      type: Types.ObjectId,
+      ref: "users",
+      required: true,
+      index: true,
+    },
   },
   { timestamps: true, collection: "knowledge_articles" }
 );
@@ -74,5 +79,8 @@ export interface IKnowledgeArticle extends mongoose.Document {
 
 export const KnowledgeArticleModel =
   mongoose.models.knowledge_articles ||
-  model<IKnowledgeArticle>("knowledge_articles", KnowledgeArticleSchema, "knowledge_articles");
-
+  model<IKnowledgeArticle>(
+    "knowledge_articles",
+    KnowledgeArticleSchema,
+    "knowledge_articles"
+  );

@@ -35,4 +35,3 @@ const dutyRosterSchema = new Schema(
 export const DutyRosterModel: Model<IDutyRoster> =
   mongoose.models.duty_rosters ||
   mongoose.model<IDutyRoster>("duty_rosters", dutyRosterSchema, "duty_rosters");
-

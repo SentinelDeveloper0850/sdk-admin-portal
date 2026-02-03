@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -10,10 +12,9 @@ import {
   InboxOutlined,
   MoreOutlined,
   QuestionCircleOutlined,
-  UserAddOutlined
+  UserAddOutlined,
 } from "@ant-design/icons";
 import { Button, Dropdown, Popconfirm, Space, Tooltip, message } from "antd";
-import { useState } from "react";
 
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
@@ -43,12 +44,15 @@ export const PolicySignupActions = ({
   onAddNotes,
   onEscalate,
   onArchive,
-  onDelete
+  onDelete,
 }: PolicySignupActionsProps) => {
   const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
 
-  const handleAction = async (action: string, callback: (record: IPolicySignUp) => void) => {
+  const handleAction = async (
+    action: string,
+    callback: (record: IPolicySignUp) => void
+  ) => {
     setLoading(action);
     try {
       callback(record);
@@ -93,7 +97,10 @@ export const PolicySignupActions = ({
         label: "Assign Consultant",
         icon: <UserAddOutlined />,
         onClick: () => handleAction("assign", onAssignConsultant),
-        disabled: record.currentStatus === "approved" || record.currentStatus === "rejected" || record.currentStatus === "archived",
+        disabled:
+          record.currentStatus === "approved" ||
+          record.currentStatus === "rejected" ||
+          record.currentStatus === "archived",
         danger: false,
       },
       {
@@ -101,7 +108,10 @@ export const PolicySignupActions = ({
         label: "Mark as Reviewed",
         icon: <CheckCircleOutlined />,
         onClick: () => handleAction("review", onMarkAsReviewed),
-        disabled: record.currentStatus === "approved" || record.currentStatus === "rejected" || record.currentStatus === "archived",
+        disabled:
+          record.currentStatus === "approved" ||
+          record.currentStatus === "rejected" ||
+          record.currentStatus === "archived",
         danger: false,
       },
       {
@@ -109,7 +119,10 @@ export const PolicySignupActions = ({
         label: "Approve",
         icon: <CheckCircleOutlined />,
         onClick: () => handleAction("approve", onApprove),
-        disabled: record.currentStatus === "approved" || record.currentStatus === "rejected" || record.currentStatus === "archived",
+        disabled:
+          record.currentStatus === "approved" ||
+          record.currentStatus === "rejected" ||
+          record.currentStatus === "archived",
         danger: false,
       },
       {
@@ -117,7 +130,10 @@ export const PolicySignupActions = ({
         label: "Reject",
         icon: <CloseCircleOutlined />,
         onClick: () => handleAction("reject", onReject),
-        disabled: record.currentStatus === "approved" || record.currentStatus === "rejected" || record.currentStatus === "archived",
+        disabled:
+          record.currentStatus === "approved" ||
+          record.currentStatus === "rejected" ||
+          record.currentStatus === "archived",
         danger: false,
       },
       {
@@ -125,7 +141,10 @@ export const PolicySignupActions = ({
         label: "Request More Info",
         icon: <QuestionCircleOutlined />,
         onClick: () => handleAction("request_info", onRequestMoreInfo),
-        disabled: record.currentStatus === "approved" || record.currentStatus === "rejected" || record.currentStatus === "archived",
+        disabled:
+          record.currentStatus === "approved" ||
+          record.currentStatus === "rejected" ||
+          record.currentStatus === "archived",
         danger: false,
       },
       {
@@ -140,7 +159,10 @@ export const PolicySignupActions = ({
         label: "Escalate",
         icon: <ExclamationCircleOutlined />,
         onClick: () => handleAction("escalate", onEscalate),
-        disabled: record.currentStatus === "approved" || record.currentStatus === "rejected" || record.currentStatus === "archived",
+        disabled:
+          record.currentStatus === "approved" ||
+          record.currentStatus === "rejected" ||
+          record.currentStatus === "archived",
         danger: false,
       },
       {
@@ -148,7 +170,9 @@ export const PolicySignupActions = ({
         label: "Archive",
         icon: <InboxOutlined />,
         onClick: () => handleAction("archive", onArchive),
-        disabled: record.currentStatus === "submitted" || record.currentStatus === "pending_info",
+        disabled:
+          record.currentStatus === "submitted" ||
+          record.currentStatus === "pending_info",
         danger: false,
       },
     ];

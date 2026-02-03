@@ -1,7 +1,12 @@
-'use client';
+"use client";
 
-import { loadPolicyData, PolicyData, validatePolicyData } from '@/utils/policy-parser';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+
+import {
+  PolicyData,
+  loadPolicyData,
+  validatePolicyData,
+} from "@/utils/policy-parser";
 
 export default function PolicyDataViewer() {
   const [policyData, setPolicyData] = useState<PolicyData[]>([]);
@@ -22,7 +27,7 @@ export default function PolicyDataViewer() {
       let valid = 0;
       let invalid = 0;
 
-      data.forEach(item => {
+      data.forEach((item) => {
         if (validatePolicyData(item)) {
           valid++;
         } else {
@@ -33,7 +38,9 @@ export default function PolicyDataViewer() {
       setValidCount(valid);
       setInvalidCount(invalid);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load policy data');
+      setError(
+        err instanceof Error ? err.message : "Failed to load policy data"
+      );
     } finally {
       setLoading(false);
     }
@@ -41,15 +48,15 @@ export default function PolicyDataViewer() {
 
   const exportToCSV = () => {
     const csvContent = [
-      'Policy Number,EasyPay Number',
-      ...policyData.map(item => `${item.policyNumber},${item.easyPayNumber}`)
-    ].join('\n');
+      "Policy Number,EasyPay Number",
+      ...policyData.map((item) => `${item.policyNumber},${item.easyPayNumber}`),
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'policy-data.csv';
+    a.download = "policy-data.csv";
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -61,7 +68,7 @@ export default function PolicyDataViewer() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
         <span className="ml-2">Loading policy data...</span>
       </div>
     );
@@ -69,13 +76,13 @@ export default function PolicyDataViewer() {
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto p-6 border border-red-200 rounded-lg bg-red-50">
+      <div className="mx-auto max-w-2xl rounded-lg border border-red-200 bg-red-50 p-6">
         <div className="flex items-center text-red-600">
           <span>⚠️ Error: {error}</span>
         </div>
         <button
           onClick={loadData}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
         >
           Retry
         </button>
@@ -85,35 +92,41 @@ export default function PolicyDataViewer() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="bg-white border rounded-lg p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
+      <div className="rounded-lg border bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Policy Data Summary</h2>
           <button
             onClick={exportToCSV}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
           >
             📥 Export CSV
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-blue-50 rounded">
-            <div className="text-2xl font-bold text-blue-600">{policyData.length}</div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded bg-blue-50 p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {policyData.length}
+            </div>
             <div className="text-sm text-gray-600">Total Records</div>
           </div>
-          <div className="text-center p-4 bg-green-50 rounded">
-            <div className="text-2xl font-bold text-green-600">{validCount}</div>
+          <div className="rounded bg-green-50 p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {validCount}
+            </div>
             <div className="text-sm text-gray-600">Valid Records</div>
           </div>
-          <div className="text-center p-4 bg-red-50 rounded">
-            <div className="text-2xl font-bold text-red-600">{invalidCount}</div>
+          <div className="rounded bg-red-50 p-4 text-center">
+            <div className="text-2xl font-bold text-red-600">
+              {invalidCount}
+            </div>
             <div className="text-sm text-gray-600">Invalid Records</div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg p-6 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Policy Data Preview</h3>
+      <div className="rounded-lg border bg-white p-6 shadow-sm">
+        <h3 className="mb-4 text-lg font-semibold">Policy Data Preview</h3>
         <div className="max-h-96 overflow-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -126,15 +139,19 @@ export default function PolicyDataViewer() {
             <tbody>
               {policyData.slice(0, 20).map((item, index) => (
                 <tr key={index} className="hover:bg-gray-50">
-                  <td className="border px-4 py-2 font-mono">{item.policyNumber}</td>
-                  <td className="border px-4 py-2 font-mono">{item.easyPayNumber}</td>
+                  <td className="border px-4 py-2 font-mono">
+                    {item.policyNumber}
+                  </td>
+                  <td className="border px-4 py-2 font-mono">
+                    {item.easyPayNumber}
+                  </td>
                   <td className="border px-4 py-2">
                     {validatePolicyData(item) ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
                         ✅ Valid
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
                         ❌ Invalid
                       </span>
                     )}
@@ -145,11 +162,11 @@ export default function PolicyDataViewer() {
           </table>
         </div>
         {policyData.length > 20 && (
-          <div className="text-center mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-center text-sm text-gray-600">
             Showing first 20 of {policyData.length} records
           </div>
         )}
       </div>
     </div>
   );
-} 
+}

@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import {
+  CalendarOutlined,
+  LeftOutlined,
+  ReloadOutlined,
+  RightOutlined,
+} from "@ant-design/icons";
 import { Avatar, Card, Chip, Divider } from "@nextui-org/react";
 import {
   Avatar as AntAvatar,
@@ -24,16 +30,12 @@ import {
 import dayjs from "dayjs";
 import sweetAlert from "sweetalert";
 
-import {
-  getDateTime,
-  getTime,
-} from "@/utils/formatters";
+import { getDateTime, getTime } from "@/utils/formatters";
 
 import PageHeader from "@/app/components/page-header";
 import { IBranch } from "@/app/models/system/branch.schema";
 import { useAuth } from "@/context/auth-context";
 import { formatPolicyNumber } from "@/lib/utils";
-import { CalendarOutlined, LeftOutlined, ReloadOutlined, RightOutlined } from "@ant-design/icons";
 
 const activities = [
   {
@@ -203,23 +205,37 @@ export default function DailyActivityPage() {
 
   const calculateStats = (reportsData: any[]) => {
     const selectedDateStr = selectedDate.format("DD/MM/YYYY");
-    const dayReports = reportsData.filter(report => report.date === selectedDateStr);
+    const dayReports = reportsData.filter(
+      (report) => report.date === selectedDateStr
+    );
 
-    const totalActivities = dayReports.reduce((sum, report) => sum + (report.activities?.length || 0), 0);
-    const branches = [...new Set(dayReports.map(report => report.branch))];
+    const totalActivities = dayReports.reduce(
+      (sum, report) => sum + (report.activities?.length || 0),
+      0
+    );
+    const branches = [...new Set(dayReports.map((report) => report.branch))];
 
     // Find most active branch
-    const branchCounts = branches.reduce((acc, branch) => {
-      acc[branch] = dayReports.filter(report => report.branch === branch).length;
-      return acc;
-    }, {} as Record<string, number>);
+    const branchCounts = branches.reduce(
+      (acc, branch) => {
+        acc[branch] = dayReports.filter(
+          (report) => report.branch === branch
+        ).length;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    const mostActiveBranch = Object.entries(branchCounts).sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || "None";
+    const mostActiveBranch =
+      Object.entries(branchCounts).sort(
+        ([, a], [, b]) => (b as number) - (a as number)
+      )[0]?.[0] || "None";
 
     // Calculate compliance rate (this would need to be fetched from dashboard API in a real implementation)
     const expectedUsers = 10; // This should come from the dashboard API
     const submittedUsers = dayReports.length;
-    const complianceRate = expectedUsers > 0 ? (submittedUsers / expectedUsers) * 100 : 0;
+    const complianceRate =
+      expectedUsers > 0 ? (submittedUsers / expectedUsers) * 100 : 0;
 
     setStats({
       totalReports: dayReports.length,
@@ -236,7 +252,7 @@ export default function DailyActivityPage() {
     try {
       const response = await fetch("/api/configurations/branches");
       const { data } = await response.json();
-      console.log("🚀 ~ fetchBranches ~ data:", data)
+      console.log("🚀 ~ fetchBranches ~ data:", data);
       if (response.ok) {
         setBranches(data as IBranch[]);
       } else if (response.status == 404) {
@@ -260,8 +276,7 @@ export default function DailyActivityPage() {
         icon: "error",
         timer: 2000,
       });
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -284,22 +299,25 @@ export default function DailyActivityPage() {
   // Filter reports based on selected date, search, and branch filter
   const filteredReports = useMemo(() => {
     const selectedDateStr = selectedDate.format("DD/MM/YYYY");
-    let filtered = allReports.filter(report => report.date === selectedDateStr);
+    let filtered = allReports.filter(
+      (report) => report.date === selectedDateStr
+    );
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(report =>
-        report.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.branch?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.activities?.some((activity: any) =>
-          activity.name?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      filtered = filtered.filter(
+        (report) =>
+          report.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          report.branch?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          report.activities?.some((activity: any) =>
+            activity.name?.toLowerCase().includes(searchTerm.toLowerCase())
+          )
       );
     }
 
     // Apply branch filter
     if (branchFilter) {
-      filtered = filtered.filter(report => report.branch === branchFilter);
+      filtered = filtered.filter((report) => report.branch === branchFilter);
     }
 
     return filtered;
@@ -334,11 +352,11 @@ export default function DailyActivityPage() {
         const reportDate = dayjs(values.date).format("DD/MM/YYYY");
         const reportTime = dayjs(values.time).format("HH:mm");
         const userId = user.id ?? user._id;
-        const branch = branches.find(branch => {
+        const branch = branches.find((branch) => {
           return branch._id?.toString() === values.branch?.toString();
         });
 
-        console.log("🚀 ~ submitReport ~ branch:", branch)
+        console.log("🚀 ~ submitReport ~ branch:", branch);
 
         const response = await fetch("/api/daily-activity", {
           method: "POST",
@@ -395,12 +413,16 @@ export default function DailyActivityPage() {
   };
 
   const addActivityToReport = () => {
-    const { activity, policyNumber, claimNumber, societyName } = form.getFieldsValue();
+    const { activity, policyNumber, claimNumber, societyName } =
+      form.getFieldsValue();
     let newActivity: any = { name: activity };
 
-    const formattedPolicyNumber = policyNumber ? formatPolicyNumber(policyNumber) : null;
+    const formattedPolicyNumber = policyNumber
+      ? formatPolicyNumber(policyNumber)
+      : null;
 
-    if (selectedActivity.type == "policy") newActivity.policyNumber = formattedPolicyNumber;
+    if (selectedActivity.type == "policy")
+      newActivity.policyNumber = formattedPolicyNumber;
     if (activity == "Claim Processing") newActivity.claimNumber = claimNumber;
     if (activity == "Society") newActivity.societyName = societyName;
 
@@ -465,14 +487,14 @@ export default function DailyActivityPage() {
   };
 
   const handlePreviousDay = () => {
-    setSelectedDate(selectedDate.subtract(1, 'day'));
+    setSelectedDate(selectedDate.subtract(1, "day"));
     setCurrentPage(1);
   };
 
   const handleNextDay = () => {
-    const tomorrow = dayjs().add(1, 'day');
-    if (selectedDate.isBefore(tomorrow, 'day')) {
-      setSelectedDate(selectedDate.add(1, 'day'));
+    const tomorrow = dayjs().add(1, "day");
+    if (selectedDate.isBefore(tomorrow, "day")) {
+      setSelectedDate(selectedDate.add(1, "day"));
       setCurrentPage(1);
     }
   };
@@ -504,7 +526,8 @@ export default function DailyActivityPage() {
             {/* Submit report button */}
             {reportSubmissionDue == true && (
               <Button
-                type="primary" className="text-black"
+                type="primary"
+                className="text-black"
                 onClick={() => setCreateDrawerOpen(true)}
               >
                 Submit Report
@@ -517,17 +540,31 @@ export default function DailyActivityPage() {
       {/* Stats Cards */}
       {stats && (
         <div className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-blue-50 dark:bg-blue-900/20">
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Total Reports</p>
-                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.totalReports}</p>
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                      Total Reports
+                    </p>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                      {stats.totalReports}
+                    </p>
                   </div>
                   <div className="text-blue-500">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg
+                      className="h-8 w-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -538,12 +575,26 @@ export default function DailyActivityPage() {
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-green-600 dark:text-green-400 font-medium">Total Activities</p>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.totalActivities}</p>
+                    <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                      Total Activities
+                    </p>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                      {stats.totalActivities}
+                    </p>
                   </div>
                   <div className="text-green-500">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <svg
+                      className="h-8 w-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -554,12 +605,26 @@ export default function DailyActivityPage() {
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Most Active Branch</p>
-                    <p className="text-lg font-bold text-purple-700 dark:text-purple-300 truncate">{stats.mostActiveBranch}</p>
+                    <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                      Most Active Branch
+                    </p>
+                    <p className="truncate text-lg font-bold text-purple-700 dark:text-purple-300">
+                      {stats.mostActiveBranch}
+                    </p>
                   </div>
                   <div className="text-purple-500">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <svg
+                      className="h-8 w-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -570,13 +635,29 @@ export default function DailyActivityPage() {
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">Compliance Rate</p>
-                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{stats.complianceRate.toFixed(1)}%</p>
-                    <p className="text-xs text-orange-600 dark:text-orange-400">{stats.submittedUsers}/{stats.expectedUsers} users</p>
+                    <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                      Compliance Rate
+                    </p>
+                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                      {stats.complianceRate.toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400">
+                      {stats.submittedUsers}/{stats.expectedUsers} users
+                    </p>
                   </div>
                   <div className="text-orange-500">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="h-8 w-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -590,19 +671,21 @@ export default function DailyActivityPage() {
       <div className="mb-6">
         <Card className="bg-white dark:bg-gray-800">
           <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
                   type="primary"
-                  size="small" className="text-black text-xs"
+                  size="small"
+                  className="text-xs text-black"
                   onClick={handlePreviousDay}
                   icon={<LeftOutlined />}
                 >
                   Previous Day
                 </Button>
                 <Button
-                  type="primary" size="small"
-                  className="text-black text-xs"
+                  type="primary"
+                  size="small"
+                  className="text-xs text-black"
                   onClick={handleToday}
                   icon={<CalendarOutlined />}
                 >
@@ -611,9 +694,9 @@ export default function DailyActivityPage() {
                 <Button
                   type="primary"
                   size="small"
-                  className="text-black text-xs"
+                  className="text-xs text-black"
                   onClick={handleNextDay}
-                  disabled={selectedDate.isSame(dayjs(), 'day')}
+                  disabled={selectedDate.isSame(dayjs(), "day")}
                   icon={<RightOutlined />}
                   iconPosition="end"
                 >
@@ -621,19 +704,30 @@ export default function DailyActivityPage() {
                 </Button>
               </div>
               <div className="text-lg font-semibold">
-                {selectedDate.format('dddd, MMMM D, YYYY')}
+                {selectedDate.format("dddd, MMMM D, YYYY")}
               </div>
             </div>
 
             {/* Search and Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <AntInput
                 placeholder="Search reports..."
-                value={searchTerm} allowClear
+                value={searchTerm}
+                allowClear
                 onChange={(e) => setSearchTerm(e.target.value)}
                 prefix={
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    className="h-4 w-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 }
               />
@@ -655,7 +749,11 @@ export default function DailyActivityPage() {
                   {filteredReports.length} reports
                 </Chip>
                 {branchFilter && (
-                  <Chip color="secondary" variant="flat" onClose={() => setBranchFilter("")}>
+                  <Chip
+                    color="secondary"
+                    variant="flat"
+                    onClose={() => setBranchFilter("")}
+                  >
                     Branch: {branchFilter}
                   </Chip>
                 )}
@@ -680,7 +778,8 @@ export default function DailyActivityPage() {
               onChange: (page) => setCurrentPage(page),
               showSizeChanger: false,
               showQuickJumper: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} reports`,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} of ${total} reports`,
             }}
             columns={[
               {
@@ -718,13 +817,21 @@ export default function DailyActivityPage() {
                 render: (activities: any[]) => (
                   <div className="flex flex-wrap gap-1">
                     <Chip color="success" variant="flat" size="sm">
-                      {activities.length} {activities.length === 1 ? "Activity" : "Activities"}
+                      {activities.length}{" "}
+                      {activities.length === 1 ? "Activity" : "Activities"}
                     </Chip>
-                    {activities.slice(0, 2).map((activity: any, index: number) => (
-                      <Chip key={index} color="default" variant="flat" size="sm">
-                        {activity.name}
-                      </Chip>
-                    ))}
+                    {activities
+                      .slice(0, 2)
+                      .map((activity: any, index: number) => (
+                        <Chip
+                          key={index}
+                          color="default"
+                          variant="flat"
+                          size="sm"
+                        >
+                          {activity.name}
+                        </Chip>
+                      ))}
                     {activities.length > 2 && (
                       <Chip color="default" variant="flat" size="sm">
                         +{activities.length - 2} more
@@ -738,9 +845,7 @@ export default function DailyActivityPage() {
                 dataIndex: "createdAt",
                 key: "createdAt",
                 render: (val: string) => (
-                  <span className="text-sm">
-                    {getTime(val)}
-                  </span>
+                  <span className="text-sm">{getTime(val)}</span>
                 ),
                 sorter: (a: any, b: any) =>
                   new Date(a.createdAt).getTime() -
@@ -795,15 +900,24 @@ export default function DailyActivityPage() {
         footer={
           <Flex justify="space-between" gap={2}>
             <Space>
-              <Button type="primary" className="bg-gray-400 hover:!bg-gray-500 text-black" onClick={saveDraft}>
+              <Button
+                type="primary"
+                className="bg-gray-400 text-black hover:!bg-gray-500"
+                onClick={saveDraft}
+              >
                 Save Draft
               </Button>
-              <Button type="primary" className="bg-green-500 hover:!bg-green-600 text-black" onClick={() => form.submit()}>
+              <Button
+                type="primary"
+                className="bg-green-500 text-black hover:!bg-green-600"
+                onClick={() => form.submit()}
+              >
                 Save & Submit
               </Button>
             </Space>
             <Button
-              danger type="default"
+              danger
+              type="default"
               onClick={() => {
                 resetForm();
                 setCreateDrawerOpen(false);

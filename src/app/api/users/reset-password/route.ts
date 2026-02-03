@@ -1,9 +1,11 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { generateTemporaryPassword } from "@/utils/generators/password";
+
 import UsersModel from "@/app/models/hr/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { sendPasswordResetEmail } from "@/lib/email";
-import { generateTemporaryPassword } from "@/utils/generators/password";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the current user is an admin
-    if (currentUser.role !== 'admin') {
+    if (currentUser.role !== "admin") {
       return NextResponse.json(
         { message: "Unauthorized - Admin access required" },
         { status: 403 }
@@ -40,14 +42,11 @@ export async function POST(request: NextRequest) {
     // Find the target user
     const targetUser = await UsersModel.findById(userId);
     if (!targetUser) {
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     // Prevent admin from resetting another admin's password
-    if (targetUser.roles?.includes('admin')) {
+    if (targetUser.roles?.includes("admin")) {
       return NextResponse.json(
         { message: "Cannot reset password for admin users" },
         { status: 403 }
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Generate new temporary password
     const newPassword = generateTemporaryPassword();
-    console.log("🚀 ~ POST ~ newPassword:", newPassword)
+    console.log("🚀 ~ POST ~ newPassword:", newPassword);
 
     // Update user with new password and set mustChangePassword flag
     targetUser.password = newPassword;
@@ -71,11 +70,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (!emailResult.success) {
-      console.error('Failed to send password reset email:', emailResult.error);
+      console.error("Failed to send password reset email:", emailResult.error);
       return NextResponse.json(
         {
-          message: "Password reset successful but failed to send email notification",
-          warning: "Please contact the user directly with their new password"
+          message:
+            "Password reset successful but failed to send email notification",
+          warning: "Please contact the user directly with their new password",
         },
         { status: 200 }
       );
@@ -87,12 +87,11 @@ export async function POST(request: NextRequest) {
         user: {
           id: targetUser._id,
           name: targetUser.name,
-          email: targetUser.email
-        }
+          email: targetUser.email,
+        },
       },
       { status: 200 }
     );
-
   } catch (error) {
     console.error("Error resetting password:", error);
     return NextResponse.json(
@@ -100,4 +99,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

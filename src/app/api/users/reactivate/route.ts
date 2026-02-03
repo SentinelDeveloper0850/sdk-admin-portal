@@ -1,6 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import UsersModel from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +23,10 @@ export async function POST(request: NextRequest) {
     user.status = "Active";
     await user.save();
 
-    return NextResponse.json({ message: "User reactivated", user }, { status: 200 });
+    return NextResponse.json(
+      { message: "User reactivated", user },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error reactivating user:", error);
     return NextResponse.json(
@@ -31,5 +35,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

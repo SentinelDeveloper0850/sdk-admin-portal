@@ -44,113 +44,123 @@ export interface IDailyActivityReminderConfig extends Document {
   shouldRunToday(): boolean;
 }
 
-const dailyActivityReminderConfigSchema = new Schema<IDailyActivityReminderConfig>({
-  isEnabled: {
-    type: Boolean,
-    default: true,
-    required: true,
-  },
-  reminderTime: {
-    type: String,
-    default: "16:00",
-    required: true,
-    validate: {
-      validator: function (value: string) {
-        return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+const dailyActivityReminderConfigSchema =
+  new Schema<IDailyActivityReminderConfig>(
+    {
+      isEnabled: {
+        type: Boolean,
+        default: true,
+        required: true,
       },
-      message: "Reminder time must be in HH:mm format (e.g., 16:00)"
-    }
-  },
-  cutoffTime: {
-    type: String,
-    default: "18:00",
-    required: true,
-    validate: {
-      validator: function (value: string) {
-        return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+      reminderTime: {
+        type: String,
+        default: "16:00",
+        required: true,
+        validate: {
+          validator: function (value: string) {
+            return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+          },
+          message: "Reminder time must be in HH:mm format (e.g., 16:00)",
+        },
       },
-      message: "Cutoff time must be in HH:mm format (e.g., 18:00)"
-    }
-  },
-  excludeWeekends: {
-    type: Boolean,
-    default: true,
-  },
-  excludeHolidays: {
-    type: Boolean,
-    default: true,
-  },
-  excludeDates: [{
-    type: String,
-    validate: {
-      validator: function (value: string) {
-        return /^\d{4}-\d{2}-\d{2}$/.test(value);
+      cutoffTime: {
+        type: String,
+        default: "18:00",
+        required: true,
+        validate: {
+          validator: function (value: string) {
+            return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+          },
+          message: "Cutoff time must be in HH:mm format (e.g., 18:00)",
+        },
       },
-      message: "Exclude dates must be in YYYY-MM-DD format"
+      excludeWeekends: {
+        type: Boolean,
+        default: true,
+      },
+      excludeHolidays: {
+        type: Boolean,
+        default: true,
+      },
+      excludeDates: [
+        {
+          type: String,
+          validate: {
+            validator: function (value: string) {
+              return /^\d{4}-\d{2}-\d{2}$/.test(value);
+            },
+            message: "Exclude dates must be in YYYY-MM-DD format",
+          },
+        },
+      ],
+      sendFirstReminder: {
+        type: Boolean,
+        default: true,
+      },
+      firstReminderOffset: {
+        type: Number,
+        default: 120, // 2 hours before cutoff
+        min: 0,
+        max: 1440, // 24 hours
+      },
+      sendFinalReminder: {
+        type: Boolean,
+        default: true,
+      },
+      finalReminderOffset: {
+        type: Number,
+        default: 30, // 30 minutes before cutoff
+        min: 0,
+        max: 1440, // 24 hours
+      },
+      sendToAllUsers: {
+        type: Boolean,
+        default: true,
+      },
+      excludeRoles: [
+        {
+          type: String,
+          enum: ["admin", "manager", "member", "driver", "consultant"],
+        },
+      ],
+      includeRoles: [
+        {
+          type: String,
+          enum: ["admin", "manager", "member", "driver", "consultant"],
+        },
+      ],
+      emailSubject: {
+        type: String,
+        default: "Daily Activity Report Reminder",
+      },
+      emailTemplate: {
+        type: String,
+        default: "", // Empty means use default template
+      },
+      lastRunAt: {
+        type: Date,
+      },
+      nextRunAt: {
+        type: Date,
+      },
+      totalRemindersSent: {
+        type: Number,
+        default: 0,
+      },
+      createdBy: {
+        type: String,
+        required: true,
+      },
+      updatedBy: {
+        type: String,
+        required: true,
+      },
+    },
+    {
+      timestamps: true,
+      collection: "daily_activity_reminder_configs",
     }
-  }],
-  sendFirstReminder: {
-    type: Boolean,
-    default: true,
-  },
-  firstReminderOffset: {
-    type: Number,
-    default: 120, // 2 hours before cutoff
-    min: 0,
-    max: 1440, // 24 hours
-  },
-  sendFinalReminder: {
-    type: Boolean,
-    default: true,
-  },
-  finalReminderOffset: {
-    type: Number,
-    default: 30, // 30 minutes before cutoff
-    min: 0,
-    max: 1440, // 24 hours
-  },
-  sendToAllUsers: {
-    type: Boolean,
-    default: true,
-  },
-  excludeRoles: [{
-    type: String,
-    enum: ["admin", "manager", "member", "driver", "consultant"]
-  }],
-  includeRoles: [{
-    type: String,
-    enum: ["admin", "manager", "member", "driver", "consultant"]
-  }],
-  emailSubject: {
-    type: String,
-    default: "Daily Activity Report Reminder",
-  },
-  emailTemplate: {
-    type: String,
-    default: "", // Empty means use default template
-  },
-  lastRunAt: {
-    type: Date,
-  },
-  nextRunAt: {
-    type: Date,
-  },
-  totalRemindersSent: {
-    type: Number,
-    default: 0,
-  },
-  createdBy: {
-    type: String,
-    required: true,
-  },
-  updatedBy: {
-    type: String,
-    required: true,
-  },
-}, {
-  timestamps: true,
-  collection: "daily_activity_reminder_configs"
-});
+  );
 
 // Indexes for performance
 dailyActivityReminderConfigSchema.index({ isEnabled: 1 });
@@ -191,7 +201,9 @@ dailyActivityReminderConfigSchema.methods.calculateNextRunTime = function () {
   }
 
   // Skip excluded dates
-  while (this.excludeDates.includes(todayReminder.toISOString().split('T')[0])) {
+  while (
+    this.excludeDates.includes(todayReminder.toISOString().split("T")[0])
+  ) {
     todayReminder.setDate(todayReminder.getDate() + 1);
   }
 
@@ -203,13 +215,14 @@ dailyActivityReminderConfigSchema.methods.shouldRunToday = function () {
   if (!this.isEnabled) return false;
 
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = today.toISOString().split("T")[0];
 
   // Check if today is excluded
   if (this.excludeDates.includes(todayStr)) return false;
 
   // Check if today is weekend and weekends are excluded
-  if (this.excludeWeekends && (today.getDay() === 0 || today.getDay() === 6)) return false;
+  if (this.excludeWeekends && (today.getDay() === 0 || today.getDay() === 6))
+    return false;
 
   // TODO: Add holiday check when holiday system is implemented
   if (this.excludeHolidays) {
@@ -221,4 +234,8 @@ dailyActivityReminderConfigSchema.methods.shouldRunToday = function () {
 
 export const DailyActivityReminderConfigModel =
   mongoose.models.daily_activity_reminder_configs ||
-  mongoose.model<IDailyActivityReminderConfig>("daily_activity_reminder_configs", dailyActivityReminderConfigSchema, "daily_activity_reminder_configs"); 
+  mongoose.model<IDailyActivityReminderConfig>(
+    "daily_activity_reminder_configs",
+    dailyActivityReminderConfigSchema,
+    "daily_activity_reminder_configs"
+  );

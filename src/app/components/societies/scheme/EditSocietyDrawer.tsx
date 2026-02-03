@@ -1,8 +1,10 @@
 "use client";
 
-import { ISchemeSociety } from "@/app/models/scheme/scheme-society.schema";
-import { Button, Collapse, Drawer, Flex, Form, Input } from "antd";
 import React, { useEffect } from "react";
+
+import { Button, Collapse, Drawer, Flex, Form, Input } from "antd";
+
+import { ISchemeSociety } from "@/app/models/scheme/scheme-society.schema";
 
 interface EditSocietyDrawerProps {
   open: boolean;
@@ -13,7 +15,12 @@ interface EditSocietyDrawerProps {
 
 const formItemStyles = "w-full";
 
-export default function EditSocietyDrawer({ open, society, onClose, onUpdated }: EditSocietyDrawerProps) {
+export default function EditSocietyDrawer({
+  open,
+  society,
+  onClose,
+  onUpdated,
+}: EditSocietyDrawerProps) {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -56,7 +63,11 @@ export default function EditSocietyDrawer({ open, society, onClose, onUpdated }:
       onUpdated(data);
       onClose();
     } catch (err) {
-      await sweetAlert({ title: "Failed to update society", icon: "error", timer: 2000 });
+      await sweetAlert({
+        title: "Failed to update society",
+        icon: "error",
+        timer: 2000,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -72,59 +83,116 @@ export default function EditSocietyDrawer({ open, society, onClose, onUpdated }:
       footer={
         <div className="flex justify-end gap-2">
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" className="text-black" loading={submitting} onClick={handleSubmit}>Save Changes</Button>
+          <Button
+            type="primary"
+            className="text-black"
+            loading={submitting}
+            onClick={handleSubmit}
+          >
+            Save Changes
+          </Button>
         </div>
       }
     >
       <Form layout="vertical" form={form} className="space-y-2">
         <Flex gap={16}>
-          <Form.Item className={formItemStyles} label="Society Name" name="name" rules={[{ required: true, message: "Please enter society name" }]}>
+          <Form.Item
+            className={formItemStyles}
+            label="Society Name"
+            name="name"
+            rules={[{ required: true, message: "Please enter society name" }]}
+          >
             <Input />
           </Form.Item>
 
-          <Form.Item className={formItemStyles} label="ID on ASSIT" name="assitID">
+          <Form.Item
+            className={formItemStyles}
+            label="ID on ASSIT"
+            name="assitID"
+          >
             <Input />
           </Form.Item>
-          <Form.Item className={formItemStyles} label="Plan" name="planName" rules={[{ required: true, message: "Please enter plan" }]}>
+          <Form.Item
+            className={formItemStyles}
+            label="Plan"
+            name="planName"
+            rules={[{ required: true, message: "Please enter plan" }]}
+          >
             <Input />
           </Form.Item>
         </Flex>
         <Collapse accordion>
           <Collapse.Panel header="Chairman" key="1">
             <Flex gap={16}>
-              <Form.Item className={formItemStyles} label="Name" name="chairman">
+              <Form.Item
+                className={formItemStyles}
+                label="Name"
+                name="chairman"
+              >
                 <Input />
               </Form.Item>
-              <Form.Item className={formItemStyles} label="Email" name="chairmanEmail">
+              <Form.Item
+                className={formItemStyles}
+                label="Email"
+                name="chairmanEmail"
+              >
                 <Input />
               </Form.Item>
-              <Form.Item className={formItemStyles} label="Phone" name="chairmanPhone">
+              <Form.Item
+                className={formItemStyles}
+                label="Phone"
+                name="chairmanPhone"
+              >
                 <Input />
               </Form.Item>
             </Flex>
           </Collapse.Panel>
           <Collapse.Panel header="Secretary" key="2">
             <Flex gap={16}>
-              <Form.Item className={formItemStyles} label="Name" name="secretary">
+              <Form.Item
+                className={formItemStyles}
+                label="Name"
+                name="secretary"
+              >
                 <Input />
               </Form.Item>
-              <Form.Item className={formItemStyles} label="Email" name="secretaryEmail">
+              <Form.Item
+                className={formItemStyles}
+                label="Email"
+                name="secretaryEmail"
+              >
                 <Input />
               </Form.Item>
-              <Form.Item className={formItemStyles} label="Phone" name="secretaryPhone">
+              <Form.Item
+                className={formItemStyles}
+                label="Phone"
+                name="secretaryPhone"
+              >
                 <Input />
               </Form.Item>
             </Flex>
           </Collapse.Panel>
           <Collapse.Panel header="Treasurer" key="3">
             <Flex gap={16}>
-              <Form.Item className={formItemStyles} label="Name" name="treasurer">
+              <Form.Item
+                className={formItemStyles}
+                label="Name"
+                name="treasurer"
+              >
                 <Input />
               </Form.Item>
-              <Form.Item className={formItemStyles} label="Email" name="treasurerEmail">
+              <Form.Item
+                className={formItemStyles}
+                label="Email"
+                name="treasurerEmail"
+              >
                 <Input />
               </Form.Item>
-              <Form.Item className={formItemStyles} label="Phone" name="treasurerPhone">
+              <Form.Item
+                className={formItemStyles}
+                label="Phone"
+                name="treasurerPhone"
+              >
                 <Input />
               </Form.Item>
             </Flex>
@@ -134,5 +202,3 @@ export default function EditSocietyDrawer({ open, society, onClose, onUpdated }:
     </Drawer>
   );
 }
-
-

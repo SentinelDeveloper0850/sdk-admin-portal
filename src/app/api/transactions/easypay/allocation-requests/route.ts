@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequest } from "@/lib/auth";
-import { connectToDatabase } from "@/lib/db";
-
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 import UserModel from "@/app/models/hr/user.schema";
+import { getUserFromRequest } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +17,9 @@ export async function GET(request: NextRequest) {
       "easypay_reviewer",
       "easypay_allocator",
     ];
-    const userRoles = [user.role, ...(user.roles || [])].filter(Boolean) as string[];
+    const userRoles = [user.role, ...(user.roles || [])].filter(
+      Boolean
+    ) as string[];
     const hasAccess = userRoles.some((r) => allowedRoles.includes(r));
     if (!hasAccess) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -48,12 +49,18 @@ export async function GET(request: NextRequest) {
     if (requester) {
       // Find users whose name/email matches; then filter by their ids
       const rx = new RegExp(requester, "i");
-      const users = await UserModel.find({ $or: [{ name: rx }, { email: rx }] }, { _id: 1 });
+      const users = await UserModel.find(
+        { $or: [{ name: rx }, { email: rx }] },
+        { _id: 1 }
+      );
       const ids = users.map((u) => u._id);
       // If no matches, make sure query returns empty
       query.requestedBy = ids.length ? { $in: ids } : null;
       if (query.requestedBy === null) {
-        return NextResponse.json({ items: [], pagination: { page, limit, total: 0 } });
+        return NextResponse.json({
+          items: [],
+          pagination: { page, limit, total: 0 },
+        });
       }
     }
 
@@ -78,12 +85,37 @@ export async function GET(request: NextRequest) {
         createdAt: 1,
         updatedAt: 1,
       })
-        .populate({ path: 'transaction', options: { strictPopulate: false } }) // gets EFT or Easypay
-        .populate({ path: 'requestedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
-        .populate({ path: 'approvedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
-        .populate({ path: 'submittedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
-        .populate({ path: 'rejectedBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
-        .populate({ path: 'cancelledBy', model: 'users', select: 'name email', options: { strictPopulate: false } })
+        .populate({ path: "transaction", options: { strictPopulate: false } }) // gets EFT or Easypay
+        .populate({
+          path: "requestedBy",
+          model: "users",
+          select: "name email",
+          options: { strictPopulate: false },
+        })
+        .populate({
+          path: "approvedBy",
+          model: "users",
+          select: "name email",
+          options: { strictPopulate: false },
+        })
+        .populate({
+          path: "submittedBy",
+          model: "users",
+          select: "name email",
+          options: { strictPopulate: false },
+        })
+        .populate({
+          path: "rejectedBy",
+          model: "users",
+          select: "name email",
+          options: { strictPopulate: false },
+        })
+        .populate({
+          path: "cancelledBy",
+          model: "users",
+          select: "name email",
+          options: { strictPopulate: false },
+        })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -99,12 +131,13 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error listing allocation requests:", (error as Error).message);
+    console.error(
+      "Error listing allocation requests:",
+      (error as Error).message
+    );
     return NextResponse.json(
       { message: "Internal Server Error ~ list allocation requests" },
       { status: 500 }
     );
   }
 }
-
-

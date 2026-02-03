@@ -1,5 +1,6 @@
-import { updateInceptionDates } from "@/server/actions/easipol-policies";
 import { NextResponse } from "next/server";
+
+import { updateInceptionDates } from "@/server/actions/easipol-policies";
 
 export async function GET(request: Request) {
   try {
@@ -11,6 +12,9 @@ export async function GET(request: Request) {
     }
   } catch (error) {
     console.error("Error updating inception dates:", error);
-    return NextResponse.json({ message: "Error updating inception dates" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Error updating inception dates" },
+      { status: 500 }
+    );
   }
 }

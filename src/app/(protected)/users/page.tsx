@@ -11,7 +11,7 @@ import {
   PlusOutlined,
   ReloadOutlined,
   StopOutlined,
-  UserOutlined
+  UserOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button, Switch } from "@nextui-org/react";
 import {
@@ -25,11 +25,12 @@ import {
   Select,
   Space,
   Table,
-  Tag
+  Tag,
 } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { ListChecks } from "lucide-react";
 import { AiOutlineUserAdd } from "react-icons/ai";
 import sweetAlert from "sweetalert";
 
@@ -42,7 +43,6 @@ import CoreRoleSelect from "@/app/components/roles/core-role-select";
 import RoleSelect from "@/app/components/roles/role-select";
 import { useAuth } from "@/context/auth-context";
 
-import { ListChecks } from "lucide-react";
 import { ERoles } from "../../../types/roles.enum";
 
 const UsersPage = () => {
@@ -58,7 +58,8 @@ const UsersPage = () => {
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
 
-  const [assignmentDrawerOpen, setAssignmentDrawerOpen] = useState<boolean>(false);
+  const [assignmentDrawerOpen, setAssignmentDrawerOpen] =
+    useState<boolean>(false);
   const [assignmentUserId, setAssignmentUserId] = useState<string | null>(null);
 
   const [form] = Form.useForm();
@@ -70,7 +71,9 @@ const UsersPage = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/users${showDeleted ? "?deleted=true" : ""}`);
+      const response = await fetch(
+        `/api/users${showDeleted ? "?deleted=true" : ""}`
+      );
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch users");
@@ -423,15 +426,23 @@ const UsersPage = () => {
   return (
     <div style={{ padding: "20px" }}>
       <PageHeader
-        title="Manage Users"
-        subtitle="Create, update, and delete Users from your system"
+        title="Manage Portal Users"
+        subtitle="Create, update, and delete users from your system"
         actions={[
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm">Show Deleted</span>
-              <Switch size="sm" isSelected={showDeleted} onValueChange={setShowDeleted} />
+              <Switch
+                size="sm"
+                isSelected={showDeleted}
+                onValueChange={setShowDeleted}
+              />
             </div>
-            <AntButton icon={<ReloadOutlined />} loading={loading} onClick={fetchUsers}>
+            <AntButton
+              icon={<ReloadOutlined />}
+              loading={loading}
+              onClick={fetchUsers}
+            >
               Refresh
             </AntButton>
             <AntButton onClick={() => setCreateDrawerOpen(true)}>
@@ -490,7 +501,9 @@ const UsersPage = () => {
                 dataIndex: "status",
                 key: "status",
                 render: (value: string) => (
-                  <Tag color={value == "Active" ? "green" : "red"}>{value}</Tag>
+                  <Tag color={value == "Active" ? "green" : "red"}>
+                    {value}
+                  </Tag>
                 ),
                 sorter: (a: any, b: any) => a.status.localeCompare(b.status),
               },
@@ -546,7 +559,10 @@ const UsersPage = () => {
                                 .split(" ")
                                 .slice(0, -1)
                                 .join(" "),
-                              lastname: record.name.split(" ").slice(-1).join(" "),
+                              lastname: record.name
+                                .split(" ")
+                                .slice(-1)
+                                .join(" "),
                               email: record.email,
                               phone: record.phone,
                               role: record.role,
@@ -554,35 +570,50 @@ const UsersPage = () => {
                             });
                             setEditingUser(record);
                             setEditDrawerOpen(true);
-                          }
+                          },
                         },
                         // Assign region and branch to the user
-                        ...(record.roles?.includes(ERoles.BranchManager) || record.roles?.includes(ERoles.RegionalManager) ? [{
-                          key: "assign-region-branch",
-                          icon: <ListChecks size={14} />,
-                          label: "Assignments",
-                          onClick: () => openAssignmentDrawer(record._id)
-                        }] : []),
+                        ...(record.roles?.includes(ERoles.BranchManager) ||
+                          record.roles?.includes(ERoles.RegionalManager)
+                          ? [
+                            {
+                              key: "assign-region-branch",
+                              icon: <ListChecks size={14} />,
+                              label: "Assignments",
+                              onClick: () =>
+                                openAssignmentDrawer(record._id),
+                            },
+                          ]
+                          : []),
                         // Only show reset password for non-admin users
-                        ...(!record.roles?.includes('admin') ? [{
-                          key: "reset-password",
-                          icon: <LockOutlined size={14} />,
-                          label: "Reset Password",
-                          onClick: () => resetPassword(record._id, record.name)
-                        }] : []),
+                        ...(!record.roles?.includes("admin")
+                          ? [
+                            {
+                              key: "reset-password",
+                              icon: <LockOutlined size={14} />,
+                              label: "Reset Password",
+                              onClick: () =>
+                                resetPassword(record._id, record.name),
+                            },
+                          ]
+                          : []),
                         {
                           key: "toggle-status",
                           icon: <StopOutlined />,
-                          label: record.status === "Active" ? "Deactivate" : "Activate",
-                          onClick: () => toggleUserStatus(record._id, record.status)
+                          label:
+                            record.status === "Active"
+                              ? "Deactivate"
+                              : "Activate",
+                          onClick: () =>
+                            toggleUserStatus(record._id, record.status),
                         },
                         {
                           key: "delete",
                           icon: <DeleteOutlined />,
                           label: "Delete",
                           danger: true,
-                          onClick: () => deleteUser(record._id)
-                        }
+                          onClick: () => deleteUser(record._id),
+                        },
                       ]
                       : [
                         {
@@ -600,27 +631,46 @@ const UsersPage = () => {
                               if (!confirmed) return;
 
                               setLoading(true);
-                              const res = await fetch(`/api/users/reactivate`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ id: record._id }),
-                              });
+                              const res = await fetch(
+                                `/api/users/reactivate`,
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ id: record._id }),
+                                }
+                              );
                               const data = await res.json();
                               if (!res.ok) {
-                                sweetAlert({ title: "Failed", text: data.message, icon: "error" });
+                                sweetAlert({
+                                  title: "Failed",
+                                  text: data.message,
+                                  icon: "error",
+                                });
                                 return;
                               }
-                              sweetAlert({ title: "User reactivated", icon: "success", timer: 2000 });
-                              setUsers((prev) => prev.filter((u) => u._id !== record._id));
+                              sweetAlert({
+                                title: "User reactivated",
+                                icon: "success",
+                                timer: 2000,
+                              });
+                              setUsers((prev) =>
+                                prev.filter((u) => u._id !== record._id)
+                              );
                             } catch (e) {
-                              sweetAlert({ title: "Error", text: "Could not reactivate user", icon: "error" });
+                              sweetAlert({
+                                title: "Error",
+                                text: "Could not reactivate user",
+                                icon: "error",
+                              });
                             } finally {
                               setLoading(false);
                             }
-                          }
-                        }
+                          },
+                        },
                       ]),
-                  ]
+                  ],
                 }}
                 trigger={["click"]}
               >
@@ -635,7 +685,9 @@ const UsersPage = () => {
               <div className="ml-0 gap-1 whitespace-pre-wrap p-0 text-gray-700">
                 🛡️<strong className="ml-1 mr-2">Additional Roles:</strong>
                 {record.roles.map((role: string, index: number) => (
-                  <Tag key={`${record._id}-${role}-${index}`} className="w-fit">{roleLabels[role]}</Tag>
+                  <Tag key={`${record._id}-${role}-${index}`} className="w-fit">
+                    {roleLabels[role]}
+                  </Tag>
                 ))}
               </div>
             ) : (
@@ -871,7 +923,11 @@ const UsersPage = () => {
         open={assignmentDrawerOpen}
         width="50%"
       >
-        <Form form={assignmentForm} layout="vertical" onFinish={handleSubmitAssignment}>
+        <Form
+          form={assignmentForm}
+          layout="vertical"
+          onFinish={handleSubmitAssignment}
+        >
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="Region" name="region">

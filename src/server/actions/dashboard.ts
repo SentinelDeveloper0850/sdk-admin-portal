@@ -34,12 +34,12 @@ export const getDashboardData = async () => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     // Get today's date in YYYY-MM-DD format for daily activity compliance
-    const todayFormatted = today.toISOString().split('T')[0];
+    const todayFormatted = today.toISOString().split("T")[0];
 
     // Get yesterday's date for compliance checking (since cutoff is 18:00 daily)
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayFormatted = yesterday.toISOString().split('T')[0];
+    const yesterdayFormatted = yesterday.toISOString().split("T")[0];
 
     // Execute all basic counts concurrently for better performance
     const [
@@ -66,33 +66,33 @@ export const getDashboardData = async () => {
       UserModel.countDocuments(),
       PolicyModel.countDocuments(),
       EftTransactionModel.countDocuments({
-        createdAt: { $gte: today, $lt: tomorrow }
+        createdAt: { $gte: today, $lt: tomorrow },
       }),
       EasypayTransactionModel.countDocuments({
-        createdAt: { $gte: today, $lt: tomorrow }
+        createdAt: { $gte: today, $lt: tomorrow },
       }),
       ClaimModel.countDocuments({
-        createdAt: { $gte: today, $lt: tomorrow }
+        createdAt: { $gte: today, $lt: tomorrow },
       }),
       PolicySignUpModel.countDocuments({
-        createdAt: { $gte: today, $lt: tomorrow }
+        createdAt: { $gte: today, $lt: tomorrow },
       }),
       ClaimModel.countDocuments({
-        status: { $in: ["Submitted", "In Review"] }
+        status: { $in: ["Submitted", "In Review"] },
       }),
       PolicySignUpModel.countDocuments({
-        currentStatus: { $in: ["submitted", "pending_info"] }
+        currentStatus: { $in: ["submitted", "pending_info"] },
       }),
       PolicyCancellationRequestModel.countDocuments({
-        status: "pending"
+        status: "pending",
       }),
       AllocationRequestModel.countDocuments({
         status: "PENDING",
-        type: "EFT"
+        type: "EFT",
       }),
       AllocationRequestModel.countDocuments({
         status: "PENDING",
-        type: "Easypay"
+        type: "Easypay",
       }),
     ]);
 
@@ -100,23 +100,31 @@ export const getDashboardData = async () => {
     const allUsers = await UserModel.find({
       status: "Active", // Only active users
       deletedAt: { $exists: false },
-      role: { $nin: ["admin", "super_admin"] } // Exclude users with admin roles
-    }).select('_id name email avatarUrl status roles role').lean();
+      role: { $nin: ["admin", "super_admin"] }, // Exclude users with admin roles
+    })
+      .select("_id name email avatarUrl status roles role")
+      .lean();
 
     const getUserRoles = (u: any) =>
       Array.from(
-        new Set([u?.role, ...((u?.roles as string[]) || [])].filter(Boolean).map((r: string) => String(r)))
+        new Set(
+          [u?.role, ...((u?.roles as string[]) || [])]
+            .filter(Boolean)
+            .map((r: string) => String(r))
+        )
       );
 
     // Determine who was expected to submit (based on duty roster)
     // If no roster exists for yesterday, fall back to all active users (current behavior).
     let expectedUsersForCompliance = allUsers;
-    let complianceExpectedSource: "duty_roster" | "all_active_users" = "all_active_users";
+    let complianceExpectedSource: "duty_roster" | "all_active_users" =
+      "all_active_users";
     try {
-      const { expectedUsers, expectedSource } = await getExpectedUsersFromDutyRoster({
-        dayStart: yesterday,
-        dayEndExclusive: today,
-      });
+      const { expectedUsers, expectedSource } =
+        await getExpectedUsersFromDutyRoster({
+          dayStart: yesterday,
+          dayEndExclusive: today,
+        });
 
       if (expectedSource === "duty_roster") {
         expectedUsersForCompliance = expectedUsers || [];
@@ -131,20 +139,30 @@ export const getDashboardData = async () => {
     }
 
     // Get yesterday's daily activity reports - using DD/MM/YYYY format
-    const yesterdayFormattedDDMMYYYY = yesterday.toLocaleDateString('en-GB'); // This gives DD/MM/YYYY format
+    const yesterdayFormattedDDMMYYYY = yesterday.toLocaleDateString("en-GB"); // This gives DD/MM/YYYY format
     const yesterdaysDailyActivities = await DailyActivityModel.find({
-      date: yesterdayFormattedDDMMYYYY
-    }).select('userId userName').lean();
+      date: yesterdayFormattedDDMMYYYY,
+    })
+      .select("userId userName")
+      .lean();
 
     // Create a set of user IDs who have submitted yesterday's report
-    const compliantUserIds = new Set(yesterdaysDailyActivities.map(activity => activity.userId.toString()));
+    const compliantUserIds = new Set(
+      yesterdaysDailyActivities.map((activity) => activity.userId.toString())
+    );
 
     // Separate users into compliant and non-compliant
-    const compliantUsers = expectedUsersForCompliance.filter((user: any) => compliantUserIds.has(user._id.toString()));
-    const nonCompliantUsers = expectedUsersForCompliance.filter((user: any) => !compliantUserIds.has(user._id.toString()));
+    const compliantUsers = expectedUsersForCompliance.filter((user: any) =>
+      compliantUserIds.has(user._id.toString())
+    );
+    const nonCompliantUsers = expectedUsersForCompliance.filter(
+      (user: any) => !compliantUserIds.has(user._id.toString())
+    );
 
     // Cashup submission compliance (Cashiers only)
-    const cashupExpectedUsers = expectedUsersForCompliance.filter((u: any) => getUserRoles(u).includes("cashier"));
+    const cashupExpectedUsers = expectedUsersForCompliance.filter((u: any) =>
+      getUserRoles(u).includes("cashier")
+    );
 
     const yesterdaysCashupSubmissions = await CashUpSubmissionModel.find({
       date: { $gte: yesterday, $lt: today },
@@ -154,39 +172,42 @@ export const getDashboardData = async () => {
       .lean();
 
     const cashupCompliantUserIds = new Set(
-      yesterdaysCashupSubmissions.map((s: any) => String(s.userId)).filter(Boolean)
+      yesterdaysCashupSubmissions
+        .map((s: any) => String(s.userId))
+        .filter(Boolean)
     );
 
     const cashupCompliantUsers = cashupExpectedUsers.filter((u: any) =>
       cashupCompliantUserIds.has(String(u._id))
     );
-    const cashupNonCompliantUsers = cashupExpectedUsers.filter((u: any) =>
-      !cashupCompliantUserIds.has(String(u._id))
+    const cashupNonCompliantUsers = cashupExpectedUsers.filter(
+      (u: any) => !cashupCompliantUserIds.has(String(u._id))
     );
 
     // Execute recent activity queries concurrently
-    const [recentDailyActivities, recentClaims, recentSignupRequests] = await Promise.all([
-      DailyActivityModel.find({
-        createdAt: { $gte: sevenDaysAgo }
-      })
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .lean(), // Use lean() for better performance when not needing Mongoose methods
+    const [recentDailyActivities, recentClaims, recentSignupRequests] =
+      await Promise.all([
+        DailyActivityModel.find({
+          createdAt: { $gte: sevenDaysAgo },
+        })
+          .sort({ createdAt: -1 })
+          .limit(10)
+          .lean(), // Use lean() for better performance when not needing Mongoose methods
 
-      ClaimModel.find({
-        createdAt: { $gte: sevenDaysAgo }
-      })
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .lean(),
+        ClaimModel.find({
+          createdAt: { $gte: sevenDaysAgo },
+        })
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .lean(),
 
-      PolicySignUpModel.find({
-        createdAt: { $gte: sevenDaysAgo }
-      })
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .lean(),
-    ]);
+        PolicySignUpModel.find({
+          createdAt: { $gte: sevenDaysAgo },
+        })
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .lean(),
+      ]);
 
     // Execute transaction trend queries concurrently
     const [recentEftImports, recentEasypayImports] = await Promise.all([
@@ -195,13 +216,13 @@ export const getDashboardData = async () => {
         {
           $group: {
             _id: {
-              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
             },
-            count: { $sum: 1 }
-          }
+            count: { $sum: 1 },
+          },
         },
         { $sort: { _id: -1 } },
-        { $limit: 7 }
+        { $limit: 7 },
       ]),
 
       EasypayTransactionModel.aggregate([
@@ -209,13 +230,13 @@ export const getDashboardData = async () => {
         {
           $group: {
             _id: {
-              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
             },
-            count: { $sum: 1 }
-          }
+            count: { $sum: 1 },
+          },
         },
         { $sort: { _id: -1 } },
-        { $limit: 7 }
+        { $limit: 7 },
       ]),
     ]);
 
@@ -250,26 +271,30 @@ export const getDashboardData = async () => {
         // Daily activity compliance
         dailyActivityCompliance: {
           expectedSource: complianceExpectedSource,
-          compliantUsers: compliantUsers.map(user => ({
+          compliantUsers: compliantUsers.map((user) => ({
             _id: user._id,
             name: user.name,
             email: user.email,
             avatarUrl: user.avatarUrl,
             status: user.status,
-            roles: user.roles
+            roles: user.roles,
           })),
-          nonCompliantUsers: nonCompliantUsers.map(user => ({
+          nonCompliantUsers: nonCompliantUsers.map((user) => ({
             _id: user._id,
             name: user.name,
             email: user.email,
             avatarUrl: user.avatarUrl,
             status: user.status,
-            roles: user.roles
+            roles: user.roles,
           })),
-          complianceRate: expectedUsersForCompliance.length > 0 ? (compliantUsers.length / expectedUsersForCompliance.length) * 100 : 0,
+          complianceRate:
+            expectedUsersForCompliance.length > 0
+              ? (compliantUsers.length / expectedUsersForCompliance.length) *
+                100
+              : 0,
           totalUsers: expectedUsersForCompliance.length,
           compliantCount: compliantUsers.length,
-          nonCompliantCount: nonCompliantUsers.length
+          nonCompliantCount: nonCompliantUsers.length,
         },
 
         // Cashup submission compliance (Cashiers only)
@@ -311,7 +336,7 @@ export const getDashboardData = async () => {
         transactionTrends: {
           eft: recentEftImports,
           easypay: recentEasypayImports,
-        }
+        },
       },
     };
   } catch (error: any) {

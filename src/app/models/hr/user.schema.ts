@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import mongoose, { Document, Model, Schema } from "mongoose";
+
 import { IEmployee } from "./employee.schema";
 
 // Define the interface for TypeScript
@@ -63,10 +64,10 @@ const userSchema: Schema<IUser> = new Schema(
     lastSeenAt: { type: Date, required: false, default: null },
     employee: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Employee',
+      ref: "Employee",
       required: false,
-      default: null
-    }
+      default: null,
+    },
   },
   { timestamps: true }
 );

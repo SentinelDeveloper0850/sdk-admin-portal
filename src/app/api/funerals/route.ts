@@ -1,14 +1,15 @@
 // src/app/api/funerals/route.ts
-import dayjs from "dayjs";
 import { NextRequest, NextResponse } from "next/server";
+
+import dayjs from "dayjs";
 
 import type { ILocation } from "@/app/models/calendar-event.schema";
 import {
+  type FuneralMilestoneType,
   FuneralModel,
   FuneralStatus,
   PaymentStatus,
   ScheduledItemStatus,
-  type FuneralMilestoneType,
 } from "@/app/models/funeral.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
@@ -24,11 +25,11 @@ type MilestoneBody = {
   location?: ILocation | null;
 
   origin?: ILocation | null;
-  via?: ILocation | null;          // ✅ add
+  via?: ILocation | null; // ✅ add
   destination?: ILocation | null;
 
-  cemeteryCode?: string | null;    // ✅ add
-  graveNumber?: string | null;     // ✅ add
+  cemeteryCode?: string | null; // ✅ add
+  graveNumber?: string | null; // ✅ add
 
   status?: ScheduledItemStatus;
   calendarEventId?: string | null;
@@ -91,7 +92,8 @@ export type CreateFuneralBody = {
 const toDateOrUndef = (v: any) => (v ? dayjs(v).toDate() : undefined);
 
 const normalizeMilestone = (m: MilestoneBody) => {
-  const start = m.startDateTime === null ? undefined : toDateOrUndef(m.startDateTime);
+  const start =
+    m.startDateTime === null ? undefined : toDateOrUndef(m.startDateTime);
   const end = m.endDateTime === null ? undefined : toDateOrUndef(m.endDateTime);
 
   return {
@@ -107,7 +109,7 @@ const normalizeMilestone = (m: MilestoneBody) => {
     destination: m.destination ?? undefined,
 
     cemeteryCode: m.cemeteryCode ?? undefined, // ✅ keep
-    graveNumber: m.graveNumber ?? undefined,   // ✅ keep
+    graveNumber: m.graveNumber ?? undefined, // ✅ keep
 
     status: m.status ?? ScheduledItemStatus.PENDING,
     calendarEventId: m.calendarEventId ?? undefined,
@@ -118,11 +120,18 @@ const normalizeMilestone = (m: MilestoneBody) => {
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
-    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!user)
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(Number(searchParams.get("page") || 1), 1);
-    const limit = Math.min(Math.max(Number(searchParams.get("limit") || 20), 1), 100);
+    const limit = Math.min(
+      Math.max(Number(searchParams.get("limit") || 20), 1),
+      100
+    );
 
     const branchId = searchParams.get("branchId") || undefined;
     const status = searchParams.get("status") || undefined;
@@ -172,41 +181,74 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json(
-      { success: true, items, page, limit, total, pages: Math.ceil(total / limit) },
+      {
+        success: true,
+        items,
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
       { status: 200 }
     );
   } catch (err) {
     console.error("GET /funerals error:", err);
-    return NextResponse.json({ success: false, message: "Failed to fetch funerals" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch funerals" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
-    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!user)
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
 
     const body = (await request.json()) as CreateFuneralBody;
 
     if (!body?.informant?.firstName || !body?.informant?.lastName) {
-      return NextResponse.json({ success: false, message: "Informant name is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Informant name is required" },
+        { status: 400 }
+      );
     }
     if (!body?.deceased?.firstName || !body?.deceased?.lastName) {
-      return NextResponse.json({ success: false, message: "Deceased name is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Deceased name is required" },
+        { status: 400 }
+      );
     }
     if (!body.branchId) {
-      return NextResponse.json({ success: false, message: "branchId is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "branchId is required" },
+        { status: 400 }
+      );
     }
     if (!Array.isArray(body.milestones)) {
-      return NextResponse.json({ success: false, message: "milestones[] is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "milestones[] is required" },
+        { status: 400 }
+      );
     }
 
     await connectToDatabase();
 
-    const ref = body.referenceNumber ?? `FNR-${dayjs().format("YYYYMMDD-HHmmss")}`;
+    const ref =
+      body.referenceNumber ?? `FNR-${dayjs().format("YYYYMMDD-HHmmss")}`;
 
-    const serviceDT = body.serviceDateTime === null ? undefined : toDateOrUndef(body.serviceDateTime);
-    const burialDT = body.burialDateTime === null ? undefined : toDateOrUndef(body.burialDateTime);
+    const serviceDT =
+      body.serviceDateTime === null
+        ? undefined
+        : toDateOrUndef(body.serviceDateTime);
+    const burialDT =
+      body.burialDateTime === null
+        ? undefined
+        : toDateOrUndef(body.burialDateTime);
 
     const milestones = body.milestones.map(normalizeMilestone);
 
@@ -221,11 +263,20 @@ export async function POST(request: NextRequest) {
       createdById: String(user._id),
     });
 
-    await upsertFuneralCalendarEvents(funeral, { name: user.name || user.email, id: String(user._id) });
+    await upsertFuneralCalendarEvents(funeral, {
+      name: user.name || user.email,
+      id: String(user._id),
+    });
 
-    return NextResponse.json({ success: true, message: "Funeral created", funeral }, { status: 201 });
+    return NextResponse.json(
+      { success: true, message: "Funeral created", funeral },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("POST /funerals error:", err);
-    return NextResponse.json({ success: false, message: "Failed to create funeral" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to create funeral" },
+      { status: 500 }
+    );
   }
 }

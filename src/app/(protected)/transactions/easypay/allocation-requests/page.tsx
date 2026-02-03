@@ -2,8 +2,32 @@
 
 import { useEffect, useState } from "react";
 
-import { ExclamationCircleOutlined, FileSearchOutlined, MoreOutlined, QuestionCircleOutlined, ReloadOutlined, UploadOutlined } from "@ant-design/icons";
-import { Alert, Button, DatePicker, Descriptions, Drawer, Dropdown, Form, Input, Popconfirm, Space, Spin, Table, Tabs, Tag, Upload, message } from "antd";
+import {
+  ExclamationCircleOutlined,
+  FileSearchOutlined,
+  MoreOutlined,
+  QuestionCircleOutlined,
+  ReloadOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  DatePicker,
+  Descriptions,
+  Drawer,
+  Dropdown,
+  Form,
+  Input,
+  Popconfirm,
+  Space,
+  Spin,
+  Table,
+  Tabs,
+  Tag,
+  Upload,
+  message,
+} from "antd";
 import dayjs from "dayjs";
 import sweetAlert from "sweetalert";
 
@@ -39,10 +63,7 @@ interface EasypayTransactionDetail {
 export default function AllocationRequestsPage() {
   const { hasRole } = useRole();
 
-  const allowed = hasRole([
-    "easypay_reviewer",
-    "easypay_allocator",
-  ]);
+  const allowed = hasRole(["easypay_reviewer", "easypay_allocator"]);
   const isAllocator = hasRole(["easypay_allocator"]);
 
   const [loading, setLoading] = useState(true);
@@ -50,18 +71,34 @@ export default function AllocationRequestsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<AllocationRequestItem[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [filters, setFilters] = useState<{ status?: string; start?: string; end?: string; requester?: string }>({});
-  const [pagination, setPagination] = useState<{ current: number; pageSize: number; total: number }>({
+  const [filters, setFilters] = useState<{
+    status?: string;
+    start?: string;
+    end?: string;
+    requester?: string;
+  }>({});
+  const [pagination, setPagination] = useState<{
+    current: number;
+    pageSize: number;
+    total: number;
+  }>({
     current: 1,
     pageSize: 20,
     total: 0,
   });
 
-  const [rejecting, setRejecting] = useState<AllocationRequestItem | null>(null);
+  const [rejecting, setRejecting] = useState<AllocationRequestItem | null>(
+    null
+  );
   const [rejectForm] = Form.useForm();
-  const [reviewing, setReviewing] = useState<AllocationRequestItem | null>(null);
+  const [reviewing, setReviewing] = useState<AllocationRequestItem | null>(
+    null
+  );
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewDetail, setReviewDetail] = useState<{ item: AllocationRequestItem; transaction: EasypayTransactionDetail } | null>(null);
+  const [reviewDetail, setReviewDetail] = useState<{
+    item: AllocationRequestItem;
+    transaction: EasypayTransactionDetail;
+  } | null>(null);
 
   const [scanDuplicatesOpen, setScanDuplicatesOpen] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -72,16 +109,22 @@ export default function AllocationRequestsPage() {
   const isReviewer = hasRole(["easypay_reviewer", "admin"]);
 
   // Utility function to format transaction date (MM/DD/YYYY) to YYYY/MM/DD format
-  const formatTransactionDateToCSVFormat = (transactionDateStr: string): string => {
+  const formatTransactionDateToCSVFormat = (
+    transactionDateStr: string
+  ): string => {
     try {
       // Parse MM/DD/YYYY format and convert to YYYY/MM/DD
-      const parsedDate = dayjs(transactionDateStr, 'MM/DD/YYYY');
+      const parsedDate = dayjs(transactionDateStr, "MM/DD/YYYY");
       if (!parsedDate.isValid()) {
-        throw new Error('Invalid date format');
+        throw new Error("Invalid date format");
       }
-      return parsedDate.format('YYYY/MM/DD');
+      return parsedDate.format("YYYY/MM/DD");
     } catch (error) {
-      console.warn('Failed to parse transaction date:', transactionDateStr, error);
+      console.warn(
+        "Failed to parse transaction date:",
+        transactionDateStr,
+        error
+      );
       throw error;
     }
   };
@@ -89,31 +132,33 @@ export default function AllocationRequestsPage() {
   // Utility function to generate and download CSV file
   const generateAndDownloadCSV = (requests: any[], filename: string) => {
     // CSV header
-    const headers = ['MembershipNo', 'DepositAmount', 'DepositDate'];
+    const headers = ["MembershipNo", "DepositAmount", "DepositDate"];
 
     // Convert requests to CSV rows
-    const csvRows = requests.map(request => {
+    const csvRows = requests.map((request) => {
       const membershipNo = request.request.policyNumber;
       const depositAmount = request.transaction.amount;
-      const depositDate = request.csvFormattedTransactionDate || formatTransactionDateToCSVFormat(request.transaction.date);
+      const depositDate =
+        request.csvFormattedTransactionDate ||
+        formatTransactionDateToCSVFormat(request.transaction.date);
 
       return [membershipNo, depositAmount, depositDate];
     });
 
     // Combine headers and rows
     const csvContent = [headers, ...csvRows]
-      .map(row => row.map(field => `"${field}"`).join(','))
-      .join('\n');
+      .map((row) => row.map((field) => `"${field}"`).join(","))
+      .join("\n");
 
     // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
 
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', filename);
-      link.style.visibility = 'hidden';
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -121,7 +166,11 @@ export default function AllocationRequestsPage() {
     }
   };
 
-  const fetchData = async (status?: string, page = pagination.current, pageSize = pagination.pageSize) => {
+  const fetchData = async (
+    status?: string,
+    page = pagination.current,
+    pageSize = pagination.pageSize
+  ) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -131,7 +180,9 @@ export default function AllocationRequestsPage() {
       if (filters.requester) params.set("requester", filters.requester);
       if (page) params.set("page", String(page));
       if (pageSize) params.set("limit", String(pageSize));
-      const res = await fetch(`/api/transactions/easypay/allocation-requests?${params.toString()}`);
+      const res = await fetch(
+        `/api/transactions/easypay/allocation-requests?${params.toString()}`
+      );
       if (!res.ok) {
         const data = await res.json();
         setError(data.message || "Failed to load allocation requests");
@@ -150,12 +201,16 @@ export default function AllocationRequestsPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchData(filters.status || 'PENDING', pagination.current, pagination.pageSize);
+    await fetchData(
+      filters.status || "PENDING",
+      pagination.current,
+      pagination.pageSize
+    );
     setRefreshing(false);
   };
 
   useEffect(() => {
-    fetchData(filters.status || 'PENDING');
+    fetchData(filters.status || "PENDING");
   }, []);
 
   if (!allowed) {
@@ -188,16 +243,18 @@ export default function AllocationRequestsPage() {
   };
 
   const parseCSV = (csvText: string) => {
-    const lines = csvText.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const lines = csvText.split("\n");
+    const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
     const data = [];
 
     for (let i = 1; i < lines.length; i++) {
       if (lines[i].trim()) {
-        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        const values = lines[i]
+          .split(",")
+          .map((v) => v.trim().replace(/"/g, ""));
         const row: any = {};
         headers.forEach((header, index) => {
-          row[header] = values[index] || '';
+          row[header] = values[index] || "";
         });
         data.push(row);
       }
@@ -221,23 +278,27 @@ export default function AllocationRequestsPage() {
 
   const performDuplicateScan = async () => {
     if (!csvData.length) {
-      message.error('Please upload a CSV file first');
+      message.error("Please upload a CSV file first");
       return;
     }
 
     setScanning(true);
     try {
       // Get selected allocation requests with their transaction details
-      const selectedItems = items.filter(item => selectedRowKeys.includes(item._id));
+      const selectedItems = items.filter((item) =>
+        selectedRowKeys.includes(item._id)
+      );
       const requestsWithTransactions = [];
 
       for (const item of selectedItems) {
-        const res = await fetch(`/api/transactions/easypay/allocation-requests/${item._id}`);
+        const res = await fetch(
+          `/api/transactions/easypay/allocation-requests/${item._id}`
+        );
         if (res.ok) {
           const data = await res.json();
           requestsWithTransactions.push({
             request: data.item,
-            transaction: data.transaction
+            transaction: data.transaction,
           });
         }
       }
@@ -248,15 +309,24 @@ export default function AllocationRequestsPage() {
         let csvFormattedTransactionDate = transaction.date;
 
         // Find matching CSV records based on composite key
-        const matches = csvData.filter(csvRow => {
-          const effectiveDate = csvRow['Effective Date'] || csvRow['effective_date'] || csvRow['EffectiveDate'];
-          const membershipId = csvRow['MembershipID'] || csvRow['membership_id'] || csvRow['Membership ID'];
+        const matches = csvData.filter((csvRow) => {
+          const effectiveDate =
+            csvRow["Effective Date"] ||
+            csvRow["effective_date"] ||
+            csvRow["EffectiveDate"];
+          const membershipId =
+            csvRow["MembershipID"] ||
+            csvRow["membership_id"] ||
+            csvRow["Membership ID"];
 
           if (!effectiveDate || !membershipId) return false;
 
           // Direct comparison: CSV Effective Date (YYYY/MM/DD) vs Formatted Transaction Date (YYYY/MM/DD)
-          return effectiveDate === csvFormattedTransactionDate &&
-            membershipId.toString().trim() === request.policyNumber.toString().trim();
+          return (
+            effectiveDate === csvFormattedTransactionDate &&
+            membershipId.toString().trim() ===
+              request.policyNumber.toString().trim()
+          );
         });
 
         results.push({
@@ -265,17 +335,19 @@ export default function AllocationRequestsPage() {
           isDuplicate: matches.length > 0,
           csvMatches: matches,
           matchCount: matches.length,
-          csvFormattedTransactionDate
+          csvFormattedTransactionDate,
         });
       }
 
       setComparisonResults(results);
-      const duplicateCount = results.filter(r => r.isDuplicate).length;
+      const duplicateCount = results.filter((r) => r.isDuplicate).length;
       const totalScanned = results.length;
-      message.success(`Scan completed. Found ${duplicateCount} potential duplicates out of ${totalScanned} requests scanned.`);
+      message.success(
+        `Scan completed. Found ${duplicateCount} potential duplicates out of ${totalScanned} requests scanned.`
+      );
     } catch (error) {
-      message.error('Failed to perform duplicate scan');
-      console.error('Duplicate scan error:', error);
+      message.error("Failed to perform duplicate scan");
+      console.error("Duplicate scan error:", error);
     } finally {
       setScanning(false);
     }
@@ -287,30 +359,40 @@ export default function AllocationRequestsPage() {
         title="Easypay Allocation Requests"
         actions={[
           <Space>
-            {(filters.status === 'APPROVED') && (
+            {filters.status === "APPROVED" && (
               <Button
                 type="primary"
                 disabled={!selectedRowKeys.length}
                 onClick={async () => {
-                  const res = await fetch('/api/transactions/easypay/allocation-requests/submit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids: selectedRowKeys }),
-                  });
+                  const res = await fetch(
+                    "/api/transactions/easypay/allocation-requests/submit",
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ ids: selectedRowKeys }),
+                    }
+                  );
                   if (res.ok) {
-                    sweetAlert({ icon: 'success', title: 'Submitted for allocation', timer: 1500 });
+                    sweetAlert({
+                      icon: "success",
+                      title: "Submitted for allocation",
+                      timer: 1500,
+                    });
                     setSelectedRowKeys([]);
                     handleRefresh();
                   } else {
                     const data = await res.json().catch(() => ({}));
-                    sweetAlert({ icon: 'error', title: data.message || 'Failed to submit' });
+                    sweetAlert({
+                      icon: "error",
+                      title: data.message || "Failed to submit",
+                    });
                   }
                 }}
               >
                 Submit for Allocation
               </Button>
             )}
-            {(filters.status === 'SUBMITTED') && (
+            {filters.status === "SUBMITTED" && (
               <Button
                 icon={<FileSearchOutlined />}
                 disabled={!selectedRowKeys.length}
@@ -319,7 +401,11 @@ export default function AllocationRequestsPage() {
                 Scan Duplicates
               </Button>
             )}
-            <Button icon={<ReloadOutlined />} loading={refreshing} onClick={handleRefresh}>
+            <Button
+              icon={<ReloadOutlined />}
+              loading={refreshing}
+              onClick={handleRefresh}
+            >
               Refresh
             </Button>
           </Space>,
@@ -327,21 +413,27 @@ export default function AllocationRequestsPage() {
       />
 
       <Tabs
-        defaultActiveKey={filters.status || (isAllocator ? 'SUBMITTED' : 'PENDING')}
-        activeKey={filters.status || (isAllocator ? 'SUBMITTED' : 'PENDING')}
+        defaultActiveKey={
+          filters.status || (isAllocator ? "SUBMITTED" : "PENDING")
+        }
+        activeKey={filters.status || (isAllocator ? "SUBMITTED" : "PENDING")}
         onChange={handleTabChange}
-        items={(isAllocator ? [
-          { key: 'SUBMITTED', label: 'Submitted for Allocation' },
-          { key: 'ALLOCATED', label: 'Allocated' },
-          { key: 'DUPLICATE', label: 'Duplicates' },
-        ] : [
-          { key: 'PENDING', label: 'Pending Review' },
-          { key: 'REJECTED', label: 'Rejected' },
-          { key: 'APPROVED', label: 'Approved' },
-          { key: 'SUBMITTED', label: 'Submitted for Allocation' },
-          { key: 'ALLOCATED', label: 'Allocated' },
-          { key: 'DUPLICATE', label: 'Duplicates' },
-        ])}
+        items={
+          isAllocator
+            ? [
+                { key: "SUBMITTED", label: "Submitted for Allocation" },
+                { key: "ALLOCATED", label: "Allocated" },
+                { key: "DUPLICATE", label: "Duplicates" },
+              ]
+            : [
+                { key: "PENDING", label: "Pending Review" },
+                { key: "REJECTED", label: "Rejected" },
+                { key: "APPROVED", label: "Approved" },
+                { key: "SUBMITTED", label: "Submitted for Allocation" },
+                { key: "ALLOCATED", label: "Allocated" },
+                { key: "DUPLICATE", label: "Duplicates" },
+              ]
+        }
       />
 
       <Space wrap style={{ marginBottom: 16 }}>
@@ -350,7 +442,9 @@ export default function AllocationRequestsPage() {
           placeholder="Filter by requester (name or email)"
           style={{ width: 260 }}
           value={filters.requester}
-          onChange={(e) => setFilters((f) => ({ ...f, requester: e.target.value }))}
+          onChange={(e) =>
+            setFilters((f) => ({ ...f, requester: e.target.value }))
+          }
         />
         <DatePicker.RangePicker
           onChange={(range) => {
@@ -361,12 +455,18 @@ export default function AllocationRequestsPage() {
             }));
           }}
         />
-        <Button onClick={() => fetchData(filters.status || 'PENDING', 1, pagination.pageSize)}>Apply</Button>
+        <Button
+          onClick={() =>
+            fetchData(filters.status || "PENDING", 1, pagination.pageSize)
+          }
+        >
+          Apply
+        </Button>
         <Button
           onClick={() => {
             setFilters({});
             setPagination((p) => ({ ...p, current: 1 }));
-            fetchData(filters.status || 'PENDING', 1, pagination.pageSize);
+            fetchData(filters.status || "PENDING", 1, pagination.pageSize);
           }}
         >
           Reset
@@ -387,25 +487,39 @@ export default function AllocationRequestsPage() {
       <Table
         rowKey="_id"
         bordered
-        rowSelection={(filters.status === 'APPROVED' || (isAllocator && filters.status === 'SUBMITTED')) ? {
-          selectedRowKeys,
-          onChange: setSelectedRowKeys,
-          preserveSelectedRowKeys: true,
-          getCheckboxProps: (record: AllocationRequestItem) => ({ disabled: !((!isAllocator && record.status === 'APPROVED') || (isAllocator && record.status === 'SUBMITTED')) }),
-        } : undefined}
+        rowSelection={
+          filters.status === "APPROVED" ||
+          (isAllocator && filters.status === "SUBMITTED")
+            ? {
+                selectedRowKeys,
+                onChange: setSelectedRowKeys,
+                preserveSelectedRowKeys: true,
+                getCheckboxProps: (record: AllocationRequestItem) => ({
+                  disabled: !(
+                    (!isAllocator && record.status === "APPROVED") ||
+                    (isAllocator && record.status === "SUBMITTED")
+                  ),
+                }),
+              }
+            : undefined
+        }
         dataSource={items}
         pagination={{
           current: pagination.current,
           pageSize: pagination.pageSize,
           total: pagination.total,
           showSizeChanger: true,
-          pageSizeOptions: ['10', '20', '50', '100'],
+          pageSizeOptions: ["10", "20", "50", "100"],
         }}
         onChange={(p: any) => {
           const nextCurrent = p.current as number;
           const nextPageSize = p.pageSize as number;
-          setPagination((prev) => ({ ...prev, current: nextCurrent, pageSize: nextPageSize }));
-          fetchData(filters.status || 'PENDING', nextCurrent, nextPageSize);
+          setPagination((prev) => ({
+            ...prev,
+            current: nextCurrent,
+            pageSize: nextPageSize,
+          }));
+          fetchData(filters.status || "PENDING", nextCurrent, nextPageSize);
         }}
         columns={[
           {
@@ -413,14 +527,16 @@ export default function AllocationRequestsPage() {
             dataIndex: "createdAt",
             key: "createdAt",
             render: (v: string) => new Date(v).toLocaleString(),
-            sorter: (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            sorter: (a: any, b: any) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
             defaultSortOrder: "descend",
           },
           {
             title: "Policy Number",
             dataIndex: "policyNumber",
             key: "policyNumber",
-            sorter: (a: any, b: any) => String(a.policyNumber).localeCompare(String(b.policyNumber)),
+            sorter: (a: any, b: any) =>
+              String(a.policyNumber).localeCompare(String(b.policyNumber)),
           },
           {
             title: "Requested By",
@@ -428,7 +544,7 @@ export default function AllocationRequestsPage() {
             render: (_: any, r: AllocationRequestItem) => {
               const rb = r.requestedBy as any;
               if (!rb) return "—";
-              if (typeof rb === 'string') return rb;
+              if (typeof rb === "string") return rb;
               return rb.name || rb.email || "—";
             },
           },
@@ -436,18 +552,36 @@ export default function AllocationRequestsPage() {
             title: "Notes",
             dataIndex: "notes",
             key: "notes",
-            render: (notes: string[]) => (notes && notes.length ? notes.join("; ") : "—"),
+            render: (notes: string[]) =>
+              notes && notes.length ? notes.join("; ") : "—",
           },
           {
             title: "Supporting Documents",
             key: "evidence",
-            render: (_: any, record: AllocationRequestItem) => record.evidence?.length || 0,
+            render: (_: any, record: AllocationRequestItem) =>
+              record.evidence?.length || 0,
           },
           {
             title: "Status",
             dataIndex: "status",
             key: "status",
-            render: (s: string) => <Tag color={s === "PENDING" ? "gold" : s === "APPROVED" ? "green" : s === "REJECTED" ? "red" : s === "DUPLICATE" ? "orange" : "blue"}>{s}</Tag>,
+            render: (s: string) => (
+              <Tag
+                color={
+                  s === "PENDING"
+                    ? "gold"
+                    : s === "APPROVED"
+                      ? "green"
+                      : s === "REJECTED"
+                        ? "red"
+                        : s === "DUPLICATE"
+                          ? "orange"
+                          : "blue"
+                }
+              >
+                {s}
+              </Tag>
+            ),
           },
           {
             title: "Actions",
@@ -457,29 +591,42 @@ export default function AllocationRequestsPage() {
                 menu={{
                   items: [
                     {
-                      key: 'review',
-                      label: record.status === 'PENDING' ? 'Review' : 'View Details',
+                      key: "review",
+                      label:
+                        record.status === "PENDING" ? "Review" : "View Details",
                       onClick: async () => {
                         setReviewing(record);
                         setReviewLoading(true);
-                        const res = await fetch(`/api/transactions/easypay/allocation-requests/${record._id}`);
+                        const res = await fetch(
+                          `/api/transactions/easypay/allocation-requests/${record._id}`
+                        );
                         if (res.ok) {
                           const data = await res.json();
                           setReviewDetail(data);
                         } else {
-                          sweetAlert({ icon: 'error', title: 'Failed to load details' });
+                          sweetAlert({
+                            icon: "error",
+                            title: "Failed to load details",
+                          });
                           setReviewing(null);
                         }
                         setReviewLoading(false);
-                      }
+                      },
                     },
-                    ...(record.status === 'APPROVED' && isReviewer ? [{
-                      key: 'reject-approved',
-                      label: 'Reject',
-                      danger: true,
-                      onClick: () => { rejectForm.resetFields(); setRejecting(record); }
-                    }] : [])
-                  ]
+                    ...(record.status === "APPROVED" && isReviewer
+                      ? [
+                          {
+                            key: "reject-approved",
+                            label: "Reject",
+                            danger: true,
+                            onClick: () => {
+                              rejectForm.resetFields();
+                              setRejecting(record);
+                            },
+                          },
+                        ]
+                      : []),
+                  ],
                 }}
                 trigger={["click"]}
               >
@@ -493,48 +640,103 @@ export default function AllocationRequestsPage() {
       <Drawer
         title={
           <div>
-            <h3 className="mb-0 text-md font-semibold">{reviewDetail?.item?.status === 'PENDING' ? 'Review Allocation Request' : 'View Allocation Request'}</h3>
-            <p className="mb-0 text-sm text-gray-500 font-normal">{reviewDetail?.item?.status === 'PENDING' ? 'Review details and submit to the Finance Department for allocation on ASSIT.' : `This request is ${(reviewDetail?.item?.status || '').toLowerCase()}. You can only view the details.`}</p>
+            <h3 className="text-md mb-0 font-semibold">
+              {reviewDetail?.item?.status === "PENDING"
+                ? "Review Allocation Request"
+                : "View Allocation Request"}
+            </h3>
+            <p className="mb-0 text-sm font-normal text-gray-500">
+              {reviewDetail?.item?.status === "PENDING"
+                ? "Review details and submit to the Finance Department for allocation on ASSIT."
+                : `This request is ${(reviewDetail?.item?.status || "").toLowerCase()}. You can only view the details.`}
+            </p>
           </div>
         }
         placement="right"
         width="84%"
         open={!!reviewing}
-        onClose={() => { setReviewing(null); setReviewDetail(null); }}
+        onClose={() => {
+          setReviewing(null);
+          setReviewDetail(null);
+        }}
         closable={false}
         extra={
           <Space>
-            <Button onClick={() => { setReviewing(null); setReviewDetail(null); }}>Close</Button>
+            <Button
+              onClick={() => {
+                setReviewing(null);
+                setReviewDetail(null);
+              }}
+            >
+              Close
+            </Button>
           </Space>
         }
         footer={
           <Space>
-            {(reviewDetail?.item?.status === "PENDING") && (
+            {reviewDetail?.item?.status === "PENDING" && (
               <>
                 <Popconfirm
                   title="Are you sure you want to approve this request?"
                   okText="Yes, approve"
-                  okButtonProps={{ className: "bg-green-500 hover:!bg-green-600 text-white hover:!text-white hover:!border-green-600" }}
+                  okButtonProps={{
+                    className:
+                      "bg-green-500 hover:!bg-green-600 text-white hover:!text-white hover:!border-green-600",
+                  }}
                   cancelText="No"
                   icon={<QuestionCircleOutlined />}
                   onConfirm={async () => {
-                    const res = await fetch(`/api/transactions/easypay/allocation-requests/${reviewDetail?.item?._id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ status: "APPROVED" }),
-                    });
-                    if (res.ok) { sweetAlert({ icon: 'success', title: 'Approved', timer: 1500 }); setReviewing(null); setReviewDetail(null); handleRefresh(); } else { sweetAlert({ icon: 'error', title: 'Failed to approve' }); }
+                    const res = await fetch(
+                      `/api/transactions/easypay/allocation-requests/${reviewDetail?.item?._id}`,
+                      {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: "APPROVED" }),
+                      }
+                    );
+                    if (res.ok) {
+                      sweetAlert({
+                        icon: "success",
+                        title: "Approved",
+                        timer: 1500,
+                      });
+                      setReviewing(null);
+                      setReviewDetail(null);
+                      handleRefresh();
+                    } else {
+                      sweetAlert({ icon: "error", title: "Failed to approve" });
+                    }
                   }}
                 >
-                  <Button className="bg-green-500 hover:!bg-green-600 text-white hover:!text-white hover:!border-green-600 w-28">Approve</Button>
+                  <Button className="w-28 bg-green-500 text-white hover:!border-green-600 hover:!bg-green-600 hover:!text-white">
+                    Approve
+                  </Button>
                 </Popconfirm>
               </>
             )}
-            {(reviewDetail?.item?.status === "PENDING") && (
-              <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail!.item); }}>Reject</Button>
+            {reviewDetail?.item?.status === "PENDING" && (
+              <Button
+                type="primary"
+                danger
+                className="w-28 text-white hover:!border-red-600 hover:!bg-red-600 hover:!text-white"
+                onClick={() => {
+                  setRejecting(reviewDetail!.item);
+                }}
+              >
+                Reject
+              </Button>
             )}
-            {(reviewDetail?.item?.status === "APPROVED" && isReviewer) && (
-              <Button type="primary" danger className="w-28 hover:!bg-red-600 text-white hover:!text-white hover:!border-red-600" onClick={() => { setRejecting(reviewDetail!.item); }}>Reject</Button>
+            {reviewDetail?.item?.status === "APPROVED" && isReviewer && (
+              <Button
+                type="primary"
+                danger
+                className="w-28 text-white hover:!border-red-600 hover:!bg-red-600 hover:!text-white"
+                onClick={() => {
+                  setRejecting(reviewDetail!.item);
+                }}
+              >
+                Reject
+              </Button>
             )}
           </Space>
         }
@@ -546,7 +748,7 @@ export default function AllocationRequestsPage() {
         )}
         {!reviewLoading && reviewDetail && (
           <div>
-            {reviewDetail.item.status === 'PENDING' && (
+            {reviewDetail.item.status === "PENDING" && (
               <Alert
                 type="info"
                 showIcon
@@ -555,56 +757,160 @@ export default function AllocationRequestsPage() {
               />
             )}
 
-            <h3 className="mb-2 text-md font-semibold">Transaction Information</h3>
-            <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
-              <Descriptions.Item label="Date">{new Date(reviewDetail.transaction.date).toLocaleString()}</Descriptions.Item>
-              <Descriptions.Item label="File ID">{reviewDetail.transaction.uuid}</Descriptions.Item>
-              <Descriptions.Item label="Easypay Number">{reviewDetail.transaction.easypayNumber}</Descriptions.Item>
-              <Descriptions.Item label="Amount">{Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR', currencyDisplay: 'narrowSymbol' }).format(reviewDetail.transaction.amount)}</Descriptions.Item>
+            <h3 className="text-md mb-2 font-semibold">
+              Transaction Information
+            </h3>
+            <Descriptions
+              size="small"
+              bordered
+              column={2}
+              style={{ marginBottom: 16 }}
+            >
+              <Descriptions.Item label="Date">
+                {new Date(reviewDetail.transaction.date).toLocaleString()}
+              </Descriptions.Item>
+              <Descriptions.Item label="File ID">
+                {reviewDetail.transaction.uuid}
+              </Descriptions.Item>
+              <Descriptions.Item label="Easypay Number">
+                {reviewDetail.transaction.easypayNumber}
+              </Descriptions.Item>
+              <Descriptions.Item label="Amount">
+                {Intl.NumberFormat(undefined, {
+                  style: "currency",
+                  currency: "ZAR",
+                  currencyDisplay: "narrowSymbol",
+                }).format(reviewDetail.transaction.amount)}
+              </Descriptions.Item>
             </Descriptions>
 
-            <h3 className="mb-2 text-md font-semibold">Request Information</h3>
-            <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
-              <Descriptions.Item label="Policy Number">{reviewDetail.item.policyNumber}</Descriptions.Item>
-              <Descriptions.Item label="Requested On">{new Date(reviewDetail.item.createdAt).toLocaleString()}</Descriptions.Item>
-              <Descriptions.Item label="Status"><Tag color={reviewDetail.item.status === 'PENDING' ? 'gold' : reviewDetail.item.status === 'APPROVED' ? 'green' : reviewDetail.item.status === 'REJECTED' ? 'red' : 'blue'}>{reviewDetail.item.status}</Tag></Descriptions.Item>
-              <Descriptions.Item label="Requested By">{(reviewDetail.item as any).requestedBy?.name || (reviewDetail.item as any).requestedBy?.email || '—'}</Descriptions.Item>
-              {reviewDetail.item.status === 'SUBMITTED' && (
+            <h3 className="text-md mb-2 font-semibold">Request Information</h3>
+            <Descriptions
+              size="small"
+              bordered
+              column={2}
+              style={{ marginBottom: 16 }}
+            >
+              <Descriptions.Item label="Policy Number">
+                {reviewDetail.item.policyNumber}
+              </Descriptions.Item>
+              <Descriptions.Item label="Requested On">
+                {new Date(reviewDetail.item.createdAt).toLocaleString()}
+              </Descriptions.Item>
+              <Descriptions.Item label="Status">
+                <Tag
+                  color={
+                    reviewDetail.item.status === "PENDING"
+                      ? "gold"
+                      : reviewDetail.item.status === "APPROVED"
+                        ? "green"
+                        : reviewDetail.item.status === "REJECTED"
+                          ? "red"
+                          : "blue"
+                  }
+                >
+                  {reviewDetail.item.status}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Requested By">
+                {(reviewDetail.item as any).requestedBy?.name ||
+                  (reviewDetail.item as any).requestedBy?.email ||
+                  "—"}
+              </Descriptions.Item>
+              {reviewDetail.item.status === "SUBMITTED" && (
                 <>
-                  <Descriptions.Item label="Submitted By">{(reviewDetail.item as any).submittedBy?.name || (reviewDetail.item as any).submittedBy?.email || '—'}</Descriptions.Item>
-                  <Descriptions.Item label="Submitted At">{(reviewDetail.item as any).submittedAt ? new Date((reviewDetail.item as any).submittedAt).toLocaleString() : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Submitted By">
+                    {(reviewDetail.item as any).submittedBy?.name ||
+                      (reviewDetail.item as any).submittedBy?.email ||
+                      "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Submitted At">
+                    {(reviewDetail.item as any).submittedAt
+                      ? new Date(
+                          (reviewDetail.item as any).submittedAt
+                        ).toLocaleString()
+                      : "—"}
+                  </Descriptions.Item>
                 </>
               )}
-              {reviewDetail.item.status === 'APPROVED' && (
+              {reviewDetail.item.status === "APPROVED" && (
                 <>
-                  <Descriptions.Item label="Approved By">{(reviewDetail.item as any).approvedBy?.name || (reviewDetail.item as any).approvedBy?.email || '—'}</Descriptions.Item>
-                  <Descriptions.Item label="Approved At">{reviewDetail.item.approvedAt ? new Date((reviewDetail.item as any).approvedAt).toLocaleString() : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Approved By">
+                    {(reviewDetail.item as any).approvedBy?.name ||
+                      (reviewDetail.item as any).approvedBy?.email ||
+                      "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Approved At">
+                    {reviewDetail.item.approvedAt
+                      ? new Date(
+                          (reviewDetail.item as any).approvedAt
+                        ).toLocaleString()
+                      : "—"}
+                  </Descriptions.Item>
                 </>
               )}
-              {reviewDetail.item.status === 'REJECTED' && (
+              {reviewDetail.item.status === "REJECTED" && (
                 <>
-                  <Descriptions.Item label="Rejected By">{(reviewDetail.item as any).rejectedBy?.name || (reviewDetail.item as any).rejectedBy?.email || '—'}</Descriptions.Item>
-                  <Descriptions.Item label="Rejected At">{(reviewDetail.item as any).rejectedAt ? new Date((reviewDetail.item as any).rejectedAt).toLocaleString() : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Rejected By">
+                    {(reviewDetail.item as any).rejectedBy?.name ||
+                      (reviewDetail.item as any).rejectedBy?.email ||
+                      "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Rejected At">
+                    {(reviewDetail.item as any).rejectedAt
+                      ? new Date(
+                          (reviewDetail.item as any).rejectedAt
+                        ).toLocaleString()
+                      : "—"}
+                  </Descriptions.Item>
                 </>
               )}
-              {reviewDetail.item.status === 'CANCELLED' && (
+              {reviewDetail.item.status === "CANCELLED" && (
                 <>
-                  <Descriptions.Item label="Cancelled By">{(reviewDetail.item as any).cancelledBy?.name || (reviewDetail.item as any).cancelledBy?.email || '—'}</Descriptions.Item>
-                  <Descriptions.Item label="Cancelled At">{(reviewDetail.item as any).cancelledAt ? new Date((reviewDetail.item as any).cancelledAt).toLocaleString() : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Cancelled By">
+                    {(reviewDetail.item as any).cancelledBy?.name ||
+                      (reviewDetail.item as any).cancelledBy?.email ||
+                      "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Cancelled At">
+                    {(reviewDetail.item as any).cancelledAt
+                      ? new Date(
+                          (reviewDetail.item as any).cancelledAt
+                        ).toLocaleString()
+                      : "—"}
+                  </Descriptions.Item>
                 </>
               )}
-              {reviewDetail.item.status === 'REJECTED' && reviewDetail.item.rejectionReason && (
-                <Descriptions.Item label="Rejection Reason" span={2}>{reviewDetail.item.rejectionReason}</Descriptions.Item>
-              )}
-              <Descriptions.Item label="Notes">{reviewDetail.item.notes?.length ? reviewDetail.item.notes.join("; ") : "—"}</Descriptions.Item>
+              {reviewDetail.item.status === "REJECTED" &&
+                reviewDetail.item.rejectionReason && (
+                  <Descriptions.Item label="Rejection Reason" span={2}>
+                    {reviewDetail.item.rejectionReason}
+                  </Descriptions.Item>
+                )}
+              <Descriptions.Item label="Notes">
+                {reviewDetail.item.notes?.length
+                  ? reviewDetail.item.notes.join("; ")
+                  : "—"}
+              </Descriptions.Item>
             </Descriptions>
 
             {reviewDetail.item.evidence?.length > 0 && (
               <div>
-                <h3 className="mb-2 text-md font-semibold">Supporting Documents</h3>
+                <h3 className="text-md mb-2 font-semibold">
+                  Supporting Documents
+                </h3>
                 <ul className="list-disc pl-5">
                   {reviewDetail.item.evidence.map((url, idx) => (
-                    <li key={idx}><a href={url} target="_blank" rel="noreferrer" className="text-blue-600">View document {idx + 1}</a></li>
+                    <li key={idx}>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600"
+                      >
+                        View document {idx + 1}
+                      </a>
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -616,8 +922,12 @@ export default function AllocationRequestsPage() {
       <Drawer
         title={
           <div>
-            <h3 className="mb-0 text-md font-semibold">Reject Allocation Request</h3>
-            <p className="mb-0 text-sm text-gray-500 font-normal">Reject this request and provide a reason for rejection.</p>
+            <h3 className="text-md mb-0 font-semibold">
+              Reject Allocation Request
+            </h3>
+            <p className="mb-0 text-sm font-normal text-gray-500">
+              Reject this request and provide a reason for rejection.
+            </p>
           </div>
         }
         placement="right"
@@ -633,12 +943,28 @@ export default function AllocationRequestsPage() {
               danger
               onClick={async () => {
                 const values = rejectForm.getFieldsValue();
-                const res = await fetch(`/api/transactions/easypay/allocation-requests/${rejecting?._id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: "REJECTED", rejectionReason: values.rejectionReason }),
-                });
-                if (res.ok) { sweetAlert({ icon: 'success', title: 'Rejected', timer: 1500 }); setRejecting(null); handleRefresh(); } else { sweetAlert({ icon: 'error', title: 'Failed to reject' }); }
+                const res = await fetch(
+                  `/api/transactions/easypay/allocation-requests/${rejecting?._id}`,
+                  {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      status: "REJECTED",
+                      rejectionReason: values.rejectionReason,
+                    }),
+                  }
+                );
+                if (res.ok) {
+                  sweetAlert({
+                    icon: "success",
+                    title: "Rejected",
+                    timer: 1500,
+                  });
+                  setRejecting(null);
+                  handleRefresh();
+                } else {
+                  sweetAlert({ icon: "error", title: "Failed to reject" });
+                }
               }}
             >
               Submit
@@ -648,7 +974,10 @@ export default function AllocationRequestsPage() {
       >
         <Form layout="vertical" form={rejectForm}>
           <Form.Item label="Reason" name="rejectionReason" required>
-            <Input.TextArea rows={4} placeholder="Provide reason for rejection" />
+            <Input.TextArea
+              rows={4}
+              placeholder="Provide reason for rejection"
+            />
           </Form.Item>
         </Form>
       </Drawer>
@@ -656,8 +985,11 @@ export default function AllocationRequestsPage() {
       <Drawer
         title={
           <div>
-            <h3 className="mb-0 text-md font-semibold">Scan for Duplicates</h3>
-            <p className="mb-0 text-sm text-gray-500 font-normal">Upload ASSIT receipts CSV to compare against selected allocation requests.</p>
+            <h3 className="text-md mb-0 font-semibold">Scan for Duplicates</h3>
+            <p className="mb-0 text-sm font-normal text-gray-500">
+              Upload ASSIT receipts CSV to compare against selected allocation
+              requests.
+            </p>
           </div>
         }
         placement="right"
@@ -680,7 +1012,7 @@ export default function AllocationRequestsPage() {
                 loading={scanning}
                 onClick={performDuplicateScan}
               >
-                {scanning ? 'Scanning...' : 'Scan for Duplicates'}
+                {scanning ? "Scanning..." : "Scan for Duplicates"}
               </Button>
             )}
           </Space>
@@ -688,7 +1020,9 @@ export default function AllocationRequestsPage() {
       >
         <div className="space-y-6">
           <div>
-            <h4 className="mb-3 text-sm font-semibold">Upload ASSIT Receipts CSV</h4>
+            <h4 className="mb-3 text-sm font-semibold">
+              Upload ASSIT Receipts CSV
+            </h4>
             <Upload
               accept=".csv"
               beforeUpload={handleCSVUpload}
@@ -696,7 +1030,7 @@ export default function AllocationRequestsPage() {
               maxCount={1}
             >
               <Button icon={<UploadOutlined />}>
-                {csvFile ? csvFile.name : 'Select CSV File'}
+                {csvFile ? csvFile.name : "Select CSV File"}
               </Button>
             </Upload>
             {csvFile && (
@@ -708,10 +1042,13 @@ export default function AllocationRequestsPage() {
 
           {csvData.length > 0 && (
             <div>
-              <h4 className="mb-3 text-sm font-semibold">Selected Allocation Requests</h4>
+              <h4 className="mb-3 text-sm font-semibold">
+                Selected Allocation Requests
+              </h4>
               <p className="mb-3 text-sm text-gray-600">
-                Comparing {selectedRowKeys.length} selected requests against CSV data.
-                Comparison is based on Effective Date + MembershipID composite key.
+                Comparing {selectedRowKeys.length} selected requests against CSV
+                data. Comparison is based on Effective Date + MembershipID
+                composite key.
               </p>
             </div>
           )}
@@ -723,49 +1060,83 @@ export default function AllocationRequestsPage() {
                 defaultActiveKey="ready"
                 items={[
                   {
-                    key: 'ready',
-                    label: `Ready for Download (${comparisonResults.filter(r => !r.isDuplicate).length})`,
+                    key: "ready",
+                    label: `Ready for Download (${comparisonResults.filter((r) => !r.isDuplicate).length})`,
                     children: (
                       <div>
-                        <div className="mb-4 flex justify-between items-center">
+                        <div className="mb-4 flex items-center justify-between">
                           <p className="text-sm text-gray-600">
-                            {comparisonResults.filter(r => !r.isDuplicate).length} requests ready for download
+                            {
+                              comparisonResults.filter((r) => !r.isDuplicate)
+                                .length
+                            }{" "}
+                            requests ready for download
                           </p>
                           <Space>
                             <Button
                               icon={<UploadOutlined />}
-                              disabled={comparisonResults.filter(r => !r.isDuplicate).length === 0}
+                              disabled={
+                                comparisonResults.filter((r) => !r.isDuplicate)
+                                  .length === 0
+                              }
                               onClick={() => {
-                                const readyRequests = comparisonResults.filter(r => !r.isDuplicate);
-                                const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
+                                const readyRequests = comparisonResults.filter(
+                                  (r) => !r.isDuplicate
+                                );
+                                const timestamp = dayjs().format(
+                                  "YYYY-MM-DD_HH-mm-ss"
+                                );
                                 const filename = `easypay_allocation_requests_${timestamp}.csv`;
                                 generateAndDownloadCSV(readyRequests, filename);
-                                message.success(`Downloaded ${readyRequests.length} requests as ${filename}`);
+                                message.success(
+                                  `Downloaded ${readyRequests.length} requests as ${filename}`
+                                );
                               }}
                             >
                               Download All
                             </Button>
                             <Button
                               type="primary"
-                              disabled={comparisonResults.filter(r => !r.isDuplicate).length === 0}
+                              disabled={
+                                comparisonResults.filter((r) => !r.isDuplicate)
+                                  .length === 0
+                              }
                               onClick={async () => {
-                                const readyRequests = comparisonResults.filter(r => !r.isDuplicate);
-                                const requestIds = readyRequests.map(r => r.request._id);
+                                const readyRequests = comparisonResults.filter(
+                                  (r) => !r.isDuplicate
+                                );
+                                const requestIds = readyRequests.map(
+                                  (r) => r.request._id
+                                );
 
-                                const res = await fetch('/api/transactions/easypay/allocation-requests/allocate', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ ids: requestIds }),
-                                });
+                                const res = await fetch(
+                                  "/api/transactions/easypay/allocation-requests/allocate",
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ ids: requestIds }),
+                                  }
+                                );
 
                                 if (res.ok) {
                                   setSelectedRowKeys([]);
                                   handleRefresh();
                                   setScanDuplicatesOpen(false);
-                                  sweetAlert({ icon: 'success', title: `Marked ${requestIds.length} requests as Allocated`, timer: 1500 });
+                                  sweetAlert({
+                                    icon: "success",
+                                    title: `Marked ${requestIds.length} requests as Allocated`,
+                                    timer: 1500,
+                                  });
                                 } else {
-                                  const data = await res.json().catch(() => ({}));
-                                  sweetAlert({ icon: 'error', title: data.message || 'Failed to allocate' });
+                                  const data = await res
+                                    .json()
+                                    .catch(() => ({}));
+                                  sweetAlert({
+                                    icon: "error",
+                                    title: data.message || "Failed to allocate",
+                                  });
                                 }
                               }}
                             >
@@ -774,30 +1145,38 @@ export default function AllocationRequestsPage() {
                           </Space>
                         </div>
                         <Table
-                          rowKey={(record, index) => `${record.request._id}-${index}`}
-                          dataSource={comparisonResults.filter(r => !r.isDuplicate)}
+                          rowKey={(record, index) =>
+                            `${record.request._id}-${index}`
+                          }
+                          dataSource={comparisonResults.filter(
+                            (r) => !r.isDuplicate
+                          )}
                           pagination={{ pageSize: 10, showSizeChanger: true }}
                           columns={[
                             {
-                              title: 'Policy Number',
-                              dataIndex: ['request', 'policyNumber'],
-                              key: 'policyNumber',
+                              title: "Policy Number",
+                              dataIndex: ["request", "policyNumber"],
+                              key: "policyNumber",
                             },
                             {
-                              title: 'Easypay Number',
-                              dataIndex: ['request', 'easypayNumber'],
-                              key: 'easypayNumber',
+                              title: "Easypay Number",
+                              dataIndex: ["request", "easypayNumber"],
+                              key: "easypayNumber",
                             },
                             {
-                              title: 'Transaction Date',
-                              dataIndex: ['transaction', 'date'],
-                              key: 'transactionDate',
+                              title: "Transaction Date",
+                              dataIndex: ["transaction", "date"],
+                              key: "transactionDate",
                             },
                             {
-                              title: 'Amount',
-                              dataIndex: ['transaction', 'amount'],
-                              key: 'amount',
-                              render: (amount: number) => Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR' }).format(amount),
+                              title: "Amount",
+                              dataIndex: ["transaction", "amount"],
+                              key: "amount",
+                              render: (amount: number) =>
+                                Intl.NumberFormat(undefined, {
+                                  style: "currency",
+                                  currency: "ZAR",
+                                }).format(amount),
                             },
                           ]}
                         />
@@ -805,41 +1184,73 @@ export default function AllocationRequestsPage() {
                     ),
                   },
                   {
-                    key: 'duplicates',
-                    label: `Potential Duplicates (${comparisonResults.filter(r => r.isDuplicate).length})`,
+                    key: "duplicates",
+                    label: `Potential Duplicates (${comparisonResults.filter((r) => r.isDuplicate).length})`,
                     children: (
                       <div>
-                        <div className="mb-4 flex justify-between items-center">
+                        <div className="mb-4 flex items-center justify-between">
                           <p className="text-sm text-gray-600">
-                            {comparisonResults.filter(r => r.isDuplicate).length} potential duplicates found
+                            {
+                              comparisonResults.filter((r) => r.isDuplicate)
+                                .length
+                            }{" "}
+                            potential duplicates found
                           </p>
                           <Button
                             type="primary"
                             danger
-                            disabled={comparisonResults.filter(r => r.isDuplicate).length === 0}
+                            disabled={
+                              comparisonResults.filter((r) => r.isDuplicate)
+                                .length === 0
+                            }
                             onClick={async () => {
-                              const duplicateRequests = comparisonResults.filter(r => r.isDuplicate);
-                              const requestIds = duplicateRequests.map(r => r.request._id);
+                              const duplicateRequests =
+                                comparisonResults.filter((r) => r.isDuplicate);
+                              const requestIds = duplicateRequests.map(
+                                (r) => r.request._id
+                              );
 
                               try {
-                                const res = await fetch('/api/transactions/easypay/allocation-requests/mark-duplicates', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ ids: requestIds }),
-                                });
+                                const res = await fetch(
+                                  "/api/transactions/easypay/allocation-requests/mark-duplicates",
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ ids: requestIds }),
+                                  }
+                                );
 
                                 if (res.ok) {
                                   setSelectedRowKeys([]);
                                   handleRefresh();
                                   setScanDuplicatesOpen(false);
-                                  sweetAlert({ icon: 'success', title: `Marked ${requestIds.length} requests as duplicates`, timer: 1500 });
+                                  sweetAlert({
+                                    icon: "success",
+                                    title: `Marked ${requestIds.length} requests as duplicates`,
+                                    timer: 1500,
+                                  });
                                 } else {
-                                  const data = await res.json().catch(() => ({}));
-                                  sweetAlert({ icon: 'error', title: data.message || 'Failed to mark as duplicates' });
+                                  const data = await res
+                                    .json()
+                                    .catch(() => ({}));
+                                  sweetAlert({
+                                    icon: "error",
+                                    title:
+                                      data.message ||
+                                      "Failed to mark as duplicates",
+                                  });
                                 }
                               } catch (error) {
-                                console.error('Error marking duplicates:', error);
-                                sweetAlert({ icon: 'error', title: 'Failed to mark as duplicates' });
+                                console.error(
+                                  "Error marking duplicates:",
+                                  error
+                                );
+                                sweetAlert({
+                                  icon: "error",
+                                  title: "Failed to mark as duplicates",
+                                });
                               }
                             }}
                           >
@@ -847,65 +1258,94 @@ export default function AllocationRequestsPage() {
                           </Button>
                         </div>
                         <Table
-                          rowKey={(record, index) => `${record.request._id}-${index}`}
-                          dataSource={comparisonResults.filter(r => r.isDuplicate)}
+                          rowKey={(record, index) =>
+                            `${record.request._id}-${index}`
+                          }
+                          dataSource={comparisonResults.filter(
+                            (r) => r.isDuplicate
+                          )}
                           pagination={{ pageSize: 10, showSizeChanger: true }}
                           columns={[
                             {
-                              title: 'Policy Number',
-                              dataIndex: ['request', 'policyNumber'],
-                              key: 'policyNumber',
+                              title: "Policy Number",
+                              dataIndex: ["request", "policyNumber"],
+                              key: "policyNumber",
                             },
                             {
-                              title: 'Transaction Date',
-                              dataIndex: ['transaction', 'date'],
-                              key: 'transactionDate',
+                              title: "Transaction Date",
+                              dataIndex: ["transaction", "date"],
+                              key: "transactionDate",
                             },
                             {
-                              title: 'Amount',
-                              dataIndex: ['transaction', 'amount'],
-                              key: 'amount',
-                              render: (amount: number) => Intl.NumberFormat(undefined, { style: 'currency', currency: 'ZAR' }).format(amount),
+                              title: "Amount",
+                              dataIndex: ["transaction", "amount"],
+                              key: "amount",
+                              render: (amount: number) =>
+                                Intl.NumberFormat(undefined, {
+                                  style: "currency",
+                                  currency: "ZAR",
+                                }).format(amount),
                             },
                             {
-                              title: 'Description',
-                              dataIndex: ['transaction', 'description'],
-                              key: 'description',
+                              title: "Description",
+                              dataIndex: ["transaction", "description"],
+                              key: "description",
                               ellipsis: true,
                             },
                             {
-                              title: 'CSV Matches',
-                              dataIndex: 'matchCount',
-                              key: 'matchCount',
+                              title: "CSV Matches",
+                              dataIndex: "matchCount",
+                              key: "matchCount",
                               render: (count: number) => (
-                                <Tag color="red">{count} match{count !== 1 ? 'es' : ''}</Tag>
+                                <Tag color="red">
+                                  {count} match{count !== 1 ? "es" : ""}
+                                </Tag>
                               ),
                             },
                             {
-                              title: 'Actions',
-                              key: 'actions',
+                              title: "Actions",
+                              key: "actions",
                               render: (_, record) => (
                                 <Button
                                   size="small"
                                   danger
                                   onClick={async () => {
                                     try {
-                                      const res = await fetch('/api/transactions/easypay/allocation-requests/mark-duplicates', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ ids: [record.request._id] }),
-                                      });
+                                      const res = await fetch(
+                                        "/api/transactions/easypay/allocation-requests/mark-duplicates",
+                                        {
+                                          method: "POST",
+                                          headers: {
+                                            "Content-Type": "application/json",
+                                          },
+                                          body: JSON.stringify({
+                                            ids: [record.request._id],
+                                          }),
+                                        }
+                                      );
 
                                       if (res.ok) {
                                         handleRefresh();
-                                        message.success(`Marked policy ${record.request.policyNumber} as duplicate`);
+                                        message.success(
+                                          `Marked policy ${record.request.policyNumber} as duplicate`
+                                        );
                                       } else {
-                                        const data = await res.json().catch(() => ({}));
-                                        message.error(data.message || 'Failed to mark as duplicate');
+                                        const data = await res
+                                          .json()
+                                          .catch(() => ({}));
+                                        message.error(
+                                          data.message ||
+                                            "Failed to mark as duplicate"
+                                        );
                                       }
                                     } catch (error) {
-                                      console.error('Error marking duplicate:', error);
-                                      message.error('Failed to mark as duplicate');
+                                      console.error(
+                                        "Error marking duplicate:",
+                                        error
+                                      );
+                                      message.error(
+                                        "Failed to mark as duplicate"
+                                      );
                                     }
                                   }}
                                 >
@@ -916,29 +1356,62 @@ export default function AllocationRequestsPage() {
                           ]}
                           expandable={{
                             expandedRowRender: (record) => (
-                              <div className="p-4 bg-red-50 border border-red-200 rounded">
-                                <h6 className="font-medium text-red-800 mb-2">Matching CSV Records:</h6>
+                              <div className="rounded border border-red-200 bg-red-50 p-4">
+                                <h6 className="mb-2 font-medium text-red-800">
+                                  Matching CSV Records:
+                                </h6>
                                 <div className="space-y-2">
-                                  {record.csvMatches.map((match: any, matchIndex: number) => {
-                                    const effectiveDate = match['Effective Date'] || match['effective_date'] || match['EffectiveDate'];
-                                    const membershipId = match['MembershipID'] || match['membership_id'] || match['Membership ID'];
+                                  {record.csvMatches.map(
+                                    (match: any, matchIndex: number) => {
+                                      const effectiveDate =
+                                        match["Effective Date"] ||
+                                        match["effective_date"] ||
+                                        match["EffectiveDate"];
+                                      const membershipId =
+                                        match["MembershipID"] ||
+                                        match["membership_id"] ||
+                                        match["Membership ID"];
 
-                                    return (
-                                      <div key={matchIndex} className="bg-white p-2 rounded border text-xs">
-                                        <p><strong>Effective Date:</strong> {effectiveDate} (YYYY/MM/DD)</p>
-                                        <p><strong>MembershipID:</strong> {membershipId}</p>
-                                        {Object.keys(match).filter(key =>
-                                          !['Effective Date', 'effective_date', 'EffectiveDate', 'MembershipID', 'membership_id', 'Membership ID'].includes(key)
-                                        ).map(key => (
-                                          <p key={key}><strong>{key}:</strong> {match[key]}</p>
-                                        ))}
-                                      </div>
-                                    );
-                                  })}
+                                      return (
+                                        <div
+                                          key={matchIndex}
+                                          className="rounded border bg-white p-2 text-xs"
+                                        >
+                                          <p>
+                                            <strong>Effective Date:</strong>{" "}
+                                            {effectiveDate} (YYYY/MM/DD)
+                                          </p>
+                                          <p>
+                                            <strong>MembershipID:</strong>{" "}
+                                            {membershipId}
+                                          </p>
+                                          {Object.keys(match)
+                                            .filter(
+                                              (key) =>
+                                                ![
+                                                  "Effective Date",
+                                                  "effective_date",
+                                                  "EffectiveDate",
+                                                  "MembershipID",
+                                                  "membership_id",
+                                                  "Membership ID",
+                                                ].includes(key)
+                                            )
+                                            .map((key) => (
+                                              <p key={key}>
+                                                <strong>{key}:</strong>{" "}
+                                                {match[key]}
+                                              </p>
+                                            ))}
+                                        </div>
+                                      );
+                                    }
+                                  )}
                                 </div>
                               </div>
                             ),
-                            rowExpandable: (record) => record.csvMatches && record.csvMatches.length > 0,
+                            rowExpandable: (record) =>
+                              record.csvMatches && record.csvMatches.length > 0,
                           }}
                         />
                       </div>
