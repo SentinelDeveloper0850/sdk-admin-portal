@@ -10,6 +10,7 @@ import {
   GraduationCap,
   HelpCircle,
   Info,
+  PlusIcon,
   Search,
   Shield
 } from "lucide-react";
@@ -83,18 +84,18 @@ export default function KnowledgeHubListPage() {
   }, [data]);
 
   const hasActiveFilters = q.trim() || category || status;
-  const showCategories = !hasActiveFilters && !items.length;
+  const showCategories = !hasActiveFilters;
 
   return (
     <div className="min-h-screen -m-4">
       <KnowledgeHubHeroSection>
-        <div className="relative px-4 py-8 md:py-12">
+        <div className="relative px-4 py-4 md:py-6">
           <div className="mx-auto max-w-4xl text-center">
-            <h1 className="mb-6 text-4xl font-bold text-[#050505]/95 md:text-5xl lg:text-6xl">
+            <h1 className="mb-6 text-3xl font-bold text-[#050505]/95 md:text-4xl lg:text-5xl">
               Knowledge Hub
             </h1>
 
-            <p className="mb-8 text-lg text-[#050505]/80 md:text-xl">
+            <p className="mb-8 text-md text-[#050505]/80 md:text-lg">
               Company documents, SOPs, and how-to guides.
             </p>
 
@@ -109,61 +110,32 @@ export default function KnowledgeHubListPage() {
                   placeholder="Search by keyword or phrase..."
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  className="w-full rounded-lg border border-white/10
+                  className="w-full rounded-lg border-1 border-[#ffac00]/70
                        bg-white/95 py-4 pl-12 pr-4 text-base shadow-lg
-                       placeholder:text-stone-500
-                       focus:outline-none focus:ring-2 focus:ring-[#ffac00]/70
+                       placeholder:text-stone-500 
+                       focus:outline-none focus:ring-1 focus:ring-[#ffac00]/70
                        dark:bg-white/95 dark:text-[#050505] dark:placeholder:text-dark/50"
                 />
               </div>
-
-              {(category || (isAdmin && status)) && (
-                <div className="mt-4 flex flex-wrap justify-center gap-2">
-                  <select
-                    className="rounded border border-white/25 bg-white/10 px-3 py-2 text-white
-                         backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#ffac00]/70
-                         dark:bg-white/5"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                  >
-                    <option value="">All categories</option>
-                    {CATEGORY_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="text-stone-900">
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  {isAdmin && (
-                    <select
-                      className="rounded border border-white/25 bg-white/10 px-3 py-2 text-white
-                           backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#ffac00]/70
-                           dark:bg-white/5"
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                    >
-                      <option value="">All statuses</option>
-                      {STATUS_OPTIONS.filter((opt) => opt.value).map((opt) => (
-                        <option key={opt.value} value={opt.value} className="text-stone-900">
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
+        {isAdmin && <div className="absolute right-4 top-4">
+          <Link href="/knowledge-hub/create" className="hover:text-white">
+            <div className="rounded-full bg-[#ffac00] p-2 text-white shadow-lg hover:bg-[#e69500] border border-white transition">
+              <PlusIcon className="inline-block h-6 w-6 align-middle" />
+            </div>
+          </Link>
+        </div>}
       </KnowledgeHubHeroSection>
 
       {/* Main Content */}
-      <div className="p-4">
+      <div className="p-4 mb-8">
         <div className="mx-auto max-w-7xl">
           {showCategories ? (
             /* Category Cards Grid */
             <>
-              <h2 className="mb-6 text-2xl font-semibold text-stone-600 dark:text-stone-400">
+              <h2 className="mb-6 text-xl font-semibold text-stone-600 dark:text-white">
                 Browse the Knowledge Hub by category
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -171,7 +143,7 @@ export default function KnowledgeHubListPage() {
                   <button
                     key={cat.value}
                     onClick={() => setCategory(cat.value)}
-                    className="group flex flex-col items-start gap-4 rounded-lg border border-stone-200 bg-white p-6 text-left transition-all hover:border-stone-300 hover:shadow-lg dark:border-stone-700 dark:bg-stone-800 dark:hover:border-stone-600"
+                    className="group flex flex-col items-start gap-4 rounded-lg border border-stone-600 bg-white p-6 text-left transition-all hover:border-stone-300 hover:shadow-lg dark:border-stone-700 dark:bg-stone-800 dark:hover:border-stone-600"
                   >
                     <div className="text-stone-600 transition-transform group-hover:scale-110 dark:text-stone-400">
                       {cat.icon}
@@ -193,7 +165,7 @@ export default function KnowledgeHubListPage() {
             <>
               {hasActiveFilters && (
                 <div className="mb-6 flex flex-wrap items-center gap-4">
-                  <h2 className="text-2xl font-semibold text-stone-900 dark:text-white">
+                  <h2 className="text-xl font-semibold text-stone-900 dark:text-white">
                     {items.length > 0 ? `Search Results (${items.length})` : "Search Results"}
                   </h2>
                   <div className="flex flex-wrap gap-2">
