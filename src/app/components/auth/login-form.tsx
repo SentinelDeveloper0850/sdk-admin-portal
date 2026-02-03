@@ -12,6 +12,10 @@ import { useAuth } from "@/context/auth-context";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 const LoginForm = () => {
   const [form] = Form.useForm();
 

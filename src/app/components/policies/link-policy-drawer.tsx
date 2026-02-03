@@ -1,9 +1,11 @@
-import { Button, Drawer, Form, Input, Space, Table } from "antd";
-import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
 import { useEffect, useState } from "react";
+
 import { SearchOutlined, UserOutlined } from "@ant-design/icons";
-import { IEasipolPolicy } from "@/app/(protected)/policies/view/EasipolPolicies";
+import { Button, Drawer, Form, Input, Space, Table } from "antd";
 import sweetAlert from "sweetalert";
+
+import { IEasipolPolicy } from "@/app/(protected)/policies/view/EasipolPolicies";
+import { IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
 
 interface Props {
   open: boolean;
@@ -25,10 +27,9 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
     searchText: "",
   });
 
-
   const handleSearch = (value: string) => {
     setSearchInput(value || "");
-    setFilters(prev => ({ ...prev, searchText: value || "" }));
+    setFilters((prev) => ({ ...prev, searchText: value || "" }));
     setCurrentPage(1); // Reset to first page when searching
     fetchEasipolPolicies();
   };
@@ -37,7 +38,7 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
     setFilters({ searchText: "" });
     setCurrentPage(1);
     fetchEasipolPolicies();
-  }
+  };
 
   const handleLink = async (id: string) => {
     sweetAlert({
@@ -71,13 +72,15 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
         }
       }
     });
-  }
+  };
 
   const fetchEasipolPolicies = async () => {
-    const response = await fetch(`/api/policies/easipol?page=${currentPage}&pageSize=${pageSize}&sortBy=${sortBy}&sortOrder=${sortOrder}&searchText=${searchInput}`);
+    const response = await fetch(
+      `/api/policies/easipol?page=${currentPage}&pageSize=${pageSize}&sortBy=${sortBy}&sortOrder=${sortOrder}&searchText=${searchInput}`
+    );
     const data = await response.json();
     setEasipolPolicies(data.policies);
-  }
+  };
 
   const columns = [
     {
@@ -94,7 +97,8 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
       title: "Main Member",
       dataIndex: "fullName",
       key: "fullName",
-      sorter: (a: IEasipolPolicy, b: IEasipolPolicy) => a.fullName?.localeCompare(b.fullName || "") || 0,
+      sorter: (a: IEasipolPolicy, b: IEasipolPolicy) =>
+        a.fullName?.localeCompare(b.fullName || "") || 0,
       render: (fullName: string, record: IEasipolPolicy) => (
         <div className="flex items-center gap-2">
           <UserOutlined className="text-gray-400" />
@@ -107,9 +111,11 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
       dataIndex: "actions",
       key: "actions",
       render: (_: any, record: IEasipolPolicy) => (
-        <Button type="link" onClick={() => handleLink(record._id)}>Link Policy</Button>
+        <Button type="link" onClick={() => handleLink(record._id)}>
+          Link Policy
+        </Button>
       ),
-    }
+    },
   ];
 
   return (
@@ -118,7 +124,8 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
       placement="right"
       width="60%"
       onClose={onClose}
-      open={open} destroyOnClose={true}
+      open={open}
+      destroyOnClose={true}
       extra={
         <Space>
           <Button onClick={onClose}>Close</Button>
@@ -126,7 +133,9 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
       }
     >
       <Form form={form} layout="vertical">
-        <p className="text-md font-medium mb-4">Search for an Easipol policy to link</p>
+        <p className="text-md mb-4 font-medium">
+          Search for an Easipol policy to link
+        </p>
 
         <Form.Item label="Search">
           <Input
@@ -141,27 +150,47 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
               }
             }}
             onPressEnter={() => handleSearch(searchInput)}
-            addonAfter={<SearchOutlined style={{ cursor: "pointer" }} onClick={() => handleSearch(searchInput)} />}
+            addonAfter={
+              <SearchOutlined
+                style={{ cursor: "pointer" }}
+                onClick={() => handleSearch(searchInput)}
+              />
+            }
           />
         </Form.Item>
       </Form>
-      <p className="text-md font-medium mb-4">Search results:</p>
+      <p className="text-md mb-4 font-medium">Search results:</p>
 
       {/* Search Results Indicator */}
-      {(filters.searchText) && (
-        <div style={{
-          backgroundColor: "#f0f9ff",
-          border: "1px solid #0ea5e9",
-          borderRadius: "6px",
-          padding: "12px 16px",
-          marginBottom: "16px",
-          color: "#0c4a6e"
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {filters.searchText && (
+        <div
+          style={{
+            backgroundColor: "#f0f9ff",
+            border: "1px solid #0ea5e9",
+            borderRadius: "6px",
+            padding: "12px 16px",
+            marginBottom: "16px",
+            color: "#0c4a6e",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <div>
-              <strong>Search Results:</strong> Showing Easipol policies matching your search term
-              {filters.searchText && <span style={{ marginLeft: "8px" }}>• Search: "{filters.searchText}"</span>}
-              <span style={{ marginLeft: "8px" }}>• {easipolPolicies.length} results</span>
+              <strong>Search Results:</strong> Showing Easipol policies matching
+              your search term
+              {filters.searchText && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Search: "{filters.searchText}"
+                </span>
+              )}
+              <span style={{ marginLeft: "8px" }}>
+                • {easipolPolicies.length} results
+              </span>
             </div>
             <Button
               type="link"
@@ -181,7 +210,7 @@ const LinkPolicyDrawer = ({ open, onClose, policy }: Props) => {
         }}
       />
     </Drawer>
-  )
-}
+  );
+};
 
 export default LinkPolicyDrawer;

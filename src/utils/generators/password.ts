@@ -5,4 +5,4 @@ export const generateTemporaryPassword = (length = 10): string => {
     password += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return password;
-}
+};

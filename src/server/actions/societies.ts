@@ -1,12 +1,12 @@
 "use server";
 
 import fs from "fs";
+import mongoose from "mongoose";
 import Papa from "papaparse";
 
+import { SocietyMemberModel } from "@/app/models/scheme/scheme-society-member.schema";
 import { SocietyModel as Model } from "@/app/models/scheme/society.schema";
 import { connectToDatabase } from "@/lib/db";
-import { SocietyMemberModel } from "@/app/models/scheme/scheme-society-member.schema";
-import mongoose from "mongoose";
 
 export const fetchAllSocieties = async (page = 1, limit = 0) => {
   try {
@@ -140,7 +140,9 @@ export async function importSocietiesFromCSV(filePath: string) {
 export const fetchSocietyMembersById = async (id: string) => {
   await connectToDatabase();
   try {
-    const members = await SocietyMemberModel.find({ societyId: new mongoose.Types.ObjectId(id) });
+    const members = await SocietyMemberModel.find({
+      societyId: new mongoose.Types.ObjectId(id),
+    });
     return {
       success: true,
       data: members || [],
@@ -152,4 +154,4 @@ export const fetchSocietyMembersById = async (id: string) => {
       message: "Internal Server Error ~ Error fetching society members",
     };
   }
-}
+};

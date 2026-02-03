@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequest } from "@/lib/auth";
-import { connectToDatabase } from "@/lib/db";
-import { createSystemNotification, getDiscordWebhookUrl, sendDiscordNotification } from "@/lib/discord";
-
 import { EAllocationRequestStatus } from "@/app/enums/hr/allocation-request-status.enum";
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
+import { getUserFromRequest } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/db";
+import {
+  createSystemNotification,
+  getDiscordWebhookUrl,
+  sendDiscordNotification,
+} from "@/lib/discord";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +17,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const userRoles = [user.role, ...(user.roles || [])].filter(Boolean) as string[];
+    const userRoles = [user.role, ...(user.roles || [])].filter(
+      Boolean
+    ) as string[];
     const allowedRoles: string[] = ["admin", "eft_reviewer", "eft_allocator"];
     const hasAccess = userRoles.some((r) => allowedRoles.includes(r));
     if (!hasAccess) {
@@ -26,13 +31,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const ids: string[] = body?.ids || [];
     if (!Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({ message: "No request ids provided" }, { status: 400 });
+      return NextResponse.json(
+        { message: "No request ids provided" },
+        { status: 400 }
+      );
     }
 
     // Only transition APPROVED -> SUBMITTED
     const res = await AllocationRequestModel.updateMany(
       { _id: { $in: ids }, status: EAllocationRequestStatus.APPROVED },
-      { $set: { status: EAllocationRequestStatus.SUBMITTED, submittedBy: user._id, submittedAt: new Date() } }
+      {
+        $set: {
+          status: EAllocationRequestStatus.SUBMITTED,
+          submittedBy: user._id,
+          submittedAt: new Date(),
+        },
+      }
     );
 
     // Send Discord notification (best-effort)
@@ -51,7 +65,11 @@ export async function POST(request: NextRequest) {
       } else {
         (payload as any).content = "@wendza";
       }
-      await sendDiscordNotification(webhookUrl, payload, "eft-allocation-submit");
+      await sendDiscordNotification(
+        webhookUrl,
+        payload,
+        "eft-allocation-submit"
+      );
     }
 
     return NextResponse.json({
@@ -59,12 +77,13 @@ export async function POST(request: NextRequest) {
       matched: res.matchedCount,
     });
   } catch (error) {
-    console.error("Error submitting allocation requests:", (error as Error).message);
+    console.error(
+      "Error submitting allocation requests:",
+      (error as Error).message
+    );
     return NextResponse.json(
       { message: "Internal Server Error ~ submit allocation requests" },
       { status: 500 }
     );
   }
 }
-
-

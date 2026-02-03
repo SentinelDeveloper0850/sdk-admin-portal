@@ -33,12 +33,16 @@ const IEftImportDataSchema: Schema = new Schema({
   contentHash: { type: String, required: false },
   dateRange: {
     start: { type: String, required: false },
-    end: { type: String, required: false }
+    end: { type: String, required: false },
   },
-  importType: { type: String, required: false }
+  importType: { type: String, required: false },
 });
 
 // Check if the model is already compiled
 export const IEftImportDataModel =
   mongoose.models?.eft_import_data ||
-  mongoose.model<IEftImportData>("eft_import_data", IEftImportDataSchema, "eft_import_data");
+  mongoose.model<IEftImportData>(
+    "eft_import_data",
+    IEftImportDataSchema,
+    "eft_import_data"
+  );

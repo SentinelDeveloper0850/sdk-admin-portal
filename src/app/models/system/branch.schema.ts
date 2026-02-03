@@ -1,26 +1,26 @@
 // branch.schema.ts
-import mongoose, { Document, Schema } from "mongoose"
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IBranch extends Document {
-  id?: string // stable business id
-  regionId?: string // stable business FK -> Region.id
-  name: string
-  code: string
-  address?: string
-  city?: string
-  province?: string
-  postalCode?: string
-  phone?: string
-  phoneExtension?: string
-  email?: string
-  manager?: mongoose.Types.ObjectId
-  latitude?: number
-  longitude?: number
-  isActive?: boolean
-  createdAt?: Date
-  updatedAt?: Date
-  createdBy?: mongoose.Types.ObjectId
-  updatedBy?: mongoose.Types.ObjectId
+  id?: string; // stable business id
+  regionId?: string; // stable business FK -> Region.id
+  name: string;
+  code: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  phone?: string;
+  phoneExtension?: string;
+  email?: string;
+  manager?: mongoose.Types.ObjectId;
+  latitude?: number;
+  longitude?: number;
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  createdBy?: mongoose.Types.ObjectId;
+  updatedBy?: mongoose.Types.ObjectId;
 }
 
 const PROVINCES = [
@@ -33,7 +33,7 @@ const PROVINCES = [
   "Limpopo",
   "North West",
   "Northern Cape",
-] as const
+] as const;
 
 const branchSchema = new Schema<IBranch>(
   {
@@ -141,17 +141,17 @@ const branchSchema = new Schema<IBranch>(
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
-)
+);
 
 // ---- Indexes
-branchSchema.index({ id: 1 })
-branchSchema.index({ regionId: 1 })
-branchSchema.index({ code: 1 })
-branchSchema.index({ city: 1 })
-branchSchema.index({ province: 1 })
-branchSchema.index({ isActive: 1 })
-branchSchema.index({ manager: 1 })
-branchSchema.index({ latitude: 1, longitude: 1 })
+branchSchema.index({ id: 1 });
+branchSchema.index({ regionId: 1 });
+branchSchema.index({ code: 1 });
+branchSchema.index({ city: 1 });
+branchSchema.index({ province: 1 });
+branchSchema.index({ isActive: 1 });
+branchSchema.index({ manager: 1 });
+branchSchema.index({ latitude: 1, longitude: 1 });
 
 // ---- Virtual populate (business-id join)
 // NOTE: "regions" must match the Region model name you register (see region.schema.ts below).
@@ -160,40 +160,47 @@ branchSchema.virtual("regionDoc", {
   localField: "regionId",
   foreignField: "id",
   justOne: true,
-})
+});
 
 // ---- Virtual for full address (skips undefined parts)
 branchSchema.virtual("fullAddress").get(function () {
-  const parts = [this.address, this.city, this.province, this.postalCode].filter(Boolean)
-  return parts.join(", ")
-})
+  const parts = [
+    this.address,
+    this.city,
+    this.province,
+    this.postalCode,
+  ].filter(Boolean);
+  return parts.join(", ");
+});
 
 // ---- Virtual for coordinates string
 branchSchema.virtual("coordinatesString").get(function () {
-  const parts = [this.latitude, this.longitude].filter((v) => typeof v === "number")
-  return parts.length === 2 ? `${parts[0]}, ${parts[1]}` : ""
-})
+  const parts = [this.latitude, this.longitude].filter(
+    (v) => typeof v === "number"
+  );
+  return parts.length === 2 ? `${parts[0]}, ${parts[1]}` : "";
+});
 
 // ---- Pre-save middleware to ensure code is uppercase
 branchSchema.pre("save", function (next) {
   if (this.isModified("code") && typeof this.code === "string") {
-    this.code = this.code.toUpperCase()
+    this.code = this.code.toUpperCase();
   }
-  next()
-})
+  next();
+});
 
 // ---- Statics
 branchSchema.statics.findActive = function () {
-  return this.find({ isActive: true })
-}
+  return this.find({ isActive: true });
+};
 
 branchSchema.statics.findByRegion = function (regionId: string) {
-  return this.find({ regionId, isActive: true })
-}
+  return this.find({ regionId, isActive: true });
+};
 
 branchSchema.statics.findByProvince = function (province: string) {
-  return this.find({ province, isActive: true })
-}
+  return this.find({ province, isActive: true });
+};
 
 // Bounding-box helper (not true geo-radius). Keep it if you want.
 branchSchema.statics.findNear = function (
@@ -205,9 +212,9 @@ branchSchema.statics.findNear = function (
     isActive: true,
     latitude: { $gte: lat - maxDistance, $lte: lat + maxDistance },
     longitude: { $gte: lng - maxDistance, $lte: lng + maxDistance },
-  })
-}
+  });
+};
 
 export const BranchModel =
   mongoose.models.branches ||
-  mongoose.model<IBranch>("branches", branchSchema, "branches")
+  mongoose.model<IBranch>("branches", branchSchema, "branches");

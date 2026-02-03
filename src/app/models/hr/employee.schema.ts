@@ -1,4 +1,4 @@
-import { model, Schema, Types } from 'mongoose';
+import { Schema, Types, model } from "mongoose";
 
 export interface IEmployee {
   _id: string;
@@ -31,7 +31,7 @@ const EmployeeSchema = new Schema(
     department: { type: String },
     startDate: { type: Date, required: true },
     endDate: { type: Date }, // optional, for terminated/resigned
-    user: { type: Types.ObjectId, ref: 'User' }, // optional link to User
+    user: { type: Types.ObjectId, ref: "User" }, // optional link to User
 
     leaveBalance: {
       annual: { type: Number, default: 15 },
@@ -42,11 +42,11 @@ const EmployeeSchema = new Schema(
 
     status: {
       type: String,
-      enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'],
-      default: 'ACTIVE',
+      enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
+      default: "ACTIVE",
     },
   },
   { timestamps: true }
 );
 
-export const Employee = model('employees', EmployeeSchema, "employees");
+export const Employee = model("employees", EmployeeSchema, "employees");

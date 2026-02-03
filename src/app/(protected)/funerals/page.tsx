@@ -1,22 +1,41 @@
 // src/app/(protected)/funerals/page.tsx
 "use client";
 
-import CaseFileSummary from "@/app/components/funerals/CaseFileSummary";
-import PageHeader from "@/app/components/page-header";
-import type { IFuneral } from "@/types/funeral";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
 import {
   CalendarOutlined,
   EditOutlined,
   EyeOutlined,
   PlusOutlined,
   ReloadOutlined,
-  SearchOutlined
+  SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Card, DatePicker, Divider, Drawer, Input, Select, Space, Statistic, Table, Tag, Typography } from "antd";
+import {
+  Button,
+  Card,
+  DatePicker,
+  Divider,
+  Drawer,
+  Input,
+  Select,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
 import dayjs, { Dayjs } from "dayjs";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
 import sweetAlert from "sweetalert";
+
+import CaseFileSummary from "@/app/components/funerals/CaseFileSummary";
+import PageHeader from "@/app/components/page-header";
+import type { IFuneral } from "@/types/funeral";
+
+// src/app/(protected)/funerals/page.tsx
+
+// src/app/(protected)/funerals/page.tsx
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -40,7 +59,8 @@ const STATUS_OPTIONS: Array<{ value: FuneralStatus; label: string }> = [
   { value: "postponed", label: "Postponed" },
 ];
 
-const fmtDT = (iso?: string) => (iso ? dayjs(iso).format("ddd, D MMM YYYY • HH:mm") : "—");
+const fmtDT = (iso?: string) =>
+  iso ? dayjs(iso).format("ddd, D MMM YYYY • HH:mm") : "—";
 
 const getStatusTag = (s: FuneralStatus) => {
   const map: Record<FuneralStatus, { color: string; label: string }> = {
@@ -74,8 +94,10 @@ const nextMilestone = (r: any) => {
     .filter((m: any) => !!m?.enabled && !!m?.startDateTime)
     .map((m: any) => [String(m.type), String(m.startDateTime)]);
 
-  if (r?.serviceDateTime) pairs.push(["service_legacy", String(r.serviceDateTime)]);
-  if (r?.burialDateTime) pairs.push(["burial_legacy", String(r.burialDateTime)]);
+  if (r?.serviceDateTime)
+    pairs.push(["service_legacy", String(r.serviceDateTime)]);
+  if (r?.burialDateTime)
+    pairs.push(["burial_legacy", String(r.burialDateTime)]);
 
   if (!pairs.length) return "—";
 
@@ -112,7 +134,9 @@ export default function FuneralsListPage() {
   const [status, setStatus] = useState<FuneralStatus | undefined>();
   const [branchId, setBranchId] = useState<string | undefined>();
   const [range, setRange] = useState<[Dayjs, Dayjs] | null>(null);
-  const [branches, setBranches] = useState<Array<{ name: string; code: string }>>([]);
+  const [branches, setBranches] = useState<
+    Array<{ name: string; code: string }>
+  >([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
 
   // drawer state
@@ -152,7 +176,11 @@ export default function FuneralsListPage() {
       setTotal(json.total);
     } catch (e: any) {
       console.error(e);
-      sweetAlert({ title: "Error", text: e?.message || "Failed to fetch funerals", icon: "error" });
+      sweetAlert({
+        title: "Error",
+        text: e?.message || "Failed to fetch funerals",
+        icon: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -169,17 +197,25 @@ export default function FuneralsListPage() {
         setBranchesLoading(true);
         const res = await fetch("/api/configurations/branches");
         const json = await res.json();
-        if (!res.ok || !json?.success) throw new Error(json?.error?.message || "Failed to load branches");
+        if (!res.ok || !json?.success)
+          throw new Error(json?.error?.message || "Failed to load branches");
 
         const list = Array.isArray(json.data) ? json.data : [];
         setBranches(
           list
             .filter((item: any) => item?.name && item?.code)
-            .map((item: any) => ({ name: String(item.name), code: String(item.code) }))
+            .map((item: any) => ({
+              name: String(item.name),
+              code: String(item.code),
+            }))
         );
       } catch (e: any) {
         console.error(e);
-        sweetAlert({ title: "Error loading branches", text: e?.message || "Unable to load branches", icon: "error" });
+        sweetAlert({
+          title: "Error loading branches",
+          text: e?.message || "Unable to load branches",
+          icon: "error",
+        });
       } finally {
         setBranchesLoading(false);
       }
@@ -188,7 +224,8 @@ export default function FuneralsListPage() {
   }, []);
 
   const branchOptions = useMemo(
-    () => branches.map((b) => ({ label: `${b.name} (${b.code})`, value: b.code })),
+    () =>
+      branches.map((b) => ({ label: `${b.name} (${b.code})`, value: b.code })),
     [branches]
   );
 
@@ -204,7 +241,11 @@ export default function FuneralsListPage() {
       {
         title: "Deceased",
         key: "deceased",
-        render: (_: any, r: any) => <span>{`${r.deceased?.firstName ?? ""} ${r.deceased?.lastName ?? ""}`.trim()}</span>,
+        render: (_: any, r: any) => (
+          <span>
+            {`${r.deceased?.firstName ?? ""} ${r.deceased?.lastName ?? ""}`.trim()}
+          </span>
+        ),
       },
       {
         title: "Church",
@@ -230,7 +271,11 @@ export default function FuneralsListPage() {
         width: 140,
         render: (v: FuneralStatus) => getStatusTag(v),
       },
-      { title: "Next Task", key: "next", render: (_: any, r: any) => nextMilestone(r) },
+      {
+        title: "Next Task",
+        key: "next",
+        render: (_: any, r: any) => nextMilestone(r),
+      },
       {
         title: "Actions",
         key: "actions",
@@ -238,9 +283,21 @@ export default function FuneralsListPage() {
         width: 160,
         render: (_: any, row: any) => (
           <Space>
-            <Button size="small" icon={<CalendarOutlined />} onClick={() => window.open("/calendar", "_blank")} />
-            <Button size="small" icon={<EditOutlined />} onClick={() => router.push(`/funerals/${row._id}`)} />
-            <Button size="small" icon={<EyeOutlined />} onClick={() => openSummary(row)} />
+            <Button
+              size="small"
+              icon={<CalendarOutlined />}
+              onClick={() => window.open("/calendar", "_blank")}
+            />
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => router.push(`/funerals/${row._id}`)}
+            />
+            <Button
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => openSummary(row)}
+            />
           </Space>
         ),
       },
@@ -255,10 +312,18 @@ export default function FuneralsListPage() {
         noDivider
         subtitle="Create, update, and manage funeral case files"
         actions={[
-          <Button key="refresh" icon={<ReloadOutlined />} onClick={() => fetchData()}>
+          <Button
+            key="refresh"
+            icon={<ReloadOutlined />}
+            onClick={() => fetchData()}
+          >
             Refresh
           </Button>,
-          <Button key="new" icon={<PlusOutlined />} onClick={() => router.push("/funerals/new")}>
+          <Button
+            key="new"
+            icon={<PlusOutlined />}
+            onClick={() => router.push("/funerals/new")}
+          >
             New Funeral
           </Button>,
         ]}
@@ -357,7 +422,6 @@ export default function FuneralsListPage() {
       >
         <CaseFileSummary record={summaryRow} readOnly />
       </Drawer>
-
     </div>
   );
 }

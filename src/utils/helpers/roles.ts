@@ -42,60 +42,157 @@ export const groupedRoles = [
   {
     category: "Core Roles",
     roles: [
-      { key: "admin", label: "Admin", description: "Full system access and configuration" },
-      { key: "member", label: "Member", description: "Standard access with limited permissions" },
+      {
+        key: "admin",
+        label: "Admin",
+        description: "Full system access and configuration",
+      },
+      {
+        key: "member",
+        label: "Member",
+        description: "Standard access with limited permissions",
+      },
     ],
   },
   {
     category: "Management",
     roles: [
-      { key: "branch_manager", label: "Branch Manager", description: "Manages the daily operations of a branch" },
-      { key: "regional_manager", label: "Regional Manager", description: "Manages the daily operations of a regional office" },
-      { key: "department_manager", label: "Department Manager", description: "Manages the daily operations of a department" },
-      { key: "team_leader", label: "Team Leader", description: "Manages the daily operations of a team" },
-      { key: "supervisor", label: "Supervisor", description: "Manages the daily operations of a supervisor" },
+      {
+        key: "branch_manager",
+        label: "Branch Manager",
+        description: "Manages the daily operations of a branch",
+      },
+      {
+        key: "regional_manager",
+        label: "Regional Manager",
+        description: "Manages the daily operations of a regional office",
+      },
+      {
+        key: "department_manager",
+        label: "Department Manager",
+        description: "Manages the daily operations of a department",
+      },
+      {
+        key: "team_leader",
+        label: "Team Leader",
+        description: "Manages the daily operations of a team",
+      },
+      {
+        key: "supervisor",
+        label: "Supervisor",
+        description: "Manages the daily operations of a supervisor",
+      },
     ],
   },
   {
     category: "Claims & Compliance",
     roles: [
-      { key: "claims_officer", label: "Claims Officer", description: "Manages policyholder claims" },
-      { key: "compliance_officer", label: "Compliance Officer", description: "Monitors operational compliance across modules" },
-      { key: "compliance_auditor", label: "Compliance Auditor", description: "Audits system and policy compliance" },
+      {
+        key: "claims_officer",
+        label: "Claims Officer",
+        description: "Manages policyholder claims",
+      },
+      {
+        key: "compliance_officer",
+        label: "Compliance Officer",
+        description: "Monitors operational compliance across modules",
+      },
+      {
+        key: "compliance_auditor",
+        label: "Compliance Auditor",
+        description: "Audits system and policy compliance",
+      },
     ],
   },
   {
     category: "HR & Finance",
     roles: [
-      { key: "hr_manager", label: "HR Manager", description: "Manages employees, leave and contracts" },
-      { key: "finance_officer", label: "Finance Officer", description: "Handles payments and reconciliation" },
-      { key: "cashier", label: "Cashier", description: "Captures payments and issues receipts" },
-      { key: "cashup_reviewer", label: "Cashup Reviewer", description: "Reviews and audits daily cashup submissions" },
-      { key: "eft_reviewer", label: "EFT Reviewer", description: "Reviews EFT imports and transactions" },
-      { key: "eft_allocator", label: "EFT Allocator", description: "Allocates EFT transactions to policies" },
-      { key: "easypay_reviewer", label: "Easypay Reviewer", description: "Reviews Easypay imports and transactions" },
-      { key: "easypay_allocator", label: "Easypay Allocator", description: "Allocates Easypay transactions to policies" },
+      {
+        key: "hr_manager",
+        label: "HR Manager",
+        description: "Manages employees, leave and contracts",
+      },
+      {
+        key: "finance_officer",
+        label: "Finance Officer",
+        description: "Handles payments and reconciliation",
+      },
+      {
+        key: "cashier",
+        label: "Cashier",
+        description: "Captures payments and issues receipts",
+      },
+      {
+        key: "cashup_reviewer",
+        label: "Cashup Reviewer",
+        description: "Reviews and audits daily cashup submissions",
+      },
+      {
+        key: "eft_reviewer",
+        label: "EFT Reviewer",
+        description: "Reviews EFT imports and transactions",
+      },
+      {
+        key: "eft_allocator",
+        label: "EFT Allocator",
+        description: "Allocates EFT transactions to policies",
+      },
+      {
+        key: "easypay_reviewer",
+        label: "Easypay Reviewer",
+        description: "Reviews Easypay imports and transactions",
+      },
+      {
+        key: "easypay_allocator",
+        label: "Easypay Allocator",
+        description: "Allocates Easypay transactions to policies",
+      },
     ],
   },
   {
     category: "Funeral Operations",
     roles: [
-      { key: "funeral_coordinator", label: "Funeral Coordinator", description: "Oversees funeral logistics and scheduling" },
+      {
+        key: "funeral_coordinator",
+        label: "Funeral Coordinator",
+        description: "Oversees funeral logistics and scheduling",
+      },
     ],
   },
   {
     category: "Sales & Client Relations",
     roles: [
-      { key: "society_consultant", label: "Society Consultant", description: "Supports and recruits social group leaders" },
-      { key: "scheme_consultant", label: "Scheme Consultant", description: "Works with external burial schemes" },
+      {
+        key: "society_consultant",
+        label: "Society Consultant",
+        description: "Supports and recruits social group leaders",
+      },
+      {
+        key: "scheme_consultant",
+        label: "Scheme Consultant",
+        description: "Works with external burial schemes",
+      },
     ],
   },
   {
     category: "Fleet & Logistics",
     roles: [
-      { key: "driver", label: "Driver", description: "Operates fleet vehicles such as hearses or staff transport" },
-      { key: "fleet_manager", label: "Fleet Manager", description: "Manages vehicles, drivers, and routes" },
-      { key: "logistics_coordinator", label: "Logistics Coordinator", description: "Plans and coordinates movement and schedules" },
+      {
+        key: "driver",
+        label: "Driver",
+        description:
+          "Operates fleet vehicles such as hearses or staff transport",
+      },
+      {
+        key: "fleet_manager",
+        label: "Fleet Manager",
+        description: "Manages vehicles, drivers, and routes",
+      },
+      {
+        key: "logistics_coordinator",
+        label: "Logistics Coordinator",
+        description: "Plans and coordinates movement and schedules",
+      },
     ],
   },
 ];

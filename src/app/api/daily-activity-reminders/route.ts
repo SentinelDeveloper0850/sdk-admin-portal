@@ -1,7 +1,17 @@
-import { getUserFromRequest } from "@/lib/auth";
-import { createDailyActivityReminderNotification, getDiscordWebhookUrl, sendDiscordNotification } from "@/lib/discord";
-import { getReminderConfig, getReminderStats, processDailyActivityReminders, saveReminderConfig } from "@/server/actions/daily-activity-reminders";
 import { NextRequest, NextResponse } from "next/server";
+
+import { getUserFromRequest } from "@/lib/auth";
+import {
+  createDailyActivityReminderNotification,
+  getDiscordWebhookUrl,
+  sendDiscordNotification,
+} from "@/lib/discord";
+import {
+  getReminderConfig,
+  getReminderStats,
+  processDailyActivityReminders,
+  saveReminderConfig,
+} from "@/server/actions/daily-activity-reminders";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user has admin role
-    const isAdmin = user.role === 'admin' || user.roles?.includes('admin');
+    const isAdmin = user.role === "admin" || user.roles?.includes("admin");
     if (!isAdmin) {
       return NextResponse.json(
         { success: false, message: "Admin access required" },
@@ -31,31 +41,30 @@ export async function GET(request: NextRequest) {
       const stats = await getReminderStats();
       return NextResponse.json({
         success: true,
-        data: stats
+        data: stats,
       });
     } else if (action === "config") {
       // Get reminder configuration
       const config = await getReminderConfig();
       return NextResponse.json({
         success: true,
-        data: config
+        data: config,
       });
     } else {
       // Default: get both stats and config
       const [stats, config] = await Promise.all([
         getReminderStats(),
-        getReminderConfig()
+        getReminderConfig(),
       ]);
 
       return NextResponse.json({
         success: true,
         data: {
           stats,
-          config
-        }
+          config,
+        },
       });
     }
-
   } catch (error) {
     console.error("Error in daily activity reminders GET:", error);
     return NextResponse.json(
@@ -77,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user has admin role
-    const isAdmin = user.role === 'admin' || user.roles?.includes('admin');
+    const isAdmin = user.role === "admin" || user.roles?.includes("admin");
     if (!isAdmin) {
       return NextResponse.json(
         { success: false, message: "Admin access required" },
@@ -114,10 +123,16 @@ export async function POST(request: NextRequest) {
           discordNotificationSent = discordResult.success;
 
           if (!discordResult.success) {
-            console.warn("Failed to send Discord notification for manual trigger:", discordResult.error);
+            console.warn(
+              "Failed to send Discord notification for manual trigger:",
+              discordResult.error
+            );
           }
         } catch (error) {
-          console.error("Error sending Discord notification for manual trigger:", error);
+          console.error(
+            "Error sending Discord notification for manual trigger:",
+            error
+          );
         }
       }
 
@@ -128,8 +143,8 @@ export async function POST(request: NextRequest) {
           remindersSent: result.remindersSent,
           errors: result.errors,
           nextRunAt: result.nextRunAt,
-          discordNotificationSent
-        }
+          discordNotificationSent,
+        },
       });
     } else if (action === "save") {
       // Save reminder configuration
@@ -138,7 +153,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: result.success,
-        message: result.message
+        message: result.message,
       });
     } else {
       return NextResponse.json(
@@ -146,7 +161,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
   } catch (error) {
     console.error("Error in daily activity reminders POST:", error);
     return NextResponse.json(
@@ -154,4 +168,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

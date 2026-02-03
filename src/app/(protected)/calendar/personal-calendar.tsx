@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import FullCalendar from '@fullcalendar/react'
-import interactionPlugin from '@fullcalendar/interaction'
+import React, { useEffect, useState } from "react";
+
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import FullCalendar from "@fullcalendar/react";
 
 const PersonalCalendar = () => {
   const [personalEvents, setPersonalEvents] = useState<any[]>([]);
 
-  useEffect(() => {
-    
-  }, []);
+  useEffect(() => {}, []);
 
   const handleEventClick = (info: any) => {
     console.log(info);
@@ -24,8 +23,8 @@ const PersonalCalendar = () => {
         eventClick={handleEventClick}
         height="auto"
       />
-      </div>
-  )
-}
+    </div>
+  );
+};
 
-export default PersonalCalendar
+export default PersonalCalendar;

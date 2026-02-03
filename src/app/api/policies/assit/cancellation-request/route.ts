@@ -1,10 +1,11 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import UserModel from "@/app/models/hr/user.schema";
 import PolicyCancellationRequest from "@/app/models/scheme/policy-cancellation-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { sendCancellationRequestEmail } from "@/lib/email";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,11 +30,18 @@ export async function POST(request: NextRequest) {
       reason,
       cancellationType,
       effectiveDate,
-      additionalNotes
+      additionalNotes,
     } = body;
 
     // Validate required fields
-    if (!policyId || !policyNumber || !memberName || !reason || !cancellationType || !effectiveDate) {
+    if (
+      !policyId ||
+      !policyNumber ||
+      !memberName ||
+      !reason ||
+      !cancellationType ||
+      !effectiveDate
+    ) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
@@ -52,12 +60,16 @@ export async function POST(request: NextRequest) {
     // Check if there's already a pending cancellation request for this policy
     const existingRequest = await PolicyCancellationRequest.findOne({
       policyId,
-      status: "pending"
+      status: "pending",
     });
 
     if (existingRequest) {
       return NextResponse.json(
-        { success: false, message: "A pending cancellation request already exists for this policy" },
+        {
+          success: false,
+          message:
+            "A pending cancellation request already exists for this policy",
+        },
         { status: 409 }
       );
     }
@@ -68,14 +80,22 @@ export async function POST(request: NextRequest) {
 
     if (cancellationType === "immediate" && effectiveDateObj < today) {
       return NextResponse.json(
-        { success: false, message: "Immediate cancellation effective date must be today or in the future" },
+        {
+          success: false,
+          message:
+            "Immediate cancellation effective date must be today or in the future",
+        },
         { status: 400 }
       );
     }
 
     if (cancellationType !== "immediate" && effectiveDateObj <= new Date()) {
       return NextResponse.json(
-        { success: false, message: "Effective date must be in the future for non-immediate cancellations" },
+        {
+          success: false,
+          message:
+            "Effective date must be in the future for non-immediate cancellations",
+        },
         { status: 400 }
       );
     }
@@ -90,7 +110,7 @@ export async function POST(request: NextRequest) {
       effectiveDate: effectiveDateObj,
       additionalNotes,
       submittedBy: user._id,
-      status: "pending"
+      status: "pending",
     });
 
     await cancellationRequest.save();
@@ -98,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Update policy cancellation status to "pending_review"
     await PolicyModel.findByIdAndUpdate(policyId, {
       cancellationStatus: "pending_review",
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     // Send confirmation email
@@ -110,7 +130,7 @@ export async function POST(request: NextRequest) {
         reason,
         cancellationType,
         effectiveDate: effectiveDateObj.toLocaleDateString(),
-        requestId: cancellationRequest._id.toString()
+        requestId: cancellationRequest._id.toString(),
       });
 
       // Mark email as sent
@@ -126,10 +146,9 @@ export async function POST(request: NextRequest) {
       data: {
         requestId: cancellationRequest._id,
         status: cancellationRequest.status,
-        submittedAt: cancellationRequest.submittedAt
-      }
+        submittedAt: cancellationRequest.submittedAt,
+      },
     });
-
   } catch (error) {
     console.error("Error submitting cancellation request:", error);
     return NextResponse.json(
@@ -167,7 +186,8 @@ export async function GET(request: NextRequest) {
     const query: any = {};
     if (status) query.status = status;
     if (policyId) query.policyId = policyId;
-    if (policyNumber) query.policyNumber = { $regex: policyNumber, $options: "i" };
+    if (policyNumber)
+      query.policyNumber = { $regex: policyNumber, $options: "i" };
     if (memberName) query.memberName = { $regex: memberName, $options: "i" };
 
     // Get cancellation requests with pagination
@@ -177,19 +197,30 @@ export async function GET(request: NextRequest) {
         .skip(skip)
         .limit(limit)
         .lean(),
-      PolicyCancellationRequest.countDocuments(query)
+      PolicyCancellationRequest.countDocuments(query),
     ]);
 
     // Manually fetch user details and attach them
     const requestsWithUsers = await Promise.all(
       requests.map(async (request: any) => {
-        const submittedBy = request.submittedBy ? await UserModel.findById(request.submittedBy).select('name email').lean() : null;
-        const reviewedBy = request.reviewedBy ? await UserModel.findById(request.reviewedBy).select('name email').lean() : null;
+        const submittedBy = request.submittedBy
+          ? await UserModel.findById(request.submittedBy)
+              .select("name email")
+              .lean()
+          : null;
+        const reviewedBy = request.reviewedBy
+          ? await UserModel.findById(request.reviewedBy)
+              .select("name email")
+              .lean()
+          : null;
 
         return {
           ...request,
-          submittedBy: submittedBy || { name: 'Unknown User', email: 'unknown@example.com' },
-          reviewedBy: reviewedBy || null
+          submittedBy: submittedBy || {
+            name: "Unknown User",
+            email: "unknown@example.com",
+          },
+          reviewedBy: reviewedBy || null,
         };
       })
     );
@@ -202,11 +233,10 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
-      }
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     });
-
   } catch (error) {
     console.error("Error fetching cancellation requests:", error);
     return NextResponse.json(
@@ -214,4 +244,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

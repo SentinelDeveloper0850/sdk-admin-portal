@@ -1,9 +1,10 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { generateTemporaryPassword } from "@/utils/generators/password";
+
 import UsersModel from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 import { sendUserInvitationEmail } from "@/lib/email";
-import { generateTemporaryPassword } from "@/utils/generators/password";
-import { NextRequest, NextResponse } from "next/server";
-
 import { ERoles } from "@/types/roles.enum";
 
 const CONSULTANT_ROLES = [
@@ -52,7 +53,11 @@ export async function GET(request: NextRequest) {
         .select("_id name email roles")
         .sort({ createdAt: -1 });
     } else {
-      users = await UsersModel.find(query).select("-password -deletedAt -deletedBy -updatedAt -createdAt -mustChangePassword").sort({ createdAt: -1 });
+      users = await UsersModel.find(query)
+        .select(
+          "-password -deletedAt -deletedBy -updatedAt -createdAt -mustChangePassword"
+        )
+        .sort({ createdAt: -1 });
     }
 
     return NextResponse.json(users, { status: 200 });
@@ -166,7 +171,7 @@ export async function POST(request: Request) {
       role: role || "member",
       roles: roles || [],
       status: "Invited",
-      mustChangePassword: true
+      mustChangePassword: true,
     });
     await user.save();
 
@@ -185,9 +190,11 @@ export async function POST(request: Request) {
       // Don't fail the request if email fails, but log it
       return NextResponse.json(
         {
-          message: "User created successfully but failed to send invitation email",
-          warning: "Please contact the user directly with their login credentials",
-          user
+          message:
+            "User created successfully but failed to send invitation email",
+          warning:
+            "Please contact the user directly with their login credentials",
+          user,
         },
         { status: 201 }
       );
@@ -219,7 +226,11 @@ export async function DELETE(request: Request) {
 
     const user = await UsersModel.findByIdAndUpdate(
       id,
-      { deletedAt: new Date(), deletedBy: deletedBy || null, status: "Deleted" },
+      {
+        deletedAt: new Date(),
+        deletedBy: deletedBy || null,
+        status: "Deleted",
+      },
       { new: true }
     );
 
@@ -227,9 +238,15 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "User soft deleted", user }, { status: 200 });
+    return NextResponse.json(
+      { message: "User soft deleted", user },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error deleting user:", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

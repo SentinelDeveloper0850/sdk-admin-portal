@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import useSWRInfinite from "swr/infinite";
 
 import { Button } from "antd";
 import {
@@ -12,21 +11,46 @@ import {
   HelpCircle,
   Info,
   Search,
-  Shield
+  Shield,
 } from "lucide-react";
+import useSWRInfinite from "swr/infinite";
 
 import { useRole } from "@/app/hooks/use-role";
 import { ERoles } from "@/types/roles.enum";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-const CATEGORY_OPTIONS: Array<{ value: string; label: string; icon: React.ReactNode }> = [
-  { value: "CODE_OF_CONDUCT", label: "Code of Conduct", icon: <Shield className="w-8 h-8" /> },
-  { value: "SOP", label: "Standard Operating Procedures", icon: <ClipboardList className="w-8 h-8" /> },
-  { value: "HOW_TO", label: "How To Guides", icon: <HelpCircle className="w-8 h-8" /> },
-  { value: "POLICY", label: "Policies", icon: <FileText className="w-8 h-8" /> },
-  { value: "TRAINING", label: "Training", icon: <GraduationCap className="w-8 h-8" /> },
-  { value: "GENERAL", label: "General", icon: <Info className="w-8 h-8" /> },
+const CATEGORY_OPTIONS: Array<{
+  value: string;
+  label: string;
+  icon: React.ReactNode;
+}> = [
+  {
+    value: "CODE_OF_CONDUCT",
+    label: "Code of Conduct",
+    icon: <Shield className="h-8 w-8" />,
+  },
+  {
+    value: "SOP",
+    label: "Standard Operating Procedures",
+    icon: <ClipboardList className="h-8 w-8" />,
+  },
+  {
+    value: "HOW_TO",
+    label: "How To Guides",
+    icon: <HelpCircle className="h-8 w-8" />,
+  },
+  {
+    value: "POLICY",
+    label: "Policies",
+    icon: <FileText className="h-8 w-8" />,
+  },
+  {
+    value: "TRAINING",
+    label: "Training",
+    icon: <GraduationCap className="h-8 w-8" />,
+  },
+  { value: "GENERAL", label: "General", icon: <Info className="h-8 w-8" /> },
 ];
 
 const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
@@ -38,7 +62,7 @@ const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
 
 const getCategoryIcon = (category: string) => {
   const cat = CATEGORY_OPTIONS.find((c) => c.value === category);
-  return cat?.icon || <FileText className="w-8 h-8" />;
+  return cat?.icon || <FileText className="h-8 w-8" />;
 };
 
 const getCategoryLabel = (category: string) => {
@@ -56,7 +80,8 @@ export default function KnowledgeHubListPage() {
 
   const getKey = (pageIndex: number, previousPageData: any) => {
     if (previousPageData && !previousPageData.nextCursor) return null;
-    const cursor = pageIndex === 0 ? "" : `&cursor=${previousPageData.nextCursor}`;
+    const cursor =
+      pageIndex === 0 ? "" : `&cursor=${previousPageData.nextCursor}`;
     const qs = new URLSearchParams();
     qs.set("take", "20");
     if (q.trim()) qs.set("q", q.trim());
@@ -85,7 +110,7 @@ export default function KnowledgeHubListPage() {
   const showCategories = !hasActiveFilters && !items.length;
 
   return (
-    <div className="min-h-screen -m-4">
+    <div className="-m-4 min-h-screen">
       {/* Hero Section */}
       <div
         className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-900 dark:via-blue-800 dark:to-indigo-900"
@@ -110,7 +135,10 @@ export default function KnowledgeHubListPage() {
             {isAdmin && (
               <div className="mb-6 flex justify-end">
                 <Link href="/knowledge-hub/create">
-                  <Button type="primary" className="bg-white text-blue-700 hover:bg-gray-100">
+                  <Button
+                    type="primary"
+                    className="bg-white text-blue-700 hover:bg-gray-100"
+                  >
                     Create Article
                   </Button>
                 </Link>
@@ -142,7 +170,7 @@ export default function KnowledgeHubListPage() {
 
               {/* Additional Filters (Hidden by default, shown when needed) */}
               {(category || (isAdmin && status)) && (
-                <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
                   <select
                     className="rounded border border-white/30 bg-white/10 px-3 py-2 text-white backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 dark:bg-white/5"
                     value={category}
@@ -150,7 +178,11 @@ export default function KnowledgeHubListPage() {
                   >
                     <option value="">All categories</option>
                     {CATEGORY_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="text-gray-900">
+                      <option
+                        key={opt.value}
+                        value={opt.value}
+                        className="text-gray-900"
+                      >
                         {opt.label}
                       </option>
                     ))}
@@ -163,7 +195,11 @@ export default function KnowledgeHubListPage() {
                     >
                       <option value="">All statuses</option>
                       {STATUS_OPTIONS.filter((opt) => opt.value).map((opt) => (
-                        <option key={opt.value} value={opt.value} className="text-gray-900">
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          className="text-gray-900"
+                        >
                           {opt.label}
                         </option>
                       ))}
@@ -213,7 +249,9 @@ export default function KnowledgeHubListPage() {
               {hasActiveFilters && (
                 <div className="mb-6 flex flex-wrap items-center gap-4">
                   <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {items.length > 0 ? `Search Results (${items.length})` : "Search Results"}
+                    {items.length > 0
+                      ? `Search Results (${items.length})`
+                      : "Search Results"}
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     <select
@@ -235,11 +273,13 @@ export default function KnowledgeHubListPage() {
                         onChange={(e) => setStatus(e.target.value)}
                       >
                         <option value="">All statuses</option>
-                        {STATUS_OPTIONS.filter((opt) => opt.value).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
+                        {STATUS_OPTIONS.filter((opt) => opt.value).map(
+                          (opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          )
+                        )}
                       </select>
                     )}
                     {(q || category || status) && (
@@ -276,13 +316,19 @@ export default function KnowledgeHubListPage() {
                             {item.publishedAt && (
                               <>
                                 <span>•</span>
-                                <span>{new Date(item.publishedAt).toLocaleDateString()}</span>
+                                <span>
+                                  {new Date(
+                                    item.publishedAt
+                                  ).toLocaleDateString()}
+                                </span>
                               </>
                             )}
                             {isAdmin && item.status !== "PUBLISHED" && (
                               <>
                                 <span>•</span>
-                                <span className="font-semibold">{item.status}</span>
+                                <span className="font-semibold">
+                                  {item.status}
+                                </span>
                               </>
                             )}
                           </div>
@@ -290,7 +336,9 @@ export default function KnowledgeHubListPage() {
                             {item.title}
                           </h3>
                           {item.summary && (
-                            <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">{item.summary}</p>
+                            <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">
+                              {item.summary}
+                            </p>
                           )}
                           {item.tags && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1">
@@ -312,7 +360,9 @@ export default function KnowledgeHubListPage() {
               ) : hasActiveFilters ? (
                 <div className="rounded-lg border border-gray-200 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800">
                   <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                  <p className="text-lg font-medium text-gray-900 dark:text-white">No articles found</p>
+                  <p className="text-lg font-medium text-gray-900 dark:text-white">
+                    No articles found
+                  </p>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Try adjusting your search or filter criteria
                   </p>

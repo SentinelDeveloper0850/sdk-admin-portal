@@ -1,10 +1,13 @@
 "use client";
 
-import { IPolicy } from "@/app/models/scheme/policy.schema";
-import { formatToMoneyWithCurrency } from "@/utils/formatters";
+import React, { useEffect, useState } from "react";
+
 import { Button, Card, Drawer, Space, Tag, message } from "antd";
 import dayjs from "dayjs";
-import React, { useEffect, useState } from "react";
+
+import { formatToMoneyWithCurrency } from "@/utils/formatters";
+
+import { IPolicy } from "@/app/models/scheme/policy.schema";
 
 interface Props {
   open: boolean;
@@ -74,7 +77,9 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
       extra={
         <Space>
           {policy?.currstatus && (
-            <Tag color={getStatusColor(policy.currstatus)}>{policy.currstatus}</Tag>
+            <Tag color={getStatusColor(policy.currstatus)}>
+              {policy.currstatus}
+            </Tag>
           )}
         </Space>
       }
@@ -90,7 +95,7 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
             <Card title="Policy Information" size="small">
               <div className="mb-4">
                 <h3 className="font-semibold">Policy Number</h3>
-                <p className="text-lg font-mono">{policy.policyNumber}</p>
+                <p className="font-mono text-lg">{policy.policyNumber}</p>
               </div>
               <div className="mb-4">
                 <h3 className="font-semibold">Member ID</h3>
@@ -102,7 +107,9 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
               </div>
               <div className="mb-4">
                 <h3 className="font-semibold">Branch</h3>
-                <p>{policy.branchName} ({policy.branchID})</p>
+                <p>
+                  {policy.branchName} ({policy.branchID})
+                </p>
               </div>
               {policy.inceptionDate && (
                 <div className="mb-4">
@@ -139,7 +146,9 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
               <Card title="Payment History" size="small">
                 <Button
                   type="primary"
-                  onClick={() => setPreviewImage(policy.paymentHistoryFile || null)}
+                  onClick={() =>
+                    setPreviewImage(policy.paymentHistoryFile || null)
+                  }
                   block
                 >
                   View Payment History
@@ -191,7 +200,9 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
               {policy.physicalAddress && (
                 <div className="mb-4">
                   <h3 className="font-semibold">Physical Address</h3>
-                  <p className="whitespace-pre-wrap">{policy.physicalAddress}</p>
+                  <p className="whitespace-pre-wrap">
+                    {policy.physicalAddress}
+                  </p>
                 </div>
               )}
               {policy.postalAddress && (
@@ -239,7 +250,9 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
                 {policy.applicationComplete !== undefined && (
                   <div className="flex items-center justify-between">
                     <span>Application Complete</span>
-                    <Tag color={policy.applicationComplete ? "green" : "orange"}>
+                    <Tag
+                      color={policy.applicationComplete ? "green" : "orange"}
+                    >
                       {policy.applicationComplete ? "Yes" : "No"}
                     </Tag>
                   </div>
@@ -286,4 +299,4 @@ const PolicyDetailsDrawer: React.FC<Props> = ({ open, onClose, policyId }) => {
   );
 };
 
-export default PolicyDetailsDrawer; 
+export default PolicyDetailsDrawer;

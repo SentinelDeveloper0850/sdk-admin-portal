@@ -1,7 +1,8 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   request: NextRequest,
@@ -11,25 +12,37 @@ export async function PUT(
     const { id } = await params;
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     await connectToDatabase();
     const submission = await CashUpSubmissionModel.findById(id);
     if (!submission) {
-      return NextResponse.json({ success: false, message: "Cash up submission not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Cash up submission not found" },
+        { status: 404 }
+      );
     }
 
     // "Resolve" here is owner-focused: after being sent back, mark resolved for re-review.
     const ownerId = String((submission as any).userId);
     if (ownerId !== String((user as any)._id)) {
-      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const currentStatus = String((submission as any).status || "draft");
     if (currentStatus !== "needs_changes") {
       return NextResponse.json(
-        { success: false, message: `Cannot resolve when status is '${currentStatus}'` },
+        {
+          success: false,
+          message: `Cannot resolve when status is '${currentStatus}'`,
+        },
         { status: 400 }
       );
     }
@@ -57,4 +70,4 @@ export async function PUT(
       { status: 500 }
     );
   }
-} 
+}

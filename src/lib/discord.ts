@@ -54,14 +54,14 @@ export const sendDiscordNotification = async (
     // If no webhook URL provided, fall back to environment config similar to discord-v2
     let resolvedWebhookUrl = webhookUrl;
     if (!resolvedWebhookUrl) {
-      resolvedWebhookUrl = getDiscordWebhookUrl() || '';
+      resolvedWebhookUrl = getDiscordWebhookUrl() || "";
     }
 
     if (!resolvedWebhookUrl) {
       return {
         success: false,
-        message: 'Discord webhook URL is not configured',
-        error: 'WEBHOOK_URL_MISSING'
+        message: "Discord webhook URL is not configured",
+        error: "WEBHOOK_URL_MISSING",
       };
     }
 
@@ -72,17 +72,22 @@ export const sendDiscordNotification = async (
 
       if (rateLimit) {
         if (now < rateLimit.resetTime) {
-          if (rateLimit.count >= 5) { // Max 5 messages per window
+          if (rateLimit.count >= 5) {
+            // Max 5 messages per window
             return {
               success: false,
-              message: "Rate limit exceeded. Please wait before sending another notification.",
-              error: "RATE_LIMIT_EXCEEDED"
+              message:
+                "Rate limit exceeded. Please wait before sending another notification.",
+              error: "RATE_LIMIT_EXCEEDED",
             };
           }
           rateLimit.count++;
         } else {
           // Reset rate limit window
-          rateLimitStore.set(rateLimitKey, { count: 1, resetTime: now + 60000 }); // 1 minute window
+          rateLimitStore.set(rateLimitKey, {
+            count: 1,
+            resetTime: now + 60000,
+          }); // 1 minute window
         }
       } else {
         // Initialize rate limit
@@ -91,34 +96,37 @@ export const sendDiscordNotification = async (
     }
 
     const response = await fetch(resolvedWebhookUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Failed to send Discord message:', response.status, errorText);
+      console.error(
+        "Failed to send Discord message:",
+        response.status,
+        errorText
+      );
       return {
         success: false,
-        message: 'Failed to send Discord notification',
-        error: `HTTP ${response.status}`
+        message: "Failed to send Discord notification",
+        error: `HTTP ${response.status}`,
       };
     }
 
     return {
       success: true,
-      message: "Discord notification sent successfully"
+      message: "Discord notification sent successfully",
     };
-
   } catch (error) {
-    console.error('Error sending Discord notification:', error);
+    console.error("Error sending Discord notification:", error);
     return {
       success: false,
       message: "Failed to send Discord notification",
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 };
@@ -141,46 +149,47 @@ export const createDailyActivityReminderNotification = (
       {
         name: "📤 Reminders Sent",
         value: `${remindersSent} users`,
-        inline: true
+        inline: true,
       },
       {
         name: "⚠️ Non-Compliant Users",
         value: `${nonCompliantCount} users`,
-        inline: true
+        inline: true,
       },
       {
         name: "📊 Total Users",
         value: `${totalUsers} users`,
-        inline: true
+        inline: true,
       },
       {
         name: "📈 Compliance Rate",
         value: `${complianceRate.toFixed(1)}%`,
-        inline: true
+        inline: true,
       },
       {
         name: "⏰ Timestamp",
-        value: new Date().toLocaleString('en-ZA', {
-          timeZone: 'Africa/Johannesburg',
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
+        value: new Date().toLocaleString("en-ZA", {
+          timeZone: "Africa/Johannesburg",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         }),
-        inline: true
-      }
+        inline: true,
+      },
     ],
     timestamp: new Date().toISOString(),
     footer: {
-      text: "SDK Admin Portal - Daily Activity System"
-    }
+      text: "SDK Admin Portal - Daily Activity System",
+    },
   };
 
   return {
     embeds: [embed],
     username: "SDK Admin Portal",
-    avatar_url: "https://cdn.discordapp.com/attachments/123456789/123456789/logo.png" // Replace with actual logo URL
+    avatar_url:
+      "https://cdn.discordapp.com/attachments/123456789/123456789/logo.png", // Replace with actual logo URL
   };
 };
 
@@ -190,14 +199,14 @@ export const createDailyActivityReminderNotification = (
 export const createSystemNotification = (
   title: string,
   description: string,
-  type: 'info' | 'warning' | 'error' | 'success' = 'info',
+  type: "info" | "warning" | "error" | "success" = "info",
   fields?: DiscordField[]
 ): DiscordWebhookPayload => {
   const colors = {
     info: 0x0099ff,
     warning: 0xff9900,
     error: 0xff0000,
-    success: 0x00ff00
+    success: 0x00ff00,
   };
 
   const embed: DiscordEmbed = {
@@ -207,14 +216,15 @@ export const createSystemNotification = (
     fields,
     timestamp: new Date().toISOString(),
     footer: {
-      text: "SDK Admin Portal"
-    }
+      text: "SDK Admin Portal",
+    },
   };
 
   return {
     embeds: [embed],
     username: "SDK Admin Portal",
-    avatar_url: "https://cdn.discordapp.com/attachments/123456789/123456789/logo.png" // Replace with actual logo URL
+    avatar_url:
+      "https://cdn.discordapp.com/attachments/123456789/123456789/logo.png", // Replace with actual logo URL
   };
 };
 
@@ -223,7 +233,11 @@ export const createSystemNotification = (
  */
 export const getDiscordWebhookUrl = (): string | null => {
   // Prefer the working variable used in discord-v2, but support the legacy name
-  return process.env.DISCORD_WEBHOOK_URL || process.env.DISCORD_GENERAL_WEBHOOK || null;
+  return (
+    process.env.DISCORD_WEBHOOK_URL ||
+    process.env.DISCORD_GENERAL_WEBHOOK ||
+    null
+  );
 };
 
 /**
@@ -236,6 +250,8 @@ export const clearRateLimit = (rateLimitKey: string): void => {
 /**
  * Get current rate limit status for a key
  */
-export const getRateLimitStatus = (rateLimitKey: string): { count: number; resetTime: number } | null => {
+export const getRateLimitStatus = (
+  rateLimitKey: string
+): { count: number; resetTime: number } | null => {
   return rateLimitStore.get(rateLimitKey) || null;
-}; 
+};

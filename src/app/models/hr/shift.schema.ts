@@ -40,10 +40,8 @@ const shiftSchema: Schema = new Schema(
 
 shiftSchema.index({ weekendStart: 1 });
 
-export const ShiftModel: Model<IShift> = mongoose.models.shifts || mongoose.model<IShift>(
-  "shifts",
-  shiftSchema,
-  "shifts"
-);
+export const ShiftModel: Model<IShift> =
+  mongoose.models.shifts ||
+  mongoose.model<IShift>("shifts", shiftSchema, "shifts");
 
 export default ShiftModel;

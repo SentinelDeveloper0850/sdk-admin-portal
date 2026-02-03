@@ -14,7 +14,11 @@ export interface ISocietyMember extends Document {
 
 const SocietyMemberSchema: Schema = new Schema(
   {
-    societyId: { type: Schema.Types.ObjectId, ref: "SchemeSociety", required: true },
+    societyId: {
+      type: Schema.Types.ObjectId,
+      ref: "SchemeSociety",
+      required: true,
+    },
     firstNames: { type: String, required: true },
     initials: { type: String, required: true },
     lastName: { type: String, required: true },
@@ -32,4 +36,8 @@ const SocietyMemberSchema: Schema = new Schema(
 // Export the model
 export const SocietyMemberModel =
   mongoose.models.society_members ||
-  mongoose.model<ISocietyMember>("society_members", SocietyMemberSchema, "society_members");
+  mongoose.model<ISocietyMember>(
+    "society_members",
+    SocietyMemberSchema,
+    "society_members"
+  );

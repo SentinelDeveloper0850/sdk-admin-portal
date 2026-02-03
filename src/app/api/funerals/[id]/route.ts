@@ -1,14 +1,15 @@
 // src/app/api/funerals/[id]/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
 import dayjs from "dayjs";
 import mongoose from "mongoose";
-import { NextRequest, NextResponse } from "next/server";
 
 import type { ILocation } from "@/app/models/calendar-event.schema";
 import { CalendarEventModel } from "@/app/models/calendar-event.schema";
 import {
+  type FuneralMilestoneType,
   FuneralModel,
   ScheduledItemStatus,
-  type FuneralMilestoneType,
 } from "@/app/models/funeral.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
@@ -33,7 +34,8 @@ type MilestoneBody = {
 const toDateOrUndef = (v: any) => (v ? dayjs(v).toDate() : undefined);
 
 const normalizeMilestone = (m: MilestoneBody) => {
-  const start = m.startDateTime === null ? undefined : toDateOrUndef(m.startDateTime);
+  const start =
+    m.startDateTime === null ? undefined : toDateOrUndef(m.startDateTime);
   const end = m.endDateTime === null ? undefined : toDateOrUndef(m.endDateTime);
 
   return {
@@ -51,33 +53,56 @@ const normalizeMilestone = (m: MilestoneBody) => {
   };
 };
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const { id } = params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid id" },
+        { status: 400 }
+      );
     }
 
     await connectToDatabase();
 
     const funeral = await FuneralModel.findById(id);
-    if (!funeral) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+    if (!funeral)
+      return NextResponse.json(
+        { success: false, message: "Not found" },
+        { status: 404 }
+      );
 
     return NextResponse.json({ success: true, funeral }, { status: 200 });
   } catch (err) {
     console.error("GET /funerals/:id error:", err);
-    return NextResponse.json({ success: false, message: "Failed to fetch funeral" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch funeral" },
+      { status: 500 }
+    );
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getUserFromRequest(request);
-    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!user)
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
 
     const { id } = params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid id" },
+        { status: 400 }
+      );
     }
 
     const body = await request.json();
@@ -85,10 +110,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     await connectToDatabase();
 
     const funeral = await FuneralModel.findById(id);
-    if (!funeral) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+    if (!funeral)
+      return NextResponse.json(
+        { success: false, message: "Not found" },
+        { status: 404 }
+      );
 
-    const serviceDT = body.serviceDateTime === null ? undefined : toDateOrUndef(body.serviceDateTime);
-    const burialDT = body.burialDateTime === null ? undefined : toDateOrUndef(body.burialDateTime);
+    const serviceDT =
+      body.serviceDateTime === null
+        ? undefined
+        : toDateOrUndef(body.serviceDateTime);
+    const burialDT =
+      body.burialDateTime === null
+        ? undefined
+        : toDateOrUndef(body.burialDateTime);
 
     // canonical only
     const milestones = Array.isArray(body.milestones)
@@ -97,33 +132,58 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     Object.assign(funeral, {
       ...body,
-      ...(body.serviceDateTime !== undefined ? { serviceDateTime: serviceDT } : {}),
-      ...(body.burialDateTime !== undefined ? { burialDateTime: burialDT } : {}),
+      ...(body.serviceDateTime !== undefined
+        ? { serviceDateTime: serviceDT }
+        : {}),
+      ...(body.burialDateTime !== undefined
+        ? { burialDateTime: burialDT }
+        : {}),
       ...(milestones !== undefined ? { milestones } : {}),
-      ...(body.notes !== undefined ? { notes: Array.isArray(body.notes) ? body.notes : [] } : {}),
+      ...(body.notes !== undefined
+        ? { notes: Array.isArray(body.notes) ? body.notes : [] }
+        : {}),
       updatedBy: user.name || user.email,
       updatedById: String(user._id),
     });
 
     await funeral.save();
 
-    await upsertFuneralCalendarEvents(funeral, { name: user.name || user.email, id: String(user._id) });
+    await upsertFuneralCalendarEvents(funeral, {
+      name: user.name || user.email,
+      id: String(user._id),
+    });
 
-    return NextResponse.json({ success: true, message: "Funeral updated", funeral }, { status: 200 });
+    return NextResponse.json(
+      { success: true, message: "Funeral updated", funeral },
+      { status: 200 }
+    );
   } catch (err) {
     console.error("PUT /funerals/:id error:", err);
-    return NextResponse.json({ success: false, message: "Failed to update funeral" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to update funeral" },
+      { status: 500 }
+    );
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getUserFromRequest(request);
-    if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!user)
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
 
     const { id } = params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ success: false, message: "Invalid id" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid id" },
+        { status: 400 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -132,7 +192,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     await connectToDatabase();
 
     const funeral = await FuneralModel.findById(id);
-    if (!funeral) return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
+    if (!funeral)
+      return NextResponse.json(
+        { success: false, message: "Not found" },
+        { status: 404 }
+      );
 
     // delete funeral
     await FuneralModel.findByIdAndDelete(id);
@@ -147,9 +211,15 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       }
     }
 
-    return NextResponse.json({ success: true, message: "Funeral deleted" }, { status: 200 });
+    return NextResponse.json(
+      { success: true, message: "Funeral deleted" },
+      { status: 200 }
+    );
   } catch (err) {
     console.error("DELETE /funerals/:id error:", err);
-    return NextResponse.json({ success: false, message: "Failed to delete funeral" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to delete funeral" },
+      { status: 500 }
+    );
   }
 }

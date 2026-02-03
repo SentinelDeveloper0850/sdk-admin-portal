@@ -215,8 +215,9 @@ const RoleSelect: FC<RoleSelectProps> = ({ value, onChange }) => {
 
         return (
           <div
-            className={`mb-1 mr-1 flex items-center gap-2 rounded-md px-2 py-1 ${isDark ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"
-              }`}
+            className={`mb-1 mr-1 flex items-center gap-2 rounded-md px-2 py-1 ${
+              isDark ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"
+            }`}
             style={{ display: "inline-flex" }}
           >
             {role?.icon}
@@ -243,8 +244,9 @@ const RoleSelect: FC<RoleSelectProps> = ({ value, onChange }) => {
                   {role.label}
                 </div>
                 <div
-                  className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"
-                    }`}
+                  className={`text-xs ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
                 >
                   {role.description}
                 </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { IconCoffin, IconPigMoney } from "@tabler/icons-react";
 import { Tooltip } from "antd";
 import {
   Banknote,
@@ -21,11 +22,18 @@ import {
   Server,
   Settings,
   Shield,
-  Users
+  Users,
 } from "lucide-react";
-import { HiBell, HiBuildingOffice, HiClock, HiCog6Tooth, HiMapPin, HiOutlineDocumentCurrencyDollar, HiUserGroup } from "react-icons/hi2";
+import {
+  HiBell,
+  HiBuildingOffice,
+  HiClock,
+  HiCog6Tooth,
+  HiMapPin,
+  HiOutlineDocumentCurrencyDollar,
+  HiUserGroup,
+} from "react-icons/hi2";
 
-import { IconCoffin, IconPigMoney } from "@tabler/icons-react";
 import { ERoles } from "../../types/roles.enum";
 import { useRole } from "../hooks/use-role";
 
@@ -283,14 +291,23 @@ const SideNavBar = () => {
       name: "Configurations",
       icon: <Settings size={18} />,
       url: "/configurations",
-      allowedRoles: [ERoles.Admin, ERoles.BranchManager, ERoles.RegionalManager],
+      allowedRoles: [
+        ERoles.Admin,
+        ERoles.BranchManager,
+        ERoles.RegionalManager,
+      ],
       group: "Management",
       children: [
         {
           id: "staff-members",
           name: "Staff Members",
           url: "/configurations/staff-members",
-          allowedRoles: [ERoles.Admin, ERoles.HRManager, ERoles.BranchManager, ERoles.RegionalManager],
+          allowedRoles: [
+            ERoles.Admin,
+            ERoles.HRManager,
+            ERoles.BranchManager,
+            ERoles.RegionalManager,
+          ],
           icon: <HiUserGroup size={18} />,
         },
         {
@@ -318,7 +335,11 @@ const SideNavBar = () => {
           id: "branches-config",
           name: "Branches",
           url: "/configurations/branches",
-          allowedRoles: [ERoles.Admin, ERoles.BranchManager, ERoles.RegionalManager],
+          allowedRoles: [
+            ERoles.Admin,
+            ERoles.BranchManager,
+            ERoles.RegionalManager,
+          ],
           icon: <HiBuildingOffice size={18} />,
         },
         {
@@ -332,7 +353,12 @@ const SideNavBar = () => {
           id: "duty-roster-config",
           name: "Duty Roster",
           url: "/configurations/roster",
-          allowedRoles: [ERoles.Admin, ERoles.HRManager, ERoles.BranchManager, ERoles.RegionalManager],
+          allowedRoles: [
+            ERoles.Admin,
+            ERoles.HRManager,
+            ERoles.BranchManager,
+            ERoles.RegionalManager,
+          ],
           icon: <HiClock size={18} />,
         },
       ],
@@ -372,14 +398,14 @@ const SideNavBar = () => {
 
   return (
     <section
-      className={`h-full pb-10 overflow-hidden ${collapsed ? "w-16" : "w-64 overflow-y-scroll"} bg-white transition-all duration-200 dark:bg-zinc-900`}
+      className={`h-full overflow-hidden pb-10 ${collapsed ? "w-16" : "w-64 overflow-y-scroll"} bg-white transition-all duration-200 dark:bg-zinc-900`}
     >
       <div
-        className={`flex ${collapsed ? "justify-center !ml-[-4px]" : "justify-end"} p-2`}
+        className={`flex ${collapsed ? "!ml-[-4px] justify-center" : "justify-end"} p-2`}
       >
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="text-zinc-500 hover:text-black dark:hover:text-white px-2"
+          className="px-2 text-zinc-500 hover:text-black dark:hover:text-white"
         >
           {collapsed ? <ChevronsRight size={20} /> : <ChevronsLeft size={20} />}
         </button>
@@ -387,7 +413,9 @@ const SideNavBar = () => {
 
       <div className="grid gap-0">
         {filteredMenuItems.map((item) => {
-          const isChildActive = !!item.children?.some((child) => pathname.startsWith(child.url || ""));
+          const isChildActive = !!item.children?.some((child) =>
+            pathname.startsWith(child.url || "")
+          );
           const isActive = isChildActive || pathname.startsWith(item.url || "");
           const baseClass =
             "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
@@ -405,7 +433,9 @@ const SideNavBar = () => {
                   onClick={() => {
                     if (collapsed) {
                       setCollapsed(false);
-                      setOpenMenuId((prev) => (prev === item.id ? null : item.id));
+                      setOpenMenuId((prev) =>
+                        prev === item.id ? null : item.id
+                      );
                       return;
                     }
                     toggleSubmenu(item.id);
@@ -428,7 +458,6 @@ const SideNavBar = () => {
                   )}
                 </div>
 
-
                 {isOpen &&
                   !collapsed &&
                   item.children.map((child) => {
@@ -436,10 +465,11 @@ const SideNavBar = () => {
                     return (
                       <Link key={child.id} href={child.url!}>
                         <div
-                          className={`ml-6 flex items-center gap-2 px-4 py-2 text-sm hover:bg-[#ffe082] ${childActive
-                            ? "font-semibold text-primary"
-                            : "text-gray-600"
-                            }`}
+                          className={`ml-6 flex items-center gap-2 px-4 py-2 text-sm hover:bg-[#ffe082] ${
+                            childActive
+                              ? "font-semibold text-primary"
+                              : "text-gray-600"
+                          }`}
                         >
                           <span className="inline-flex w-5 justify-center">
                             {child.icon ?? null}

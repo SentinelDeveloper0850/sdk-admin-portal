@@ -17,13 +17,38 @@ export const fetchAll = async (limit?: number) => {
 
     const numberOfTransactions = await EftTransactionModel.countDocuments();
 
-    const totalAllocationRequestsCount = await AllocationRequestModel.countDocuments({ type: "EFT" });
-    const pendingAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "PENDING", type: "EFT" });
-    const submittedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "SUBMITTED", type: "EFT" });
-    const approvedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "APPROVED", type: "EFT" });
-    const rejectedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "REJECTED", type: "EFT" });
-    const cancelledAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "CANCELLED", type: "EFT" });
-    const duplicateAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "DUPLICATE", type: "EFT" });
+    const totalAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({ type: "EFT" });
+    const pendingAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "PENDING",
+        type: "EFT",
+      });
+    const submittedAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "SUBMITTED",
+        type: "EFT",
+      });
+    const approvedAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "APPROVED",
+        type: "EFT",
+      });
+    const rejectedAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "REJECTED",
+        type: "EFT",
+      });
+    const cancelledAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "CANCELLED",
+        type: "EFT",
+      });
+    const duplicateAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "DUPLICATE",
+        type: "EFT",
+      });
 
     let transactionsQuery = EftTransactionModel.find()
       .sort({ date: -1 })
@@ -69,7 +94,7 @@ export const searchTransactions = async (searchText: string) => {
         { description: { $regex: searchText, $options: "i" } },
         { additionalInformation: { $regex: searchText, $options: "i" } },
       ],
-    }).sort({ date: -1 })
+    }).sort({ date: -1 });
     // .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
@@ -104,7 +129,7 @@ export const searchTransactionsByAmount = async (
                 : { $eq: amount },
         },
       ],
-    }).sort({ amount: filter === "<" ? "desc" : "asc" })
+    }).sort({ amount: filter === "<" ? "desc" : "asc" });
     // .populate({ path: "allocationRequests", strictPopulate: false });
 
     return {
@@ -144,8 +169,10 @@ export const findOne = async (id: string) => {
   try {
     await connectToDatabase();
 
-    const transaction = await EftTransactionModel.findById(id)
-      .populate({ path: "allocationRequests", strictPopulate: false });
+    const transaction = await EftTransactionModel.findById(id).populate({
+      path: "allocationRequests",
+      strictPopulate: false,
+    });
 
     return {
       success: true,

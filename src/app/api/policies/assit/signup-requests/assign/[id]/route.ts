@@ -46,8 +46,8 @@ export async function POST(
             status: "assigned",
             changedBy: currentUser._id,
             changedAt: new Date(),
-          }
-        }
+          },
+        },
       },
       { new: true }
     ).catch((err) => {

@@ -1,8 +1,9 @@
 "use client";
 
-import { LoadingOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Spin, Skeleton, Button, Space, Typography } from "antd";
 import { useState } from "react";
+
+import { LoadingOutlined, ReloadOutlined } from "@ant-design/icons";
+import { Button, Skeleton, Space, Spin, Typography } from "antd";
 
 const { Text } = Typography;
 
@@ -15,13 +16,13 @@ interface LoadingProps {
   children?: React.ReactNode;
 }
 
-export default function Loading({ 
-  type = "spinner", 
-  message = "Loading...", 
+export default function Loading({
+  type = "spinner",
+  message = "Loading...",
   size = "default",
   retry,
   error,
-  children
+  children,
 }: LoadingProps) {
   const [isRetrying, setIsRetrying] = useState(false);
 
@@ -47,8 +48,8 @@ export default function Loading({
           {error}
         </Text>
         {retry && (
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             onClick={handleRetry}
             loading={isRetrying}
             icon={<ReloadOutlined />}
@@ -64,8 +65,8 @@ export default function Loading({
   if (type === "inline") {
     return (
       <div className="flex items-center justify-center py-4">
-        <Spin 
-          size={size} 
+        <Spin
+          size={size}
           tip={message}
           indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />}
         />
@@ -76,13 +77,18 @@ export default function Loading({
   // Fullscreen loading
   if (type === "fullscreen") {
     return (
-      <div className="flex flex-col min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="text-center">
           <div className="mb-6">
-            <Spin 
-              size={size} 
+            <Spin
+              size={size}
               tip={message}
-              indicator={<LoadingOutlined style={{ fontSize: 48, color: '#1890ff' }} spin />}
+              indicator={
+                <LoadingOutlined
+                  style={{ fontSize: 48, color: "#1890ff" }}
+                  spin
+                />
+              }
             />
           </div>
           <h1 className="mb-4 text-3xl font-bold text-gray-800 dark:text-white">
@@ -105,8 +111,8 @@ export default function Loading({
   return (
     <div className="flex items-center justify-center py-8">
       <Space direction="vertical" align="center">
-        <Spin 
-          size={size} 
+        <Spin
+          size={size}
           tip={message}
           indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
         />
@@ -121,75 +127,120 @@ function SkeletonLoading() {
     <div style={{ padding: "20px" }}>
       {/* Page Header Skeleton */}
       <div className="mb-6">
-        <Skeleton.Input 
-          active 
-          size="large" 
-          style={{ width: 200, height: 32, marginBottom: 16 }} 
+        <Skeleton.Input
+          active
+          size="large"
+          style={{ width: 200, height: 32, marginBottom: 16 }}
         />
         <Space size={32}>
           <div>
-            <Skeleton.Input active size="small" style={{ width: 120, height: 20, marginBottom: 8 }} />
-            <Skeleton.Input active size="large" style={{ width: 80, height: 32 }} />
+            <Skeleton.Input
+              active
+              size="small"
+              style={{ width: 120, height: 20, marginBottom: 8 }}
+            />
+            <Skeleton.Input
+              active
+              size="large"
+              style={{ width: 80, height: 32 }}
+            />
           </div>
           <div>
-            <Skeleton.Input active size="small" style={{ width: 120, height: 20, marginBottom: 8 }} />
-            <Skeleton.Input active size="large" style={{ width: 80, height: 32 }} />
+            <Skeleton.Input
+              active
+              size="small"
+              style={{ width: 120, height: 20, marginBottom: 8 }}
+            />
+            <Skeleton.Input
+              active
+              size="large"
+              style={{ width: 80, height: 32 }}
+            />
           </div>
         </Space>
       </div>
 
       {/* Search Results Indicator Skeleton */}
       <div className="mb-4">
-        <Skeleton.Input 
-          active 
-          size="large" 
-          style={{ width: '100%', height: 48, borderRadius: 6 }} 
+        <Skeleton.Input
+          active
+          size="large"
+          style={{ width: "100%", height: 48, borderRadius: 6 }}
         />
       </div>
 
       {/* Filters Skeleton */}
-      <div className="mb-4 p-4 border rounded-lg">
+      <div className="mb-4 rounded-lg border p-4">
         <div className="grid grid-cols-6 gap-4">
-          <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
-          <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
-          <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
-          <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
-          <Skeleton.Input active size="large" style={{ width: '100%', height: 40 }} />
-          <Skeleton.Button active size="large" style={{ width: '100%', height: 40 }} />
+          <Skeleton.Input
+            active
+            size="large"
+            style={{ width: "100%", height: 40 }}
+          />
+          <Skeleton.Input
+            active
+            size="large"
+            style={{ width: "100%", height: 40 }}
+          />
+          <Skeleton.Input
+            active
+            size="large"
+            style={{ width: "100%", height: 40 }}
+          />
+          <Skeleton.Input
+            active
+            size="large"
+            style={{ width: "100%", height: 40 }}
+          />
+          <Skeleton.Input
+            active
+            size="large"
+            style={{ width: "100%", height: 40 }}
+          />
+          <Skeleton.Button
+            active
+            size="large"
+            style={{ width: "100%", height: 40 }}
+          />
         </div>
       </div>
 
       {/* Table Skeleton */}
-      <div className="border rounded-lg p-4">
+      <div className="rounded-lg border p-4">
         {/* Table Header */}
         <div className="mb-4">
           <div className="grid grid-cols-7 gap-4">
             {Array.from({ length: 7 }).map((_, index) => (
-              <Skeleton.Input key={index} active size="small" style={{ width: '100%', height: 20 }} />
+              <Skeleton.Input
+                key={index}
+                active
+                size="small"
+                style={{ width: "100%", height: 20 }}
+              />
             ))}
           </div>
         </div>
-        
+
         {/* Table Rows */}
         {Array.from({ length: 8 }).map((_, rowIndex) => (
           <div key={rowIndex} className="mb-3">
-            <div className="grid grid-cols-7 gap-4 items-center">
+            <div className="grid grid-cols-7 items-center gap-4">
               {Array.from({ length: 7 }).map((_, colIndex) => (
                 <div key={colIndex}>
-                  <Skeleton.Input 
-                    active 
-                    size="small" 
-                    style={{ 
-                      width: colIndex === 0 ? '80%' : '60%', 
+                  <Skeleton.Input
+                    active
+                    size="small"
+                    style={{
+                      width: colIndex === 0 ? "80%" : "60%",
                       height: 16,
-                      marginBottom: 4
-                    }} 
+                      marginBottom: 4,
+                    }}
                   />
                   {colIndex === 2 && (
-                    <Skeleton.Input 
-                      active 
-                      size="small" 
-                      style={{ width: '40%', height: 12 }} 
+                    <Skeleton.Input
+                      active
+                      size="small"
+                      style={{ width: "40%", height: 12 }}
                     />
                   )}
                 </div>
@@ -200,4 +251,4 @@ function SkeletonLoading() {
       </div>
     </div>
   );
-} 
+}

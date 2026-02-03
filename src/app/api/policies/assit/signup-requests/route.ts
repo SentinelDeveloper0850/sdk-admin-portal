@@ -8,8 +8,8 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    const requestId = searchParams.get('requestId');
+    const id = searchParams.get("id");
+    const requestId = searchParams.get("requestId");
 
     if (id) {
       // Get specific signup request
@@ -40,15 +40,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all signup requests
-    const requests = await PolicySignUpModel.find({ deletedBy: { $exists: false }, currentStatus: { $ne: "deleted" } }).sort({ created_at: -1 });
+    const requests = await PolicySignUpModel.find({
+      deletedBy: { $exists: false },
+      currentStatus: { $ne: "deleted" },
+    }).sort({ created_at: -1 });
     const count = await PolicySignUpModel.countDocuments();
 
     return NextResponse.json({
       success: true,
       data: {
         requests,
-        count
-      }
+        count,
+      },
     });
   } catch (error: any) {
     console.error("Error fetching signup requests:", error);
@@ -68,12 +71,14 @@ export async function POST(request: NextRequest) {
     const newRequest = new PolicySignUpModel({
       ...body,
       currentStatus: "submitted",
-      statusHistory: [{
-        status: "submitted",
-        changedBy: body.created_by || "system",
-        changedAt: new Date(),
-        notes: "Request submitted"
-      }]
+      statusHistory: [
+        {
+          status: "submitted",
+          changedBy: body.created_by || "system",
+          changedAt: new Date(),
+          notes: "Request submitted",
+        },
+      ],
     });
 
     await newRequest.save();
@@ -123,11 +128,14 @@ export async function DELETE(request: NextRequest) {
 
     // Check if request can be deleted (only allow deletion of certain statuses)
     const deletableStatuses = ["submitted", "rejected", "archived"];
-    if (!deletableStatuses.includes(signupRequest.currentStatus || "submitted")) {
+    if (
+      !deletableStatuses.includes(signupRequest.currentStatus || "submitted")
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "Cannot delete request with current status. Only submitted, rejected, or archived requests can be deleted."
+          error:
+            "Cannot delete request with current status. Only submitted, rejected, or archived requests can be deleted.",
         },
         { status: 400 }
       );
@@ -147,16 +155,16 @@ export async function DELETE(request: NextRequest) {
             status: "deleted",
             changedBy: deletedBy,
             changedAt: new Date(),
-            notes: "Request deleted by admin"
-          }
-        }
+            notes: "Request deleted by admin",
+          },
+        },
       },
       { new: true }
     );
 
     return NextResponse.json({
       success: true,
-      data: deletedRequest
+      data: deletedRequest,
     });
   } catch (error: any) {
     console.error("Error deleting signup request:", error);

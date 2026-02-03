@@ -27,10 +27,16 @@ export async function GET() {
       lastSeenAt: u.lastSeenAt,
     }));
 
-    return NextResponse.json({ online: result, windowMs: ONLINE_WINDOW_MS }, { status: 200 });
+    return NextResponse.json(
+      { online: result, windowMs: ONLINE_WINDOW_MS },
+      { status: 200 }
+    );
   } catch (error: any) {
     console.error("Error listing online users:", error?.message || error);
-    return NextResponse.json({ message: "Failed to list online users" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Failed to list online users" },
+      { status: 500 }
+    );
   }
 }
 
@@ -47,11 +53,15 @@ export async function POST(request: NextRequest) {
     user.lastSeenAt = new Date();
     await user.save();
 
-    return NextResponse.json({ ok: true, lastSeenAt: user.lastSeenAt }, { status: 200 });
+    return NextResponse.json(
+      { ok: true, lastSeenAt: user.lastSeenAt },
+      { status: 200 }
+    );
   } catch (error: any) {
     console.error("Heartbeat error:", error?.message || error);
-    return NextResponse.json({ message: "Failed to update presence" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Failed to update presence" },
+      { status: 500 }
+    );
   }
 }
-
-

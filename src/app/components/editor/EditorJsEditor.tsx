@@ -1,13 +1,14 @@
 "use client";
 
-import EditorJS, { type OutputData } from "@editorjs/editorjs";
+import { useEffect, useId, useRef } from "react";
+
 import CodeTool from "@editorjs/code";
 import Delimiter from "@editorjs/delimiter";
+import EditorJS, { type OutputData } from "@editorjs/editorjs";
 import Header from "@editorjs/header";
 import InlineCode from "@editorjs/inline-code";
 import List from "@editorjs/list";
 import Quote from "@editorjs/quote";
-import { useEffect, useId, useRef } from "react";
 
 type Props = {
   initialData?: OutputData;
@@ -15,7 +16,11 @@ type Props = {
   onChange?: (data: OutputData) => void;
 };
 
-export default function EditorJsEditor({ initialData, placeholder, onChange }: Props) {
+export default function EditorJsEditor({
+  initialData,
+  placeholder,
+  onChange,
+}: Props) {
   const holderId = useId().replace(/:/g, "");
   const editorRef = useRef<EditorJS | null>(null);
   const changeTimerRef = useRef<number | null>(null);
@@ -66,4 +71,3 @@ export default function EditorJsEditor({ initialData, placeholder, onChange }: P
     </div>
   );
 }
-

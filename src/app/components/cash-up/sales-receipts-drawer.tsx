@@ -3,7 +3,20 @@
 import React, { useEffect, useState } from "react";
 
 import { UploadOutlined } from "@ant-design/icons";
-import { Alert, Button, DatePicker, Drawer, Form, Input, InputNumber, message, Select, Space, Typography, Upload } from "antd";
+import {
+  Alert,
+  Button,
+  DatePicker,
+  Drawer,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Space,
+  Typography,
+  Upload,
+  message,
+} from "antd";
 import dayjs from "dayjs";
 import swal from "sweetalert";
 
@@ -22,7 +35,12 @@ interface Props {
 
 // OCR removed for now
 
-const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defaultDate }) => {
+const SalesReceiptsDrawer: React.FC<Props> = ({
+  open,
+  onClose,
+  onSubmitted,
+  defaultDate,
+}) => {
   // const { user } = useAuth();
   const [form] = Form.useForm();
   const [uploading, setUploading] = useState(false);
@@ -38,7 +56,10 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
   const wPaymentMethod = Form.useWatch("paymentMethod", form);
   const wCashAmount = Form.useWatch("cashAmount", form);
   const wCardAmount = Form.useWatch("cardAmount", form);
-  const wReasonForCashTransactions = Form.useWatch("reasonForCashTransactions", form);
+  const wReasonForCashTransactions = Form.useWatch(
+    "reasonForCashTransactions",
+    form
+  );
 
   const uploadFiles = async (files: File[], submissionIdSuffix: string) => {
     const uploadedFiles: any[] = [];
@@ -59,7 +80,10 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
 
   const pmWatch = String(wPaymentMethod || "").toLowerCase();
   const dateOk = !!wDate;
-  const amountOk = wSubmittedAmount !== undefined && wSubmittedAmount !== null && Number(wSubmittedAmount) >= 0;
+  const amountOk =
+    wSubmittedAmount !== undefined &&
+    wSubmittedAmount !== null &&
+    Number(wSubmittedAmount) >= 0;
   const paymentOk = ["cash", "card", "both"].includes(pmWatch);
   const splitOk =
     pmWatch !== "both" ||
@@ -67,10 +91,12 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
       wCashAmount !== null &&
       wCardAmount !== undefined &&
       wCardAmount !== null &&
-      Math.round((Number(wCashAmount) + Number(wCardAmount)) * 100) === Math.round(Number(wSubmittedAmount) * 100));
+      Math.round((Number(wCashAmount) + Number(wCardAmount)) * 100) ===
+        Math.round(Number(wSubmittedAmount) * 100));
   const reasonOk =
     !["cash", "both"].includes(pmWatch) ||
-    (typeof wReasonForCashTransactions === "string" && wReasonForCashTransactions.trim().length > 0);
+    (typeof wReasonForCashTransactions === "string" &&
+      wReasonForCashTransactions.trim().length > 0);
 
   const canSubmit =
     fileList.length > 0 &&
@@ -108,7 +134,10 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
         message.error("Please select a payment method (cash, card, or both).");
         return;
       }
-      if (pm === "both" && Math.round((cash + card) * 100) !== Math.round(submitted * 100)) {
+      if (
+        pm === "both" &&
+        Math.round((cash + card) * 100) !== Math.round(submitted * 100)
+      ) {
         message.error("Cash + card must equal the submitted amount.");
         return;
       }
@@ -123,9 +152,13 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
         date: dayjs(values.date).format("YYYY-MM-DD"),
         submittedAmount: submitted,
         paymentMethod: pm,
-        cashAmount: pm === "both" ? cash : pm === "cash" ? submitted : undefined,
-        cardAmount: pm === "both" ? card : pm === "card" ? submitted : undefined,
-        reasonForCashTransactions: ["cash", "both"].includes(pm) ? reason : undefined,
+        cashAmount:
+          pm === "both" ? cash : pm === "cash" ? submitted : undefined,
+        cardAmount:
+          pm === "both" ? card : pm === "card" ? submitted : undefined,
+        reasonForCashTransactions: ["cash", "both"].includes(pm)
+          ? reason
+          : undefined,
         notes: values.notes || "",
         submittedAt: new Date().toISOString(),
       };
@@ -169,7 +202,7 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
     const now = dayjs();
     const submissionDate = date || now;
     const cutoff = submissionDate.hour(20).minute(0).second(0);
-    const gracePeriod = cutoff.add(30, 'minute');
+    const gracePeriod = cutoff.add(30, "minute");
 
     setIsLateSubmission(now.isAfter(gracePeriod));
   };
@@ -216,10 +249,12 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
       }}
       footer={
         <Space>
-          <Button onClick={() => {
-            resetForm();
-            onClose();
-          }}>
+          <Button
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
+          >
             Cancel
           </Button>
           <Button
@@ -256,24 +291,41 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
           <Form.Item
             name="date"
             label="Receipt Date"
-            rules={[{ required: true, message: "Please select the receipt date" }]}
+            rules={[
+              { required: true, message: "Please select the receipt date" },
+            ]}
           >
             <DatePicker
               style={{ width: "100%" }}
-              disabledDate={(current) => current && current.isAfter(dayjs(), "day")}
+              disabledDate={(current) =>
+                current && current.isAfter(dayjs(), "day")
+              }
               onChange={checkSubmissionTiming}
               defaultValue={dayjs()}
             />
           </Form.Item>
 
-          <Form.Item name="submittedAmount" label="Submitted Amount" rules={[{ required: true, message: "Please enter the submitted amount" }]}>
-            <InputNumber prefix="R" min={0} step={100} style={{ width: "100%" }} />
+          <Form.Item
+            name="submittedAmount"
+            label="Submitted Amount"
+            rules={[
+              { required: true, message: "Please enter the submitted amount" },
+            ]}
+          >
+            <InputNumber
+              prefix="R"
+              min={0}
+              step={100}
+              style={{ width: "100%" }}
+            />
           </Form.Item>
 
           <Form.Item
             name="paymentMethod"
             label="Payment Method"
-            rules={[{ required: true, message: "Please select a payment method" }]}
+            rules={[
+              { required: true, message: "Please select a payment method" },
+            ]}
           >
             <Select placeholder="Select payment method" disabled={processing}>
               <Option value="cash">Cash</Option>
@@ -282,9 +334,16 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
             </Select>
           </Form.Item>
 
-          <Form.Item shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod || prev.submittedAmount !== cur.submittedAmount}>
+          <Form.Item
+            shouldUpdate={(prev, cur) =>
+              prev.paymentMethod !== cur.paymentMethod ||
+              prev.submittedAmount !== cur.submittedAmount
+            }
+          >
             {() => {
-              const pm = String(form.getFieldValue("paymentMethod") || "").toLowerCase();
+              const pm = String(
+                form.getFieldValue("paymentMethod") || ""
+              ).toLowerCase();
               if (pm !== "both") return null;
               return (
                 <div className="grid grid-cols-2 gap-4">
@@ -293,48 +352,73 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
                     label="Cash Amount"
                     rules={[{ required: true, message: "Enter cash amount" }]}
                   >
-                    <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
+                    <InputNumber
+                      prefix="R"
+                      min={0}
+                      step={50}
+                      style={{ width: "100%" }}
+                      disabled={processing}
+                    />
                   </Form.Item>
                   <Form.Item
                     name="cardAmount"
                     label="Card Amount"
                     rules={[{ required: true, message: "Enter card amount" }]}
                   >
-                    <InputNumber prefix="R" min={0} step={50} style={{ width: "100%" }} disabled={processing} />
+                    <InputNumber
+                      prefix="R"
+                      min={0}
+                      step={50}
+                      style={{ width: "100%" }}
+                      disabled={processing}
+                    />
                   </Form.Item>
                 </div>
               );
             }}
           </Form.Item>
 
-          <Form.Item shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod}>
+          <Form.Item
+            shouldUpdate={(prev, cur) =>
+              prev.paymentMethod !== cur.paymentMethod
+            }
+          >
             {() => {
-              const pm = String(form.getFieldValue("paymentMethod") || "").toLowerCase();
+              const pm = String(
+                form.getFieldValue("paymentMethod") || ""
+              ).toLowerCase();
               if (!["cash", "both"].includes(pm)) return null;
               return (
                 <Form.Item
                   name="reasonForCashTransactions"
                   label="Reason for Cash Transactions"
                   rules={[
-                    { required: true, whitespace: true, message: "Please provide a reason for cash transactions" },
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: "Please provide a reason for cash transactions",
+                    },
                     {
                       validator: async (_, value) => {
                         const v = String(value ?? "").trim();
-                        if (!v) throw new Error("Please provide a reason for cash transactions");
+                        if (!v)
+                          throw new Error(
+                            "Please provide a reason for cash transactions"
+                          );
                       },
                     },
                   ]}
                 >
-                  <Input placeholder="Explain why cash was used" disabled={processing} />
+                  <Input
+                    placeholder="Explain why cash was used"
+                    disabled={processing}
+                  />
                 </Form.Item>
               );
             }}
           </Form.Item>
 
-          <Form.Item
-            name="notes"
-            label="Notes (Optional)"
-          >
+          <Form.Item name="notes" label="Notes (Optional)">
             <TextArea
               rows={3}
               placeholder="Add any notes about today's receipts..."
@@ -349,14 +433,16 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
               <p className="ant-upload-drag-icon">
                 <UploadOutlined />
               </p>
-              <p className="ant-upload-text">Click or drag receipt images to upload</p>
+              <p className="ant-upload-text">
+                Click or drag receipt images to upload
+              </p>
               <p className="ant-upload-hint">
                 Support for JPG, PNG, PDF files. Max file size: 10MB
               </p>
             </Upload.Dragger>
 
             {uploading && (
-              <div className="text-center py-4">
+              <div className="py-4 text-center">
                 <div className="text-blue-500">Uploading and processing...</div>
               </div>
             )}
@@ -367,4 +453,4 @@ const SalesReceiptsDrawer: React.FC<Props> = ({ open, onClose, onSubmitted, defa
   );
 };
 
-export default SalesReceiptsDrawer; 
+export default SalesReceiptsDrawer;

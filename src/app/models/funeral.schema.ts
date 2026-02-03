@@ -1,7 +1,14 @@
 // src/app/models/funeral.schema.ts
-import type { ILocation } from "@/app/models/calendar-event.schema";
-import type { IDeceased, IFuneral, IFuneralAssignment, IInformant, ITransportDetail } from "@/types/funeral";
 import mongoose, { Schema } from "mongoose";
+
+import type { ILocation } from "@/app/models/calendar-event.schema";
+import type {
+  IDeceased,
+  IFuneral,
+  IFuneralAssignment,
+  IInformant,
+  ITransportDetail,
+} from "@/types/funeral";
 
 export enum FuneralStatus {
   DRAFT = "draft",
@@ -82,7 +89,7 @@ const DeceasedSchema = new Schema<IDeceased>(
 
 const AssignmentSchema = new Schema<IFuneralAssignment>(
   {
-    role: { type: String, required: true },      // later: enum if you want
+    role: { type: String, required: true }, // later: enum if you want
     staffId: { type: String },
     staffName: { type: String },
     contact: { type: String },
@@ -137,7 +144,11 @@ const MilestoneSchema = new Schema(
     origin: { type: Schema.Types.Mixed },
     destination: { type: Schema.Types.Mixed },
 
-    status: { type: String, enum: ["pending", "completed", "cancelled"], default: "pending" },
+    status: {
+      type: String,
+      enum: ["pending", "completed", "cancelled"],
+      default: "pending",
+    },
 
     // Burial info
     cemeteryCode: { type: String },
@@ -156,7 +167,12 @@ const MilestoneSchema = new Schema(
 
 const FuneralSchema: Schema = new Schema(
   {
-    referenceNumber: { type: String, required: true, unique: true, index: true },
+    referenceNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
     policyNumber: { type: String, index: true },
 
     branchId: { type: String, required: true, index: true },

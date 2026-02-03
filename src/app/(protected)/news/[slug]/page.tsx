@@ -1,15 +1,23 @@
 "use client";
 
-import DOMPurify from "dompurify";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
+
+import DOMPurify from "dompurify";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export default function NewsDetailPage({ params }: { params: { slug: string } }) {
+export default function NewsDetailPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const router = useRouter();
-  const { data, isLoading, mutate } = useSWR(`/api/news/${params.slug}`, fetcher);
+  const { data, isLoading, mutate } = useSWR(
+    `/api/news/${params.slug}`,
+    fetcher
+  );
 
   const doc = data;
 
@@ -23,10 +31,10 @@ export default function NewsDetailPage({ params }: { params: { slug: string } })
   if (!doc) return <div className="p-4">Not found</div>;
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       <div className="space-y-1">
         <h1 className="text-xl font-semibold">{doc.title}</h1>
-        <div className="text-sm text-muted-foreground flex items-center gap-2">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <span>{doc.category}</span>
           {doc.version ? <span>• {doc.version}</span> : null}
           {doc.publishedAt ? (
@@ -79,10 +87,10 @@ export default function NewsDetailPage({ params }: { params: { slug: string } })
           }}
         />
       ) : (
-        <article className="prose dark:prose-invert max-w-none whitespace-pre-wrap">{doc.bodyMd}</article>
+        <article className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
+          {doc.bodyMd}
+        </article>
       )}
     </div>
   );
 }
-
-

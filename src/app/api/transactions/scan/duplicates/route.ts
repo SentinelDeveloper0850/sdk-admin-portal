@@ -1,13 +1,17 @@
-import { IAllocationRequest } from "@/app/models/hr/allocation-request.schema";
-import { connectToDatabase } from "@/lib/db";
-import dayjs from "dayjs";
 import { NextRequest, NextResponse } from "next/server";
 
+import dayjs from "dayjs";
+
+import { IAllocationRequest } from "@/app/models/hr/allocation-request.schema";
+import { connectToDatabase } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { allocationRequests, receiptsFromASSIT } = body as { allocationRequests: IAllocationRequest[], receiptsFromASSIT: any[] };
+    const { allocationRequests, receiptsFromASSIT } = body as {
+      allocationRequests: IAllocationRequest[];
+      receiptsFromASSIT: any[];
+    };
 
     const metadata = {
       failedRequests: 0,
@@ -17,16 +21,22 @@ export async function POST(request: NextRequest) {
       requestsWithoutTransactions: 0,
       requestsToScan: 0,
       receiptsFromASSIT: 0,
-    }
+    };
 
     if (!allocationRequests) {
-      return NextResponse.json({ message: "Allocation requests are required" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Allocation requests are required" },
+        { status: 400 }
+      );
     }
 
     metadata.totalRequests = allocationRequests.length;
 
     if (!receiptsFromASSIT) {
-      return NextResponse.json({ message: "Receipts from ASSIT are required" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Receipts from ASSIT are required" },
+        { status: 400 }
+      );
     }
 
     metadata.receiptsFromASSIT = receiptsFromASSIT.length;
@@ -36,18 +46,25 @@ export async function POST(request: NextRequest) {
     const importRequests: IAllocationRequest[] = [];
 
     // Get all allocation requests that have no transactions attached to them
-    const requestsWithoutTransactions = allocationRequests.filter((request) => !request.transaction);
+    const requestsWithoutTransactions = allocationRequests.filter(
+      (request) => !request.transaction
+    );
     failedRequests.push(...requestsWithoutTransactions);
     metadata.requestsWithoutTransactions = requestsWithoutTransactions.length;
 
     // Requests to scan for duplicates
-    const requestsToScan = allocationRequests.filter((request) => request.transaction);
+    const requestsToScan = allocationRequests.filter(
+      (request) => request.transaction
+    );
     metadata.requestsToScan = requestsToScan.length;
 
     await connectToDatabase();
 
     for (const request of requestsToScan) {
-      const { duplicate, failed, importToASSIT } = await scanForDuplicates(request, receiptsFromASSIT);
+      const { duplicate, failed, importToASSIT } = await scanForDuplicates(
+        request,
+        receiptsFromASSIT
+      );
 
       if (duplicate) {
         duplicateRequests.push(request);
@@ -63,13 +80,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ message: "Duplicates scanned successfully", failedRequests, duplicateRequests, importRequests, stats: metadata }, { status: 200 });
+    return NextResponse.json(
+      {
+        message: "Duplicates scanned successfully",
+        failedRequests,
+        duplicateRequests,
+        importRequests,
+        stats: metadata,
+      },
+      { status: 200 }
+    );
   } catch (error) {
-    return NextResponse.json({ message: "Internal Server Error ~ Scan duplicates" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Server Error ~ Scan duplicates" },
+      { status: 500 }
+    );
   }
 }
 
-async function scanForDuplicates(request: IAllocationRequest, receiptsFromASSIT: any[]) {
+async function scanForDuplicates(
+  request: IAllocationRequest,
+  receiptsFromASSIT: any[]
+) {
   try {
     if (!request.transaction) {
       return { duplicate: false, failed: true, importToASSIT: false };
@@ -77,7 +109,10 @@ async function scanForDuplicates(request: IAllocationRequest, receiptsFromASSIT:
 
     // Reduce receiptsFromASSIT to only include receipts that match the policy number
     const receiptsMatchingPolicyNumber = receiptsFromASSIT.filter((receipt) => {
-      const receiptPolicyNumber = receipt['MembershipID'] || receipt['membership_id'] || receipt['Membership ID'];
+      const receiptPolicyNumber =
+        receipt["MembershipID"] ||
+        receipt["membership_id"] ||
+        receipt["Membership ID"];
       return receiptPolicyNumber === request.policyNumber;
     });
 
@@ -86,10 +121,14 @@ async function scanForDuplicates(request: IAllocationRequest, receiptsFromASSIT:
     }
 
     // Reduce receiptsMatchingPolicyNumber to only include receipts that match the date using dayjs
-    const receiptsMatchingPolicyNumberAndDate = receiptsMatchingPolicyNumber.filter((receipt) => {
-      const receiptDate: string = receipt['Effective Date'] || receipt['effective_date'] || receipt['EffectiveDate'];
-      return dayjs(receiptDate).isSame(request.transaction.date, 'day');
-    });
+    const receiptsMatchingPolicyNumberAndDate =
+      receiptsMatchingPolicyNumber.filter((receipt) => {
+        const receiptDate: string =
+          receipt["Effective Date"] ||
+          receipt["effective_date"] ||
+          receipt["EffectiveDate"];
+        return dayjs(receiptDate).isSame(request.transaction.date, "day");
+      });
 
     if (receiptsMatchingPolicyNumberAndDate.length > 0) {
       return { duplicate: true, failed: false, importToASSIT: false };

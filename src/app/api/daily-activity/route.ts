@@ -32,11 +32,11 @@ export async function GET(request: Request) {
           ...report.toObject(),
           author: user
             ? {
-              _id: user._id,
-              name: user.name,
-              email: user.email,
-              avatarUrl: user.avatarUrl,
-            }
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                avatarUrl: user.avatarUrl,
+              }
             : null,
         };
       })

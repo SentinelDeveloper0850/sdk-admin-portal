@@ -12,12 +12,16 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { message: "Internal Server Error ~ Error importing policies from ASSIT" },
+      {
+        message: "Internal Server Error ~ Error importing policies from ASSIT",
+      },
       { status: 500 }
     );
   } catch (error: any) {
     return NextResponse.json(
-      { message: "Internal Server Error ~ Error importing policies from ASSIT" },
+      {
+        message: "Internal Server Error ~ Error importing policies from ASSIT",
+      },
       { status: 500 }
     );
   }

@@ -1,5 +1,6 @@
-import { Types } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+
+import { Types } from "mongoose";
 
 import {
   KnowledgeArticleCategory,
@@ -23,7 +24,10 @@ export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
 
   if (!user || !(user as any)._id) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   const url = new URL(req.url);
@@ -54,7 +58,9 @@ export async function GET(req: NextRequest) {
   const nextCursor = items.length > take ? String(items[take]._id) : undefined;
 
   return NextResponse.json({
-    items: items.slice(0, take).map(({ _id, ...doc }) => ({ id: String(_id), ...doc })),
+    items: items
+      .slice(0, take)
+      .map(({ _id, ...doc }) => ({ id: String(_id), ...doc })),
     nextCursor,
     categories: Object.values(KnowledgeArticleCategory),
   });
@@ -65,17 +71,27 @@ export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
 
   if (!user || !(user as any)._id) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
   }
   if ((user as any).role !== "admin") {
-    return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+    return NextResponse.json(
+      { success: false, message: "Forbidden" },
+      { status: 403 }
+    );
   }
 
   const body = await req.json();
-  const { title, summary, bodyMd, bodyHtml, bodyJson, category, tags } = body ?? {};
+  const { title, summary, bodyMd, bodyHtml, bodyJson, category, tags } =
+    body ?? {};
 
   if (!title || !bodyMd || !category) {
-    return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
+    return NextResponse.json(
+      { success: false, message: "Missing required fields" },
+      { status: 400 }
+    );
   }
 
   const slug = body.slug ? String(body.slug) : slugify(String(title));
@@ -96,6 +112,8 @@ export async function POST(req: NextRequest) {
     updatedAt: now,
   });
 
-  return NextResponse.json({ id: String(doc._id), slug: doc.slug }, { status: 201 });
+  return NextResponse.json(
+    { id: String(doc._id), slug: doc.slug },
+    { status: 201 }
+  );
 }
-

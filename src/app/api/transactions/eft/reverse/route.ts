@@ -8,16 +8,17 @@ export async function POST(request: NextRequest) {
   try {
     const { uuid } = await request.json();
     if (!uuid) {
-      return NextResponse.json(
-        { message: "Missing uuid" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Missing uuid" }, { status: 400 });
     }
 
     // Authenticate user
     const user = await getUserFromRequest(request);
-    const ipHeader = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
-    const ip = (ipHeader ? ipHeader.split(",")[0].trim() : null) as string | null;
+    const ipHeader =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip");
+    const ip = (ipHeader ? ipHeader.split(",")[0].trim() : null) as
+      | string
+      | null;
     const userAgent = request.headers.get("user-agent") || null;
 
     if (!user) {
@@ -34,10 +35,7 @@ export async function POST(request: NextRequest) {
         severity: "high",
         tags: ["security", "destructive"],
       });
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     if ((user as any).role !== "admin") {
@@ -94,5 +92,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -7,19 +9,18 @@ import {
   ExclamationCircleOutlined,
   InboxOutlined,
   QuestionCircleOutlined,
-  UserAddOutlined
+  UserAddOutlined,
 } from "@ant-design/icons";
 import {
   Button,
   Divider,
   Form,
   Input,
-  message,
   Select,
   Space,
-  Typography
+  Typography,
+  message,
 } from "antd";
-import { useEffect, useState } from "react";
 
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
@@ -54,7 +55,7 @@ export const PolicySignupActionModals = ({
   action,
   record,
   onClose,
-  onSuccess
+  onSuccess,
 }: ActionModalProps) => {
   const [form] = Form.useForm();
   const { user } = useAuth();
@@ -73,7 +74,7 @@ export const PolicySignupActionModals = ({
 
   const loadConsultants = async () => {
     try {
-      const response = await fetch('/api/users?type=consultants&slim=true');
+      const response = await fetch("/api/users?type=consultants&slim=true");
       const data = await response.json();
       if (data) {
         setConsultants(data);
@@ -85,7 +86,7 @@ export const PolicySignupActionModals = ({
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/users?type=escalation&slim=true');
+      const response = await fetch("/api/users?type=escalation&slim=true");
       const data = await response.json();
       if (data) {
         setUsers(data);
@@ -104,35 +105,42 @@ export const PolicySignupActionModals = ({
 
       let response = null;
 
-      console.log("🚀 ~ handleSubmit ~ action:", action, values)
+      console.log("🚀 ~ handleSubmit ~ action:", action, values);
 
       if (action === "assign_consultant") {
-        response = await fetch(`/api/policies/assit/signup-requests/assign/${record._id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ consultantId: values.consultantId }),
-        });
+        response = await fetch(
+          `/api/policies/assit/signup-requests/assign/${record._id}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ consultantId: values.consultantId }),
+          }
+        );
       } else {
-
-        response = await fetch(`/api/policies/easipol/signup-requests/${record._id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action,
-            ...values,
-            userId,
-            authorName: user.name || user.email || "Unknown"
-          }),
-        });
+        response = await fetch(
+          `/api/policies/easipol/signup-requests/${record._id}`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action,
+              ...values,
+              userId,
+              authorName: user.name || user.email || "Unknown",
+            }),
+          }
+        );
 
         const data = await response.json();
 
         if (data.success) {
-          messageApi.success(`${getActionTitle(action)} completed successfully`);
+          messageApi.success(
+            `${getActionTitle(action)} completed successfully`
+          );
           onSuccess();
           onClose();
         } else {
@@ -205,7 +213,7 @@ export const PolicySignupActionModals = ({
             rules={[{ required: true, message: "Please select a consultant" }]}
           >
             <Select placeholder="Choose a consultant">
-              {consultants.map(consultant => (
+              {consultants.map((consultant) => (
                 <Option key={consultant._id} value={consultant._id}>
                   {consultant.name} ({consultant.email})
                 </Option>
@@ -216,21 +224,18 @@ export const PolicySignupActionModals = ({
 
       case "mark_as_reviewed":
         return (
-          <Form.Item
-            name="notes"
-            label="Review Notes (Optional)"
-          >
-            <TextArea rows={3} placeholder="Add any notes about the review..." />
+          <Form.Item name="notes" label="Review Notes (Optional)">
+            <TextArea
+              rows={3}
+              placeholder="Add any notes about the review..."
+            />
           </Form.Item>
         );
 
       case "approve":
         return (
           <>
-            <Form.Item
-              name="policyNumber"
-              label="Policy Number (Optional)"
-            >
+            <Form.Item name="policyNumber" label="Policy Number (Optional)">
               <Input placeholder="Leave blank to auto-generate" />
             </Form.Item>
             <div style={{ marginBottom: 16 }}>
@@ -249,20 +254,30 @@ export const PolicySignupActionModals = ({
             <Form.Item
               name="reason"
               label="Rejection Reason"
-              rules={[{ required: true, message: "Please provide a rejection reason" }]}
+              rules={[
+                {
+                  required: true,
+                  message: "Please provide a rejection reason",
+                },
+              ]}
             >
               <Select placeholder="Select a reason">
-                <Option value="Incomplete Information">Incomplete Information</Option>
-                <Option value="Invalid Documentation">Invalid Documentation</Option>
-                <Option value="Does Not Meet Requirements">Does Not Meet Requirements</Option>
-                <Option value="Duplicate Application">Duplicate Application</Option>
+                <Option value="Incomplete Information">
+                  Incomplete Information
+                </Option>
+                <Option value="Invalid Documentation">
+                  Invalid Documentation
+                </Option>
+                <Option value="Does Not Meet Requirements">
+                  Does Not Meet Requirements
+                </Option>
+                <Option value="Duplicate Application">
+                  Duplicate Application
+                </Option>
                 <Option value="Other">Other</Option>
               </Select>
             </Form.Item>
-            <Form.Item
-              name="notes"
-              label="Additional Notes"
-            >
+            <Form.Item name="notes" label="Additional Notes">
               <TextArea rows={3} placeholder="Provide additional details..." />
             </Form.Item>
           </>
@@ -274,14 +289,25 @@ export const PolicySignupActionModals = ({
             <Form.Item
               name="field"
               label="Information Field"
-              rules={[{ required: true, message: "Please specify what information is needed" }]}
+              rules={[
+                {
+                  required: true,
+                  message: "Please specify what information is needed",
+                },
+              ]}
             >
               <Select placeholder="Select the type of information needed">
-                <Option value="Additional Documentation">Additional Documentation</Option>
+                <Option value="Additional Documentation">
+                  Additional Documentation
+                </Option>
                 <Option value="Proof of Income">Proof of Income</Option>
                 <Option value="Bank Details">Bank Details</Option>
-                <Option value="Employment Verification">Employment Verification</Option>
-                <Option value="Address Verification">Address Verification</Option>
+                <Option value="Employment Verification">
+                  Employment Verification
+                </Option>
+                <Option value="Address Verification">
+                  Address Verification
+                </Option>
                 <Option value="Medical Information">Medical Information</Option>
                 <Option value="Other">Other</Option>
               </Select>
@@ -289,9 +315,14 @@ export const PolicySignupActionModals = ({
             <Form.Item
               name="description"
               label="Description"
-              rules={[{ required: true, message: "Please provide a description" }]}
+              rules={[
+                { required: true, message: "Please provide a description" },
+              ]}
             >
-              <TextArea rows={3} placeholder="Describe what specific information is needed..." />
+              <TextArea
+                rows={3}
+                placeholder="Describe what specific information is needed..."
+              />
             </Form.Item>
           </>
         );
@@ -325,10 +356,12 @@ export const PolicySignupActionModals = ({
             <Form.Item
               name="escalatedTo"
               label="Escalate To"
-              rules={[{ required: true, message: "Please select who to escalate to" }]}
+              rules={[
+                { required: true, message: "Please select who to escalate to" },
+              ]}
             >
               <Select placeholder="Choose a user to escalate to">
-                {users.map(user => (
+                {users.map((user) => (
                   <Option key={user._id} value={user._id}>
                     {user.name} ({user.roles.join(", ")})
                   </Option>
@@ -338,20 +371,28 @@ export const PolicySignupActionModals = ({
             <Form.Item
               name="reason"
               label="Escalation Reason"
-              rules={[{ required: true, message: "Please provide a reason for escalation" }]}
+              rules={[
+                {
+                  required: true,
+                  message: "Please provide a reason for escalation",
+                },
+              ]}
             >
-              <TextArea rows={3} placeholder="Explain why this request needs to be escalated..." />
+              <TextArea
+                rows={3}
+                placeholder="Explain why this request needs to be escalated..."
+              />
             </Form.Item>
           </>
         );
 
       case "archive":
         return (
-          <Form.Item
-            name="reason"
-            label="Archive Reason (Optional)"
-          >
-            <TextArea rows={3} placeholder="Reason for archiving (optional)..." />
+          <Form.Item name="reason" label="Archive Reason (Optional)">
+            <TextArea
+              rows={3}
+              placeholder="Reason for archiving (optional)..."
+            />
           </Form.Item>
         );
 
@@ -365,7 +406,7 @@ export const PolicySignupActionModals = ({
   return (
     <>
       {contextHolder}
-      <div style={{ padding: '16px' }}>
+      <div style={{ padding: "16px" }}>
         <div style={{ marginBottom: 16 }}>
           <Title level={5}>
             <Space>
@@ -374,20 +415,24 @@ export const PolicySignupActionModals = ({
             </Space>
           </Title>
           <div style={{ marginBottom: 16 }}>
-            <p><strong>Applicant:</strong> {record.fullNames} {record.surname}</p>
-            <p><strong>ID Number:</strong> {record.identificationNumber}</p>
-            <p><strong>Plan:</strong> {record.plan?.name || 'Unknown Plan'}</p>
-            <p><strong>Request ID:</strong> {record.requestId}</p>
+            <p>
+              <strong>Applicant:</strong> {record.fullNames} {record.surname}
+            </p>
+            <p>
+              <strong>ID Number:</strong> {record.identificationNumber}
+            </p>
+            <p>
+              <strong>Plan:</strong> {record.plan?.name || "Unknown Plan"}
+            </p>
+            <p>
+              <strong>Request ID:</strong> {record.requestId}
+            </p>
           </div>
         </div>
 
         <Divider />
 
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
           {renderForm()}
 
           <Form.Item style={{ marginTop: 24 }}>
@@ -395,9 +440,7 @@ export const PolicySignupActionModals = ({
               <Button type="primary" htmlType="submit" loading={loading}>
                 {getActionTitle(action)}
               </Button>
-              <Button onClick={onClose}>
-                Cancel
-              </Button>
+              <Button onClick={onClose}>Cancel</Button>
             </Space>
           </Form.Item>
         </Form>

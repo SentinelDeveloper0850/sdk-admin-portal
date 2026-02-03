@@ -7,16 +7,19 @@ import { connectToDatabase } from "@/lib/db";
 import { createAuditLog } from "@/server/actions/audit";
 import {
   importFromBankStatement,
-  importFromTransactionHistory
+  importFromTransactionHistory,
 } from "@/server/actions/eft-transactions";
 
 export async function GET(_request: NextRequest) {
   try {
-
     const { searchParams } = new URL(_request.url);
 
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit') as string) : 1000;
-    const page = searchParams.get('page') ? parseInt(searchParams.get('page') as string) : 1;
+    const limit = searchParams.get("limit")
+      ? parseInt(searchParams.get("limit") as string)
+      : 1000;
+    const page = searchParams.get("page")
+      ? parseInt(searchParams.get("page") as string)
+      : 1;
 
     await connectToDatabase();
 
@@ -28,33 +31,61 @@ export async function GET(_request: NextRequest) {
       .skip((page - 1) * limit)
       .limit(limit);
 
-    const totalAllocationRequestsCount = await AllocationRequestModel.countDocuments({ type: "EFT" });
-    const pendingAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "PENDING", type: "EFT" });
-    const submittedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "SUBMITTED", type: "EFT" });
-    const approvedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "APPROVED", type: "EFT" });
-    const rejectedAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "REJECTED", type: "EFT" });
-    const cancelledAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "CANCELLED", type: "EFT" });
-    const duplicateAllocationRequestsCount = await AllocationRequestModel.countDocuments({ status: "DUPLICATE", type: "EFT" });
+    const totalAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({ type: "EFT" });
+    const pendingAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "PENDING",
+        type: "EFT",
+      });
+    const submittedAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "SUBMITTED",
+        type: "EFT",
+      });
+    const approvedAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "APPROVED",
+        type: "EFT",
+      });
+    const rejectedAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "REJECTED",
+        type: "EFT",
+      });
+    const cancelledAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "CANCELLED",
+        type: "EFT",
+      });
+    const duplicateAllocationRequestsCount =
+      await AllocationRequestModel.countDocuments({
+        status: "DUPLICATE",
+        type: "EFT",
+      });
 
-    return NextResponse.json({
-      success: true,
-      pagination: {
-        page: page,
-        limit: limit,
-        total: numberOfTransactions,
+    return NextResponse.json(
+      {
+        success: true,
+        pagination: {
+          page: page,
+          limit: limit,
+          total: numberOfTransactions,
+        },
+        stats: {
+          count: numberOfTransactions,
+          totalAllocationRequestsCount: totalAllocationRequestsCount,
+          pendingAllocationRequestsCount: pendingAllocationRequestsCount,
+          submittedAllocationRequestsCount: submittedAllocationRequestsCount,
+          approvedAllocationRequestsCount: approvedAllocationRequestsCount,
+          rejectedAllocationRequestsCount: rejectedAllocationRequestsCount,
+          cancelledAllocationRequestsCount: cancelledAllocationRequestsCount,
+          duplicateAllocationRequestsCount: duplicateAllocationRequestsCount,
+        },
+        transactions: transactions,
       },
-      stats: {
-        count: numberOfTransactions,
-        totalAllocationRequestsCount: totalAllocationRequestsCount,
-        pendingAllocationRequestsCount: pendingAllocationRequestsCount,
-        submittedAllocationRequestsCount: submittedAllocationRequestsCount,
-        approvedAllocationRequestsCount: approvedAllocationRequestsCount,
-        rejectedAllocationRequestsCount: rejectedAllocationRequestsCount,
-        cancelledAllocationRequestsCount: cancelledAllocationRequestsCount,
-        duplicateAllocationRequestsCount: duplicateAllocationRequestsCount,
-      },
-      transactions: transactions,
-    }, { status: 200 });
+      { status: 200 }
+    );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -83,8 +114,12 @@ export async function POST(request: NextRequest) {
     // Audit log
     try {
       const user = await getUserFromRequest(request);
-      const ipHeader = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
-      const ip = (ipHeader ? ipHeader.split(",")[0].trim() : null) as string | null;
+      const ipHeader =
+        request.headers.get("x-forwarded-for") ||
+        request.headers.get("x-real-ip");
+      const ip = (ipHeader ? ipHeader.split(",")[0].trim() : null) as
+        | string
+        | null;
       const userAgent = request.headers.get("user-agent") || null;
 
       await createAuditLog({
@@ -96,11 +131,11 @@ export async function POST(request: NextRequest) {
         resourceId: payload?.importData?.uuid || payload?.uuid,
         performedBy: user
           ? {
-            id: user._id?.toString?.(),
-            name: (user as any).name,
-            email: (user as any).email,
-            role: (user as any).role,
-          }
+              id: user._id?.toString?.(),
+              name: (user as any).name,
+              email: (user as any).email,
+              role: (user as any).role,
+            }
           : {},
         ip,
         userAgent,
@@ -116,7 +151,10 @@ export async function POST(request: NextRequest) {
         tags: ["import"],
       });
     } catch (e) {
-      console.error("Failed to write audit log for EFT import:", (e as any)?.message);
+      console.error(
+        "Failed to write audit log for EFT import:",
+        (e as any)?.message
+      );
     }
 
     if (response?.success) {

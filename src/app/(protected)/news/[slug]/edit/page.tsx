@@ -1,18 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import useSWR from "swr";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
 import { ERoles } from "../../../../../types/roles.enum";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 function EditAnnouncementInner({ params }: { params: { slug: string } }) {
-  const { data, isLoading, mutate } = useSWR(`/api/news/${params.slug}`, fetcher);
+  const { data, isLoading, mutate } = useSWR(
+    `/api/news/${params.slug}`,
+    fetcher
+  );
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("RELEASE");
@@ -42,11 +47,29 @@ function EditAnnouncementInner({ params }: { params: { slug: string } }) {
     const res = await fetch(`/api/news/${data.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, bodyMd, category, version, tags, isPinned, requiresAck }),
+      body: JSON.stringify({
+        title,
+        bodyMd,
+        category,
+        version,
+        tags,
+        isPinned,
+        requiresAck,
+      }),
     });
     setSaving(false);
     if (res.ok) mutate();
-  }, [data?.id, title, bodyMd, category, version, tags, isPinned, requiresAck, mutate]);
+  }, [
+    data?.id,
+    title,
+    bodyMd,
+    category,
+    version,
+    tags,
+    isPinned,
+    requiresAck,
+    mutate,
+  ]);
 
   const handlePublish = useCallback(async () => {
     if (!data?.id) return;
@@ -58,7 +81,7 @@ function EditAnnouncementInner({ params }: { params: { slug: string } }) {
   if (!data) return <div className="p-4">Not found</div>;
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       <h1 className="text-xl font-semibold">Edit Announcement</h1>
 
       <div className="grid gap-3">
@@ -70,7 +93,11 @@ function EditAnnouncementInner({ params }: { params: { slug: string } }) {
         />
 
         <div className="flex gap-2">
-          <select className="rounded border px-3 py-2" value={category} onChange={(e) => setCategory(e.target.value)}>
+          <select
+            className="rounded border px-3 py-2"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
             <option value="SYSTEM_UPDATE">System Update</option>
             <option value="POLICY_CHANGE">Policy Change</option>
             <option value="TRAINING">Training</option>
@@ -89,21 +116,36 @@ function EditAnnouncementInner({ params }: { params: { slug: string } }) {
           className="rounded border px-3 py-2"
           placeholder="Tags (comma separated)"
           value={tagsString}
-          onChange={(e) => setTags(e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
+          onChange={(e) =>
+            setTags(
+              e.target.value
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            )
+          }
         />
 
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={isPinned} onChange={(e) => setIsPinned(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={isPinned}
+            onChange={(e) => setIsPinned(e.target.checked)}
+          />
           Pinned
         </label>
 
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={requiresAck} onChange={(e) => setRequiresAck(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={requiresAck}
+            onChange={(e) => setRequiresAck(e.target.checked)}
+          />
           Requires Acknowledgement
         </label>
 
         <textarea
-          className="rounded border px-3 py-2 h-60 font-mono"
+          className="h-60 rounded border px-3 py-2 font-mono"
           placeholder="Write Markdown here..."
           value={bodyMd}
           onChange={(e) => setBodyMd(e.target.value)}
@@ -111,25 +153,38 @@ function EditAnnouncementInner({ params }: { params: { slug: string } }) {
       </div>
 
       <div className="flex gap-2">
-        <button className="rounded border px-3 py-1 text-sm" onClick={handleSave} disabled={saving}>
+        <button
+          className="rounded border px-3 py-1 text-sm"
+          onClick={handleSave}
+          disabled={saving}
+        >
           {saving ? "Saving..." : "Save"}
         </button>
-        <button className="rounded border px-3 py-1 text-sm" onClick={handlePublish}>
+        <button
+          className="rounded border px-3 py-1 text-sm"
+          onClick={handlePublish}
+        >
           Publish
         </button>
       </div>
 
       <div className="pt-4">
-        <h2 className="text-sm font-semibold mb-2">Preview</h2>
+        <h2 className="mb-2 text-sm font-semibold">Preview</h2>
         <article className="prose dark:prose-invert max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{bodyMd}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeSanitize]}
+          >
+            {bodyMd}
+          </ReactMarkdown>
         </article>
       </div>
     </div>
   );
 }
 
-const EditAnnouncementPage = withRoleGuard(EditAnnouncementInner as unknown as React.FC, [ERoles.Admin]);
+const EditAnnouncementPage = withRoleGuard(
+  EditAnnouncementInner as unknown as React.FC,
+  [ERoles.Admin]
+);
 export default EditAnnouncementPage;
-
-

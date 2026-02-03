@@ -1,10 +1,31 @@
 "use client";
 
-import Papa from "papaparse";
 import { useEffect, useMemo, useState } from "react";
 
-import { DeleteOutlined, EditOutlined, EyeOutlined, ReloadOutlined, UploadOutlined } from "@ant-design/icons";
-import { Alert, Button, Col, Drawer, Form, Input, message, Popconfirm, Row, Space, Spin, Statistic, Table, Upload } from "antd";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  ReloadOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Col,
+  Drawer,
+  Form,
+  Input,
+  Popconfirm,
+  Row,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Upload,
+  message,
+} from "antd";
+import Papa from "papaparse";
 
 import { BankStatementExcelImporter } from "@/app/components/import-tools/bank-statement-xlsx-importer";
 import PageHeader from "@/app/components/page-header";
@@ -35,11 +56,16 @@ export default function TransactionHistoryImporter() {
   const [previewMode, setPreviewMode] = useState<boolean>(false);
   const [previewPageSize, setPreviewPageSize] = useState<number>(10);
   const [previewUuid, setPreviewUuid] = useState<string>("");
-  const [previewDateRange, setPreviewDateRange] = useState<{ start: string; end: string } | null>(null);
+  const [previewDateRange, setPreviewDateRange] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
   const [previewContentHash, setPreviewContentHash] = useState<string>("");
   const [duplicateExists, setDuplicateExists] = useState<boolean>(false);
   const [checkingDuplicate, setCheckingDuplicate] = useState<boolean>(false);
-  const [previewFilter, setPreviewFilter] = useState<"all" | "positive" | "negative">("all");
+  const [previewFilter, setPreviewFilter] = useState<
+    "all" | "positive" | "negative"
+  >("all");
   const [imports, setImports] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -51,7 +77,10 @@ export default function TransactionHistoryImporter() {
   const [drawerForm] = Form.useForm();
 
   const [rawTransactionVisible, setRawTransactionVisible] = useState(false);
-  const [rawTransaction, setRawTransaction] = useState<{ description: string, line: string }>();
+  const [rawTransaction, setRawTransaction] = useState<{
+    description: string;
+    line: string;
+  }>();
 
   const { user } = useAuth();
 
@@ -68,7 +97,10 @@ export default function TransactionHistoryImporter() {
   };
 
   const isNegativeAmount = (record: CsvTransaction): boolean => {
-    const rawAmt: any = (record as any).rawData?.amount ?? (record as any).rawData?.Amount ?? record.amount;
+    const rawAmt: any =
+      (record as any).rawData?.amount ??
+      (record as any).rawData?.Amount ??
+      record.amount;
     const amt = typeof rawAmt === "number" ? rawAmt : parseNumber(rawAmt);
     return !isNaN(amt) && amt < 0;
   };
@@ -152,22 +184,26 @@ export default function TransactionHistoryImporter() {
         setLoading(false);
 
         if (results.errors.length > 0) {
-          console.log("🚀 ~ handleCsvUpload ~ results.errors:", results.errors)
+          console.log("🚀 ~ handleCsvUpload ~ results.errors:", results.errors);
           setError("Error parsing CSV file. Please check the file format.");
           return;
         }
 
         // Find the header row that contains Date, Amount, Balance, Description
         const headerRowIndex = results.data.findIndex((row: any) => {
-          const rowString = row.join(',').toLowerCase();
-          return rowString.includes('date') &&
-            rowString.includes('amount') &&
-            rowString.includes('balance') &&
-            rowString.includes('description');
+          const rowString = row.join(",").toLowerCase();
+          return (
+            rowString.includes("date") &&
+            rowString.includes("amount") &&
+            rowString.includes("balance") &&
+            rowString.includes("description")
+          );
         });
 
         if (headerRowIndex === -1) {
-          setError("Could not find header row with Date, Amount, Balance, Description columns.");
+          setError(
+            "Could not find header row with Date, Amount, Balance, Description columns."
+          );
           return;
         }
 
@@ -177,15 +213,27 @@ export default function TransactionHistoryImporter() {
 
         // Create a mapping of column indices
         const columnMap = {
-          date: headerRow.findIndex((col: string) => col.toLowerCase().includes('date')),
-          amount: headerRow.findIndex((col: string) => col.toLowerCase().includes('amount')),
-          balance: headerRow.findIndex((col: string) => col.toLowerCase().includes('balance')),
-          description: headerRow.findIndex((col: string) => col.toLowerCase().includes('description'))
+          date: headerRow.findIndex((col: string) =>
+            col.toLowerCase().includes("date")
+          ),
+          amount: headerRow.findIndex((col: string) =>
+            col.toLowerCase().includes("amount")
+          ),
+          balance: headerRow.findIndex((col: string) =>
+            col.toLowerCase().includes("balance")
+          ),
+          description: headerRow.findIndex((col: string) =>
+            col.toLowerCase().includes("description")
+          ),
         };
 
         // Parse transactions from data rows
         const parsedTransactions: CsvTransaction[] = dataRows
-          .filter((row: any) => row.length > 0 && row.some((cell: any) => cell && cell.toString().trim() !== ''))
+          .filter(
+            (row: any) =>
+              row.length > 0 &&
+              row.some((cell: any) => cell && cell.toString().trim() !== "")
+          )
           .map((row: any, index: number) => ({
             key: `csv-${index}`,
             date: row[columnMap.date] || "",
@@ -195,18 +243,20 @@ export default function TransactionHistoryImporter() {
               date: row[columnMap.date],
               amount: row[columnMap.amount],
               balance: row[columnMap.balance],
-              description: row[columnMap.description]
-            }
+              description: row[columnMap.description],
+            },
           }));
 
         setCsvTransactions(parsedTransactions);
         setPreviewMode(true);
-        message.success(`Successfully parsed ${parsedTransactions.length} transactions`);
+        message.success(
+          `Successfully parsed ${parsedTransactions.length} transactions`
+        );
       },
       error: (error) => {
         setLoading(false);
         setError("Failed to parse CSV file: " + error.message);
-      }
+      },
     });
 
     return false; // Prevent default upload behavior
@@ -300,8 +350,10 @@ export default function TransactionHistoryImporter() {
 
       // Use preview metadata
       const uuid = previewUuid;
-      const firstDateStr = previewDateRange?.start || new Date().toISOString().slice(0, 10);
-      const lastDateStr = previewDateRange?.end || new Date().toISOString().slice(0, 10);
+      const firstDateStr =
+        previewDateRange?.start || new Date().toISOString().slice(0, 10);
+      const lastDateStr =
+        previewDateRange?.end || new Date().toISOString().slice(0, 10);
       const contentHash = previewContentHash;
 
       // Prepare the payload for the API
@@ -313,7 +365,7 @@ export default function TransactionHistoryImporter() {
           date: csvTx.date,
           description: csvTx.description,
           amount: csvTx.amount,
-          additionalInformation: "--"
+          additionalInformation: "--",
         })),
         importData: {
           uuid: uuid,
@@ -324,10 +376,10 @@ export default function TransactionHistoryImporter() {
           contentHash: contentHash,
           dateRange: {
             start: firstDateStr,
-            end: lastDateStr
+            end: lastDateStr,
           },
-          importType: "transaction-history-csv"
-        }
+          importType: "transaction-history-csv",
+        },
       };
 
       const response = await fetch("/api/transactions/eft", {
@@ -347,17 +399,21 @@ export default function TransactionHistoryImporter() {
       const result = await response.json();
 
       if (result.success) {
-        message.success(result.message || `Successfully imported ${csvTransactions.length} transactions`);
+        message.success(
+          result.message ||
+            `Successfully imported ${csvTransactions.length} transactions`
+        );
 
         // Clear the preview and show the imported transactions in the main table
-        const convertedTransactions: EditableTransaction[] = csvTransactions.map((csvTx, index) => ({
-          key: `imported-${index}`,
-          date: csvTx.date,
-          description: csvTx.description,
-          rawDescription: csvTx.description,
-          rawLine: JSON.stringify(csvTx.rawData),
-          amount: csvTx.amount
-        }));
+        const convertedTransactions: EditableTransaction[] =
+          csvTransactions.map((csvTx, index) => ({
+            key: `imported-${index}`,
+            date: csvTx.date,
+            description: csvTx.description,
+            rawDescription: csvTx.description,
+            rawLine: JSON.stringify(csvTx.rawData),
+            amount: csvTx.amount,
+          }));
 
         setTransactions(convertedTransactions);
         setCsvTransactions([]);
@@ -410,7 +466,7 @@ export default function TransactionHistoryImporter() {
             onClick={() => {
               setRawTransaction({
                 description: record.rawDescription,
-                line: record.rawLine
+                line: record.rawLine,
               });
               setRawTransactionVisible(true);
             }}
@@ -439,8 +495,10 @@ export default function TransactionHistoryImporter() {
           const x = String(s);
           if (x.includes("/")) {
             const p = x.split("/");
-            if (p[0]?.length === 4) return `${p[0]}-${p[1].padStart(2, "0")}-${p[2].padStart(2, "0")}`;
-            if (p[2]?.length === 4) return `${p[2]}-${p[1].padStart(2, "0")}-${p[0].padStart(2, "0")}`;
+            if (p[0]?.length === 4)
+              return `${p[0]}-${p[1].padStart(2, "0")}-${p[2].padStart(2, "0")}`;
+            if (p[2]?.length === 4)
+              return `${p[2]}-${p[1].padStart(2, "0")}-${p[0].padStart(2, "0")}`;
           }
           return x.replace(/\./g, "-");
         };
@@ -452,12 +510,14 @@ export default function TransactionHistoryImporter() {
     {
       title: "Description",
       dataIndex: "description",
-      sorter: (a: CsvTransaction, b: CsvTransaction) => a.description.localeCompare(b.description),
+      sorter: (a: CsvTransaction, b: CsvTransaction) =>
+        a.description.localeCompare(b.description),
     },
     {
       title: "Amount",
       dataIndex: "amount",
-      sorter: (a: CsvTransaction, b: CsvTransaction) => (a.amount || 0) - (b.amount || 0),
+      sorter: (a: CsvTransaction, b: CsvTransaction) =>
+        (a.amount || 0) - (b.amount || 0),
     },
     {
       title: "Actions",
@@ -477,9 +537,7 @@ export default function TransactionHistoryImporter() {
     if (user && user.role === "admin") {
       const actions: any[] = [];
       if (!transactions || transactions.length == 0) {
-        actions.push(
-          <BankStatementExcelImporter key="xlsx-importer" />
-        );
+        actions.push(<BankStatementExcelImporter key="xlsx-importer" />);
         actions.push(
           <Upload
             key="upload-csv-btn"
@@ -494,7 +552,16 @@ export default function TransactionHistoryImporter() {
         );
       }
       actions.push(
-        <Button key="refresh-btn" icon={<ReloadOutlined />} loading={refreshing} onClick={async () => { setRefreshing(true); await fetchImportHistory(); setRefreshing(false); }}>
+        <Button
+          key="refresh-btn"
+          icon={<ReloadOutlined />}
+          loading={refreshing}
+          onClick={async () => {
+            setRefreshing(true);
+            await fetchImportHistory();
+            setRefreshing(false);
+          }}
+        >
           Refresh
         </Button>
       );
@@ -528,34 +595,80 @@ export default function TransactionHistoryImporter() {
       {/* CSV Preview Section */}
       {previewMode && csvTransactions.length > 0 && (
         <div style={{ marginBottom: 24 }}>
-          <div className="flex justify-between items-center p-3 md:p-4 rounded-lg border bg-white text-slate-800 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
+          <div className="flex items-center justify-between rounded-lg border bg-white p-3 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 md:p-4">
             <div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">Preview Summary</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                Preview Summary
+              </div>
               <div className="mt-1.5 text-sm">
-                <span className="mr-4"><span className="font-semibold">Date range:</span> {previewDateRange?.start} → {previewDateRange?.end}</span>
-                <span className="mr-4"><span className="font-semibold">Showing:</span> {filteredCsvTransactions.length} of {csvTransactions.length}</span>
-                <span className="mr-4"><span className="font-semibold">UUID:</span> {previewUuid}</span>
+                <span className="mr-4">
+                  <span className="font-semibold">Date range:</span>{" "}
+                  {previewDateRange?.start} → {previewDateRange?.end}
+                </span>
+                <span className="mr-4">
+                  <span className="font-semibold">Showing:</span>{" "}
+                  {filteredCsvTransactions.length} of {csvTransactions.length}
+                </span>
+                <span className="mr-4">
+                  <span className="font-semibold">UUID:</span> {previewUuid}
+                </span>
                 <span>
                   <span className="font-semibold">Duplicate:</span>
-                  <span className={`ml-2 inline-flex items-center rounded px-2 py-0.5 text-xs font-medium border ${checkingDuplicate ? 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300' : duplicateExists ? 'border-red-300 text-red-700 dark:border-red-500 dark:text-red-400' : 'border-emerald-300 text-emerald-700 dark:border-emerald-500 dark:text-emerald-400'}`}>
-                    {checkingDuplicate ? 'Checking…' : duplicateExists ? 'Yes (already imported)' : 'No'}
+                  <span
+                    className={`ml-2 inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${checkingDuplicate ? "border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300" : duplicateExists ? "border-red-300 text-red-700 dark:border-red-500 dark:text-red-400" : "border-emerald-300 text-emerald-700 dark:border-emerald-500 dark:text-emerald-400"}`}
+                  >
+                    {checkingDuplicate
+                      ? "Checking…"
+                      : duplicateExists
+                        ? "Yes (already imported)"
+                        : "No"}
                   </span>
                 </span>
               </div>
             </div>
             <Space>
-              <div className="hidden md:flex items-center gap-1 mr-2">
-                <Button size="small" type={previewFilter === "all" ? "primary" : "default"} onClick={() => setPreviewFilter("all")}>All</Button>
-                <Button size="small" type={previewFilter === "positive" ? "primary" : "default"} onClick={() => setPreviewFilter("positive")}>Positive</Button>
-                <Button size="small" type={previewFilter === "negative" ? "primary" : "default"} onClick={() => setPreviewFilter("negative")}>Negative</Button>
+              <div className="mr-2 hidden items-center gap-1 md:flex">
+                <Button
+                  size="small"
+                  type={previewFilter === "all" ? "primary" : "default"}
+                  onClick={() => setPreviewFilter("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  size="small"
+                  type={previewFilter === "positive" ? "primary" : "default"}
+                  onClick={() => setPreviewFilter("positive")}
+                >
+                  Positive
+                </Button>
+                <Button
+                  size="small"
+                  type={previewFilter === "negative" ? "primary" : "default"}
+                  onClick={() => setPreviewFilter("negative")}
+                >
+                  Negative
+                </Button>
               </div>
               <Button size="small" onClick={handleCancelPreview}>
                 Cancel
               </Button>
-              <Button size="small" onClick={() => setCsvTransactions(prev => prev.filter(tx => !isNegativeAmount(tx)))}>
+              <Button
+                size="small"
+                onClick={() =>
+                  setCsvTransactions((prev) =>
+                    prev.filter((tx) => !isNegativeAmount(tx))
+                  )
+                }
+              >
                 Remove Negative Amounts
               </Button>
-              <Button size="small" type="primary" onClick={handleImportCsvTransactions} disabled={duplicateExists}>
+              <Button
+                size="small"
+                type="primary"
+                onClick={handleImportCsvTransactions}
+                disabled={duplicateExists}
+              >
                 {duplicateExists ? "Already Imported" : "Import All"}
               </Button>
             </Space>
@@ -563,7 +676,9 @@ export default function TransactionHistoryImporter() {
           <Table
             dataSource={filteredCsvTransactions}
             columns={csvPreviewColumns}
-            rowClassName={(record: any) => (isNegativeAmount(record) ? 'bg-red-50 dark:bg-red-900/20' : '')}
+            rowClassName={(record: any) =>
+              isNegativeAmount(record) ? "bg-red-50 dark:bg-red-900/20" : ""
+            }
             pagination={{
               pageSize: previewPageSize,
               showSizeChanger: true,
@@ -583,12 +698,23 @@ export default function TransactionHistoryImporter() {
       {!previewMode && (
         <div>
           <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={12} style={{ display: "flex", justifyContent: "flex-start" }}>
+            <Col
+              span={12}
+              style={{ display: "flex", justifyContent: "flex-start" }}
+            >
               <Space size={32}>
-                <Statistic title="Total Imports" value={imports.length} loading={historyLoading} />
+                <Statistic
+                  title="Total Imports"
+                  value={imports.length}
+                  loading={historyLoading}
+                />
                 <Statistic
                   title="Total Imported Transactions"
-                  value={imports.reduce((sum, it: any) => sum + (Number(it.numberOfTransactions) || 0), 0)}
+                  value={imports.reduce(
+                    (sum, it: any) =>
+                      sum + (Number(it.numberOfTransactions) || 0),
+                    0
+                  )}
                   loading={historyLoading}
                 />
               </Space>
@@ -625,30 +751,39 @@ export default function TransactionHistoryImporter() {
                       onConfirm={async () => {
                         try {
                           setRefreshing(true);
-                          const resp = await fetch('/api/transactions/eft/reverse', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ uuid: rec.uuid })
-                          });
+                          const resp = await fetch(
+                            "/api/transactions/eft/reverse",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ uuid: rec.uuid }),
+                            }
+                          );
                           const result = await resp.json();
                           if (!resp.ok || !result.success) {
-                            message.error(result.message || 'Failed to reverse import');
+                            message.error(
+                              result.message || "Failed to reverse import"
+                            );
                           } else {
-                            message.success(result.message || 'Import reversed');
+                            message.success(
+                              result.message || "Import reversed"
+                            );
                             await fetchImportHistory();
                           }
                         } catch (_e) {
-                          message.error('Failed to reverse import');
+                          message.error("Failed to reverse import");
                         } finally {
                           setRefreshing(false);
                         }
                       }}
                     >
-                      <Button danger size="small">Reverse</Button>
+                      <Button danger size="small">
+                        Reverse
+                      </Button>
                     </Popconfirm>
                   </Space>
-                )
-              }
+                ),
+              },
             ]}
           />
         </div>
@@ -728,9 +863,7 @@ export default function TransactionHistoryImporter() {
         footer={null}
       >
         <p style={{ fontWeight: "bold" }}>Raw Description:</p>
-        <p style={{ whiteSpace: "pre-wrap" }}>
-          {rawTransaction?.description}
-        </p>
+        <p style={{ whiteSpace: "pre-wrap" }}>{rawTransaction?.description}</p>
 
         <p style={{ fontWeight: "bold", marginTop: 16 }}>Raw Line:</p>
         <p style={{ whiteSpace: "pre-wrap" }}>{rawTransaction?.line}</p>

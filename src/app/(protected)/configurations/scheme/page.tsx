@@ -1,11 +1,14 @@
 "use client";
 
-import { Button, Card, Col, Row, Typography } from "antd";
-import { ArrowLeft, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import PageHeader from "@/app/components/page-header";
+import { Button, Card, Col, Row, Typography } from "antd";
+import { ArrowLeft, Clock } from "lucide-react";
+
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
+import PageHeader from "@/app/components/page-header";
+
 import { ERoles } from "../../../../types/roles.enum";
 
 const { Title, Paragraph, Text } = Typography;
@@ -25,7 +28,7 @@ const SchemeConfigurationsPage = () => {
             onClick={() => router.back()}
           >
             Go Back
-          </Button>
+          </Button>,
         ]}
       />
 
@@ -35,16 +38,16 @@ const SchemeConfigurationsPage = () => {
             <Card className="text-center">
               <div className="py-12">
                 <div className="mb-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                  <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                     <Clock size={32} className="text-green-600" />
                   </div>
                   <Title level={3} className="mb-4 dark:text-white">
                     Coming Soon
                   </Title>
-                  <Paragraph className="text-md dark:text-gray-400 mb-6">
-                    Scheme configurations management is currently under development.
-                    This feature will allow you to manage insurance schemes,
-                    policies, and benefit configurations.
+                  <Paragraph className="text-md mb-6 dark:text-gray-400">
+                    Scheme configurations management is currently under
+                    development. This feature will allow you to manage insurance
+                    schemes, policies, and benefit configurations.
                   </Paragraph>
                 </div>
 

@@ -15,15 +15,16 @@ import {
   NavbarContent,
   NavbarItem,
   NavbarMenu,
-  NavbarMenuToggle
+  NavbarMenuToggle,
 } from "@nextui-org/react";
+
+import Presence from "@/components/presence";
 
 import { logout } from "@/utils/auth";
 
+import { NotificationBell } from "@/app/components/notifications/notification-bell";
 import { useAuth } from "@/context/auth-context";
 
-import { NotificationBell } from "@/app/components/notifications/notification-bell";
-import Presence from "@/components/presence";
 import SideNavBar from "./side-navbar";
 import { TaskBell } from "./tasks/task-bell";
 import { ThemeSwitcher } from "./theme-switcher";
@@ -96,8 +97,12 @@ export default function AppBarOnline() {
                 className="h-14 gap-2 rounded-b-none border-b hover:bg-white"
               >
                 <p className="font-semibold">{user?.name ?? "Unknown User"}</p>
-                <p className="text-xs text-gray-500">{user?.email ?? "Unknown Email"}</p>
-                <p className="text-[12px] pb-2 text-gray-500">{user?.phone ?? "Unknown Phone"}</p>
+                <p className="text-xs text-gray-500">
+                  {user?.email ?? "Unknown Email"}
+                </p>
+                <p className="pb-2 text-[12px] text-gray-500">
+                  {user?.phone ?? "Unknown Phone"}
+                </p>
 
                 {/* <Tag color="orange" className="text-xs italic">
                   {user?.role?.toUpperCase() ?? "No Role"}

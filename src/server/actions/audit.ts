@@ -1,6 +1,9 @@
 "use server";
 
-import { AuditLogModel, IAuditActor } from "@/app/models/system/audit-log.schema";
+import {
+  AuditLogModel,
+  IAuditActor,
+} from "@/app/models/system/audit-log.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export type CreateAuditParams = {
@@ -27,5 +30,3 @@ export async function createAuditLog(entry: CreateAuditParams) {
     return { success: false, message: "Failed to write audit log" } as const;
   }
 }
-
-

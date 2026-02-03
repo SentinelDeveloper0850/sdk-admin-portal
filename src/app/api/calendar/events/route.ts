@@ -1,18 +1,26 @@
 // /api/calendar/events/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
 import { CalendarEventModel } from "@/app/models/calendar-event.schema";
 import { StaffMemberModel } from "@/app/models/staff-member.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
 
 export type CalendarEventType = "company" | "branch" | "personal";
-export const calendarEventTypes: CalendarEventType[] = ["company", "branch", "personal"];
+export const calendarEventTypes: CalendarEventType[] = [
+  "company",
+  "branch",
+  "personal",
+];
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -21,23 +29,34 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate");
 
     if (!type || !calendarEventTypes.includes(type)) {
-      return NextResponse.json({ success: false, message: "Invalid type" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid type" },
+        { status: 400 }
+      );
     }
 
     const filter: Record<string, any> = {};
     const sort: Record<string, any> = { startDateTime: 1 };
 
     if (startDate && endDate) {
-      filter.startDateTime = { $gte: new Date(startDate), $lte: new Date(endDate) };
+      filter.startDateTime = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
     }
 
     await connectToDatabase();
 
     switch (type) {
       case "branch": {
-        const staffMember = await StaffMemberModel.findOne({ userId: user._id });
+        const staffMember = await StaffMemberModel.findOne({
+          userId: user._id,
+        });
         if (!staffMember) {
-          return NextResponse.json({ success: false, message: "Staff member not found" }, { status: 404 });
+          return NextResponse.json(
+            { success: false, message: "Staff member not found" },
+            { status: 404 }
+          );
         }
         filter.branchId = staffMember.branchId;
         break;
@@ -53,10 +72,16 @@ export async function GET(request: NextRequest) {
     }
 
     const events = await CalendarEventModel.find(filter).sort(sort);
-    return NextResponse.json({ success: true, message: "Events fetched successfully", events }, { status: 200 });
+    return NextResponse.json(
+      { success: true, message: "Events fetched successfully", events },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching events:", error);
-    return NextResponse.json({ success: false, message: "Failed to fetch events" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch events" },
+      { status: 500 }
+    );
   }
 }
 
@@ -64,16 +89,25 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
     await connectToDatabase();
 
     const response = await CalendarEventModel.create(body);
-    return NextResponse.json({ success: true, message: "Event added successfully", event: response }, { status: 201 });
+    return NextResponse.json(
+      { success: true, message: "Event added successfully", event: response },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error adding event:", error);
-    return NextResponse.json({ success: false, message: "Failed to add event" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to add event" },
+      { status: 500 }
+    );
   }
 }

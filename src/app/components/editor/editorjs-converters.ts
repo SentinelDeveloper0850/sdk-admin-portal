@@ -23,10 +23,14 @@ function blockTextToMarkdown(block: OutputBlockData): string {
     }
     case "list": {
       const style = String((block.data as any)?.style ?? "unordered");
-      const items = Array.isArray((block.data as any)?.items) ? (block.data as any).items : [];
+      const items = Array.isArray((block.data as any)?.items)
+        ? (block.data as any).items
+        : [];
       if (!items.length) return "";
       if (style === "ordered") {
-        return items.map((it: any, idx: number) => `${idx + 1}. ${String(it).trim()}`).join("\n");
+        return items
+          .map((it: any, idx: number) => `${idx + 1}. ${String(it).trim()}`)
+          .join("\n");
       }
       return items.map((it: any) => `- ${String(it).trim()}`).join("\n");
     }
@@ -53,7 +57,9 @@ function blockTextToMarkdown(block: OutputBlockData): string {
   }
 }
 
-export function editorJsToMarkdown(data: OutputData | null | undefined): string {
+export function editorJsToMarkdown(
+  data: OutputData | null | undefined
+): string {
   if (!data?.blocks?.length) return "";
   const md = data.blocks
     .map((b) => blockTextToMarkdown(b))
@@ -61,4 +67,3 @@ export function editorJsToMarkdown(data: OutputData | null | undefined): string 
     .join("\n\n");
   return md;
 }
-

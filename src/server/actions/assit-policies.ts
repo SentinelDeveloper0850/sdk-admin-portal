@@ -1,6 +1,9 @@
 "use server";
 
-import { AssitPolicyModel, IAssitPolicy } from "@/app/models/scheme/assit-policy.schema";
+import {
+  AssitPolicyModel,
+  IAssitPolicy,
+} from "@/app/models/scheme/assit-policy.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
 
@@ -14,7 +17,7 @@ export interface IAssitMembersReportItem {
   PayAtNo: string; // eg: 11536102031 🗺️ Maps to payAtNumber
   TotalPremium: string; // eg: R300,00 🗺️ Maps to totalPremiumString
   WPeriod: number; // eg: 6 🗺️ Maps to waitingPeriod
-  Category: string; // eg: Family 18-74 🗺️ Maps to category 
+  Category: string; // eg: Family 18-74 🗺️ Maps to category
 }
 
 export const fetchAllPolicies = async (
@@ -70,7 +73,7 @@ export const fetchAllPolicies = async (
           page,
           limit,
           totalPages: Math.ceil(numberOfPolicies / limit),
-        }
+        },
       },
     };
   } catch (error: any) {
@@ -161,7 +164,9 @@ export const deletePolicyById = async (policyId: string) => {
   }
 };
 
-export const importPolicies = async (assitRecords: IAssitMembersReportItem[]) => {
+export const importPolicies = async (
+  assitRecords: IAssitMembersReportItem[]
+) => {
   if (!assitRecords || assitRecords.length < 1) {
     return {
       success: false,
@@ -176,36 +181,48 @@ export const importPolicies = async (assitRecords: IAssitMembersReportItem[]) =>
     const existingPolicies = await AssitPolicyModel.find({
       membershipID: { $in: memberIds },
     });
-    const existingMemberIds = existingPolicies.map((policy) => policy.membershipID);
+    const existingMemberIds = existingPolicies.map(
+      (policy) => policy.membershipID
+    );
 
-    const skippedRecords = assitRecords.filter((record) => existingMemberIds.includes(record.MembershipID));
-    const recordsToImport = assitRecords.filter((record) => !existingMemberIds.includes(record.MembershipID)).map((record) => {
-      // Convert TotalPremium to number with 2 decimal places (from R3,000,00 to 3000.00)
-      const totalPremium = Number(record.TotalPremium.replace("R", "").replace(/,/g, ".").replaceAll(",", "").replace(" ", "")).toFixed(2);
-      // Convert WPeriod to number
-      const waitingPeriod = Number(record.WPeriod);
-      // Convert EntDate to Date
-      const entryDate = new Date(record.EntDate);
-      // Convert CovDate to Date
-      const coverDate = new Date(record.CovDate);
-      return {
-        ...record,
-        membershipID: record.MembershipID,
-        lastName: record.LastName,
-        initials: record.Initials,
-        dateOfBirth: record.DOB,
-        entryDate: entryDate,
-        coverDate: coverDate,
-        payAtNumber: record.PayAtNo,
-        totalPremiumString: record.TotalPremium,
-        totalPremium: totalPremium,
-        waitingPeriod: waitingPeriod,
-        category: record.Category,
-      };
-    });
+    const skippedRecords = assitRecords.filter((record) =>
+      existingMemberIds.includes(record.MembershipID)
+    );
+    const recordsToImport = assitRecords
+      .filter((record) => !existingMemberIds.includes(record.MembershipID))
+      .map((record) => {
+        // Convert TotalPremium to number with 2 decimal places (from R3,000,00 to 3000.00)
+        const totalPremium = Number(
+          record.TotalPremium.replace("R", "")
+            .replace(/,/g, ".")
+            .replaceAll(",", "")
+            .replace(" ", "")
+        ).toFixed(2);
+        // Convert WPeriod to number
+        const waitingPeriod = Number(record.WPeriod);
+        // Convert EntDate to Date
+        const entryDate = new Date(record.EntDate);
+        // Convert CovDate to Date
+        const coverDate = new Date(record.CovDate);
+        return {
+          ...record,
+          membershipID: record.MembershipID,
+          lastName: record.LastName,
+          initials: record.Initials,
+          dateOfBirth: record.DOB,
+          entryDate: entryDate,
+          coverDate: coverDate,
+          payAtNumber: record.PayAtNo,
+          totalPremiumString: record.TotalPremium,
+          totalPremium: totalPremium,
+          waitingPeriod: waitingPeriod,
+          category: record.Category,
+        };
+      });
 
     // Import the records that are not already in the database in a batch, return imported records
-    const importedPolicies: IAssitPolicy[] = await AssitPolicyModel.insertMany(recordsToImport);
+    const importedPolicies: IAssitPolicy[] =
+      await AssitPolicyModel.insertMany(recordsToImport);
 
     return {
       success: true,
@@ -236,7 +253,8 @@ export const linkPolicy = async (payload: any) => {
     if (!assitPolicy || !easipolPolicy) {
       return {
         success: false,
-        message: "ASSIT policy or Easipol policy not found ~ Error linking Easipol policy to ASSIT policy",
+        message:
+          "ASSIT policy or Easipol policy not found ~ Error linking Easipol policy to ASSIT policy",
       };
     }
 
@@ -252,10 +270,14 @@ export const linkPolicy = async (payload: any) => {
       data: assitPolicy,
     };
   } catch (error: any) {
-    console.error("Error linking Easipol policy to ASSIT policy:", error.message);
+    console.error(
+      "Error linking Easipol policy to ASSIT policy:",
+      error.message
+    );
     return {
       success: false,
-      message: "Internal Server Error ~ Error linking Easipol policy to ASSIT policy",
+      message:
+        "Internal Server Error ~ Error linking Easipol policy to ASSIT policy",
     };
   }
 };

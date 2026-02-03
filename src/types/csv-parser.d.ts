@@ -1,5 +1,5 @@
-declare module 'csv-parser' {
-  import { Transform } from 'stream';
+declare module "csv-parser" {
+  import { Transform } from "stream";
   interface Options {
     separator?: string;
     newline?: string;

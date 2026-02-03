@@ -1,14 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
+import { ReloadOutlined } from "@ant-design/icons";
 import { Avatar, Badge, Card } from "@nextui-org/react";
+import { Button } from "antd";
 import {
   AlertCircle,
   Banknote,
   CheckCircle,
   ChurchIcon,
   FileText,
+  FileWarning,
   HandCoins,
   PenBox,
   RefreshCw,
@@ -16,15 +20,11 @@ import {
   ShieldCheck,
   Users,
   XCircle,
-  FileWarning
 } from "lucide-react";
 
 import PageHeader from "@/app/components/page-header";
 import { CardContent } from "@/app/components/ui/card";
 import { useToast } from "@/app/hooks/use-toast";
-import Link from "next/link";
-import { Button } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
 
 interface DashboardStats {
   userCount: number;
@@ -122,7 +122,9 @@ const formatNumber = (num: number) =>
 
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -148,67 +150,87 @@ const DashboardPage: React.FC = () => {
 
   const cardStats = stats
     ? [
-      {
-        label: "EFT Transactions",
-        value: stats.eftTransactionCount,
-        icon: <Banknote className="h-5 w-5" />,
-        link: "/transactions/eft",
-      },
-      {
-        label: "EasyPay Transactions",
-        value: stats.easypayTransactionCount,
-        icon: <Banknote className="h-5 w-5" />,
-        link: "/transactions/easypay",
-      },
-      {
-        label: "Prepaid Societies (Easipol)",
-        value: stats.prepaidSocietyCount,
-        icon: <ChurchIcon className="h-5 w-5" />,
-        link: "/societies/prepaid",
-      },
-      {
-        label: "Policies (Easipol)",
-        value: stats.policyCount,
-        icon: <ShieldCheck className="h-5 w-5" />,
-        link: "/policies/view",
-      },
-      {
-        label: "Registered Users",
-        value: stats.userCount,
-        icon: <Users className="h-5 w-5" />,
-        link: "/users",
-      },
-      {
-        label: "EFT Allocation Requests",
-        value: stats.pendingItems.eftAllocationRequests,
-        icon: stats.pendingItems.eftAllocationRequests > 0 ? <FileWarning className="h-5 w-5 text-red-500" /> : <HandCoins className="h-5 w-5" />,
-        link: "/transactions/eft/allocation-requests",
-      },
-      {
-        label: "EasyPay Allocation Requests",
-        value: stats.pendingItems.easypayAllocationRequests,
-        icon: stats.pendingItems.easypayAllocationRequests > 0 ? <FileWarning className="h-5 w-5 text-red-500" /> : <HandCoins className="h-5 w-5" />,
-        link: "/transactions/easypay/allocation-requests",
-      },
-      {
-        label: "Scheme Societies",
-        value: stats.schemeSocietyCount,
-        icon: <ChurchIcon className="h-5 w-5" />,
-        link: "/societies/scheme",
-      },
-      {
-        label: "Signup Requests",
-        value: stats.pendingItems.signupRequests,
-        icon: stats.pendingItems.signupRequests > 0 ? <FileWarning className="h-5 w-5 text-red-500" /> : <PenBox className="h-5 w-5" />,
-        link: "/policies/signup-requests",
-      },
-      {
-        label: "Cancellation Requests",
-        value: stats.pendingItems.cancellationRequests,
-        icon: stats.pendingItems.cancellationRequests > 0 ? <FileWarning className="h-5 w-5 text-red-500" /> : <FileText className="h-5 w-5" />,
-        link: "/policies/cancellation-requests",
-      },
-    ]
+        {
+          label: "EFT Transactions",
+          value: stats.eftTransactionCount,
+          icon: <Banknote className="h-5 w-5" />,
+          link: "/transactions/eft",
+        },
+        {
+          label: "EasyPay Transactions",
+          value: stats.easypayTransactionCount,
+          icon: <Banknote className="h-5 w-5" />,
+          link: "/transactions/easypay",
+        },
+        {
+          label: "Prepaid Societies (Easipol)",
+          value: stats.prepaidSocietyCount,
+          icon: <ChurchIcon className="h-5 w-5" />,
+          link: "/societies/prepaid",
+        },
+        {
+          label: "Policies (Easipol)",
+          value: stats.policyCount,
+          icon: <ShieldCheck className="h-5 w-5" />,
+          link: "/policies/view",
+        },
+        {
+          label: "Registered Users",
+          value: stats.userCount,
+          icon: <Users className="h-5 w-5" />,
+          link: "/users",
+        },
+        {
+          label: "EFT Allocation Requests",
+          value: stats.pendingItems.eftAllocationRequests,
+          icon:
+            stats.pendingItems.eftAllocationRequests > 0 ? (
+              <FileWarning className="h-5 w-5 text-red-500" />
+            ) : (
+              <HandCoins className="h-5 w-5" />
+            ),
+          link: "/transactions/eft/allocation-requests",
+        },
+        {
+          label: "EasyPay Allocation Requests",
+          value: stats.pendingItems.easypayAllocationRequests,
+          icon:
+            stats.pendingItems.easypayAllocationRequests > 0 ? (
+              <FileWarning className="h-5 w-5 text-red-500" />
+            ) : (
+              <HandCoins className="h-5 w-5" />
+            ),
+          link: "/transactions/easypay/allocation-requests",
+        },
+        {
+          label: "Scheme Societies",
+          value: stats.schemeSocietyCount,
+          icon: <ChurchIcon className="h-5 w-5" />,
+          link: "/societies/scheme",
+        },
+        {
+          label: "Signup Requests",
+          value: stats.pendingItems.signupRequests,
+          icon:
+            stats.pendingItems.signupRequests > 0 ? (
+              <FileWarning className="h-5 w-5 text-red-500" />
+            ) : (
+              <PenBox className="h-5 w-5" />
+            ),
+          link: "/policies/signup-requests",
+        },
+        {
+          label: "Cancellation Requests",
+          value: stats.pendingItems.cancellationRequests,
+          icon:
+            stats.pendingItems.cancellationRequests > 0 ? (
+              <FileWarning className="h-5 w-5 text-red-500" />
+            ) : (
+              <FileText className="h-5 w-5" />
+            ),
+          link: "/policies/cancellation-requests",
+        },
+      ]
     : [];
 
   return (
@@ -224,7 +246,7 @@ const DashboardPage: React.FC = () => {
             icon={<ReloadOutlined />}
           >
             Refresh
-          </Button>
+          </Button>,
         ]}
       />
 
@@ -257,9 +279,11 @@ const DashboardPage: React.FC = () => {
               <h2 className="text-lg font-semibold text-foreground">
                 Daily Activity Compliance
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Based on yesterday's reports (cutoff: 18:00 daily) • Excludes admins and inactive users
-                {dashboardData.dailyActivityCompliance.expectedSource === "duty_roster"
+              <p className="text-muted-foreground mt-1 text-sm">
+                Based on yesterday's reports (cutoff: 18:00 daily) • Excludes
+                admins and inactive users
+                {dashboardData.dailyActivityCompliance.expectedSource ===
+                "duty_roster"
                   ? " • Expected users from Duty Roster"
                   : " • Expected users: all active users (no roster)"}
               </p>
@@ -270,7 +294,7 @@ const DashboardPage: React.FC = () => {
                 color="success"
                 className="text-white"
               >
-                <div className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900 rounded-full">
+                <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 dark:bg-green-900">
                   <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                   <span className="text-sm font-medium text-green-700 dark:text-green-300">
                     Compliant
@@ -278,11 +302,13 @@ const DashboardPage: React.FC = () => {
                 </div>
               </Badge>
               <Badge
-                content={dashboardData.dailyActivityCompliance.nonCompliantCount}
+                content={
+                  dashboardData.dailyActivityCompliance.nonCompliantCount
+                }
                 color="danger"
                 className="text-white"
               >
-                <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900 rounded-full">
+                <div className="flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 dark:bg-red-900">
                   <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   <span className="text-sm font-medium text-red-700 dark:text-red-300">
                     Non-Compliant
@@ -304,67 +330,85 @@ const DashboardPage: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-foreground">
-                    {dashboardData.dailyActivityCompliance.complianceRate.toFixed(1)}%
+                    {dashboardData.dailyActivityCompliance.complianceRate.toFixed(
+                      1
+                    )}
+                    %
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {dashboardData.dailyActivityCompliance.compliantCount} of {dashboardData.dailyActivityCompliance.totalUsers} users
+                  <p className="text-muted-foreground text-sm">
+                    {dashboardData.dailyActivityCompliance.compliantCount} of{" "}
+                    {dashboardData.dailyActivityCompliance.totalUsers} users
                   </p>
                 </div>
               </div>
-              <div className="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="mt-4 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
                 <div
-                  className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${dashboardData.dailyActivityCompliance.complianceRate}%` }}
+                  className="h-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-300"
+                  style={{
+                    width: `${dashboardData.dailyActivityCompliance.complianceRate}%`,
+                  }}
                 ></div>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground">
-                Checking compliance for: {new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString()} (cutoff: 18:00) •
-                Last updated: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+              <div className="text-muted-foreground mt-2 text-xs">
+                Checking compliance for:{" "}
+                {new Date(
+                  Date.now() - 24 * 60 * 60 * 1000
+                ).toLocaleDateString()}{" "}
+                (cutoff: 18:00) • Last updated:{" "}
+                {new Date().toLocaleDateString()} at{" "}
+                {new Date().toLocaleTimeString()}
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Compliant Users */}
             <Card className="bg-muted border-border border dark:border-[#333]">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="mb-4 flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                   <h3 className="text-md font-semibold text-foreground">
-                    Compliant Users ({dashboardData.dailyActivityCompliance.compliantCount})
+                    Compliant Users (
+                    {dashboardData.dailyActivityCompliance.compliantCount})
                   </h3>
                 </div>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {dashboardData.dailyActivityCompliance.compliantUsers.length > 0 ? (
-                    dashboardData.dailyActivityCompliance.compliantUsers.map((user) => (
-                      <div key={user._id} className="flex items-center gap-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                        <Avatar
-                          src={user.avatarUrl || ""}
-                          size="sm"
-                          name={user.name}
-                          className="flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                        <Badge
-                          size="sm"
-                          color="success"
-                          variant="flat"
-                          className="flex-shrink-0"
+                <div className="max-h-64 space-y-3 overflow-y-auto">
+                  {dashboardData.dailyActivityCompliance.compliantUsers.length >
+                  0 ? (
+                    dashboardData.dailyActivityCompliance.compliantUsers.map(
+                      (user) => (
+                        <div
+                          key={user._id}
+                          className="flex items-center gap-3 rounded-lg bg-green-50 p-2 dark:bg-green-900/20"
                         >
-                          {user.status}
-                        </Badge>
-                      </div>
-                    ))
+                          <Avatar
+                            src={user.avatarUrl || ""}
+                            size="sm"
+                            name={user.name}
+                            className="flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {user.name}
+                            </p>
+                            <p className="text-muted-foreground truncate text-xs">
+                              {user.email}
+                            </p>
+                          </div>
+                          <Badge
+                            size="sm"
+                            color="success"
+                            variant="flat"
+                            className="flex-shrink-0"
+                          >
+                            {user.status}
+                          </Badge>
+                        </div>
+                      )
+                    )
                   ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                    <div className="text-muted-foreground py-4 text-center">
+                      <CheckCircle className="mx-auto mb-2 h-8 w-8 text-green-500" />
                       <p>No compliant users yet</p>
                     </div>
                   )}
@@ -375,43 +419,50 @@ const DashboardPage: React.FC = () => {
             {/* Non-Compliant Users */}
             <Card className="bg-muted border-border border dark:border-[#333]">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="mb-4 flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                   <h3 className="text-md font-semibold text-foreground">
-                    Non-Compliant Users ({dashboardData.dailyActivityCompliance.nonCompliantCount})
+                    Non-Compliant Users (
+                    {dashboardData.dailyActivityCompliance.nonCompliantCount})
                   </h3>
                 </div>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {dashboardData.dailyActivityCompliance.nonCompliantUsers.length > 0 ? (
-                    dashboardData.dailyActivityCompliance.nonCompliantUsers.map((user) => (
-                      <div key={user._id} className="flex items-center gap-3 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                        <Avatar
-                          src={user.avatarUrl || ""}
-                          size="sm"
-                          name={user.name}
-                          className="flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                        <Badge
-                          size="sm"
-                          color="danger"
-                          variant="flat"
-                          className="flex-shrink-0"
+                <div className="max-h-64 space-y-3 overflow-y-auto">
+                  {dashboardData.dailyActivityCompliance.nonCompliantUsers
+                    .length > 0 ? (
+                    dashboardData.dailyActivityCompliance.nonCompliantUsers.map(
+                      (user) => (
+                        <div
+                          key={user._id}
+                          className="flex items-center gap-3 rounded-lg bg-red-50 p-2 dark:bg-red-900/20"
                         >
-                          {user.status}
-                        </Badge>
-                      </div>
-                    ))
+                          <Avatar
+                            src={user.avatarUrl || ""}
+                            size="sm"
+                            name={user.name}
+                            className="flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {user.name}
+                            </p>
+                            <p className="text-muted-foreground truncate text-xs">
+                              {user.email}
+                            </p>
+                          </div>
+                          <Badge
+                            size="sm"
+                            color="danger"
+                            variant="flat"
+                            className="flex-shrink-0"
+                          >
+                            {user.status}
+                          </Badge>
+                        </div>
+                      )
+                    )
                   ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                    <div className="text-muted-foreground py-4 text-center">
+                      <CheckCircle className="mx-auto mb-2 h-8 w-8 text-green-500" />
                       <p>All users are compliant!</p>
                     </div>
                   )}
@@ -430,20 +481,24 @@ const DashboardPage: React.FC = () => {
               <h2 className="text-lg font-semibold text-foreground">
                 Cashup Submission Compliance
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Based on yesterday's cashups (cutoff: 20:00 daily) • Cashiers only • Excludes admins and inactive users
-                {dashboardData.cashUpSubmissionCompliance.expectedSource === "duty_roster"
+              <p className="text-muted-foreground mt-1 text-sm">
+                Based on yesterday's cashups (cutoff: 20:00 daily) • Cashiers
+                only • Excludes admins and inactive users
+                {dashboardData.cashUpSubmissionCompliance.expectedSource ===
+                "duty_roster"
                   ? " • Expected users from Duty Roster"
                   : " • Expected users: all active users (no roster)"}
               </p>
             </div>
             <div className="flex items-center gap-4">
               <Badge
-                content={dashboardData.cashUpSubmissionCompliance.compliantCount}
+                content={
+                  dashboardData.cashUpSubmissionCompliance.compliantCount
+                }
                 color="success"
                 className="text-white"
               >
-                <div className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900 rounded-full">
+                <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 dark:bg-green-900">
                   <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                   <span className="text-sm font-medium text-green-700 dark:text-green-300">
                     Compliant
@@ -451,11 +506,13 @@ const DashboardPage: React.FC = () => {
                 </div>
               </Badge>
               <Badge
-                content={dashboardData.cashUpSubmissionCompliance.nonCompliantCount}
+                content={
+                  dashboardData.cashUpSubmissionCompliance.nonCompliantCount
+                }
                 color="danger"
                 className="text-white"
               >
-                <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900 rounded-full">
+                <div className="flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 dark:bg-red-900">
                   <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   <span className="text-sm font-medium text-red-700 dark:text-red-300">
                     Non-Compliant
@@ -477,67 +534,85 @@ const DashboardPage: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-foreground">
-                    {dashboardData.cashUpSubmissionCompliance.complianceRate.toFixed(1)}%
+                    {dashboardData.cashUpSubmissionCompliance.complianceRate.toFixed(
+                      1
+                    )}
+                    %
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {dashboardData.cashUpSubmissionCompliance.compliantCount} of {dashboardData.cashUpSubmissionCompliance.totalUsers} users
+                  <p className="text-muted-foreground text-sm">
+                    {dashboardData.cashUpSubmissionCompliance.compliantCount} of{" "}
+                    {dashboardData.cashUpSubmissionCompliance.totalUsers} users
                   </p>
                 </div>
               </div>
-              <div className="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="mt-4 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
                 <div
-                  className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${dashboardData.cashUpSubmissionCompliance.complianceRate}%` }}
+                  className="h-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-300"
+                  style={{
+                    width: `${dashboardData.cashUpSubmissionCompliance.complianceRate}%`,
+                  }}
                 ></div>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground">
-                Checking compliance for: {new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString()} (cutoff: 20:00) •
-                Last updated: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+              <div className="text-muted-foreground mt-2 text-xs">
+                Checking compliance for:{" "}
+                {new Date(
+                  Date.now() - 24 * 60 * 60 * 1000
+                ).toLocaleDateString()}{" "}
+                (cutoff: 20:00) • Last updated:{" "}
+                {new Date().toLocaleDateString()} at{" "}
+                {new Date().toLocaleTimeString()}
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Compliant Users */}
             <Card className="bg-muted border-border border dark:border-[#333]">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="mb-4 flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                   <h3 className="text-md font-semibold text-foreground">
-                    Compliant Users ({dashboardData.cashUpSubmissionCompliance.compliantCount})
+                    Compliant Users (
+                    {dashboardData.cashUpSubmissionCompliance.compliantCount})
                   </h3>
                 </div>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {dashboardData.cashUpSubmissionCompliance.compliantUsers.length > 0 ? (
-                    dashboardData.cashUpSubmissionCompliance.compliantUsers.map((user) => (
-                      <div key={user._id} className="flex items-center gap-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                        <Avatar
-                          src={user.avatarUrl || ""}
-                          size="sm"
-                          name={user.name}
-                          className="flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                        <Badge
-                          size="sm"
-                          color="success"
-                          variant="flat"
-                          className="flex-shrink-0"
+                <div className="max-h-64 space-y-3 overflow-y-auto">
+                  {dashboardData.cashUpSubmissionCompliance.compliantUsers
+                    .length > 0 ? (
+                    dashboardData.cashUpSubmissionCompliance.compliantUsers.map(
+                      (user) => (
+                        <div
+                          key={user._id}
+                          className="flex items-center gap-3 rounded-lg bg-green-50 p-2 dark:bg-green-900/20"
                         >
-                          {user.status}
-                        </Badge>
-                      </div>
-                    ))
+                          <Avatar
+                            src={user.avatarUrl || ""}
+                            size="sm"
+                            name={user.name}
+                            className="flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {user.name}
+                            </p>
+                            <p className="text-muted-foreground truncate text-xs">
+                              {user.email}
+                            </p>
+                          </div>
+                          <Badge
+                            size="sm"
+                            color="success"
+                            variant="flat"
+                            className="flex-shrink-0"
+                          >
+                            {user.status}
+                          </Badge>
+                        </div>
+                      )
+                    )
                   ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                    <div className="text-muted-foreground py-4 text-center">
+                      <CheckCircle className="mx-auto mb-2 h-8 w-8 text-green-500" />
                       <p>No compliant users yet</p>
                     </div>
                   )}
@@ -548,43 +623,51 @@ const DashboardPage: React.FC = () => {
             {/* Non-Compliant Users */}
             <Card className="bg-muted border-border border dark:border-[#333]">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="mb-4 flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                   <h3 className="text-md font-semibold text-foreground">
-                    Non-Compliant Users ({dashboardData.cashUpSubmissionCompliance.nonCompliantCount})
+                    Non-Compliant Users (
+                    {dashboardData.cashUpSubmissionCompliance.nonCompliantCount}
+                    )
                   </h3>
                 </div>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {dashboardData.cashUpSubmissionCompliance.nonCompliantUsers.length > 0 ? (
-                    dashboardData.cashUpSubmissionCompliance.nonCompliantUsers.map((user) => (
-                      <div key={user._id} className="flex items-center gap-3 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                        <Avatar
-                          src={user.avatarUrl || ""}
-                          size="sm"
-                          name={user.name}
-                          className="flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                        <Badge
-                          size="sm"
-                          color="danger"
-                          variant="flat"
-                          className="flex-shrink-0"
+                <div className="max-h-64 space-y-3 overflow-y-auto">
+                  {dashboardData.cashUpSubmissionCompliance.nonCompliantUsers
+                    .length > 0 ? (
+                    dashboardData.cashUpSubmissionCompliance.nonCompliantUsers.map(
+                      (user) => (
+                        <div
+                          key={user._id}
+                          className="flex items-center gap-3 rounded-lg bg-red-50 p-2 dark:bg-red-900/20"
                         >
-                          {user.status}
-                        </Badge>
-                      </div>
-                    ))
+                          <Avatar
+                            src={user.avatarUrl || ""}
+                            size="sm"
+                            name={user.name}
+                            className="flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {user.name}
+                            </p>
+                            <p className="text-muted-foreground truncate text-xs">
+                              {user.email}
+                            </p>
+                          </div>
+                          <Badge
+                            size="sm"
+                            color="danger"
+                            variant="flat"
+                            className="flex-shrink-0"
+                          >
+                            {user.status}
+                          </Badge>
+                        </div>
+                      )
+                    )
                   ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                    <div className="text-muted-foreground py-4 text-center">
+                      <CheckCircle className="mx-auto mb-2 h-8 w-8 text-green-500" />
                       <p>All users are compliant!</p>
                     </div>
                   )}

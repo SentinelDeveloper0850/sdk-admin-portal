@@ -9,45 +9,48 @@ export interface IAuthIdentity extends Document {
   lastLoginAt: Date;
 }
 
-const AuthIdentitySchema = new Schema({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: "users",
-    index: true,
-    required: true,
-    unique: true
+const AuthIdentitySchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "users",
+      index: true,
+      required: true,
+      unique: true,
+    },
+    provider: {
+      type: String,
+      enum: ["google", "clerk"],
+      required: true,
+    },
+    providerUserId: {
+      type: String,
+      index: true,
+      unique: true,
+      default: undefined,
+    },
+    clerkUserId: {
+      type: String,
+      index: true,
+      required: true,
+      unique: true,
+    },
+    emailAtLinkTime: {
+      type: String,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    lastLoginAt: {
+      type: Date,
+      unique: true,
+    },
   },
-  provider: {
-    type: String,
-    enum: ["google", "clerk"],
-    required: true
-  },
-  providerUserId: {
-    type: String,
-    index: true,
-    unique: true,
-    default: undefined,
-  },
-  clerkUserId: {
-    type: String,
-    index: true,
-    required: true,
-    unique: true
-  },
-  emailAtLinkTime: {
-    type: String,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  lastLoginAt: {
-    type: Date,
-    unique: true
-  },
-}, {
-  timestamps: true,
-  versionKey: false
-});
+  {
+    timestamps: true,
+    versionKey: false,
+  }
+);
 
 /**
  * Indexes & constraints
@@ -58,7 +61,10 @@ const AuthIdentitySchema = new Schema({
 AuthIdentitySchema.index({ clerkUserId: 1 }, { unique: true });
 AuthIdentitySchema.index(
   { provider: 1, providerUserId: 1 },
-  { unique: true, partialFilterExpression: { providerUserId: { $type: "string" } } }
+  {
+    unique: true,
+    partialFilterExpression: { providerUserId: { $type: "string" } },
+  }
 );
 AuthIdentitySchema.index(
   { userId: 1, provider: 1 },
@@ -69,6 +75,11 @@ AuthIdentitySchema.index(
 AuthIdentitySchema.index({ lastLoginAt: -1 });
 
 export const AuthIdentityModel: Model<IAuthIdentity> =
-  mongoose.models.auth_identities || mongoose.model<IAuthIdentity>("auth_identities", AuthIdentitySchema, "auth_identities");
+  mongoose.models.auth_identities ||
+  mongoose.model<IAuthIdentity>(
+    "auth_identities",
+    AuthIdentitySchema,
+    "auth_identities"
+  );
 
 export default AuthIdentityModel;

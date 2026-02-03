@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-import { EyeOutlined, InboxOutlined, MoreOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  EyeOutlined,
+  InboxOutlined,
+  MoreOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import {
   Alert,
   Button,
@@ -23,6 +28,7 @@ import {
   Upload,
 } from "antd";
 import Search from "antd/es/input/Search";
+import useNotification from "antd/es/notification/useNotification";
 import { Dayjs } from "dayjs";
 import { saveAs } from "file-saver";
 import { EyeClosed } from "lucide-react";
@@ -37,7 +43,6 @@ import { useRole } from "@/app/hooks/use-role";
 import { IEasypayImport } from "@/app/interfaces/easypay-import.interface";
 import { useAuth } from "@/context/auth-context";
 import { syncPolicyNumbers } from "@/server/actions/easypay-transactions";
-import useNotification from "antd/es/notification/useNotification";
 
 import { ERoles } from "../../../../types/roles.enum";
 
@@ -72,7 +77,12 @@ export default function EasypayTransactionsPage() {
   const [syncing, setSyncing] = useState<boolean>(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  const [stats, setStats] = useState<{ count: number; toSync: number; withoutPolicy: number; uniqueEasyPayWithoutPolicy: number }>({
+  const [stats, setStats] = useState<{
+    count: number;
+    toSync: number;
+    withoutPolicy: number;
+    uniqueEasyPayWithoutPolicy: number;
+  }>({
     count: 0,
     toSync: 0,
     withoutPolicy: 0,
@@ -95,17 +105,17 @@ export default function EasypayTransactionsPage() {
   const [toSyncLoading, setToSyncLoading] = useState(false);
   const [toSyncPagination, setToSyncPagination] = useState({
     current: 1,
-    pageSize: 50
+    pageSize: 50,
   });
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 50
+    pageSize: 50,
   });
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchResultsCount, setSearchResultsCount] = useState(0);
   const [currentSearchParams, setCurrentSearchParams] = useState<{
-    type: 'text' | 'policyNumber' | 'amount' | 'date';
+    type: "text" | "policyNumber" | "amount" | "date";
     value: string;
     amount?: number;
     filterType?: string;
@@ -116,18 +126,27 @@ export default function EasypayTransactionsPage() {
   const { hasRole } = useRole();
   const [notification, contextHolder] = useNotification();
 
-  const [showAllocationRequestDrawer, setShowAllocationRequestDrawer] = useState<boolean>(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<IEasypayTransaction | null>(null);
+  const [showAllocationRequestDrawer, setShowAllocationRequestDrawer] =
+    useState<boolean>(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<IEasypayTransaction | null>(null);
   const [allocationRequestForm] = Form.useForm();
   const [evidenceFileList, setEvidenceFileList] = useState<any[]>([]);
-  const [allocationRequestLoading, setAllocationRequestLoading] = useState<boolean>(false);
-  const [allocationRequestError, setAllocationRequestError] = useState<string | null>(null);
-  const [allocationRequestSuccess, setAllocationRequestSuccess] = useState<string | null>(null);
+  const [allocationRequestLoading, setAllocationRequestLoading] =
+    useState<boolean>(false);
+  const [allocationRequestError, setAllocationRequestError] = useState<
+    string | null
+  >(null);
+  const [allocationRequestSuccess, setAllocationRequestSuccess] = useState<
+    string | null
+  >(null);
 
   const fetchTransactions = async (page = 1, pageSize = 50) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/transactions/easypay?page=${page}&pageSize=${pageSize}`);
+      const response = await fetch(
+        `/api/transactions/easypay?page=${page}&pageSize=${pageSize}`
+      );
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch transactions");
@@ -140,11 +159,11 @@ export default function EasypayTransactionsPage() {
         count: data.count,
         toSync: data.toSync,
         withoutPolicy: data.withoutPolicy,
-        uniqueEasyPayWithoutPolicy: data.uniqueEasyPayWithoutPolicy || 0
+        uniqueEasyPayWithoutPolicy: data.uniqueEasyPayWithoutPolicy || 0,
       });
       setPagination({
         current: page,
-        pageSize: pageSize
+        pageSize: pageSize,
       });
       setShowToSync(false);
       setIsSearching(false);
@@ -173,7 +192,7 @@ export default function EasypayTransactionsPage() {
         count: data.count,
         toSync: data.toSync,
         withoutPolicy: data.withoutPolicy,
-        uniqueEasyPayWithoutPolicy: data.uniqueEasyPayWithoutPolicy || 0
+        uniqueEasyPayWithoutPolicy: data.uniqueEasyPayWithoutPolicy || 0,
       });
       setShowToSync(true);
     } catch (err) {
@@ -206,11 +225,14 @@ export default function EasypayTransactionsPage() {
   const fetchUniqueEasyPayNumbers = async () => {
     try {
       setUniqueEasyPayLoading(true);
-      const response = await fetch("/api/transactions/easypay/unique-without-policy");
+      const response = await fetch(
+        "/api/transactions/easypay/unique-without-policy"
+      );
       if (!response.ok) {
         const errorData = await response.json();
         notification.error({
-          message: errorData.message || "Failed to fetch unique EasyPay numbers",
+          message:
+            errorData.message || "Failed to fetch unique EasyPay numbers",
         });
         return;
       }
@@ -221,13 +243,13 @@ export default function EasypayTransactionsPage() {
         setShowUniqueEasyPayDrawer(true);
       } else {
         notification.error({
-          message: "Failed to load unique EasyPay numbers"
+          message: "Failed to load unique EasyPay numbers",
         });
       }
     } catch (err) {
       console.error("Error fetching unique EasyPay numbers:", err);
       notification.error({
-        message: "Failed to fetch unique EasyPay numbers"
+        message: "Failed to fetch unique EasyPay numbers",
       });
     } finally {
       setUniqueEasyPayLoading(false);
@@ -237,7 +259,9 @@ export default function EasypayTransactionsPage() {
   const fetchToSyncForDrawer = async (page = 1, pageSize = 50) => {
     try {
       setToSyncLoading(true);
-      const response = await fetch(`/api/transactions/easypay/sync?page=${page}&pageSize=${pageSize}`);
+      const response = await fetch(
+        `/api/transactions/easypay/sync?page=${page}&pageSize=${pageSize}`
+      );
       if (!response.ok) {
         const errorData = await response.json();
         notification.error({
@@ -251,25 +275,29 @@ export default function EasypayTransactionsPage() {
         setToSyncData(data.data);
         setToSyncPagination({
           current: page,
-          pageSize: pageSize
+          pageSize: pageSize,
         });
         setShowToSyncDrawer(true);
       } else {
         notification.error({
-          message: "Failed to load transactions to sync"
+          message: "Failed to load transactions to sync",
         });
       }
     } catch (err) {
       console.error("Error fetching transactions to sync:", err);
       notification.error({
-        message: "Failed to fetch transactions to sync"
+        message: "Failed to fetch transactions to sync",
       });
     } finally {
       setToSyncLoading(false);
     }
   };
 
-  const searchTransactions = async (value: string, page = 1, pageSize = pagination.pageSize) => {
+  const searchTransactions = async (
+    value: string,
+    page = 1,
+    pageSize = pagination.pageSize
+  ) => {
     setLoading(true);
     try {
       const response = await fetch("/api/transactions/easypay/search", {
@@ -281,7 +309,7 @@ export default function EasypayTransactionsPage() {
           searchText: value,
           searchType: "text",
           page,
-          pageSize
+          pageSize,
         }),
       });
 
@@ -295,10 +323,10 @@ export default function EasypayTransactionsPage() {
       setTransactions(data.transactions || data);
       setIsSearching(true);
       setSearchResultsCount(data.total || data.length);
-      setCurrentSearchParams({ type: 'text', value });
+      setCurrentSearchParams({ type: "text", value });
       setPagination({
         current: page,
-        pageSize: pageSize
+        pageSize: pageSize,
       });
     } catch (err) {
       setError("An error occurred while searching transactions.");
@@ -307,7 +335,11 @@ export default function EasypayTransactionsPage() {
     }
   };
 
-  const searchByPolicyNumber = async (value: string, page = 1, pageSize = pagination.pageSize) => {
+  const searchByPolicyNumber = async (
+    value: string,
+    page = 1,
+    pageSize = pagination.pageSize
+  ) => {
     setLoading(true);
     try {
       const response = await fetch("/api/transactions/easypay/search", {
@@ -319,7 +351,7 @@ export default function EasypayTransactionsPage() {
           searchText: value,
           searchType: "policyNumber",
           page,
-          pageSize
+          pageSize,
         }),
       });
 
@@ -333,10 +365,10 @@ export default function EasypayTransactionsPage() {
       setTransactions(data.transactions || data);
       setIsSearching(true);
       setSearchResultsCount(data.total || data.length);
-      setCurrentSearchParams({ type: 'policyNumber', value });
+      setCurrentSearchParams({ type: "policyNumber", value });
       setPagination({
         current: page,
-        pageSize: pageSize
+        pageSize: pageSize,
       });
     } catch (err) {
       setError("An error occurred while searching transactions.");
@@ -349,28 +381,40 @@ export default function EasypayTransactionsPage() {
     if (!currentSearchParams) return;
 
     switch (currentSearchParams.type) {
-      case 'text':
+      case "text":
         await searchTransactions(currentSearchParams.value, page, pageSize);
         break;
-      case 'policyNumber':
+      case "policyNumber":
         await searchByPolicyNumber(currentSearchParams.value, page, pageSize);
         break;
-      case 'amount':
-        await searchByAmount({
-          amount: currentSearchParams.amount!,
-          filterType: currentSearchParams.filterType!
-        }, page, pageSize);
+      case "amount":
+        await searchByAmount(
+          {
+            amount: currentSearchParams.amount!,
+            filterType: currentSearchParams.filterType!,
+          },
+          page,
+          pageSize
+        );
         break;
-      case 'date':
-        await searchByDate({
-          date: {} as Dayjs,
-          dateString: currentSearchParams.date!
-        }, page, pageSize);
+      case "date":
+        await searchByDate(
+          {
+            date: {} as Dayjs,
+            dateString: currentSearchParams.date!,
+          },
+          page,
+          pageSize
+        );
         break;
     }
   };
 
-  const searchByAmount = async ({ amount, filterType }: any, page = 1, pageSize = pagination.pageSize) => {
+  const searchByAmount = async (
+    { amount, filterType }: any,
+    page = 1,
+    pageSize = pagination.pageSize
+  ) => {
     setLoading(true);
     try {
       const response = await fetch("/api/transactions/easypay/search", {
@@ -383,7 +427,7 @@ export default function EasypayTransactionsPage() {
           filterType: filterType,
           searchType: "amount",
           page,
-          pageSize
+          pageSize,
         }),
       });
 
@@ -397,10 +441,10 @@ export default function EasypayTransactionsPage() {
       setTransactions(data.transactions || data);
       setIsSearching(true);
       setSearchResultsCount(data.total || data.length);
-      setCurrentSearchParams({ type: 'amount', value: '', amount, filterType });
+      setCurrentSearchParams({ type: "amount", value: "", amount, filterType });
       setPagination({
         current: page,
-        pageSize: pageSize
+        pageSize: pageSize,
       });
     } catch (err) {
       setError("An error occurred while searching transactions.");
@@ -409,13 +453,17 @@ export default function EasypayTransactionsPage() {
     }
   };
 
-  const searchByDate = async ({
-    date,
-    dateString,
-  }: {
-    date: Dayjs;
-    dateString: string | string[];
-  }, page = 1, pageSize = pagination.pageSize) => {
+  const searchByDate = async (
+    {
+      date,
+      dateString,
+    }: {
+      date: Dayjs;
+      dateString: string | string[];
+    },
+    page = 1,
+    pageSize = pagination.pageSize
+  ) => {
     try {
       setLoading(true);
       const formattedDate = (dateString as String).replaceAll("-", "/");
@@ -430,7 +478,7 @@ export default function EasypayTransactionsPage() {
             date: formattedDate,
             searchType: "date",
             page,
-            pageSize
+            pageSize,
           }),
         });
 
@@ -444,10 +492,14 @@ export default function EasypayTransactionsPage() {
         setTransactions(data.transactions || data);
         setIsSearching(true);
         setSearchResultsCount(data.total || data.length);
-        setCurrentSearchParams({ type: 'date', value: '', date: formattedDate });
+        setCurrentSearchParams({
+          type: "date",
+          value: "",
+          date: formattedDate,
+        });
         setPagination({
           current: page,
-          pageSize: pageSize
+          pageSize: pageSize,
         });
       }
     } catch (err) {
@@ -666,14 +718,19 @@ export default function EasypayTransactionsPage() {
       // Append simple fields last
       formData.append("notes", data.notes || "");
 
-      const response = await fetch(`/api/transactions/easypay/request-allocation`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `/api/transactions/easypay/request-allocation`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        setAllocationRequestError(errorData.message || "Failed to request allocation");
+        setAllocationRequestError(
+          errorData.message || "Failed to request allocation"
+        );
         return;
       }
 
@@ -681,7 +738,9 @@ export default function EasypayTransactionsPage() {
       resetAllocationRequest();
       setShowAllocationRequestDrawer(false);
     } catch (err) {
-      setAllocationRequestError("An error occurred while requesting allocation");
+      setAllocationRequestError(
+        "An error occurred while requesting allocation"
+      );
     } finally {
       setAllocationRequestLoading(false);
     }
@@ -767,8 +826,10 @@ export default function EasypayTransactionsPage() {
                     <span>Policies to Find</span>
                     {stats.uniqueEasyPayWithoutPolicy > 0 && (
                       <EyeOutlined
-                        onClick={() => !uniqueEasyPayLoading && fetchUniqueEasyPayNumbers()}
-                        style={{ cursor: 'pointer', color: '#ffac00' }}
+                        onClick={() =>
+                          !uniqueEasyPayLoading && fetchUniqueEasyPayNumbers()
+                        }
+                        style={{ cursor: "pointer", color: "#ffac00" }}
                       />
                     )}
                   </Space>
@@ -782,8 +843,10 @@ export default function EasypayTransactionsPage() {
                       <span>To Sync</span>
                       {!showToSync ? (
                         <EyeOutlined
-                          onClick={() => !toSyncLoading && fetchToSyncForDrawer()}
-                          style={{ cursor: 'pointer', color: '#ffac00' }}
+                          onClick={() =>
+                            !toSyncLoading && fetchToSyncForDrawer()
+                          }
+                          style={{ cursor: "pointer", color: "#ffac00" }}
                         />
                       ) : (
                         <EyeClosed width="1em" height="1em" />
@@ -814,10 +877,7 @@ export default function EasypayTransactionsPage() {
 
       {!loading ? (
         <main className="space-y-4">
-          <Form
-            layout="vertical"
-            className="w-full px-0 pb-0 mb-2"
-          >
+          <Form layout="vertical" className="mb-2 w-full px-0 pb-0">
             <Space size={32} wrap className="flex w-full pb-0">
               <Form.Item style={{ marginBottom: "0" }}>
                 <p
@@ -853,7 +913,9 @@ export default function EasypayTransactionsPage() {
                   allowClear
                   value={policyNumberSearch}
                   placeholder="Policy Number..."
-                  onChange={(event: any) => setPolicyNumberSearch(event.target.value)}
+                  onChange={(event: any) =>
+                    setPolicyNumberSearch(event.target.value)
+                  }
                   onSearch={(value: string) =>
                     value.length > 0
                       ? searchByPolicyNumber(value)
@@ -899,9 +961,9 @@ export default function EasypayTransactionsPage() {
                     onSearch={async (value: string) =>
                       value.length > 0
                         ? searchByAmount({
-                          amount: amount,
-                          filterType: amountFilterType,
-                        })
+                            amount: amount,
+                            filterType: amountFilterType,
+                          })
                         : fetchTransactions(1, pagination.pageSize)
                     }
                     onClear={() => {
@@ -945,23 +1007,34 @@ export default function EasypayTransactionsPage() {
 
           {/* Search Results Description */}
           {isSearching && currentSearchParams && (
-            <div className="flex justify-between items-center mt-2 p-4 mb-2 bg-[#222222] rounded-md border border-[#333333]">
+            <div className="mb-2 mt-2 flex items-center justify-between rounded-md border border-[#333333] bg-[#222222] p-4">
               <div>
-                <span className="text-sm" style={{ fontWeight: "400", color: "#CCCCCC" }}>
+                <span
+                  className="text-sm"
+                  style={{ fontWeight: "400", color: "#CCCCCC" }}
+                >
                   Search results for:{" "}
                 </span>
                 <span style={{ fontWeight: "600", color: "#ffffff" }}>
-                  {currentSearchParams.type === 'text' && `"${currentSearchParams.value}"`}
-                  {currentSearchParams.type === 'policyNumber' && `Policy Number: "${currentSearchParams.value}"`}
-                  {currentSearchParams.type === 'amount' && `${currentSearchParams.filterType} ${currentSearchParams.amount}`}
-                  {currentSearchParams.type === 'date' && `Date: ${currentSearchParams.date}`}
+                  {currentSearchParams.type === "text" &&
+                    `"${currentSearchParams.value}"`}
+                  {currentSearchParams.type === "policyNumber" &&
+                    `Policy Number: "${currentSearchParams.value}"`}
+                  {currentSearchParams.type === "amount" &&
+                    `${currentSearchParams.filterType} ${currentSearchParams.amount}`}
+                  {currentSearchParams.type === "date" &&
+                    `Date: ${currentSearchParams.date}`}
                 </span>
-                <span className="text-sm" style={{ marginLeft: "8px", color: "#CCCCCC" }}>
+                <span
+                  className="text-sm"
+                  style={{ marginLeft: "8px", color: "#CCCCCC" }}
+                >
                   ({searchResultsCount} results)
                 </span>
               </div>
               <Button
-                type="default" className="uppercase text-sm font-semibold !text-red-700 !hover:text-red-500 !border-red-700 !hover:border-red-500"
+                type="default"
+                className="!hover:text-red-500 !hover:border-red-500 !border-red-700 text-sm font-semibold uppercase !text-red-700"
                 onClick={() => {
                   setIsSearching(false);
                   setSearchResultsCount(0);
@@ -989,7 +1062,8 @@ export default function EasypayTransactionsPage() {
               total: isSearching ? searchResultsCount : stats.count,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} of ${total} items`,
               onChange: (page, pageSize) => {
                 if (isSearching) {
                   // Handle search result pagination
@@ -997,7 +1071,7 @@ export default function EasypayTransactionsPage() {
                 } else {
                   fetchTransactions(page, pageSize);
                 }
-              }
+              },
             }}
             columns={[
               {
@@ -1038,9 +1112,9 @@ export default function EasypayTransactionsPage() {
                           key: "request-allocation",
                           icon: <InboxOutlined />,
                           label: "Request Allocation",
-                          onClick: () => openAllocationRequestDrawer(record)
+                          onClick: () => openAllocationRequestDrawer(record),
                         },
-                      ]
+                      ],
                     }}
                     trigger={["click"]}
                   >
@@ -1100,44 +1174,55 @@ export default function EasypayTransactionsPage() {
               <Statistic
                 title="Total Unique EasyPay Numbers"
                 value={uniqueEasyPayData.pagination?.total || 0}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: "#1890ff" }}
               />
             </div>
             <Table
               dataSource={uniqueEasyPayData.uniqueEasyPayNumbers}
               columns={[
                 {
-                  title: 'EasyPay Number',
-                  dataIndex: 'easypayNumber',
-                  key: 'easypayNumber',
+                  title: "EasyPay Number",
+                  dataIndex: "easypayNumber",
+                  key: "easypayNumber",
                   width: 200,
                 },
                 {
-                  title: 'Transaction Count',
-                  dataIndex: 'transactionCount',
-                  key: 'transactionCount',
+                  title: "Transaction Count",
+                  dataIndex: "transactionCount",
+                  key: "transactionCount",
                   width: 120,
                   render: (value: number) => (
-                    <span style={{ fontWeight: 'bold', color: value > 1 ? '#ff4d4f' : '#52c41a' }}>
+                    <span
+                      style={{
+                        fontWeight: "bold",
+                        color: value > 1 ? "#ff4d4f" : "#52c41a",
+                      }}
+                    >
                       {value}
                     </span>
                   ),
                 },
                 {
-                  title: 'Total Amount',
-                  dataIndex: 'totalAmount',
-                  key: 'totalAmount',
+                  title: "Total Amount",
+                  dataIndex: "totalAmount",
+                  key: "totalAmount",
                   width: 120,
                   render: (value: number) => formatToMoneyWithCurrency(value),
                 },
                 {
-                  title: 'Date Range',
-                  key: 'dateRange',
+                  title: "Date Range",
+                  key: "dateRange",
                   width: 150,
                   render: (_, record: any) => {
-                    const firstDate = new Date(record.firstTransactionDate).toLocaleDateString();
-                    const lastDate = new Date(record.lastTransactionDate).toLocaleDateString();
-                    return firstDate === lastDate ? firstDate : `${firstDate} - ${lastDate}`;
+                    const firstDate = new Date(
+                      record.firstTransactionDate
+                    ).toLocaleDateString();
+                    const lastDate = new Date(
+                      record.lastTransactionDate
+                    ).toLocaleDateString();
+                    return firstDate === lastDate
+                      ? firstDate
+                      : `${firstDate} - ${lastDate}`;
                   },
                 },
               ]}
@@ -1147,10 +1232,11 @@ export default function EasypayTransactionsPage() {
                 total: uniqueEasyPayData.pagination?.total || 0,
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} items`,
                 onChange: (page, pageSize) => {
                   fetchUniqueEasyPayNumbers();
-                }
+                },
               }}
               size="small"
             />
@@ -1171,41 +1257,41 @@ export default function EasypayTransactionsPage() {
               <Statistic
                 title="Total Transactions to Sync"
                 value={toSyncData.toSync || 0}
-                valueStyle={{ color: '#ff4d4f' }}
+                valueStyle={{ color: "#ff4d4f" }}
               />
             </div>
             <Table
               dataSource={toSyncData.transactions}
               columns={[
                 {
-                  title: 'Transaction Date',
-                  dataIndex: 'date',
-                  key: 'date',
+                  title: "Transaction Date",
+                  dataIndex: "date",
+                  key: "date",
                   width: 120,
                 },
                 {
-                  title: 'File ID',
-                  dataIndex: 'uuid',
-                  key: 'uuid',
+                  title: "File ID",
+                  dataIndex: "uuid",
+                  key: "uuid",
                   width: 120,
                 },
                 {
-                  title: 'EasyPay Number',
-                  dataIndex: 'easypayNumber',
-                  key: 'easypayNumber',
+                  title: "EasyPay Number",
+                  dataIndex: "easypayNumber",
+                  key: "easypayNumber",
                   width: 180,
                 },
                 {
-                  title: 'Amount',
-                  dataIndex: 'amount',
-                  key: 'amount',
+                  title: "Amount",
+                  dataIndex: "amount",
+                  key: "amount",
                   width: 100,
                   render: (value: number) => formatToMoneyWithCurrency(value),
                 },
                 {
-                  title: 'Description',
-                  dataIndex: 'description',
-                  key: 'description',
+                  title: "Description",
+                  dataIndex: "description",
+                  key: "description",
                   ellipsis: true,
                 },
               ]}
@@ -1215,10 +1301,11 @@ export default function EasypayTransactionsPage() {
                 total: toSyncData.pagination?.total || 0,
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} items`,
                 onChange: (page, pageSize) => {
                   fetchToSyncForDrawer(page, pageSize);
-                }
+                },
               }}
               size="small"
             />
@@ -1229,8 +1316,12 @@ export default function EasypayTransactionsPage() {
       <Drawer
         title={
           <div>
-            <h3 className="mb-0 text-md font-semibold">Easypay Allocation Request</h3>
-            <p className="mb-0 text-sm text-gray-500 font-normal">Request allocation of the selected easypay transaction on ASSIT</p>
+            <h3 className="text-md mb-0 font-semibold">
+              Easypay Allocation Request
+            </h3>
+            <p className="mb-0 text-sm font-normal text-gray-500">
+              Request allocation of the selected easypay transaction on ASSIT
+            </p>
           </div>
         }
         placement="right"
@@ -1240,8 +1331,16 @@ export default function EasypayTransactionsPage() {
         open={showAllocationRequestDrawer}
         footer={
           <Space>
-            <Button onClick={() => setShowAllocationRequestDrawer(false)}>Cancel</Button>
-            <Button onClick={submitAllocationRequest} loading={allocationRequestLoading} type="primary">Submit Request</Button>
+            <Button onClick={() => setShowAllocationRequestDrawer(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submitAllocationRequest}
+              loading={allocationRequestLoading}
+              type="primary"
+            >
+              Submit Request
+            </Button>
           </Space>
         }
       >
@@ -1251,14 +1350,29 @@ export default function EasypayTransactionsPage() {
           message="Please note that the allocation request will be reviewed. If approved, it will be submitted for allocation on ASSIT."
           style={{ marginBottom: 16 }}
         />
-        <h3 className="mb-4 text-md font-semibold">Transaction Information</h3>
+        <h3 className="text-md mb-4 font-semibold">Transaction Information</h3>
         {selectedTransaction && (
-          <Descriptions size="small" bordered column={2} style={{ marginBottom: 16 }}>
-            <Descriptions.Item label="Date">{formatUCTtoISO(selectedTransaction.date)}</Descriptions.Item>
-            <Descriptions.Item label="File ID">{selectedTransaction.uuid}</Descriptions.Item>
-            <Descriptions.Item label="Easypay Number">{selectedTransaction.easypayNumber}</Descriptions.Item>
-            <Descriptions.Item label="Policy Number">{selectedTransaction.policyNumber}</Descriptions.Item>
-            <Descriptions.Item label="Amount">{formatToMoneyWithCurrency(selectedTransaction.amount)}</Descriptions.Item>
+          <Descriptions
+            size="small"
+            bordered
+            column={2}
+            style={{ marginBottom: 16 }}
+          >
+            <Descriptions.Item label="Date">
+              {formatUCTtoISO(selectedTransaction.date)}
+            </Descriptions.Item>
+            <Descriptions.Item label="File ID">
+              {selectedTransaction.uuid}
+            </Descriptions.Item>
+            <Descriptions.Item label="Easypay Number">
+              {selectedTransaction.easypayNumber}
+            </Descriptions.Item>
+            <Descriptions.Item label="Policy Number">
+              {selectedTransaction.policyNumber}
+            </Descriptions.Item>
+            <Descriptions.Item label="Amount">
+              {formatToMoneyWithCurrency(selectedTransaction.amount)}
+            </Descriptions.Item>
           </Descriptions>
         )}
         {allocationRequestError && (
@@ -1290,8 +1404,12 @@ export default function EasypayTransactionsPage() {
               <p className="ant-upload-drag-icon">
                 <UploadOutlined className="h-6 w-6" />
               </p>
-              <p className="ant-upload-text">Click or drag supporting documents to upload</p>
-              <p className="ant-upload-hint">Support for JPG, PNG, PDF files. Max file size: 10MB</p>
+              <p className="ant-upload-text">
+                Click or drag supporting documents to upload
+              </p>
+              <p className="ant-upload-hint">
+                Support for JPG, PNG, PDF files. Max file size: 10MB
+              </p>
             </Upload.Dragger>
           </Form.Item>
         </Form>

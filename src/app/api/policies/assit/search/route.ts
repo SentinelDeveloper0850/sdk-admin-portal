@@ -1,10 +1,13 @@
-import { fetchAllPolicies } from "@/server/actions/easipol-policies";
 import { NextResponse } from "next/server";
+
+import { fetchAllPolicies } from "@/server/actions/easipol-policies";
 
 export async function POST(request: Request) {
   try {
     const { searchText } = await request.json();
-    const response = await fetchAllPolicies(1, 50, "policyNumber", "asc", { searchText });
+    const response = await fetchAllPolicies(1, 50, "policyNumber", "asc", {
+      searchText,
+    });
 
     if (response.success) {
       return NextResponse.json(response.data, { status: 200 });

@@ -3,14 +3,32 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Button, Card, DatePicker, Drawer, Form, Select, Space, Table, Tabs, Tag, Typography, Upload } from "antd";
+import {
+  Button,
+  Card,
+  DatePicker,
+  Drawer,
+  Form,
+  Select,
+  Space,
+  Table,
+  Tabs,
+  Tag,
+  Typography,
+  Upload,
+} from "antd";
 import dayjs from "dayjs";
 import swal from "sweetalert";
+
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import CashUpSubmissionReviewDrawer from "@/app/components/cash-up/cash-up-submission-review-drawer";
 import PageHeader from "@/app/components/page-header";
 import { ERoles } from "@/types/roles.enum";
-import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -104,7 +122,12 @@ const CashUpReviewPage = () => {
       const res = await fetch("/api/users?slim=true", { cache: "no-store" });
       const json = await res.json();
       const list = Array.isArray(json) ? json : [];
-      setUsers(list.map((u: any) => ({ _id: String(u._id), name: String(u.name || "") })));
+      setUsers(
+        list.map((u: any) => ({
+          _id: String(u._id),
+          name: String(u.name || ""),
+        }))
+      );
     } catch {
       // non-fatal
     }
@@ -113,9 +136,12 @@ const CashUpReviewPage = () => {
   const fetchAuditReports = async () => {
     setAuditReportsLoading(true);
     try {
-      const res = await fetch("/api/cash-up/audit-reports?limit=30", { cache: "no-store" });
+      const res = await fetch("/api/cash-up/audit-reports?limit=30", {
+        cache: "no-store",
+      });
       const json = await res.json();
-      if (!json?.success) throw new Error(json?.message || "Failed to fetch audit reports");
+      if (!json?.success)
+        throw new Error(json?.message || "Failed to fetch audit reports");
       setAuditReports(json.reports || []);
     } catch (e: any) {
       swal({
@@ -154,7 +180,9 @@ const CashUpReviewPage = () => {
       render: (text: string, record: ICashUpSubmissionRow) => (
         <div>
           <div className="font-medium">{text}</div>
-          <div className="text-xs text-gray-500">{dayjs(record.date).format("DD MMM YYYY")}</div>
+          <div className="text-xs text-gray-500">
+            {dayjs(record.date).format("DD MMM YYYY")}
+          </div>
         </div>
       ),
     },
@@ -163,21 +191,30 @@ const CashUpReviewPage = () => {
       dataIndex: "batchReceiptTotal",
       key: "batchReceiptTotal",
       align: "right" as const,
-      render: (amount: number) => new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(amount ?? 0),
+      render: (amount: number) =>
+        new Intl.NumberFormat("en-ZA", {
+          style: "currency",
+          currency: "ZAR",
+        }).format(amount ?? 0),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
       align: "center" as const,
-      render: (status: string) => <Tag className="uppercase" color={statusColor(status)}>{status}</Tag>,
+      render: (status: string) => (
+        <Tag className="uppercase" color={statusColor(status)}>
+          {status}
+        </Tag>
+      ),
     },
     {
       title: "Late",
       dataIndex: "isLateSubmission",
       key: "isLateSubmission",
       align: "center" as const,
-      render: (isLate: boolean) => (isLate ? <Tag color="red">LATE</Tag> : <Tag color="green">ON TIME</Tag>),
+      render: (isLate: boolean) =>
+        isLate ? <Tag color="red">LATE</Tag> : <Tag color="green">ON TIME</Tag>,
     },
     {
       title: "Actions",
@@ -216,21 +253,33 @@ const CashUpReviewPage = () => {
       dataIndex: "incomeTotal",
       key: "incomeTotal",
       align: "right" as const,
-      render: (v: number) => new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(v ?? 0),
+      render: (v: number) =>
+        new Intl.NumberFormat("en-ZA", {
+          style: "currency",
+          currency: "ZAR",
+        }).format(v ?? 0),
     },
     {
       title: "Expense",
       dataIndex: "expenseTotal",
       key: "expenseTotal",
       align: "right" as const,
-      render: (v: number) => new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(v ?? 0),
+      render: (v: number) =>
+        new Intl.NumberFormat("en-ZA", {
+          style: "currency",
+          currency: "ZAR",
+        }).format(v ?? 0),
     },
     {
       title: "Net",
       dataIndex: "netTotal",
       key: "netTotal",
       align: "right" as const,
-      render: (v: number) => new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(v ?? 0),
+      render: (v: number) =>
+        new Intl.NumberFormat("en-ZA", {
+          style: "currency",
+          currency: "ZAR",
+        }).format(v ?? 0),
     },
     {
       title: "File",
@@ -270,7 +319,10 @@ const CashUpReviewPage = () => {
       fd.append("userId", String(values.userId));
       fd.append("dateKey", dayjs(values.date).format("YYYY-MM-DD"));
 
-      const res = await fetch("/api/cash-up/audit-report", { method: "POST", body: fd });
+      const res = await fetch("/api/cash-up/audit-report", {
+        method: "POST",
+        body: fd,
+      });
       const json = await res.json();
       if (!json?.success) {
         if (json?.expected && json?.detected) {
@@ -314,7 +366,11 @@ const CashUpReviewPage = () => {
         title="Cashup Review"
         subtitle="Review, approve, reject, or send back submissions"
         actions={[
-          <Button key="upload-audit" type="primary" onClick={() => setAuditDrawerOpen(true)}>
+          <Button
+            key="upload-audit"
+            type="primary"
+            onClick={() => setAuditDrawerOpen(true)}
+          >
             Upload Audit Report
           </Button>,
           <Button key="refresh" onClick={fetchAll}>
@@ -431,10 +487,16 @@ const CashUpReviewPage = () => {
 
       <Card size="small">
         <div className="mb-4 flex items-center justify-between">
-          <Title level={4} style={{ margin: 0 }}>Audit Reports (latest)</Title>
+          <Title level={4} style={{ margin: 0 }}>
+            Audit Reports (latest)
+          </Title>
           <Space>
-            <Button onClick={fetchAuditReports} loading={auditReportsLoading}>Refresh</Button>
-            <Button href="/reports/audit-reports">Open Audit Reports Page</Button>
+            <Button onClick={fetchAuditReports} loading={auditReportsLoading}>
+              Refresh
+            </Button>
+            <Button href="/reports/audit-reports">
+              Open Audit Reports Page
+            </Button>
           </Space>
         </div>
         <Table
@@ -470,7 +532,11 @@ const CashUpReviewPage = () => {
         footer={
           <Space>
             <Button onClick={() => setAuditDrawerOpen(false)}>Cancel</Button>
-            <Button type="primary" onClick={uploadAuditReport} loading={auditUploading}>
+            <Button
+              type="primary"
+              onClick={uploadAuditReport}
+              loading={auditUploading}
+            >
               Upload
             </Button>
           </Space>
@@ -478,11 +544,25 @@ const CashUpReviewPage = () => {
       >
         <div className="space-y-4">
           <Text type="secondary">
-            Select the employee and the report date, then upload the Excel. The upload will be rejected if the spreadsheet's header employee/date doesn't match.
+            Select the employee and the report date, then upload the Excel. The
+            upload will be rejected if the spreadsheet's header employee/date
+            doesn't match.
           </Text>
-          <Form form={auditForm} layout="vertical" initialValues={{ date: dayjs() }}>
-            <Form.Item name="userId" label="Employee" rules={[{ required: true, message: "Select an employee" }]}>
-              <Select showSearch optionFilterProp="children" placeholder="Select employee">
+          <Form
+            form={auditForm}
+            layout="vertical"
+            initialValues={{ date: dayjs() }}
+          >
+            <Form.Item
+              name="userId"
+              label="Employee"
+              rules={[{ required: true, message: "Select an employee" }]}
+            >
+              <Select
+                showSearch
+                optionFilterProp="children"
+                placeholder="Select employee"
+              >
                 {users.map((u) => (
                   <Option key={u._id} value={u._id}>
                     {u.name}
@@ -490,7 +570,11 @@ const CashUpReviewPage = () => {
                 ))}
               </Select>
             </Form.Item>
-            <Form.Item name="date" label="Report Date" rules={[{ required: true, message: "Select a date" }]}>
+            <Form.Item
+              name="date"
+              label="Report Date"
+              rules={[{ required: true, message: "Select a date" }]}
+            >
               <DatePicker style={{ width: "100%" }} />
             </Form.Item>
             <Form.Item label="Excel file">
@@ -501,9 +585,13 @@ const CashUpReviewPage = () => {
                   setAuditFile(f as any);
                   return false;
                 }}
-                fileList={auditFile ? ([{ uid: "1", name: auditFile.name }] as any) : []}
+                fileList={
+                  auditFile ? ([{ uid: "1", name: auditFile.name }] as any) : []
+                }
               >
-                <p className="ant-upload-text">Click or drag the Excel report here</p>
+                <p className="ant-upload-text">
+                  Click or drag the Excel report here
+                </p>
                 <p className="ant-upload-hint">Supported: .xlsx, .xls, .csv</p>
               </Upload.Dragger>
             </Form.Item>

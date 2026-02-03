@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import {
   CloseOutlined,
-  ReloadOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
@@ -12,6 +11,7 @@ import {
   MoreOutlined,
   PhoneOutlined,
   PrinterOutlined,
+  ReloadOutlined,
   SearchOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -27,15 +27,15 @@ import {
   Space,
   Statistic,
   Table,
+  Tabs,
   Tag,
-  Tabs
 } from "antd";
+import sweetAlert from "sweetalert";
 
 import PolicyCancellationDrawer from "@/app/components/policies/policy-cancellation-drawer";
 import PolicyDetailsDrawer from "@/app/components/policies/policy-details-drawer";
 import PolicyPrintCardDrawer from "@/app/components/policies/policy-print-card-drawer";
 import Loading from "@/app/components/ui/loading";
-import sweetAlert from "sweetalert";
 
 export interface IEasipolPolicy {
   _id: string;
@@ -65,13 +65,20 @@ export default function EasipolPoliciesPage() {
   const [bootstrapping, setBootstrapping] = useState<boolean>(true);
   const [tableLoading, setTableLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
-  const [stats, setStats] = useState<{ count: number; totalPages: number }>({ count: 0, totalPages: 0 });
+  const [stats, setStats] = useState<{ count: number; totalPages: number }>({
+    count: 0,
+    totalPages: 0,
+  });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
-  const [editingPolicy, setEditingPolicy] = useState<IEasipolPolicy | null>(null);
+  const [editingPolicy, setEditingPolicy] = useState<IEasipolPolicy | null>(
+    null
+  );
   const [cancellationDrawerOpen, setCancellationDrawerOpen] = useState(false);
-  const [selectedPolicyForCancellation, setSelectedPolicyForCancellation] = useState<IEasipolPolicy | null>(null);
-  const [filterOptionsLoading, setFilterOptionsLoading] = useState<boolean>(true);
+  const [selectedPolicyForCancellation, setSelectedPolicyForCancellation] =
+    useState<IEasipolPolicy | null>(null);
+  const [filterOptionsLoading, setFilterOptionsLoading] =
+    useState<boolean>(true);
   const [searchInput, setSearchInput] = useState("");
 
   // Pagination and filtering state
@@ -105,12 +112,18 @@ export default function EasipolPoliciesPage() {
       });
 
       // Add filters - only add non-empty values
-      if (filters.status && filters.status.trim()) params.append("status", filters.status.trim());
-      if (filters.productName && filters.productName.trim()) params.append("productName", filters.productName.trim());
-      if (filters.branchName && filters.branchName.trim()) params.append("branchName", filters.branchName.trim());
-      if (filters.searchText && filters.searchText.trim()) params.append("searchText", filters.searchText.trim());
+      if (filters.status && filters.status.trim())
+        params.append("status", filters.status.trim());
+      if (filters.productName && filters.productName.trim())
+        params.append("productName", filters.productName.trim());
+      if (filters.branchName && filters.branchName.trim())
+        params.append("branchName", filters.branchName.trim());
+      if (filters.searchText && filters.searchText.trim())
+        params.append("searchText", filters.searchText.trim());
 
-      const response = await fetch(`/api/policies/easipol?${params.toString()}`);
+      const response = await fetch(
+        `/api/policies/easipol?${params.toString()}`
+      );
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Failed to fetch policies");
@@ -152,12 +165,12 @@ export default function EasipolPoliciesPage() {
 
   const handleSearch = (value: string) => {
     setSearchInput(value || "");
-    setFilters(prev => ({ ...prev, searchText: value || "" }));
+    setFilters((prev) => ({ ...prev, searchText: value || "" }));
     setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value || "" }));
+    setFilters((prev) => ({ ...prev, [key]: value || "" }));
     setCurrentPage(1); // Reset to first page when filtering
   };
 
@@ -268,16 +281,18 @@ export default function EasipolPoliciesPage() {
 
   return (
     <div>
-      <div className="w-full flex justify-between mb-8">
+      <div className="mb-8 flex w-full justify-between">
         <Space size={32}>
-            <Statistic title="Total Easipol Policies" value={stats.count} />
-            <Statistic
-              title="Listed Easipol Policies"
-              value={policies ? policies.length : 0}
-            />
+          <Statistic title="Total Easipol Policies" value={stats.count} />
+          <Statistic
+            title="Listed Easipol Policies"
+            value={policies ? policies.length : 0}
+          />
         </Space>
         <Space size={32}>
-          <Button icon={<ReloadOutlined />} onClick={fetchEasipolPolicies}>Refresh</Button>
+          <Button icon={<ReloadOutlined />} onClick={fetchEasipolPolicies}>
+            Refresh
+          </Button>
         </Space>
       </div>
       {error && (
@@ -285,23 +300,53 @@ export default function EasipolPoliciesPage() {
       )}
 
       {/* Search Results Indicator */}
-      {(filters.status || filters.productName || filters.branchName || filters.searchText) && (
-        <div style={{
-          backgroundColor: "#f0f9ff",
-          border: "1px solid #0ea5e9",
-          borderRadius: "6px",
-          padding: "12px 16px",
-          marginBottom: "16px",
-          color: "#0c4a6e"
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {(filters.status ||
+        filters.productName ||
+        filters.branchName ||
+        filters.searchText) && (
+        <div
+          style={{
+            backgroundColor: "#f0f9ff",
+            border: "1px solid #0ea5e9",
+            borderRadius: "6px",
+            padding: "12px 16px",
+            marginBottom: "16px",
+            color: "#0c4a6e",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <div>
-              <strong>Search Results:</strong> Showing Easipol policies matching your filters
-              {filters.status && <span style={{ marginLeft: "8px" }}>• Status: {filters.status}</span>}
-              {filters.productName && <span style={{ marginLeft: "8px" }}>• Product: {filters.productName}</span>}
-              {filters.branchName && <span style={{ marginLeft: "8px" }}>• Branch: {filters.branchName}</span>}
-              {filters.searchText && <span style={{ marginLeft: "8px" }}>• Search: "{filters.searchText}"</span>}
-              <span style={{ marginLeft: "8px" }}>• {policies.length} results</span>
+              <strong>Search Results:</strong> Showing Easipol policies matching
+              your filters
+              {filters.status && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Status: {filters.status}
+                </span>
+              )}
+              {filters.productName && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Product: {filters.productName}
+                </span>
+              )}
+              {filters.branchName && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Branch: {filters.branchName}
+                </span>
+              )}
+              {filters.searchText && (
+                <span style={{ marginLeft: "8px" }}>
+                  • Search: "{filters.searchText}"
+                </span>
+              )}
+              <span style={{ marginLeft: "8px" }}>
+                • {policies.length} results
+              </span>
             </div>
             <Button
               type="link"
@@ -329,7 +374,12 @@ export default function EasipolPoliciesPage() {
                   }
                 }}
                 onPressEnter={() => handleSearch(searchInput)}
-                addonAfter={<SearchOutlined style={{ cursor: "pointer" }} onClick={() => handleSearch(searchInput)} />}
+                addonAfter={
+                  <SearchOutlined
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleSearch(searchInput)}
+                  />
+                }
               />
             </Form.Item>
           </Col>
@@ -389,7 +439,12 @@ export default function EasipolPoliciesPage() {
               <Space>
                 <Button
                   onClick={handleClearFilters}
-                  disabled={!filters.status && !filters.productName && !filters.branchName && !filters.searchText}
+                  disabled={
+                    !filters.status &&
+                    !filters.productName &&
+                    !filters.branchName &&
+                    !filters.searchText
+                  }
                 >
                   Clear Filters
                 </Button>
@@ -406,7 +461,10 @@ export default function EasipolPoliciesPage() {
         rowClassName="cursor-pointer hover:bg-gray-50"
         onChange={(pagination, filters, sorter: any) => {
           if (sorter && sorter.field) {
-            handleSort(sorter.field, sorter.order === "descend" ? "desc" : "asc");
+            handleSort(
+              sorter.field,
+              sorter.order === "descend" ? "desc" : "asc"
+            );
           }
         }}
         pagination={{
@@ -419,7 +477,7 @@ export default function EasipolPoliciesPage() {
             `${range[0]}-${range[1]} of ${total} Easipol policies`,
           onChange: handlePageChange,
           onShowSizeChange: handlePageChange,
-          position: ['bottomCenter'],
+          position: ["bottomCenter"],
         }}
         columns={[
           {
@@ -427,7 +485,8 @@ export default function EasipolPoliciesPage() {
             dataIndex: "policyNumber",
             key: "policyNumber",
             sorter: true,
-            sortOrder: sortBy === "policyNumber" ? (sortOrder as any) : undefined,
+            sortOrder:
+              sortBy === "policyNumber" ? (sortOrder as any) : undefined,
             render: (policyNumber: string) => (
               <span className="font-mono font-semibold">{policyNumber}</span>
             ),
@@ -436,7 +495,8 @@ export default function EasipolPoliciesPage() {
             title: "Easypay Number",
             dataIndex: "easypayNumber",
             key: "easypayNumber",
-            sorter: (a, b) => a.easypayNumber?.localeCompare(b.easypayNumber || "") || 0,
+            sorter: (a, b) =>
+              a.easypayNumber?.localeCompare(b.easypayNumber || "") || 0,
           },
           // {
           //   title: "Easipol Member ID",
@@ -461,10 +521,13 @@ export default function EasipolPoliciesPage() {
             key: "contact",
             render: (_, record: IEasipolPolicy) => {
               const contactMethods = [];
-              if (record.cellphoneNumber) contactMethods.push(record.cellphoneNumber);
+              if (record.cellphoneNumber)
+                contactMethods.push(record.cellphoneNumber);
               if (record.cellNumber) contactMethods.push(record.cellNumber);
-              if (record.whatsappNumber) contactMethods.push(record.whatsappNumber);
-              if (record.homeTelephone) contactMethods.push(record.homeTelephone);
+              if (record.whatsappNumber)
+                contactMethods.push(record.whatsappNumber);
+              if (record.homeTelephone)
+                contactMethods.push(record.homeTelephone);
 
               return (
                 <div className="space-y-1">
@@ -487,7 +550,9 @@ export default function EasipolPoliciesPage() {
                     </div>
                   )}
                   {contactMethods.length === 0 && (
-                    <span className="text-gray-400 text-xs">No contact info</span>
+                    <span className="text-xs text-gray-400">
+                      No contact info
+                    </span>
                   )}
                 </div>
               );
@@ -497,7 +562,8 @@ export default function EasipolPoliciesPage() {
             title: "Product",
             dataIndex: "productName",
             key: "productName",
-            sorter: (a, b) => a.productName?.localeCompare(b.productName || "") || 0,
+            sorter: (a, b) =>
+              a.productName?.localeCompare(b.productName || "") || 0,
             render: (productName: string) => (
               <Tag color="blue" className="w-fit">
                 {productName}
@@ -531,9 +597,7 @@ export default function EasipolPoliciesPage() {
               };
 
               return (
-                <Tag color={getStatusColor(status)}>
-                  {status || "Unknown"}
-                </Tag>
+                <Tag color={getStatusColor(status)}>{status || "Unknown"}</Tag>
               );
             },
             sorter: (a, b) => (a.status || "").localeCompare(b.status || ""),
@@ -580,7 +644,10 @@ export default function EasipolPoliciesPage() {
                 </Tag>
               );
             },
-            sorter: (a, b) => (a.cancellationStatus || "").localeCompare(b.cancellationStatus || ""),
+            sorter: (a, b) =>
+              (a.cancellationStatus || "").localeCompare(
+                b.cancellationStatus || ""
+              ),
           },
           {
             title: "Actions",
@@ -601,21 +668,33 @@ export default function EasipolPoliciesPage() {
                     //   label: "Edit Easipol Policy",
                     //   onClick: () => editPolicy(record),
                     // },
-                    ...(record.cancellationStatus === "none" || !record.cancellationStatus ? [{
-                      key: "request-cancellation",
-                      icon: <CloseOutlined />,
-                      label: "Request Cancellation",
-                      onClick: () => {
-                        setSelectedPolicyForCancellation(record);
-                        setCancellationDrawerOpen(true);
-                      },
-                    }] : []),
-                    ...(record.paymentHistoryFile ? [{
-                      key: "payment-history",
-                      icon: <EyeOutlined />,
-                      label: "Payment History",
-                      onClick: () => setPreviewImage(record.paymentHistoryFile || null),
-                    }] : []),
+                    ...(record.cancellationStatus === "none" ||
+                    !record.cancellationStatus
+                      ? [
+                          {
+                            key: "request-cancellation",
+                            icon: <CloseOutlined />,
+                            label: "Request Cancellation",
+                            onClick: () => {
+                              setSelectedPolicyForCancellation(record);
+                              setCancellationDrawerOpen(true);
+                            },
+                          },
+                        ]
+                      : []),
+                    ...(record.paymentHistoryFile
+                      ? [
+                          {
+                            key: "payment-history",
+                            icon: <EyeOutlined />,
+                            label: "Payment History",
+                            onClick: () =>
+                              setPreviewImage(
+                                record.paymentHistoryFile || null
+                              ),
+                          },
+                        ]
+                      : []),
                     // {
                     //   key: "delete",
                     //   icon: <DeleteOutlined />,
@@ -637,12 +716,14 @@ export default function EasipolPoliciesPage() {
       {/* Modal to preview payment history image */}
       <Modal
         open={!!previewImage}
-        title={<div className="flex justify-between items-center pb-4">
-          <h1>Easipol Payment History</h1>
-          <Button key="close" onClick={() => setPreviewImage(null)}>
-            Close
-          </Button>
-        </div>}
+        title={
+          <div className="flex items-center justify-between pb-4">
+            <h1>Easipol Payment History</h1>
+            <Button key="close" onClick={() => setPreviewImage(null)}>
+              Close
+            </Button>
+          </div>
+        }
         footer={[
           <Button key="close" onClick={() => setPreviewImage(null)}>
             Close
@@ -681,8 +762,11 @@ export default function EasipolPoliciesPage() {
         }}
         policyId={selectedPolicyForCancellation?._id || null}
         policyNumber={selectedPolicyForCancellation?.policyNumber}
-        memberName={selectedPolicyForCancellation?.fullName || selectedPolicyForCancellation?.fullname}
+        memberName={
+          selectedPolicyForCancellation?.fullName ||
+          selectedPolicyForCancellation?.fullname
+        }
       />
-    </div >
+    </div>
   );
 }

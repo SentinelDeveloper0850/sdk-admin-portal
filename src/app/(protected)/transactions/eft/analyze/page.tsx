@@ -27,7 +27,6 @@ const EftPdfAnalysis = () => {
           </Col>
         </Row>
       </PageHeader>
-
     </div>
   );
 };

@@ -31,7 +31,12 @@ export const fetchAllPolicies = async (
     if (filters.searchText) {
       filterQuery.$or = [
         { policyNumber: { $regex: filters.searchText, $options: "i" } },
-        { linkedEasipolPolicyNumber: { $regex: filters.searchText, $options: "i" } },
+        {
+          linkedEasipolPolicyNumber: {
+            $regex: filters.searchText,
+            $options: "i",
+          },
+        },
         { payAtNumber: { $regex: filters.searchText, $options: "i" } },
         { memberID: { $regex: filters.searchText, $options: "i" } },
         { fullname: { $regex: filters.searchText, $options: "i" } },
@@ -180,7 +185,7 @@ export const importPolicy = async (policyData: any) => {
     };
   }
 };
-    
+
 const BATCH_SIZE = Number(process.env.BATCH_SIZE || 500);
 
 function isValidDate(value: Date) {
@@ -230,7 +235,10 @@ export const updateInceptionDates = async () => {
     for await (const doc of cursor) {
       processed += 1;
 
-      const originalValue = (doc as any).inceptionDate as unknown as string | null | undefined;
+      const originalValue = (doc as any).inceptionDate as unknown as
+        | string
+        | null
+        | undefined;
       const stringValue = (originalValue ?? "").toString().trim();
 
       if (!stringValue) {
@@ -261,7 +269,9 @@ export const updateInceptionDates = async () => {
         const res = await PolicyModel.bulkWrite(bulkOps, { ordered: false });
         updated += (res.modifiedCount || 0) + (res.upsertedCount || 0);
         bulkOps = [];
-        console.log(`➡️  Progress: ${processed}/${totalToProcess} processed, ${updated} updated, ${skipped} skipped`);
+        console.log(
+          `➡️  Progress: ${processed}/${totalToProcess} processed, ${updated} updated, ${skipped} skipped`
+        );
       }
     }
 
@@ -270,7 +280,9 @@ export const updateInceptionDates = async () => {
       updated += (res.modifiedCount || 0) + (res.upsertedCount || 0);
     }
 
-    console.log(`🎉 Complete. Processed: ${processed}, Updated: ${updated}, Skipped: ${skipped}`);
+    console.log(
+      `🎉 Complete. Processed: ${processed}, Updated: ${updated}, Skipped: ${skipped}`
+    );
 
     updateInceptionDates().catch((err) => {
       console.error("❌ Update inception dates failed:", err);

@@ -10,6 +10,10 @@ import type { IUser } from "@/app/models/hr/user.schema";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // Define the shape of the context
 interface AuthContextType {
   user: IUser | null;

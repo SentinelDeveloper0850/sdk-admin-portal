@@ -26,7 +26,11 @@ const EasypayTransactionSchema: Schema = new Schema({
 
 // Check if the model is already compiled
 export const EasypayTransactionModel =
-  mongoose.models.easypay_transactions || mongoose.model<IEasypayTransaction>("easypay_transactions", EasypayTransactionSchema, "easypay_transactions"
+  mongoose.models.easypay_transactions ||
+  mongoose.model<IEasypayTransaction>(
+    "easypay_transactions",
+    EasypayTransactionSchema,
+    "easypay_transactions"
   );
 
 export default EasypayTransactionModel;

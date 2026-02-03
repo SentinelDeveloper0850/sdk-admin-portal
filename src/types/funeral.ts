@@ -1,5 +1,6 @@
-import { ILocation } from "@/app/models/calendar-event.schema";
 import mongoose, { Document } from "mongoose";
+
+import { ILocation } from "@/app/models/calendar-event.schema";
 
 export enum EFuneralStatus {
   PLANNED = "planned",
@@ -15,8 +16,12 @@ export enum EPaymentStatus {
 }
 
 // ---------- Types ----------
-export type IFuneralStatus = 'planned' | 'in_progress' | 'completed' | 'cancelled';
-export type IPaymentStatus = 'unpaid' | 'partial' | 'paid';
+export type IFuneralStatus =
+  | "planned"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
+export type IPaymentStatus = "unpaid" | "partial" | "paid";
 
 export interface IInformant {
   firstName: string;
@@ -40,8 +45,8 @@ export interface IDeceased {
 }
 
 export interface IFuneralAssignment {
-  role: string;                // e.g. "Driver", "Undertaker", "Speaker"
-  staffId?: string;            // reference to StaffMember
+  role: string; // e.g. "Driver", "Undertaker", "Speaker"
+  staffId?: string; // reference to StaffMember
   staffName?: string;
   contact?: string;
   notes?: string;
@@ -57,19 +62,19 @@ export interface ITransportDetail {
 }
 
 export interface IScheduledItem {
-  enabled: boolean;                 // whether this milestone applies
-  startDateTime?: Date;             // when it happens
+  enabled: boolean; // whether this milestone applies
+  startDateTime?: Date; // when it happens
   endDateTime?: Date;
   location?: ILocation;
   notes?: string;
   calendarEventId?: mongoose.Types.ObjectId; // link to calendar-events
-  status?: string;                  // current status of the milestone (e.g., completed)
+  status?: string; // current status of the milestone (e.g., completed)
 }
 
 export interface IFuneral extends Document {
   // Core identifiers
-  referenceNumber: string;          // "FNR-2025-0001"
-  policyNumber?: string;            // optional link to policy
+  referenceNumber: string; // "FNR-2025-0001"
+  policyNumber?: string; // optional link to policy
   calendarEventId?: mongoose.Types.ObjectId; // link to calendar-events
 
   // Deceased information
@@ -81,7 +86,7 @@ export interface IFuneral extends Document {
   burialDateTime?: Date;
   isSameDay?: boolean;
 
-  location?: ILocation;             // chapel, church, or cemetery
+  location?: ILocation; // chapel, church, or cemetery
   cemetery?: string;
   graveNumber?: string;
 

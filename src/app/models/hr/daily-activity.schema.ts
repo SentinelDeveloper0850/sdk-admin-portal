@@ -105,7 +105,8 @@ const dailyActivitySchema = new Schema({
   },
   branch: {
     type: String,
-    description: "The branch name. This way even if the branch is deleted, we can still get the branch name",
+    description:
+      "The branch name. This way even if the branch is deleted, we can still get the branch name",
     required: false,
   },
   comments: {

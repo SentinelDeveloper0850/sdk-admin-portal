@@ -1,17 +1,26 @@
 "use client";
 
-import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Select } from "antd";
-import type { OutputData } from "@editorjs/editorjs";
 import { useCallback, useMemo, useState } from "react";
 
-import { editorJsToHtml, editorJsToMarkdown } from "@/app/components/editor/editorjs-converters";
+import type { OutputData } from "@editorjs/editorjs";
+import { Select } from "antd";
+import DOMPurify from "dompurify";
+
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
+import {
+  editorJsToHtml,
+  editorJsToMarkdown,
+} from "@/app/components/editor/editorjs-converters";
+
 import { ERoles } from "../../../../types/roles.enum";
 
-const EditorJsEditor = dynamic(() => import("@/app/components/editor/EditorJsEditor"), { ssr: false });
+const EditorJsEditor = dynamic(
+  () => import("@/app/components/editor/EditorJsEditor"),
+  { ssr: false }
+);
 
 function CreateKnowledgeArticleInner() {
   const router = useRouter();
@@ -49,10 +58,19 @@ function CreateKnowledgeArticleInner() {
     }
     const json = await res.json();
     router.push(`/knowledge-hub/${json.slug}`);
-  }, [title, summary, derived.bodyMd, derived.bodyHtml, bodyJson, category, tags, router]);
+  }, [
+    title,
+    summary,
+    derived.bodyMd,
+    derived.bodyHtml,
+    bodyJson,
+    category,
+    tags,
+    router,
+  ]);
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       <h1 className="text-xl font-semibold">Create Knowledge Article</h1>
 
       <div className="grid gap-3">
@@ -64,13 +82,17 @@ function CreateKnowledgeArticleInner() {
         />
 
         <textarea
-          className="rounded border px-3 py-2 min-h-20"
+          className="min-h-20 rounded border px-3 py-2"
           placeholder="Summary (optional)"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
         />
 
-        <select className="rounded border px-3 py-2" value={category} onChange={(e) => setCategory(e.target.value)}>
+        <select
+          className="rounded border px-3 py-2"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
           <option value="CODE_OF_CONDUCT">Code of Conduct</option>
           <option value="SOP">Standard Operating Procedures</option>
           <option value="HOW_TO">How To Guide</option>
@@ -82,7 +104,9 @@ function CreateKnowledgeArticleInner() {
         <Select
           mode="tags"
           value={tags}
-          onChange={(next) => setTags(Array.isArray(next) ? next.map(String) : [])}
+          onChange={(next) =>
+            setTags(Array.isArray(next) ? next.map(String) : [])
+          }
           tokenSeparators={[","]}
           placeholder="Tags"
           style={{ width: "100%" }}
@@ -97,13 +121,17 @@ function CreateKnowledgeArticleInner() {
       </div>
 
       <div className="flex gap-2">
-        <button className="rounded border px-3 py-1 text-sm" onClick={handleSubmit} disabled={saving}>
+        <button
+          className="rounded border px-3 py-1 text-sm"
+          onClick={handleSubmit}
+          disabled={saving}
+        >
           {saving ? "Saving..." : "Save draft"}
         </button>
       </div>
 
       <div className="pt-4">
-        <h2 className="text-sm font-semibold mb-2">Preview</h2>
+        <h2 className="mb-2 text-sm font-semibold">Preview</h2>
         {derived.bodyHtml ? (
           <article
             className="prose dark:prose-invert max-w-none"
@@ -137,13 +165,17 @@ function CreateKnowledgeArticleInner() {
             }}
           />
         ) : (
-          <div className="text-sm text-muted-foreground">Start writing to see a preview…</div>
+          <div className="text-muted-foreground text-sm">
+            Start writing to see a preview…
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-const CreateKnowledgeArticlePage = withRoleGuard(CreateKnowledgeArticleInner as unknown as React.FC, [ERoles.Admin]);
+const CreateKnowledgeArticlePage = withRoleGuard(
+  CreateKnowledgeArticleInner as unknown as React.FC,
+  [ERoles.Admin]
+);
 export default CreateKnowledgeArticlePage;
-

@@ -104,7 +104,10 @@ export function calculateDiscrepancy(
  * @param currency - Currency code (default: 'ZAR')
  * @returns Formatted currency string
  */
-export function formatCurrency(amount: number, currency: string = "ZAR"): string {
+export function formatCurrency(
+  amount: number,
+  currency: string = "ZAR"
+): string {
   return new Intl.NumberFormat("en-ZA", {
     style: "currency",
     currency: currency,
@@ -302,4 +305,4 @@ export const DAILY_AUDIT_CONFIG = {
   REPEAT_OFFENDER_THRESHOLD: 3, // Number of issues to be considered repeat offender
   MAX_FILE_SIZE_MB: 10,
   ALLOWED_FILE_TYPES: ["image/jpeg", "image/png", "application/pdf"],
-} as const; 
+} as const;

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-sync-scripts */
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "antd/dist/reset.css";
 
 import Providers from "./components/providers";

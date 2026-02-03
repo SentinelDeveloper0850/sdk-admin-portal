@@ -1,12 +1,13 @@
 "use client";
 
-import { debounce, deriveRegionCode } from "@/lib/utils";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { PlusOutlined, ReloadOutlined, SaveOutlined } from "@ant-design/icons";
 import {
   Button,
   Drawer,
   Form,
   Input,
-  message,
   Popconfirm,
   Select,
   Space,
@@ -15,16 +16,18 @@ import {
   Table,
   Tag,
   Tooltip,
+  message,
 } from "antd";
 import { Delete, Edit, User as UserIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
 import sweetAlert from "sweetalert";
+
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
 import { IUser } from "@/app/models/hr/user.schema";
 import { useAuth } from "@/context/auth-context";
-import { withRoleGuard } from "@/utils/utils/with-role-guard";
-import { PlusOutlined, ReloadOutlined, SaveOutlined } from "@ant-design/icons";
+import { debounce, deriveRegionCode } from "@/lib/utils";
+
 import { ERoles } from "../../../../types/roles.enum";
 
 const { Option } = Select;
@@ -82,7 +85,8 @@ const RegionsPage = () => {
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
 
   const [editingRegion, setEditingRegion] = useState<RegionConfig | null>(null);
-  const [originalRegionData, setOriginalRegionData] = useState<Partial<RegionConfig> | null>(null);
+  const [originalRegionData, setOriginalRegionData] =
+    useState<Partial<RegionConfig> | null>(null);
 
   const [addForm] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -267,11 +271,14 @@ const RegionsPage = () => {
         return;
       }
 
-      const response = await fetch(`/api/configurations/regions/${editingRegion._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...dirtied, updatedBy: user?._id }),
-      });
+      const response = await fetch(
+        `/api/configurations/regions/${editingRegion._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...dirtied, updatedBy: user?._id }),
+        }
+      );
 
       const data = await response.json();
 
@@ -307,11 +314,17 @@ const RegionsPage = () => {
 
   const handleDeleteRegion = async (id: string) => {
     try {
-      const response = await fetch(`/api/configurations/regions/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/configurations/regions/${id}`, {
+        method: "DELETE",
+      });
       const data = await response.json();
 
       if (data?.success) {
-        sweetAlert({ title: "Success", text: "Region deleted successfully", icon: "success" });
+        sweetAlert({
+          title: "Success",
+          text: "Region deleted successfully",
+          icon: "success",
+        });
         fetchRegions();
       } else {
         sweetAlert({
@@ -336,41 +349,53 @@ const RegionsPage = () => {
         title: "Name",
         dataIndex: "name",
         key: "name",
-        sorter: (a: RegionConfig, b: RegionConfig) => a.name.localeCompare(b.name),
+        sorter: (a: RegionConfig, b: RegionConfig) =>
+          a.name.localeCompare(b.name),
       },
       {
         title: "Code",
         dataIndex: "code",
         key: "code",
         render: (text: string) => <Tag color="blue">{text}</Tag>,
-        sorter: (a: RegionConfig, b: RegionConfig) => a.code.localeCompare(b.code),
+        sorter: (a: RegionConfig, b: RegionConfig) =>
+          a.code.localeCompare(b.code),
       },
       {
         title: "Province",
         dataIndex: "province",
         key: "province",
-        render: (value: string) => (value ? <Tag>{value}</Tag> : <span className="text-gray-400">--</span>),
+        render: (value: string) =>
+          value ? (
+            <Tag>{value}</Tag>
+          ) : (
+            <span className="text-gray-400">--</span>
+          ),
         filters: PROVINCES.map((p) => ({ text: p, value: p })),
-        onFilter: (value: any, record: RegionConfig) => record.province === value,
+        onFilter: (value: any, record: RegionConfig) =>
+          record.province === value,
       },
       {
         title: "Manager",
         dataIndex: "manager",
         key: "manager",
-        render: (_: any, record: RegionConfig) => getManagerLabel(record.manager),
+        render: (_: any, record: RegionConfig) =>
+          getManagerLabel(record.manager),
       },
       {
         title: "Status",
         dataIndex: "isActive",
         key: "isActive",
         render: (isActive: boolean) => (
-          <Tag color={isActive ? "green" : "red"}>{isActive ? "Active" : "Inactive"}</Tag>
+          <Tag color={isActive ? "green" : "red"}>
+            {isActive ? "Active" : "Inactive"}
+          </Tag>
         ),
         filters: [
           { text: "Active", value: true },
           { text: "Inactive", value: false },
         ],
-        onFilter: (value: any, record: RegionConfig) => record.isActive === value,
+        onFilter: (value: any, record: RegionConfig) =>
+          record.isActive === value,
       },
       {
         title: "Actions",
@@ -378,7 +403,11 @@ const RegionsPage = () => {
         render: (_: any, record: RegionConfig) => (
           <Space>
             <Tooltip title="Edit">
-              <Button type="text" icon={<Edit size={16} />} onClick={() => handleEditRegion(record)} />
+              <Button
+                type="text"
+                icon={<Edit size={16} />}
+                onClick={() => handleEditRegion(record)}
+              />
             </Tooltip>
             <Popconfirm
               title="Are you sure you want to delete this region?"
@@ -403,10 +432,15 @@ const RegionsPage = () => {
       debounce((name: string) => {
         if (codeManuallyEditedRef.current) return;
 
-        const suggested = deriveRegionCode(name, { maxLength: 3, fallbackLength: 3 });
+        const suggested = deriveRegionCode(name, {
+          maxLength: 3,
+          fallbackLength: 3,
+        });
         if (!suggested) return;
 
-        const currentCode = (addForm.getFieldValue("code") || "").trim().toUpperCase();
+        const currentCode = (addForm.getFieldValue("code") || "")
+          .trim()
+          .toUpperCase();
         const lastSuggested = lastSuggestedAddCodeRef.current;
 
         // Fill if empty OR still equals our last suggestion
@@ -418,16 +452,20 @@ const RegionsPage = () => {
     [addForm]
   );
 
-
   const suggestEditCode = useMemo(
     () =>
       debounce((name: string) => {
         if (editCodeManuallyEditedRef.current) return;
 
-        const suggested = deriveRegionCode(name, { maxLength: 3, fallbackLength: 3 });
+        const suggested = deriveRegionCode(name, {
+          maxLength: 3,
+          fallbackLength: 3,
+        });
         if (!suggested) return;
 
-        const currentCode = (editForm.getFieldValue("code") || "").trim().toUpperCase();
+        const currentCode = (editForm.getFieldValue("code") || "")
+          .trim()
+          .toUpperCase();
         const lastSuggested = lastSuggestedEditCodeRef.current;
 
         if (!currentCode || (lastSuggested && currentCode === lastSuggested)) {
@@ -438,10 +476,9 @@ const RegionsPage = () => {
     [editForm]
   );
 
-
   if (loading) {
     return (
-      <div className="h-[80vh] flex items-center justify-center">
+      <div className="flex h-[80vh] items-center justify-center">
         <Spin size="large" />
       </div>
     );
@@ -453,7 +490,11 @@ const RegionsPage = () => {
         title="Region Configurations"
         subtitle="Manage operational regions (groupings of branches)"
         actions={[
-          <Button key="refresh" icon={<ReloadOutlined />} onClick={handleRefresh}>
+          <Button
+            key="refresh"
+            icon={<ReloadOutlined />}
+            onClick={handleRefresh}
+          >
             Refresh
           </Button>,
           <Button
@@ -463,9 +504,8 @@ const RegionsPage = () => {
             icon={<PlusOutlined />}
             onClick={() => {
               codeManuallyEditedRef.current = false;
-              setAddDrawerOpen(true)
-            }
-            }
+              setAddDrawerOpen(true);
+            }}
           >
             Add Region
           </Button>,
@@ -476,7 +516,11 @@ const RegionsPage = () => {
         dataSource={regions}
         columns={columns as any}
         rowKey="_id"
-        pagination={{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          showQuickJumper: true,
+        }}
       />
 
       {/* Add Drawer */}
@@ -490,7 +534,7 @@ const RegionsPage = () => {
         }}
         destroyOnClose
         footer={
-          <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
             <Button
               onClick={() => {
                 setAddDrawerOpen(false);
@@ -511,17 +555,25 @@ const RegionsPage = () => {
           </div>
         }
       >
-        <Form form={addForm} layout="vertical" onFinish={handleSaveRegion} className="grid grid-cols-1 gap-4">
+        <Form
+          form={addForm}
+          layout="vertical"
+          onFinish={handleSaveRegion}
+          className="grid grid-cols-1 gap-4"
+        >
           <Form.Item
             name="name"
             label="Region Name"
             rules={[{ required: true, message: "Please enter region name" }]}
           >
-            <Input placeholder="e.g. South Coast" allowClear
+            <Input
+              placeholder="e.g. South Coast"
+              allowClear
               onChange={(e) => {
                 // user is typing name → suggest code
                 suggestAddCode(e.target.value);
-              }} />
+              }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -529,12 +581,15 @@ const RegionsPage = () => {
             label="Region Code"
             rules={[{ required: true, message: "Please enter region code" }]}
           >
-            <Input placeholder="e.g. SC001" allowClear
+            <Input
+              placeholder="e.g. SC001"
+              allowClear
               onChange={(e) => {
                 // once user touches code, stop auto-suggest
                 codeManuallyEditedRef.current = true;
                 addForm.setFieldsValue({ code: e.target.value.toUpperCase() });
-              }} />
+              }}
+            />
           </Form.Item>
 
           <Form.Item name="province" label="Province">
@@ -548,7 +603,11 @@ const RegionsPage = () => {
           </Form.Item>
 
           <Form.Item name="manager" label="Region Manager">
-            <Select placeholder="Select region manager" allowClear suffixIcon={<UserIcon size={16} />}>
+            <Select
+              placeholder="Select region manager"
+              allowClear
+              suffixIcon={<UserIcon size={16} />}
+            >
               {users.map((u, idx) => (
                 <Option key={u._id || idx} value={u._id}>
                   {u.name as any}
@@ -557,7 +616,12 @@ const RegionsPage = () => {
             </Select>
           </Form.Item>
 
-          <Form.Item name="isActive" label="Active" valuePropName="checked" initialValue={true}>
+          <Form.Item
+            name="isActive"
+            label="Active"
+            valuePropName="checked"
+            initialValue={true}
+          >
             <Switch />
           </Form.Item>
         </Form>
@@ -577,7 +641,7 @@ const RegionsPage = () => {
         destroyOnClose
         width={520}
         footer={
-          <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
             <Button
               onClick={() => {
                 setEditDrawerOpen(false);
@@ -600,22 +664,33 @@ const RegionsPage = () => {
           </div>
         }
       >
-        <Form form={editForm} layout="vertical" onFinish={handleUpdateRegion} className="grid grid-cols-1 gap-4">
+        <Form
+          form={editForm}
+          layout="vertical"
+          onFinish={handleUpdateRegion}
+          className="grid grid-cols-1 gap-4"
+        >
           <Form.Item name="name" label="Region Name">
-            <Input placeholder="e.g. South Coast" allowClear
+            <Input
+              placeholder="e.g. South Coast"
+              allowClear
               onChange={(e) => {
                 // user is typing name → suggest code
                 suggestEditCode(e.target.value);
-              }} />
+              }}
+            />
           </Form.Item>
 
           <Form.Item name="code" label="Region Code">
-            <Input placeholder="e.g. SC001" allowClear
+            <Input
+              placeholder="e.g. SC001"
+              allowClear
               onChange={(e) => {
                 // once user touches code, stop auto-suggest
                 editCodeManuallyEditedRef.current = true;
                 editForm.setFieldsValue({ code: e.target.value.toUpperCase() });
-              }} />
+              }}
+            />
           </Form.Item>
 
           <Form.Item name="province" label="Province">
@@ -629,7 +704,11 @@ const RegionsPage = () => {
           </Form.Item>
 
           <Form.Item name="manager" label="Region Manager">
-            <Select placeholder="Select region manager" allowClear suffixIcon={<UserIcon size={16} />}>
+            <Select
+              placeholder="Select region manager"
+              allowClear
+              suffixIcon={<UserIcon size={16} />}
+            >
               {users.map((u, idx) => (
                 <Option key={u._id || idx} value={u._id}>
                   {u.name as any}

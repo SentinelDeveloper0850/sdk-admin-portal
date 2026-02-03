@@ -1,13 +1,35 @@
 "use client";
 
-import { ClockCircleOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined, UserOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Divider, Form, Input, message, Row, Space, Statistic, Switch, TimePicker } from "antd";
-import dayjs from "dayjs";
 import { useEffect, useState } from "react";
+
+import {
+  ClockCircleOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  SaveOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Form,
+  Input,
+  Row,
+  Space,
+  Statistic,
+  Switch,
+  TimePicker,
+  message,
+} from "antd";
+import dayjs from "dayjs";
+
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
-import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 interface ReminderConfig {
   isEnabled: boolean;
@@ -59,8 +81,12 @@ const DailyActivityRemindersPage = () => {
         if (data.data.config) {
           form.setFieldsValue({
             ...data.data.config,
-            reminderTime: data.data.config.reminderTime ? dayjs(data.data.config.reminderTime, "HH:mm") : null,
-            cutoffTime: data.data.config.cutoffTime ? dayjs(data.data.config.cutoffTime, "HH:mm") : null,
+            reminderTime: data.data.config.reminderTime
+              ? dayjs(data.data.config.reminderTime, "HH:mm")
+              : null,
+            cutoffTime: data.data.config.cutoffTime
+              ? dayjs(data.data.config.cutoffTime, "HH:mm")
+              : null,
           });
         }
       } else {
@@ -79,8 +105,12 @@ const DailyActivityRemindersPage = () => {
     try {
       const configData = {
         ...values,
-        reminderTime: values.reminderTime ? values.reminderTime.format("HH:mm") : "16:00",
-        cutoffTime: values.cutoffTime ? values.cutoffTime.format("HH:mm") : "18:00",
+        reminderTime: values.reminderTime
+          ? values.reminderTime.format("HH:mm")
+          : "16:00",
+        cutoffTime: values.cutoffTime
+          ? values.cutoffTime.format("HH:mm")
+          : "18:00",
       };
 
       const response = await fetch("/api/daily-activity-reminders", {
@@ -120,7 +150,9 @@ const DailyActivityRemindersPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        message.success(`Reminders triggered: ${data.data.remindersSent} emails sent`);
+        message.success(
+          `Reminders triggered: ${data.data.remindersSent} emails sent`
+        );
         fetchData(); // Refresh stats
       } else {
         message.error(data.message || "Failed to trigger reminders");
@@ -137,8 +169,9 @@ const DailyActivityRemindersPage = () => {
     fetchData();
   }, []);
 
-  const getStatusColor = (isEnabled: boolean) => isEnabled ? "green" : "red";
-  const getStatusText = (isEnabled: boolean) => isEnabled ? "Active" : "Inactive";
+  const getStatusColor = (isEnabled: boolean) => (isEnabled ? "green" : "red");
+  const getStatusText = (isEnabled: boolean) =>
+    isEnabled ? "Active" : "Inactive";
 
   return (
     <div className="space-y-6 p-6">
@@ -203,7 +236,9 @@ const DailyActivityRemindersPage = () => {
               <Statistic
                 title="Pending Today"
                 value={stats.pendingToday}
-                valueStyle={{ color: stats.pendingToday > 0 ? "#cf1322" : "#3f8600" }}
+                valueStyle={{
+                  color: stats.pendingToday > 0 ? "#cf1322" : "#3f8600",
+                }}
               />
             </Card>
           </Col>
@@ -247,7 +282,9 @@ const DailyActivityRemindersPage = () => {
               <Form.Item
                 name="emailSubject"
                 label="Email Subject"
-                rules={[{ required: true, message: "Email subject is required" }]}
+                rules={[
+                  { required: true, message: "Email subject is required" },
+                ]}
               >
                 <Input placeholder="Daily Activity Report Reminder" />
               </Form.Item>
@@ -261,7 +298,9 @@ const DailyActivityRemindersPage = () => {
               <Form.Item
                 name="reminderTime"
                 label="Reminder Time"
-                rules={[{ required: true, message: "Reminder time is required" }]}
+                rules={[
+                  { required: true, message: "Reminder time is required" },
+                ]}
               >
                 <TimePicker format="HH:mm" placeholder="16:00" />
               </Form.Item>
@@ -323,7 +362,12 @@ const DailyActivityRemindersPage = () => {
               <Form.Item
                 name="firstReminderOffset"
                 label="First Reminder (minutes before cutoff)"
-                rules={[{ required: true, message: "First reminder offset is required" }]}
+                rules={[
+                  {
+                    required: true,
+                    message: "First reminder offset is required",
+                  },
+                ]}
               >
                 <Input type="number" min={0} max={1440} placeholder="120" />
               </Form.Item>
@@ -344,7 +388,12 @@ const DailyActivityRemindersPage = () => {
               <Form.Item
                 name="finalReminderOffset"
                 label="Final Reminder (minutes before cutoff)"
-                rules={[{ required: true, message: "Final reminder offset is required" }]}
+                rules={[
+                  {
+                    required: true,
+                    message: "Final reminder offset is required",
+                  },
+                ]}
               >
                 <Input type="number" min={0} max={1440} placeholder="30" />
               </Form.Item>
@@ -357,12 +406,18 @@ const DailyActivityRemindersPage = () => {
             <Row gutter={16}>
               <Col span={8}>
                 <div className="text-sm text-gray-600">
-                  <strong>Last Run:</strong> {stats.lastRunAt ? dayjs(stats.lastRunAt).format("DD/MM/YYYY HH:mm") : "Never"}
+                  <strong>Last Run:</strong>{" "}
+                  {stats.lastRunAt
+                    ? dayjs(stats.lastRunAt).format("DD/MM/YYYY HH:mm")
+                    : "Never"}
                 </div>
               </Col>
               <Col span={8}>
                 <div className="text-sm text-gray-600">
-                  <strong>Next Run:</strong> {stats.nextRunAt ? dayjs(stats.nextRunAt).format("DD/MM/YYYY HH:mm") : "Not scheduled"}
+                  <strong>Next Run:</strong>{" "}
+                  {stats.nextRunAt
+                    ? dayjs(stats.nextRunAt).format("DD/MM/YYYY HH:mm")
+                    : "Not scheduled"}
                 </div>
               </Col>
               <Col span={8}>
@@ -385,9 +440,7 @@ const DailyActivityRemindersPage = () => {
               >
                 Save Configuration
               </Button>
-              <Button onClick={() => form.resetFields()}>
-                Reset
-              </Button>
+              <Button onClick={() => form.resetFields()}>Reset</Button>
             </Space>
           </Form.Item>
         </Form>
@@ -399,10 +452,21 @@ const DailyActivityRemindersPage = () => {
         description={
           <div className="space-y-2">
             <p>• Reminders are sent automatically at the configured time</p>
-            <p>• First reminder: {config?.firstReminderOffset || 120} minutes before cutoff</p>
-            <p>• Final reminder: {config?.finalReminderOffset || 30} minutes before cutoff</p>
-            <p>• Only users who haven't submitted their report receive reminders</p>
-            <p>• You can manually trigger reminders using the "Trigger Reminders" button</p>
+            <p>
+              • First reminder: {config?.firstReminderOffset || 120} minutes
+              before cutoff
+            </p>
+            <p>
+              • Final reminder: {config?.finalReminderOffset || 30} minutes
+              before cutoff
+            </p>
+            <p>
+              • Only users who haven't submitted their report receive reminders
+            </p>
+            <p>
+              • You can manually trigger reminders using the "Trigger Reminders"
+              button
+            </p>
           </div>
         }
         type="info"
@@ -412,4 +476,4 @@ const DailyActivityRemindersPage = () => {
   );
 };
 
-export default withRoleGuard(DailyActivityRemindersPage, ["admin"]); 
+export default withRoleGuard(DailyActivityRemindersPage, ["admin"]);

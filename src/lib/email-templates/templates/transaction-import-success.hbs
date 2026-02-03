@@ -3,74 +3,75 @@
 <p>Hello {{userName}},</p>
 
 <div class="alert alert-success">
-    <h3>✅ Import Completed Successfully</h3>
-    <p>Your transaction import has been processed successfully.</p>
+  <h3>✅ Import Completed Successfully</h3>
+  <p>Your transaction import has been processed successfully.</p>
 </div>
 
 <div class="info-box">
-    <h3>Import Summary</h3>
-    <table class="info-table">
-        <tr>
-            <td>Import Type:</td>
-            <td>{{importType}}</td>
-        </tr>
-        <tr>
-            <td>File Name:</td>
-            <td>{{fileName}}</td>
-        </tr>
-        <tr>
-            <td>Total Transactions:</td>
-            <td>{{totalTransactions}}</td>
-        </tr>
-        <tr>
-            <td>Successfully Imported:</td>
-            <td>{{successfulImports}}</td>
-        </tr>
-        <tr>
-            <td>Failed Imports:</td>
-            <td>{{failedImports}}</td>
-        </tr>
-        <tr>
-            <td>Import Date:</td>
-            <td>{{formatDateTime importDate}}</td>
-        </tr>
-        <tr>
-            <td>Processing Time:</td>
-            <td>{{processingTime}} seconds</td>
-        </tr>
-    </table>
+  <h3>Import Summary</h3>
+  <table class="info-table">
+    <tr>
+      <td>Import Type:</td>
+      <td>{{importType}}</td>
+    </tr>
+    <tr>
+      <td>File Name:</td>
+      <td>{{fileName}}</td>
+    </tr>
+    <tr>
+      <td>Total Transactions:</td>
+      <td>{{totalTransactions}}</td>
+    </tr>
+    <tr>
+      <td>Successfully Imported:</td>
+      <td>{{successfulImports}}</td>
+    </tr>
+    <tr>
+      <td>Failed Imports:</td>
+      <td>{{failedImports}}</td>
+    </tr>
+    <tr>
+      <td>Import Date:</td>
+      <td>{{formatDateTime importDate}}</td>
+    </tr>
+    <tr>
+      <td>Processing Time:</td>
+      <td>{{processingTime}} seconds</td>
+    </tr>
+  </table>
 </div>
 
 {{#if importNotes}}
-<div class="alert alert-info">
+  <div class="alert alert-info">
     <h4>Import Notes</h4>
     <p>{{importNotes}}</p>
-</div>
+  </div>
 {{/if}}
 
 {{#if failedTransactions}}
-<div class="alert alert-warning">
+  <div class="alert alert-warning">
     <h4>Failed Transactions</h4>
     <p>The following transactions could not be imported:</p>
     <ul>
-        {{#each failedTransactions}}
+      {{#each failedTransactions}}
         <li>{{description}} - {{reason}}</li>
-        {{/each}}
+      {{/each}}
     </ul>
-</div>
+  </div>
 {{/if}}
 
 <div class="alert alert-info">
-    <h4>Next Steps</h4>
-    <ol>
-        <li>Review the imported transactions in the system</li>
-        <li>Verify data accuracy and completeness</li>
-        <li>Process any reconciliation tasks if needed</li>
-        <li>Contact support if you notice any discrepancies</li>
-    </ol>
+  <h4>Next Steps</h4>
+  <ol>
+    <li>Review the imported transactions in the system</li>
+    <li>Verify data accuracy and completeness</li>
+    <li>Process any reconciliation tasks if needed</li>
+    <li>Contact support if you notice any discrepancies</li>
+  </ol>
 </div>
 
-<p>You can view the imported transactions in the SDK Admin Portal under the Transactions section.</p>
+<p>You can view the imported transactions in the SDK Admin Portal under the
+  Transactions section.</p>
 
-<p>Best regards,<br>
-<strong>SDK Admin Portal Team</strong></p> 
+<p>Best regards,<br />
+  <strong>SDK Admin Portal Team</strong></p>

@@ -7,9 +7,23 @@ import {
   ClockCircleOutlined,
   ExclamationCircleOutlined,
   UserOutlined,
-  WarningOutlined
+  WarningOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Card, Col, DatePicker, Drawer, Progress, Row, Space, Statistic, Table, Tag, Typography } from "antd";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  DatePicker,
+  Drawer,
+  Progress,
+  Row,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -47,26 +61,29 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
   onClose,
   summary,
   selectedWeek,
-  onWeekChange
+  onWeekChange,
 }) => {
   const [loading, setLoading] = useState(false);
   const [repeatOffenders, setRepeatOffenders] = useState<RepeatOffender[]>([]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR'
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
     }).format(amount);
   };
 
   const getBalanceRate = () => {
     if (!summary || summary.totalStaffAudited === 0) return 0;
-    return Math.round((summary.fullyBalanced / summary.totalStaffAudited) * 100);
+    return Math.round(
+      (summary.fullyBalanced / summary.totalStaffAudited) * 100
+    );
   };
 
   const getSubmissionRate = () => {
     if (!summary || summary.totalStaffAudited === 0) return 0;
-    const totalSubmissions = summary.onTimeSubmissions + summary.lateSubmissions;
+    const totalSubmissions =
+      summary.onTimeSubmissions + summary.lateSubmissions;
     return Math.round((totalSubmissions / summary.totalStaffAudited) * 100);
   };
 
@@ -87,7 +104,9 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
       title: "Count",
       dataIndex: "count",
       key: "count",
-      render: (count: number) => <Text className="text-lg font-semibold">{count}</Text>,
+      render: (count: number) => (
+        <Text className="text-lg font-semibold">{count}</Text>
+      ),
     },
     {
       title: "Percentage",
@@ -99,7 +118,13 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
             percent={percentage}
             size="small"
             showInfo={false}
-            strokeColor={percentage >= 80 ? "#52c41a" : percentage >= 60 ? "#faad14" : "#ff4d4f"}
+            strokeColor={
+              percentage >= 80
+                ? "#52c41a"
+                : percentage >= 60
+                  ? "#faad14"
+                  : "#ff4d4f"
+            }
           />
           <Text className="text-sm">{percentage}%</Text>
         </div>
@@ -124,9 +149,7 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
       dataIndex: "discrepancyCount",
       key: "discrepancyCount",
       render: (count: number) => (
-        <Tag color={getRiskLevelColor(count)}>
-          {count} issues
-        </Tag>
+        <Tag color={getRiskLevelColor(count)}>{count} issues</Tag>
       ),
     },
     {
@@ -134,9 +157,7 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
       dataIndex: "lateSubmissionCount",
       key: "lateSubmissionCount",
       render: (count: number) => (
-        <Tag color={getRiskLevelColor(count)}>
-          {count} late
-        </Tag>
+        <Tag color={getRiskLevelColor(count)}>{count} late</Tag>
       ),
     },
     {
@@ -144,9 +165,7 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
       dataIndex: "totalIssues",
       key: "totalIssues",
       render: (count: number) => (
-        <Tag color={getRiskLevelColor(count)}>
-          {count} total
-        </Tag>
+        <Tag color={getRiskLevelColor(count)}>{count} total</Tag>
       ),
     },
     {
@@ -157,32 +176,44 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
     },
   ];
 
-  const summaryData = summary ? [
-    {
-      key: "balanced",
-      metric: "Fully Balanced",
-      count: summary.fullyBalanced,
-      percentage: getBalanceRate(),
-    },
-    {
-      key: "submissions",
-      metric: "On-Time Submissions",
-      count: summary.onTimeSubmissions,
-      percentage: getSubmissionRate(),
-    },
-    {
-      key: "discrepancies",
-      metric: "Discrepancies Found",
-      count: summary.discrepanciesFound,
-      percentage: summary.totalStaffAudited > 0 ? Math.round((summary.discrepanciesFound / summary.totalStaffAudited) * 100) : 0,
-    },
-    {
-      key: "late",
-      metric: "Late Submissions",
-      count: summary.lateSubmissions,
-      percentage: summary.totalStaffAudited > 0 ? Math.round((summary.lateSubmissions / summary.totalStaffAudited) * 100) : 0,
-    },
-  ] : [];
+  const summaryData = summary
+    ? [
+        {
+          key: "balanced",
+          metric: "Fully Balanced",
+          count: summary.fullyBalanced,
+          percentage: getBalanceRate(),
+        },
+        {
+          key: "submissions",
+          metric: "On-Time Submissions",
+          count: summary.onTimeSubmissions,
+          percentage: getSubmissionRate(),
+        },
+        {
+          key: "discrepancies",
+          metric: "Discrepancies Found",
+          count: summary.discrepanciesFound,
+          percentage:
+            summary.totalStaffAudited > 0
+              ? Math.round(
+                  (summary.discrepanciesFound / summary.totalStaffAudited) * 100
+                )
+              : 0,
+        },
+        {
+          key: "late",
+          metric: "Late Submissions",
+          count: summary.lateSubmissions,
+          percentage:
+            summary.totalStaffAudited > 0
+              ? Math.round(
+                  (summary.lateSubmissions / summary.totalStaffAudited) * 100
+                )
+              : 0,
+        },
+      ]
+    : [];
 
   return (
     <Drawer
@@ -193,19 +224,17 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
       onClose={onClose}
       footer={
         <Space>
-          <Button onClick={onClose}>
-            Close
-          </Button>
-          <Button type="primary">
-            Export Report
-          </Button>
+          <Button onClick={onClose}>Close</Button>
+          <Button type="primary">Export Report</Button>
         </Space>
       }
     >
       <div className="space-y-6">
         {/* Week Selector */}
         <div className="flex items-center justify-between">
-          <Title level={4}>Week of {dayjs(selectedWeek).format("DD MMM YYYY")}</Title>
+          <Title level={4}>
+            Week of {dayjs(selectedWeek).format("DD MMM YYYY")}
+          </Title>
           <DatePicker
             picker="week"
             value={dayjs(selectedWeek)}
@@ -218,8 +247,10 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
         </div>
 
         {!summary ? (
-          <div className="text-center py-8">
-            <Text className="text-gray-500">No data available for this week</Text>
+          <div className="py-8 text-center">
+            <Text className="text-gray-500">
+              No data available for this week
+            </Text>
           </div>
         ) : (
           <>
@@ -273,17 +304,24 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
               <Col xs={24} lg={12}>
                 <Card title="Balance Rate">
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <Text>Fully Balanced</Text>
                       <Text className="font-semibold">{getBalanceRate()}%</Text>
                     </div>
                     <Progress
                       percent={getBalanceRate()}
-                      strokeColor={getBalanceRate() >= 80 ? "#52c41a" : getBalanceRate() >= 60 ? "#faad14" : "#ff4d4f"}
+                      strokeColor={
+                        getBalanceRate() >= 80
+                          ? "#52c41a"
+                          : getBalanceRate() >= 60
+                            ? "#faad14"
+                            : "#ff4d4f"
+                      }
                       showInfo={false}
                     />
                     <Text className="text-xs text-gray-500">
-                      {summary.fullyBalanced} out of {summary.totalStaffAudited} staff members
+                      {summary.fullyBalanced} out of {summary.totalStaffAudited}{" "}
+                      staff members
                     </Text>
                   </div>
                 </Card>
@@ -291,17 +329,26 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
               <Col xs={24} lg={12}>
                 <Card title="Submission Rate">
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <Text>On-Time Submissions</Text>
-                      <Text className="font-semibold">{getSubmissionRate()}%</Text>
+                      <Text className="font-semibold">
+                        {getSubmissionRate()}%
+                      </Text>
                     </div>
                     <Progress
                       percent={getSubmissionRate()}
-                      strokeColor={getSubmissionRate() >= 80 ? "#52c41a" : getSubmissionRate() >= 60 ? "#faad14" : "#ff4d4f"}
+                      strokeColor={
+                        getSubmissionRate() >= 80
+                          ? "#52c41a"
+                          : getSubmissionRate() >= 60
+                            ? "#faad14"
+                            : "#ff4d4f"
+                      }
                       showInfo={false}
                     />
                     <Text className="text-xs text-gray-500">
-                      {summary.onTimeSubmissions} out of {summary.totalStaffAudited} staff members
+                      {summary.onTimeSubmissions} out of{" "}
+                      {summary.totalStaffAudited} staff members
                     </Text>
                   </div>
                 </Card>
@@ -309,7 +356,8 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
             </Row>
 
             {/* Risk Alerts */}
-            {(summary.highRiskDiscrepancies > 0 || summary.repeatOffenders > 0) && (
+            {(summary.highRiskDiscrepancies > 0 ||
+              summary.repeatOffenders > 0) && (
               <div className="space-y-4">
                 <Title level={4}>Risk Alerts</Title>
 
@@ -362,11 +410,12 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
               <div className="space-y-3">
                 {summary.discrepanciesFound > 0 && (
                   <div className="flex items-start gap-3">
-                    <ExclamationCircleOutlined className="text-orange-500 mt-1" />
+                    <ExclamationCircleOutlined className="mt-1 text-orange-500" />
                     <div>
                       <Text className="font-medium">Address Discrepancies</Text>
                       <div className="text-sm text-gray-500">
-                        {summary.discrepanciesFound} discrepancies found. Review and resolve these issues promptly.
+                        {summary.discrepanciesFound} discrepancies found. Review
+                        and resolve these issues promptly.
                       </div>
                     </div>
                   </div>
@@ -374,11 +423,14 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
 
                 {summary.lateSubmissions > 0 && (
                   <div className="flex items-start gap-3">
-                    <ClockCircleOutlined className="text-orange-500 mt-1" />
+                    <ClockCircleOutlined className="mt-1 text-orange-500" />
                     <div>
-                      <Text className="font-medium">Improve Submission Timeliness</Text>
+                      <Text className="font-medium">
+                        Improve Submission Timeliness
+                      </Text>
                       <div className="text-sm text-gray-500">
-                        {summary.lateSubmissions} late submissions. Consider reminders or training on submission deadlines.
+                        {summary.lateSubmissions} late submissions. Consider
+                        reminders or training on submission deadlines.
                       </div>
                     </div>
                   </div>
@@ -386,11 +438,15 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
 
                 {summary.repeatOffenders > 0 && (
                   <div className="flex items-start gap-3">
-                    <WarningOutlined className="text-red-500 mt-1" />
+                    <WarningOutlined className="mt-1 text-red-500" />
                     <div>
-                      <Text className="font-medium">Address Repeat Offenders</Text>
+                      <Text className="font-medium">
+                        Address Repeat Offenders
+                      </Text>
                       <div className="text-sm text-gray-500">
-                        {summary.repeatOffenders} employees with multiple issues. Consider additional training or disciplinary measures.
+                        {summary.repeatOffenders} employees with multiple
+                        issues. Consider additional training or disciplinary
+                        measures.
                       </div>
                     </div>
                   </div>
@@ -398,11 +454,12 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
 
                 {getBalanceRate() >= 90 && (
                   <div className="flex items-start gap-3">
-                    <CheckCircleOutlined className="text-green-500 mt-1" />
+                    <CheckCircleOutlined className="mt-1 text-green-500" />
                     <div>
                       <Text className="font-medium">Excellent Performance</Text>
                       <div className="text-sm text-gray-500">
-                        {getBalanceRate()}% balance rate is excellent. Keep up the good work!
+                        {getBalanceRate()}% balance rate is excellent. Keep up
+                        the good work!
                       </div>
                     </div>
                   </div>
@@ -416,4 +473,4 @@ const WeeklySummaryDrawer: React.FC<Props> = ({
   );
 };
 
-export default WeeklySummaryDrawer; 
+export default WeeklySummaryDrawer;

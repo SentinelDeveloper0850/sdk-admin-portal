@@ -6,20 +6,24 @@
  *
  * This file is not routed by Next.js (only `page.tsx` is).
  */
-
-import DOMPurify from "dompurify";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Select } from "antd";
 import { useCallback, useRef, useState } from "react";
+
+import { Select } from "antd";
+import DOMPurify from "dompurify";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
+
 import { ERoles } from "../../../../types/roles.enum";
 
-const RichTextEditor = dynamic(() => import("@/app/components/editor/RichTextEditor"), { ssr: false });
+const RichTextEditor = dynamic(
+  () => import("@/app/components/editor/RichTextEditor"),
+  { ssr: false }
+);
 
 function CreateKnowledgeArticleInner() {
   const router = useRouter();
@@ -51,7 +55,7 @@ function CreateKnowledgeArticleInner() {
         }
       }
     },
-    [title],
+    [title]
   );
 
   const handlePickFile = useCallback(() => {
@@ -75,7 +79,7 @@ function CreateKnowledgeArticleInner() {
         setUploadError("Could not read the file. Please try again.");
       }
     },
-    [applyMarkdown],
+    [applyMarkdown]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -83,7 +87,14 @@ function CreateKnowledgeArticleInner() {
     const res = await fetch("/api/knowledge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, summary, bodyMd, bodyHtml, category, tags }),
+      body: JSON.stringify({
+        title,
+        summary,
+        bodyMd,
+        bodyHtml,
+        category,
+        tags,
+      }),
     });
     if (!res.ok) {
       setSaving(false);
@@ -94,7 +105,7 @@ function CreateKnowledgeArticleInner() {
   }, [title, summary, bodyMd, bodyHtml, category, tags, router]);
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       <h1 className="text-xl font-semibold">Create Knowledge Article</h1>
 
       <div className="grid gap-3">
@@ -106,13 +117,17 @@ function CreateKnowledgeArticleInner() {
         />
 
         <textarea
-          className="rounded border px-3 py-2 min-h-20"
+          className="min-h-20 rounded border px-3 py-2"
           placeholder="Summary (optional)"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
         />
 
-        <select className="rounded border px-3 py-2" value={category} onChange={(e) => setCategory(e.target.value)}>
+        <select
+          className="rounded border px-3 py-2"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
           <option value="CODE_OF_CONDUCT">Code of Conduct</option>
           <option value="SOP">Standard Operating Procedures</option>
           <option value="HOW_TO">How To Guide</option>
@@ -124,7 +139,9 @@ function CreateKnowledgeArticleInner() {
         <Select
           mode="tags"
           value={tags}
-          onChange={(next) => setTags(Array.isArray(next) ? next.map(String) : [])}
+          onChange={(next) =>
+            setTags(Array.isArray(next) ? next.map(String) : [])
+          }
           tokenSeparators={[","]}
           placeholder="Tags"
           style={{ width: "100%" }}
@@ -150,8 +167,10 @@ function CreateKnowledgeArticleInner() {
           >
             Rich text
           </button>
-          <span className="text-xs text-muted-foreground">
-            {editorMode === "markdown" ? "Upload or paste Markdown." : "Uses the built-in rich text editor."}
+          <span className="text-muted-foreground text-xs">
+            {editorMode === "markdown"
+              ? "Upload or paste Markdown."
+              : "Uses the built-in rich text editor."}
           </span>
         </div>
 
@@ -181,19 +200,27 @@ function CreateKnowledgeArticleInner() {
                 <span className="text-muted-foreground">Drop a</span>
                 <span className="font-medium">.md</span>
                 <span className="text-muted-foreground">file here, or</span>
-                <button type="button" className="underline" onClick={handlePickFile}>
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={handlePickFile}
+                >
                   choose a file
                 </button>
                 <span className="text-muted-foreground">.</span>
               </div>
               {uploadedFileName ? (
-                <div className="mt-2 text-xs text-muted-foreground">Loaded: {uploadedFileName}</div>
+                <div className="text-muted-foreground mt-2 text-xs">
+                  Loaded: {uploadedFileName}
+                </div>
               ) : null}
-              {uploadError ? <div className="mt-2 text-xs text-red-600">{uploadError}</div> : null}
+              {uploadError ? (
+                <div className="mt-2 text-xs text-red-600">{uploadError}</div>
+              ) : null}
             </div>
 
             <textarea
-              className="rounded border px-3 py-2 h-60 font-mono w-full"
+              className="h-60 w-full rounded border px-3 py-2 font-mono"
               placeholder="Write Markdown here..."
               value={bodyMd}
               onChange={(e) => applyMarkdown(e.target.value)}
@@ -212,16 +239,23 @@ function CreateKnowledgeArticleInner() {
       </div>
 
       <div className="flex gap-2">
-        <button className="rounded border px-3 py-1 text-sm" onClick={handleSubmit} disabled={saving}>
+        <button
+          className="rounded border px-3 py-1 text-sm"
+          onClick={handleSubmit}
+          disabled={saving}
+        >
           {saving ? "Saving..." : "Save draft"}
         </button>
       </div>
 
       <div className="pt-4">
-        <h2 className="text-sm font-semibold mb-2">Preview</h2>
+        <h2 className="mb-2 text-sm font-semibold">Preview</h2>
         {editorMode === "markdown" ? (
           <article className="prose dark:prose-invert max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeSanitize]}
+            >
               {bodyMd}
             </ReactMarkdown>
           </article>
@@ -265,7 +299,6 @@ function CreateKnowledgeArticleInner() {
 
 const CreateKnowledgeArticleLegacyMarkdownPage = withRoleGuard(
   CreateKnowledgeArticleInner as unknown as React.FC,
-  [ERoles.Admin],
+  [ERoles.Admin]
 );
 export default CreateKnowledgeArticleLegacyMarkdownPage;
-

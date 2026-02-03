@@ -31,7 +31,11 @@ export async function POST(request: Request) {
       const page = body.page || 1;
       const pageSize = body.pageSize || 50;
 
-      const response = await searchTransactionsByPolicyNumber(searchText, page, pageSize);
+      const response = await searchTransactionsByPolicyNumber(
+        searchText,
+        page,
+        pageSize
+      );
 
       if (response.success) {
         return NextResponse.json(response.data, { status: 200 });
@@ -43,7 +47,12 @@ export async function POST(request: Request) {
       const page = body.page || 1;
       const pageSize = body.pageSize || 50;
 
-      const response = await searchTransactionsByAmount(amount, filterType, page, pageSize);
+      const response = await searchTransactionsByAmount(
+        amount,
+        filterType,
+        page,
+        pageSize
+      );
 
       if (response.success) {
         return NextResponse.json(response.data, { status: 200 });

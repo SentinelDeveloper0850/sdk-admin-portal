@@ -2,12 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Button, Card, DatePicker, Form, Select, Space, Spin, Table, Typography, message } from "antd";
+import {
+  Button,
+  Card,
+  DatePicker,
+  Form,
+  Select,
+  Space,
+  Spin,
+  Table,
+  Typography,
+  message,
+} from "antd";
 import dayjs from "dayjs";
+
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
 import { useDutyRoster } from "@/app/hooks/use-duty-roster";
-import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import { ERoles } from "@/types/roles.enum";
 
 const { Text } = Typography;
@@ -51,7 +63,12 @@ function DutyRosterPage() {
   const [rosterStaffIds, setRosterStaffIds] = useState<string[]>([]);
 
   const dateKey = date.format("YYYY-MM-DD");
-  const { loading, roster, error: rosterError, refresh: refreshRoster } = useDutyRoster(dateKey);
+  const {
+    loading,
+    roster,
+    error: rosterError,
+    refresh: refreshRoster,
+  } = useDutyRoster(dateKey);
 
   const fetchStaff = async () => {
     try {
@@ -87,7 +104,8 @@ function DutyRosterPage() {
         }),
       });
       const json = await res.json();
-      if (!json?.success) throw new Error(json?.message || "Failed to save roster");
+      if (!json?.success)
+        throw new Error(json?.message || "Failed to save roster");
       message.success("Roster saved");
       await refreshRoster();
     } catch (e: any) {
@@ -109,7 +127,10 @@ function DutyRosterPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roster]);
 
-  const staffOptions = useMemo(() => staff.slice().sort((a, b) => a.name.localeCompare(b.name)), [staff]);
+  const staffOptions = useMemo(
+    () => staff.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [staff]
+  );
 
   const rosterRows = useMemo(() => {
     const byId = new Map(staffOptions.map((s) => [s._id, s]));
@@ -133,7 +154,12 @@ function DutyRosterPage() {
         actions={[
           <Space key="actions">
             <Button onClick={refreshRoster}>Refresh</Button>
-            <Button type="primary" className="text-black" onClick={saveRoster} loading={saving}>
+            <Button
+              type="primary"
+              className="text-black"
+              onClick={saveRoster}
+              loading={saving}
+            >
               Save Roster
             </Button>
           </Space>,
@@ -144,11 +170,11 @@ function DutyRosterPage() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="min-w-[240px]">
-              <div className="text-xs text-gray-500 mb-1">Date</div>
+              <div className="mb-1 text-xs text-gray-500">Date</div>
               <DatePicker value={date} onChange={(d) => d && setDate(d)} />
             </div>
-            <div className="flex-1 min-w-[320px]">
-              <div className="text-xs text-gray-500 mb-1">On-duty staff</div>
+            <div className="min-w-[320px] flex-1">
+              <div className="mb-1 text-xs text-gray-500">On-duty staff</div>
               <Select
                 mode="multiple"
                 value={rosterStaffIds}
@@ -161,8 +187,9 @@ function DutyRosterPage() {
                   label: `${s.name}${s.branch ? ` • ${s.branch}` : ""}${s.position ? ` • ${s.position}` : ""}${s.userId ? "" : " • (no portal user)"}`,
                 }))}
               />
-              <Text type="secondary" className="block mt-2">
-                Only staff linked to a portal user can be “expected to submit” for submission-based modules (e.g. Daily Activity, Cashup).
+              <Text type="secondary" className="mt-2 block">
+                Only staff linked to a portal user can be “expected to submit”
+                for submission-based modules (e.g. Daily Activity, Cashup).
               </Text>
             </div>
           </div>
@@ -190,7 +217,7 @@ function DutyRosterPage() {
             <Spin />
           </div>
         ) : rosterError ? (
-          <div className="text-red-600 font-medium">{rosterError}</div>
+          <div className="font-medium text-red-600">{rosterError}</div>
         ) : (
           <Table
             size="small"
@@ -212,4 +239,3 @@ function DutyRosterPage() {
 }
 
 export default withRoleGuard(DutyRosterPage, [ERoles.Admin, ERoles.HRManager]);
-

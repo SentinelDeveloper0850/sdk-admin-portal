@@ -106,7 +106,7 @@ const PolicySchema: Schema = new Schema({
   cancellationStatus: {
     type: String,
     enum: ["none", "pending_review", "approved", "rejected"],
-    default: "none"
+    default: "none",
   },
 });
 

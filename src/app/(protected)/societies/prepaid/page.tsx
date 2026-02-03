@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 import { Col, Form, Row, Space, Spin, Statistic, Table } from "antd";
 import Search from "antd/es/input/Search";
 
+import { formatToMoneyWithCurrency } from "@/utils/formatters";
+
 import PageHeader from "@/app/components/page-header";
 import { ISociety } from "@/app/models/scheme/society.schema";
-import { formatToMoneyWithCurrency } from "@/utils/formatters";
 
 export default function PrepaidSocietiesPage() {
   const [societies, setSocieties] = useState<ISociety[]>([]);

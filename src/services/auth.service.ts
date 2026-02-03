@@ -63,7 +63,7 @@ export const loginUser = async (email: string, password: string) => {
       roles: user.roles,
       status: user.status,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      updatedAt: user.updatedAt,
     },
   };
 };

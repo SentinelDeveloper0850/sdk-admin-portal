@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { deletePolicyById, fetchPolicyById } from "@/server/actions/easipol-policies";
+import {
+  deletePolicyById,
+  fetchPolicyById,
+} from "@/server/actions/easipol-policies";
 
 export async function GET(
   request: NextRequest,
@@ -32,7 +35,10 @@ export async function GET(
   } catch (error: any) {
     console.error("Error fetching policy:", error.message);
     return NextResponse.json(
-      { success: false, message: "Internal Server Error ~ Error fetching policy" },
+      {
+        success: false,
+        message: "Internal Server Error ~ Error fetching policy",
+      },
       { status: 500 }
     );
   }
@@ -68,8 +74,11 @@ export async function DELETE(
   } catch (error: any) {
     console.error("Error deleting policy:", error.message);
     return NextResponse.json(
-      { success: false, message: "Internal Server Error ~ Error deleting policy" },
+      {
+        success: false,
+        message: "Internal Server Error ~ Error deleting policy",
+      },
       { status: 500 }
     );
   }
-} 
+}
