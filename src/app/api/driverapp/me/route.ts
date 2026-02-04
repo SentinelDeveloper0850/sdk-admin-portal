@@ -1,4 +1,5 @@
 import { DriverModel } from "@/app/models/drivers/driver.schema";
+import { StaffMemberModel } from "@/app/models/staff-member.schema";
 import { connectToDatabase } from "@/lib/db";
 import { requireDriverAuth } from "@/lib/driverapp-guard";
 import { NextResponse } from "next/server";
@@ -11,9 +12,14 @@ export async function GET(req: Request) {
 
     await connectToDatabase();
 
-    const driver = await DriverModel.findById(driverId).populate("staffMemberId");
+    const driver = await DriverModel.findById(driverId)
     if (!driver) {
         return NextResponse.json({ error: "Driver not found" }, { status: 404 });
+    }
+
+    const staffMember = await StaffMemberModel.findById(driver.staffMemberId);
+    if (staffMember) {
+        driver.staffMemberId = staffMember;
     }
 
     const staff: any = driver.staffMemberId;
