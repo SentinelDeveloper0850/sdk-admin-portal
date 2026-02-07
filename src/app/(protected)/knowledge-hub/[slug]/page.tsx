@@ -47,7 +47,7 @@ export default function KnowledgeArticleDetailPage({
   return (
     <div className="space-y-4 p-4">
       <PageHeader
-        title={doc.title}
+        title={doc.title} isChild
         subtitle={doc.summary ? String(doc.summary) : null}
         actions={[
           isAdmin ? (

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { IconCoffin, IconPigMoney, IconSteeringWheel, IconUserShield } from "@tabler/icons-react";
+import { IconCoffin, IconPigMoney, IconSteeringWheel } from "@tabler/icons-react";
 import { Tooltip } from "antd";
 import {
   Banknote,
@@ -22,11 +22,13 @@ import {
   Server,
   Settings,
   Shield,
-  Users,
+  UserPen,
+  Users
 } from "lucide-react";
 import {
   HiBuildingOffice,
   HiClock,
+  HiCog6Tooth,
   HiMapPin,
   HiOutlineDocumentCurrencyDollar,
   HiUserGroup
@@ -58,29 +60,7 @@ const SideNavBar = () => {
       name: "Tasks",
       icon: <ClipboardList size={18} />,
       url: "/tasks",
-      // No allowedRoles => visible to all logged in users
     },
-    // {
-    //   id: 9,
-    //   name: "Communication",
-    //   icon: <FileText size={18} />,
-    //   url: "/communication",
-    //   group: "Communication",
-    //   children: [
-    //     {
-    //       id: "news",
-    //       name: "News & Announcements",
-    //       icon: <FileText size={18} />,
-    //       url: "/news",
-    //     },
-    //     {
-    //       id: "knowledge-hub",
-    //       name: "Knowledge Hub",
-    //       icon: <FileText size={18} />,
-    //       url: "/knowledge-hub",
-    //     },
-    //   ],
-    // },
     {
       id: 3,
       name: "Operations",
@@ -269,6 +249,20 @@ const SideNavBar = () => {
       ],
     },
     {
+      id: 9,
+      name: "Knowledge Hub",
+      icon: <FileText size={18} />,
+      url: "/knowledge-hub",
+    },
+    {
+      id: 13,
+      name: "Status",
+      icon: <Server size={18} />,
+      url: "/status",
+      allowedRoles: [...Object.values(ERoles)],
+      group: "Management",
+    },
+    {
       id: 14,
       name: "Configurations",
       icon: <Settings size={18} />,
@@ -293,12 +287,19 @@ const SideNavBar = () => {
           icon: <HiUserGroup size={18} />,
         },
         {
-          id: "users-config",
-          name: "Portal Users",
-          icon: <IconUserShield size={18} />,
-          url: "/configurations/users",
+          id: "users",
+          name: "Users",
+          icon: <UserPen size={18} />,
+          url: "/users",
           allowedRoles: [ERoles.Admin, ERoles.HRManager],
           group: "Management",
+        },
+        {
+          id: "system-config",
+          name: "System",
+          url: "/configurations/system",
+          allowedRoles: [ERoles.Admin],
+          icon: <HiCog6Tooth size={18} />,
         },
         {
           id: "drivers-config",

@@ -681,5 +681,24 @@ a:hover {
 }
 
 .ant-input-outlined.ant-input-status-error:not(.ant-input-disabled) {
-  background: unset !important;
+    background: unset !important;
+}
+
+@keyframes pattern-drift {
+  0%   { transform: translate3d(0, 0, 0) rotate(-1.5deg) scale(1.01); }
+  50%  { transform: translate3d(-10px, 8px, 0) rotate(1.5deg) scale(1.01); }
+  100% { transform: translate3d(0, 0, 0) rotate(-1.5deg) scale(1.01); }
+}
+
+.pattern-animate {
+  transform-origin: 50% 50%;
+  animation: pattern-drift 42s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Respect accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .pattern-animate {
+    animation: none;
+  }
 }
