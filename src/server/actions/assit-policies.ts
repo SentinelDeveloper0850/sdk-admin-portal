@@ -1,8 +1,7 @@
 "use server";
 
 import {
-  AssitPolicyModel,
-  IAssitPolicy,
+  AssitPolicyModel
 } from "@/app/models/scheme/assit-policy.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";
@@ -164,82 +163,102 @@ export const deletePolicyById = async (policyId: string) => {
   }
 };
 
-export const importPolicies = async (
-  assitRecords: IAssitMembersReportItem[]
-) => {
-  if (!assitRecords || assitRecords.length < 1) {
-    return {
-      success: false,
-      message: "No policies to import from ASSIT Report Records",
-    };
+type AnyIncoming = Partial<IAssitMembersReportItem> & {
+  membershipID?: string;
+  lastName?: string;
+  initials?: string;
+  dateOfBirth?: string;
+  entryDate?: string | Date;
+  coverDate?: string | Date;
+  payAtNumber?: string;
+  totalPremium?: string | number;
+  waitingPeriod?: string | number;
+  category?: string;
+};
+
+function normalizeIncomingRecord(r: AnyIncoming): IAssitMembersReportItem {
+  // If it already looks like raw ASSIT, keep it
+  if (r.MembershipID) return r as IAssitMembersReportItem;
+
+  // Otherwise map from your client shape -> raw shape
+  return {
+    MembershipID: String(r.membershipID ?? "").trim(),
+    LastName: String(r.lastName ?? "").trim(),
+    Initials: String(r.initials ?? "").trim(),
+    DOB: String(r.dateOfBirth ?? "").trim(),
+    EntDate: String(r.entryDate ?? "").trim(),
+    CovDate: String(r.coverDate ?? "").trim(),
+    PayAtNo: String(r.payAtNumber ?? r.membershipID ?? "").trim(),
+    TotalPremium: String(r.totalPremium ?? "").trim(),
+    WPeriod: Number(r.waitingPeriod ?? 0),
+    Category: String(r.category ?? "").trim(),
+  };
+}
+
+export const importPolicies = async (assitRecords: AnyIncoming[]) => {
+  if (!assitRecords?.length) {
+    return { success: false, message: "No policies to import from ASSIT Report Records" };
   }
 
   await connectToDatabase();
 
   try {
-    const memberIds = assitRecords.map((record) => record.MembershipID);
+    const normalized = assitRecords.map(normalizeIncomingRecord);
+
+    // (optional) validate the essentials so you fail gracefully instead of 500
+    const invalid = normalized.filter(r => !r.MembershipID || !r.LastName || !r.Initials);
+    if (invalid.length) {
+      return { success: false, message: `Invalid records: ${invalid.length}` };
+    }
+
+    const memberIds = normalized.map((r) => r.MembershipID);
+
     const existingPolicies = await AssitPolicyModel.find({
       membershipID: { $in: memberIds },
     });
-    const existingMemberIds = existingPolicies.map(
-      (policy) => policy.membershipID
-    );
 
-    const skippedRecords = assitRecords.filter((record) =>
-      existingMemberIds.includes(record.MembershipID)
-    );
-    const recordsToImport = assitRecords
-      .filter((record) => !existingMemberIds.includes(record.MembershipID))
+    const existingMemberIds = new Set(existingPolicies.map(p => p.membershipID));
+
+    const skippedRecords = normalized.filter(r => existingMemberIds.has(r.MembershipID));
+
+    const recordsToImport = normalized
+      .filter(r => !existingMemberIds.has(r.MembershipID))
       .map((record) => {
-        // Convert TotalPremium to number with 2 decimal places (from R3,000,00 to 3000.00)
         const totalPremium = Number(
-          record.TotalPremium.replace("R", "")
-            .replace(/,/g, ".")
-            .replaceAll(",", "")
-            .replace(" ", "")
-        ).toFixed(2);
-        // Convert WPeriod to number
-        const waitingPeriod = Number(record.WPeriod);
-        // Convert EntDate to Date
-        const entryDate = new Date(record.EntDate);
-        // Convert CovDate to Date
-        const coverDate = new Date(record.CovDate);
+          String(record.TotalPremium)
+            .replace("R", "")
+            .replace(/\s/g, "")
+            // handle "300,00" vs "3,000.00" without guessing wrong
+            .replace(/\.(?=\d{3}\b)/g, "") // remove thousand dots if present
+            .replace(/,(?=\d{2}\b)/g, ".") // cents comma -> dot
+            .replace(/,/g, "")            // remaining commas -> nothing
+        );
+
         return {
           ...record,
           membershipID: record.MembershipID,
           lastName: record.LastName,
           initials: record.Initials,
           dateOfBirth: record.DOB,
-          entryDate: entryDate,
-          coverDate: coverDate,
+          entryDate: new Date(record.EntDate),
+          coverDate: new Date(record.CovDate),
           payAtNumber: record.PayAtNo,
           totalPremiumString: record.TotalPremium,
-          totalPremium: totalPremium,
-          waitingPeriod: waitingPeriod,
+          totalPremium: Number.isFinite(totalPremium) ? totalPremium : 0,
+          waitingPeriod: Number(record.WPeriod) || 0,
           category: record.Category,
         };
       });
 
-    // Import the records that are not already in the database in a batch, return imported records
-    const importedPolicies: IAssitPolicy[] =
-      await AssitPolicyModel.insertMany(recordsToImport);
+    const importedPolicies = await AssitPolicyModel.insertMany(recordsToImport);
 
-    return {
-      success: true,
-      data: {
-        importedPolicies,
-        skippedRecords,
-      },
-    };
+    return { success: true, data: { importedPolicies, skippedRecords } };
   } catch (error: any) {
     console.error("Error importing ASSIT policies:", error.message);
-    return {
-      success: false,
-      message: "Internal Server Error ~ Error importing ASSIT policies",
-      error: error.message,
-    };
+    return { success: false, message: "Internal Server Error ~ Error importing ASSIT policies", error: error.message };
   }
 };
+
 
 export const linkPolicy = async (payload: any) => {
   try {

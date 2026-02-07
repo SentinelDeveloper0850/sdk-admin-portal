@@ -4,16 +4,13 @@ import { useEffect, useState } from "react";
 
 import {
   CloseOutlined,
-  DeleteOutlined,
-  EditOutlined,
   EyeOutlined,
   MailOutlined,
   MoreOutlined,
   PhoneOutlined,
-  PrinterOutlined,
   ReloadOutlined,
   SearchOutlined,
-  UserOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import {
   Button,
@@ -27,14 +24,12 @@ import {
   Space,
   Statistic,
   Table,
-  Tabs,
-  Tag,
+  Tag
 } from "antd";
 import sweetAlert from "sweetalert";
 
 import PolicyCancellationDrawer from "@/app/components/policies/policy-cancellation-drawer";
 import PolicyDetailsDrawer from "@/app/components/policies/policy-details-drawer";
-import PolicyPrintCardDrawer from "@/app/components/policies/policy-print-card-drawer";
 import Loading from "@/app/components/ui/loading";
 
 export interface IEasipolPolicy {
@@ -304,60 +299,60 @@ export default function EasipolPoliciesPage() {
         filters.productName ||
         filters.branchName ||
         filters.searchText) && (
-        <div
-          style={{
-            backgroundColor: "#f0f9ff",
-            border: "1px solid #0ea5e9",
-            borderRadius: "6px",
-            padding: "12px 16px",
-            marginBottom: "16px",
-            color: "#0c4a6e",
-          }}
-        >
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              backgroundColor: "#f0f9ff",
+              border: "1px solid #0ea5e9",
+              borderRadius: "6px",
+              padding: "12px 16px",
+              marginBottom: "16px",
+              color: "#0c4a6e",
             }}
           >
-            <div>
-              <strong>Search Results:</strong> Showing Easipol policies matching
-              your filters
-              {filters.status && (
-                <span style={{ marginLeft: "8px" }}>
-                  • Status: {filters.status}
-                </span>
-              )}
-              {filters.productName && (
-                <span style={{ marginLeft: "8px" }}>
-                  • Product: {filters.productName}
-                </span>
-              )}
-              {filters.branchName && (
-                <span style={{ marginLeft: "8px" }}>
-                  • Branch: {filters.branchName}
-                </span>
-              )}
-              {filters.searchText && (
-                <span style={{ marginLeft: "8px" }}>
-                  • Search: "{filters.searchText}"
-                </span>
-              )}
-              <span style={{ marginLeft: "8px" }}>
-                • {policies.length} results
-              </span>
-            </div>
-            <Button
-              type="link"
-              onClick={handleClearFilters}
-              style={{ padding: "0", color: "#0ea5e9", fontWeight: "600" }}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
             >
-              CLEAR SEARCH
-            </Button>
+              <div>
+                <strong>Search Results:</strong> Showing Easipol policies matching
+                your filters
+                {filters.status && (
+                  <span style={{ marginLeft: "8px" }}>
+                    • Status: {filters.status}
+                  </span>
+                )}
+                {filters.productName && (
+                  <span style={{ marginLeft: "8px" }}>
+                    • Product: {filters.productName}
+                  </span>
+                )}
+                {filters.branchName && (
+                  <span style={{ marginLeft: "8px" }}>
+                    • Branch: {filters.branchName}
+                  </span>
+                )}
+                {filters.searchText && (
+                  <span style={{ marginLeft: "8px" }}>
+                    • Search: "{filters.searchText}"
+                  </span>
+                )}
+                <span style={{ marginLeft: "8px" }}>
+                  • {policies.length} results
+                </span>
+              </div>
+              <Button
+                type="link"
+                onClick={handleClearFilters}
+                style={{ padding: "0", color: "#0ea5e9", fontWeight: "600" }}
+              >
+                CLEAR SEARCH
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       <Form layout="vertical" style={{ width: "100%" }}>
         <Row gutter={16}>
           <Col span={6}>
@@ -669,31 +664,31 @@ export default function EasipolPoliciesPage() {
                     //   onClick: () => editPolicy(record),
                     // },
                     ...(record.cancellationStatus === "none" ||
-                    !record.cancellationStatus
+                      !record.cancellationStatus
                       ? [
-                          {
-                            key: "request-cancellation",
-                            icon: <CloseOutlined />,
-                            label: "Request Cancellation",
-                            onClick: () => {
-                              setSelectedPolicyForCancellation(record);
-                              setCancellationDrawerOpen(true);
-                            },
+                        {
+                          key: "request-cancellation",
+                          icon: <CloseOutlined />,
+                          label: "Request Cancellation",
+                          onClick: () => {
+                            setSelectedPolicyForCancellation(record);
+                            setCancellationDrawerOpen(true);
                           },
-                        ]
+                        },
+                      ]
                       : []),
                     ...(record.paymentHistoryFile
                       ? [
-                          {
-                            key: "payment-history",
-                            icon: <EyeOutlined />,
-                            label: "Payment History",
-                            onClick: () =>
-                              setPreviewImage(
-                                record.paymentHistoryFile || null
-                              ),
-                          },
-                        ]
+                        {
+                          key: "payment-history",
+                          icon: <EyeOutlined />,
+                          label: "Payment History",
+                          onClick: () =>
+                            setPreviewImage(
+                              record.paymentHistoryFile || null
+                            ),
+                        },
+                      ]
                       : []),
                     // {
                     //   key: "delete",
@@ -735,8 +730,10 @@ export default function EasipolPoliciesPage() {
         style={{
           padding: "20px",
         }}
-        bodyStyle={{
-          marginTop: "20px",
+        styles={{
+          body: {
+            marginTop: "20px",
+          }
         }}
       >
         {previewImage && (
