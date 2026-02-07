@@ -13,19 +13,19 @@ import {
   Alert,
   Button,
   Col,
+  Descriptions,
   Drawer,
   Dropdown,
   Form,
   Input,
   Row,
-  Select,
   Space,
   Statistic,
   Table,
   Tag,
   Upload,
   UploadProps,
-  message,
+  message
 } from "antd";
 import Papa from "papaparse";
 import sweetAlert from "sweetalert";
@@ -44,6 +44,24 @@ const AssitPoliciesPage = () => {
     count: 0,
     totalPages: 0,
   });
+
+  const [assitPolicies, setAssitPolicies] = useState<IAssitPolicy[]>([]);
+  const [results, setResults] = useState<{
+    matchedCount: number;
+    unmatchedCount: number;
+    matchedPolicies: IAssitPolicy[];
+    unmatchedPolicies: IAssitPolicy[];
+    fetchingAssitPolicies: boolean;
+    matchingInProgress: boolean;
+  }>({
+    matchedCount: 0,
+    unmatchedCount: 0,
+    matchedPolicies: [],
+    unmatchedPolicies: [],
+    fetchingAssitPolicies: false,
+    matchingInProgress: false,
+  });
+
   const [bootstrapping, setBootstrapping] = useState<boolean>(true);
   const [tableLoading, setTableLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
@@ -164,16 +182,86 @@ const AssitPoliciesPage = () => {
           return;
         }
 
-        const _importColumns = results.meta.fields
-          .filter((field: string) => field !== "")
+        const requiredCsvFields = [
+          "MembershipID",
+          "LastName",
+          "Initials",
+          "DOB",
+          "EntDate",
+          "CovDate",
+          "KGA Premium",
+          "TotalPremium",
+          "WPeriod",
+          "Category",
+          "CoverAmount"
+        ];
+
+        const modelFields = [
+          "category",
+          "coverDate",
+          // "createdAt",
+          "dateOfBirth",
+          "entryDate",
+          "fullName",
+          // "hasLinkedEasipolPolicy",
+          // "hasLinkedSociety",
+          "initials",
+          "lastName",
+          "membershipID",
+          // "payAtNumber",
+          "totalPremium",
+          // "updatedAt",
+          "waitingPeriod"
+        ]
+
+        const _importColumns = modelFields
+          .filter((field: string) => field !== "" && !field.includes("_"))
           .map((field: string) => ({
             title: field,
             dataIndex: field,
             key: field,
           }));
 
+        const cleanData = results.data.filter((row: any) => {
+          // Ensure that these fields all have values and not empty string
+          return requiredCsvFields.every(field => row[field] && row[field].trim() !== "");
+        });
+
+        // Map excel fields to data model fields
+        const mappedData = cleanData.map((row: any) => {
+          const mappedRow: any = {};
+          Object.keys(row).forEach((key) => {
+            const lowerKey = key.toLowerCase();
+            if (lowerKey.includes("membershipid")) {
+              mappedRow.membershipID = row[key];
+            } else if (lowerKey.includes("lastname")) {
+              mappedRow.lastName = row[key];
+            } else if (lowerKey.includes("initials")) {
+              mappedRow.initials = row[key];
+            } else if (lowerKey.includes("dob")) {
+              mappedRow.dateOfBirth = row[key];
+            } else if (lowerKey.includes("entdate")) {
+              mappedRow.entryDate = row[key];
+            } else if (lowerKey.includes("covdate")) {
+              mappedRow.coverDate = row[key];
+            } else if (lowerKey.includes("premium")) {
+              mappedRow.totalPremium = row[key];
+            } else if (lowerKey.includes("wperiod")) {
+              mappedRow.waitingPeriod = row[key];
+            } else if (lowerKey.includes("category")) {
+              mappedRow.category = row[key];
+            }
+          });
+          return mappedRow;
+        });
+
+        // Set fullName field by combining lastName and initials
+        mappedData.forEach((row: any) => {
+          row.fullName = `${row.initials} ${row.lastName}`;
+        });
+
         setImportColumns(_importColumns);
-        setImportData(results.data);
+        setImportData(mappedData);
         setImportDrawerOpen(true);
       },
     });
@@ -183,7 +271,7 @@ const AssitPoliciesPage = () => {
     try {
       const response = await fetch("/api/policies/assit/import", {
         method: "POST",
-        body: JSON.stringify(importData),
+        body: JSON.stringify(results.unmatchedPolicies),
       });
       const data = await response.json();
 
@@ -214,6 +302,62 @@ const AssitPoliciesPage = () => {
       });
     }
   };
+
+  const handlePolicyReview = async () => {
+    setResults((prev) => ({ ...prev, fetchingAssitPolicies: true, matchingInProgress: true }));
+
+    // If you still need the ASSIT fetch for something else, keep it.
+    const res = await fetch("/api/policies/assit/all");
+    const data = await res.json();
+    const existingPolicies = data.policies || [];
+    setAssitPolicies(existingPolicies);
+
+    // ✅ do the review using current variables (not state)
+    reviewPolicies(importData, existingPolicies);
+
+    setResults((prev) => ({ ...prev, fetchingAssitPolicies: false }));
+  };
+
+  const reviewPolicies = (
+    importDataParam: any[],
+    portalPoliciesParam: any[]
+  ) => {
+    // Portal membership IDs (already in the portal)
+    const portalMembershipIDs = new Set(
+      portalPoliciesParam
+        .map((p) => (p.membershipID ?? "").toString().trim())
+        .filter(Boolean)
+    );
+
+    // CSV import rows that ALREADY exist in portal
+    const matchedPolicies = importDataParam.filter((p) =>
+      portalMembershipIDs.has((p.membershipID ?? "").toString().trim())
+    );
+
+    // CSV import rows that are NEW (not in portal)
+    const unmatchedPolicies = importDataParam.filter(
+      (p) => !portalMembershipIDs.has((p.membershipID ?? "").toString().trim())
+    );
+
+    setResults((prev) => ({
+      ...prev,
+      matchedCount: matchedPolicies.length,
+      unmatchedCount: unmatchedPolicies.length,
+      matchedPolicies,
+      unmatchedPolicies,
+      matchingInProgress: false,
+    }));
+
+    // ✅ If the goal is to reduce the import list to only new ones:
+    setImportData(unmatchedPolicies);
+
+    console.log("matched(import already in portal):", matchedPolicies);
+    console.log("unmatched(import NOT in portal):", unmatchedPolicies);
+
+    // Optional: if you ALSO want to compare imported vs fetched ASSIT policies:
+    // const assitIDs = new Set(assitPoliciesParam.map(p => (p.membershipID ?? "").toString().trim()));
+  };
+
 
   useEffect(() => {
     fetchPolicies();
@@ -254,8 +398,8 @@ const AssitPoliciesPage = () => {
         <div className="flex items-center gap-2">
           {user && hasRole(user, "admin") && (
             <Upload {...uploadProps} accept=".csv">
-              <Button icon={<UploadOutlined />} onClick={importPolicies}>
-                Import
+              <Button icon={<UploadOutlined />}>
+                Select Import File
               </Button>
             </Upload>
           )}
@@ -332,60 +476,60 @@ const AssitPoliciesPage = () => {
         filters.productName ||
         filters.branchName ||
         filters.searchText) && (
-        <div
-          style={{
-            backgroundColor: "#f0f9ff",
-            border: "1px solid #0ea5e9",
-            borderRadius: "6px",
-            padding: "12px 16px",
-            marginBottom: "16px",
-            color: "#0c4a6e",
-          }}
-        >
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              backgroundColor: "#f0f9ff",
+              border: "1px solid #0ea5e9",
+              borderRadius: "6px",
+              padding: "12px 16px",
+              marginBottom: "16px",
+              color: "#0c4a6e",
             }}
           >
-            <div>
-              <strong>Search Results:</strong> Showing ASSIT policies matching
-              your filters
-              {filters.status && (
-                <span style={{ marginLeft: "8px" }}>
-                  • Status: {filters.status}
-                </span>
-              )}
-              {filters.productName && (
-                <span style={{ marginLeft: "8px" }}>
-                  • Product: {filters.productName}
-                </span>
-              )}
-              {filters.branchName && (
-                <span style={{ marginLeft: "8px" }}>
-                  • Branch: {filters.branchName}
-                </span>
-              )}
-              {filters.searchText && (
-                <span style={{ marginLeft: "8px" }}>
-                  • Search: "{filters.searchText}"
-                </span>
-              )}
-              <span style={{ marginLeft: "8px" }}>
-                • {policies.length} results
-              </span>
-            </div>
-            <Button
-              type="link"
-              onClick={handleClearFilters}
-              style={{ padding: "0", color: "#0ea5e9", fontWeight: "600" }}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
             >
-              CLEAR SEARCH
-            </Button>
+              <div>
+                <strong>Search Results:</strong> Showing ASSIT policies matching
+                your filters
+                {filters.status && (
+                  <span style={{ marginLeft: "8px" }}>
+                    • Status: {filters.status}
+                  </span>
+                )}
+                {filters.productName && (
+                  <span style={{ marginLeft: "8px" }}>
+                    • Product: {filters.productName}
+                  </span>
+                )}
+                {filters.branchName && (
+                  <span style={{ marginLeft: "8px" }}>
+                    • Branch: {filters.branchName}
+                  </span>
+                )}
+                {filters.searchText && (
+                  <span style={{ marginLeft: "8px" }}>
+                    • Search: "{filters.searchText}"
+                  </span>
+                )}
+                <span style={{ marginLeft: "8px" }}>
+                  • {policies.length} results
+                </span>
+              </div>
+              <Button
+                type="link"
+                onClick={handleClearFilters}
+                style={{ padding: "0", color: "#0ea5e9", fontWeight: "600" }}
+              >
+                CLEAR SEARCH
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       <Table
         rowKey="_id"
@@ -528,23 +672,47 @@ const AssitPoliciesPage = () => {
         ]}
       />
       <Drawer
-        title="Import Polices"
-        width="93%"
+        title="Import Policies from ASSIT"
+        width="100%"
+        extra={
+          <Space>
+            <Descriptions column={4} size="small" bordered>
+              <Descriptions.Item label="Total to Import">
+                {importData.length}
+              </Descriptions.Item>
+              <Descriptions.Item label="Total on System">
+                {stats.count}
+              </Descriptions.Item>
+              <Descriptions.Item label="Matched Existing Policies">
+                {results.matchedCount}
+              </Descriptions.Item>
+              <Descriptions.Item label="Unmatched (New) Policies">
+                {results.unmatchedCount}
+              </Descriptions.Item>
+            </Descriptions>
+            {results.unmatchedCount === 0 && (
+              <Button size="large" type="primary" className="text-black text-sm" onClick={handlePolicyReview} loading={results.fetchingAssitPolicies || results.matchingInProgress}>{results.fetchingAssitPolicies ? "Fetching Policies" : results.matchingInProgress ? "Matching Policies" : "Start Review"}</Button>
+            )}
+            {results.unmatchedCount > 0 && (
+              <Button size="large" type="primary" className="text-black text-sm" onClick={importPolicies}>Import {results.unmatchedCount} New Policies</Button>
+            )}
+          </Space>
+        }
         placement="right"
         open={importDrawerOpen}
         onClose={() => setImportDrawerOpen(false)}
-        footer={
-          <Space>
-            <Button onClick={() => setImportDrawerOpen(false)}>Cancel</Button>
-            <Button
-              type="primary"
-              className="text-black"
-              onClick={() => importPolicies()}
-            >
-              Import
-            </Button>
-          </Space>
-        }
+      // footer={
+      //   <Space>
+      //     <Button onClick={() => setImportDrawerOpen(false)}>Cancel</Button>
+      //     <Button
+      //       type="primary"
+      //       className="text-black"
+      //       onClick={() => importPolicies()}
+      //     >
+      //       Import
+      //     </Button>
+      //   </Space>
+      // }
       >
         <Alert
           showIcon
@@ -553,7 +721,7 @@ const AssitPoliciesPage = () => {
           message="Import the following policies from ASSIT. Please review the policies and make sure they are correct."
           type="info"
         />
-        <Table columns={importColumns} dataSource={importData} />
+        <Table columns={importColumns} dataSource={importData} size="small" />
       </Drawer>
 
       {selectedPolicyForPrintCard && (
