@@ -28,7 +28,6 @@ import {
 import {
   HiBuildingOffice,
   HiClock,
-  HiCog6Tooth,
   HiMapPin,
   HiOutlineDocumentCurrencyDollar,
   HiUserGroup
@@ -288,18 +287,11 @@ const SideNavBar = () => {
         },
         {
           id: "users",
-          name: "Users",
+          name: "Portal Users",
           icon: <UserPen size={18} />,
           url: "/users",
           allowedRoles: [ERoles.Admin, ERoles.HRManager],
           group: "Management",
-        },
-        {
-          id: "system-config",
-          name: "System",
-          url: "/configurations/system",
-          allowedRoles: [ERoles.Admin],
-          icon: <HiCog6Tooth size={18} />,
         },
         {
           id: "drivers-config",
@@ -308,20 +300,6 @@ const SideNavBar = () => {
           allowedRoles: [ERoles.Admin],
           icon: <IconSteeringWheel size={18} />,
         },
-        // {
-        //   id: "system-config",
-        //   name: "System",
-        //   url: "/configurations/system",
-        //   allowedRoles: [ERoles.Admin],
-        //   icon: <HiCog6Tooth size={18} />,
-        // },
-        // {
-        //   id: "scheme-config",
-        //   name: "Scheme",
-        //   url: "/configurations/scheme",
-        //   allowedRoles: [ERoles.Admin],
-        //   icon: <HiCog6Tooth size={18} />,
-        // },
         {
           id: "regions-config",
           name: "Regions",
@@ -340,13 +318,6 @@ const SideNavBar = () => {
           ],
           icon: <HiBuildingOffice size={18} />,
         },
-        // {
-        //   id: "daily-activity-reminders-config",
-        //   name: "Daily Activity Reminders",
-        //   url: "/configurations/daily-activity-reminders",
-        //   allowedRoles: [ERoles.Admin],
-        //   icon: <HiBell size={18} />,
-        // },
         {
           id: "duty-roster-config",
           name: "Duty Roster",
@@ -360,14 +331,6 @@ const SideNavBar = () => {
           icon: <HiClock size={18} />,
         },
       ],
-    },
-    {
-      id: 13,
-      name: "Status",
-      icon: <Server size={18} />,
-      url: "/status",
-      allowedRoles: [...Object.values(ERoles)],
-      group: "Management",
     },
   ];
 

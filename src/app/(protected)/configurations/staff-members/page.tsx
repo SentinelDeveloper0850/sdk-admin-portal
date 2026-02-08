@@ -9,6 +9,7 @@ import {
   MailOutlined,
   PhoneOutlined,
   PlusOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import {
   Avatar,
@@ -21,8 +22,7 @@ import {
   Form,
   Input,
   Select,
-  Table,
-  message,
+  Table
 } from "antd";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -56,57 +56,6 @@ const StaffMemberPage = () => {
   const [editingStaffMember, setEditingStaffMember] =
     useState<IStaffMember | null>(null);
 
-  const handleAddStaffMember = async (values: IStaffMember) => {
-    const initials = values.firstNames
-      .split(" ")
-      .map((name) => name[0])
-      .join("");
-
-    const response = await fetch("/api/staff", {
-      method: "POST",
-      body: JSON.stringify({ ...values, initials }),
-    });
-    const data = await response.json();
-    await message.success("Staff member added successfully");
-    addStaffMemberDrawerForm.resetFields();
-    fetchStaffMembers();
-    setAddStaffMemberDrawerOpen(false);
-  };
-
-  const handleCancelAddStaffMember = () => {
-    setAddStaffMemberDrawerOpen(false);
-    addStaffMemberDrawerForm.resetFields();
-  };
-
-  const handleEditStaffMember = async (values: IStaffMember) => {
-    const response = await fetch(`/api/staff/${editingStaffMember?._id}`, {
-      method: "PUT",
-      body: JSON.stringify(values),
-    });
-    const data = await response.json();
-    await message.success("Staff member updated successfully");
-    fetchStaffMembers();
-  };
-
-  const handleCancelEditStaffMember = () => {
-    setEditDrawerOpen(false);
-    editStaffMemberDrawerForm?.resetFields();
-  };
-
-  useEffect(() => {
-    fetchStaffMembers();
-    addStaffMemberDrawerForm.setFieldsValue({
-      address: {
-        country: "South Africa",
-      },
-    });
-  }, []);
-
-  const loading = useMemo(
-    () => fetchingStaffMembers && fetchingUsers,
-    [fetchingStaffMembers, fetchingUsers]
-  );
-
   const fetchStaffMembers = async () => {
     setFetchingStaffMembers(true);
     const response = await fetch("/api/staff");
@@ -126,6 +75,67 @@ const StaffMemberPage = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const handleAddStaffMember = async (values: IStaffMember) => {
+    const initials = values.firstNames
+      .split(" ")
+      .map((name) => name[0])
+      .join("");
+
+    const response = await fetch("/api/staff", {
+      method: "POST",
+      body: JSON.stringify({ ...values, initials }),
+    });
+    const data = await response.json();
+    sweetAlert({
+      title: "Staff member added successfully",
+      icon: "success",
+      timer: 2000,
+    });
+    addStaffMemberDrawerForm.resetFields();
+    setAddStaffMemberDrawerOpen(false);
+    fetchStaffMembers();
+  };
+
+  const handleCancelAddStaffMember = () => {
+    setAddStaffMemberDrawerOpen(false);
+    addStaffMemberDrawerForm.resetFields();
+  };
+
+  const handleEditStaffMember = async (values: IStaffMember) => {
+    const response = await fetch(`/api/staff/${editingStaffMember?._id}`, {
+      method: "PUT",
+      body: JSON.stringify(values),
+    });
+    const data = await response.json();
+    sweetAlert({
+      title: "Staff member updated successfully",
+      icon: "success",
+      timer: 2000,
+    });
+    editStaffMemberDrawerForm.resetFields();
+    setEditDrawerOpen(false);
+    fetchStaffMembers();
+  };
+
+  const handleCloseEditStaffMember = () => {
+    setEditDrawerOpen(false);
+    editStaffMemberDrawerForm?.resetFields();
+  };
+
+  const handleCloseLinkDrawer = () => {
+    setLinkDrawerOpen(false);
+    linkDrawerForm.resetFields();
+  }
+
+  useEffect(() => {
+    fetchStaffMembers();
+  }, []);
+
+  const loading = useMemo(
+    () => fetchingStaffMembers && fetchingUsers,
+    [fetchingStaffMembers, fetchingUsers]
+  );
 
   const handleLinkUser = async (values: { userId: string }) => {
     const response = await fetch(`/api/staff/link-user`, {
@@ -163,9 +173,22 @@ const StaffMemberPage = () => {
           subtitle="Create, update, and delete staff members from your system"
           actions={[
             <Button
+              icon={<ReloadOutlined />}
+              loading={fetchingStaffMembers}
+              onClick={fetchStaffMembers}
+            >
+              Refresh
+            </Button>,
+            <Button
               key="add-staff-member"
-              type="dashed"
-              onClick={() => setAddStaffMemberDrawerOpen(true)}
+              onClick={() => {
+                addStaffMemberDrawerForm.resetFields();
+                addStaffMemberDrawerForm.setFieldsValue({
+                  identity: { type: "SA_ID" },
+                  address: { country: "South Africa" },
+                });
+                setAddStaffMemberDrawerOpen(true);
+              }}
             >
               <PlusOutlined className="h-4 w-4" /> Add Staff Member
             </Button>,
@@ -186,7 +209,7 @@ const StaffMemberPage = () => {
             rowClassName="cursor-pointer hover:bg-gray-100"
             columns={[
               {
-                title: "Full Names",
+                title: "Identity",
                 dataIndex: "fullNames",
                 key: "fullNames",
                 sorter: (a: any, b: any) =>
@@ -204,10 +227,6 @@ const StaffMemberPage = () => {
                           <span className="text-sm">
                             {member.firstNames} {member.lastName}
                           </span>
-                          {/* <div className="flex items-center gap-1 text-xs">
-                          <PhoneOutlined className="text-green-500" />
-                          <span>{member.contact.phone ? `+27${member.contact.phone}` : "--"}</span>
-                        </div> */}
                           <span className="text-xs text-gray-500">
                             {member.identity?.type}: {member.identity?.number}
                           </span>
@@ -291,60 +310,63 @@ const StaffMemberPage = () => {
                   <Dropdown
                     menu={{
                       items: [
-                        // Edit staff member
                         {
                           label: "Edit",
-                          key: member._id,
+                          key: `edit:${member._id}`,
                           icon: <EditOutlined />,
-                          onClick: () => {
-                            setEditingStaffMember(member);
-                            editStaffMemberDrawerForm.setFieldsValue({
-                              firstNames: member.firstNames,
-                              lastName: member.lastName,
-                              identity: {
-                                type: member.identity.type,
-                                number: member.identity.number,
-                                country: member.identity.country,
-                              },
-                              address: {
-                                addressLine1: member.address?.addressLine1,
-                                addressLine2: member.address?.addressLine2,
-                                suburb: member.address?.suburb,
-                                town: member.address?.town,
-                                province: member.address?.province,
-                                country: member.address?.country,
-                                postalCode: member.address?.postalCode,
-                              },
-                              contact: {
-                                phone: member.contact?.phone,
-                                email: member.contact?.email,
-                              },
-                              employment: {
-                                businessUnit: member.employment?.businessUnit,
-                                department: member.employment?.department,
-                                branchId: member.employment?.branchId,
-                                regionId: member.employment?.regionId,
-                                position: member.employment?.position,
-                                startDate: member.employment?.startDate,
-                                endDate: member.employment?.endDate,
-                                isActive: member.employment?.isActive,
-                                isPortalUser: member.employment?.isPortalUser,
-                                notes: member.employment?.notes,
-                              },
-                            });
-                            setEditDrawerOpen(true);
-                          },
                         },
                         {
                           label: "Link User",
-                          key: member._id,
+                          key: `link:${member._id}`,
                           icon: <LinkOutlined />,
                         },
                       ],
                       onClick: (e) => {
-                        message.info("Click on menu item.");
-                        setSelectedStaffMember(member);
-                        setLinkDrawerOpen(true);
+                        if (e.key.startsWith("link:")) {
+                          setSelectedStaffMember(member);
+                          setLinkDrawerOpen(true);
+                        } else if (e.key.startsWith("edit:")) {
+                          setEditingStaffMember(member);
+
+                          const { address, contact, employment, identity } = member;
+
+                          editStaffMemberDrawerForm.setFieldsValue({
+                            firstNames: member.firstNames,
+                            lastName: member.lastName,
+                            identity: {
+                              type: identity?.type,
+                              number: identity?.number,
+                              country: identity?.country,
+                            },
+                            address: {
+                              addressLine1: address?.addressLine1,
+                              addressLine2: address?.addressLine2,
+                              suburb: address?.suburb,
+                              town: address?.town,
+                              province: address?.province,
+                              country: address?.country,
+                              postalCode: address?.postalCode,
+                            },
+                            contact: {
+                              phone: contact?.phone,
+                              email: contact?.email,
+                            },
+                            employment: {
+                              businessUnit: employment?.businessUnit,
+                              department: employment?.department,
+                              branchId: employment?.branchId,
+                              regionId: employment?.regionId,
+                              position: employment?.position,
+                              startDate: employment?.startDate,
+                              endDate: employment?.endDate,
+                              isActive: employment?.isActive,
+                              isPortalUser: employment?.isPortalUser,
+                              notes: employment?.notes,
+                            },
+                          });
+
+                          setEditDrawerOpen(true);
+                        }
                       },
                     }}
                   >
@@ -361,6 +383,7 @@ const StaffMemberPage = () => {
           title="Add Staff Member"
           open={addStaffMemberDrawerOpen}
           onClose={handleCancelAddStaffMember}
+          closable={true}
           destroyOnClose
           footer={
             <div className="flex justify-end gap-2">
@@ -666,11 +689,12 @@ const StaffMemberPage = () => {
           width="35%"
           title="Edit Staff Member"
           open={editDrawerOpen}
-          onClose={handleCancelEditStaffMember}
+          onClose={handleCloseEditStaffMember}
+          closable={true}
           destroyOnClose
           footer={
             <div className="flex justify-end gap-2">
-              <Button onClick={handleCancelEditStaffMember}>Cancel</Button>
+              <Button onClick={handleCloseEditStaffMember}>Cancel</Button>
               <Button
                 type="primary"
                 className="text-black"
@@ -770,7 +794,7 @@ const StaffMemberPage = () => {
             <h4 className="mb-2 text-sm font-bold">Residential Address</h4>
             <Form.Item
               label="Address Line 1"
-              name="address.addressLine1"
+              name={["address", "addressLine1"]}
               rules={[
                 { required: true, message: "Please enter street address" },
               ]}
@@ -783,7 +807,7 @@ const StaffMemberPage = () => {
             <Flex gap={16}>
               <Form.Item
                 label="Suburb"
-                name="address.suburb"
+                name={["address", "suburb"]}
                 className="w-1/2"
                 rules={[{ required: true, message: "Please enter suburb" }]}
               >
@@ -791,7 +815,7 @@ const StaffMemberPage = () => {
               </Form.Item>
               <Form.Item
                 label="Town"
-                name="address.town"
+                name={["address", "town"]}
                 className="w-1/2"
                 rules={[{ required: true, message: "Please enter town" }]}
               >
@@ -801,7 +825,7 @@ const StaffMemberPage = () => {
             <Flex gap={16}>
               <Form.Item
                 label="Province"
-                name="address.province"
+                name={["address", "province"]}
                 className="w-1/2"
                 rules={[{ required: true, message: "Please select province" }]}
               >
@@ -823,7 +847,7 @@ const StaffMemberPage = () => {
               </Form.Item>
               <Form.Item
                 label="Country"
-                name="address.country"
+                name={["address", "country"]}
                 className="w-1/2"
               >
                 <Select
@@ -840,7 +864,7 @@ const StaffMemberPage = () => {
             <Flex gap={16}>
               <Form.Item
                 label="Postal Code"
-                name="address.postalCode"
+                name={["address", "postalCode"]}
                 className="w-1/2"
               >
                 <Input placeholder="Enter postal code" />
@@ -854,7 +878,7 @@ const StaffMemberPage = () => {
             <Flex gap={16}>
               <Form.Item
                 label="Phone Number"
-                name="contact.phone"
+                name={["contact", "phone"]}
                 className="w-full"
                 rules={[
                   { required: true, message: "Please enter phone number" },
@@ -868,7 +892,7 @@ const StaffMemberPage = () => {
               </Form.Item>
               <Form.Item
                 label="Email Address"
-                name="contact.email"
+                name={["contact", "email"]}
                 className="w-full"
                 rules={[
                   { required: true, message: "Please enter email address" },
@@ -884,7 +908,7 @@ const StaffMemberPage = () => {
             <Flex gap={16}>
               <Form.Item
                 label="Business Unit"
-                name="employment.businessUnit"
+                name={["employment", "businessUnit"]}
                 className="w-full"
                 rules={[
                   { required: true, message: "Please select business unit" },
@@ -898,7 +922,7 @@ const StaffMemberPage = () => {
               </Form.Item>
               <Form.Item
                 label="Department"
-                name="employment.department"
+                name={["employment", "department"]}
                 className="w-full"
                 rules={[
                   { required: true, message: "Please select department" },
@@ -931,7 +955,7 @@ const StaffMemberPage = () => {
             {/* Region select - South Coast, Johannesburg */}
             <Form.Item
               label="Region"
-              name="employment.region"
+              name={["employment", "region"]}
               className="w-full"
               rules={[{ required: true, message: "Please select region" }]}
             >
@@ -944,7 +968,7 @@ const StaffMemberPage = () => {
             <Flex gap={16}>
               <Form.Item
                 label="Branch"
-                name="employment.branch"
+                name={["employment", "branch"]}
                 className="w-full"
                 rules={[{ required: true, message: "Please select branch" }]}
               >
@@ -961,7 +985,7 @@ const StaffMemberPage = () => {
 
               <Form.Item
                 label="Position"
-                name="employment.position"
+                name={["employment", "position"]}
                 className="w-full"
                 rules={[{ required: true, message: "Please enter position" }]}
               >
@@ -972,7 +996,7 @@ const StaffMemberPage = () => {
             <Divider className="my-4 mt-0" />
 
             <h4 className="mb-2 text-sm font-bold">Additional Details</h4>
-            <Form.Item label="Notes" name="employment.notes">
+            <Form.Item label="Notes" name={["employment", "notes"]}>
               <Input.TextArea
                 rows={4}
                 placeholder="Enter any additional notes"
@@ -985,13 +1009,15 @@ const StaffMemberPage = () => {
           width="30%"
           title="Link User to Staff Member"
           open={linkDrawerOpen}
+          onClose={handleCloseLinkDrawer}
+          closable={true}
           destroyOnClose
           footer={
             <div className="flex justify-end gap-2">
               <Button
                 onClick={() => {
-                  setLinkDrawerOpen(false);
                   linkDrawerForm.resetFields();
+                  setLinkDrawerOpen(false);
                   setSelectedStaffMember(null);
                 }}
               >
