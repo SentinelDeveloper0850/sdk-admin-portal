@@ -17,6 +17,7 @@ import {
   message,
 } from "antd";
 import dayjs from "dayjs";
+import sweetAlert from "sweetalert";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
@@ -69,7 +70,11 @@ function AuditReportsPage() {
         throw new Error(json?.message || "Failed to fetch reports");
       setReports(json.reports || []);
     } catch (e: any) {
-      message.error(e?.message || "Failed to load audit reports");
+      sweetAlert({
+        title: "Failed to load audit reports",
+        icon: "error",
+        timer: 2000,
+      });
     } finally {
       setLoading(false);
     }
@@ -124,22 +129,36 @@ function AuditReportsPage() {
       const json = await res.json();
       if (!json?.success) {
         if (json?.expected && json?.detected) {
-          message.error(
-            `${json.message} (Expected: ${json.expected.employeeName} / ${json.expected.date}, Detected: ${json.detected.employeeName} / ${json.detected.date})`
-          );
+          sweetAlert({
+            title: `${json.message} (Expected: ${json.expected.employeeName} / ${json.expected.date}, Detected: ${json.detected.employeeName} / ${json.detected.date})`,
+            icon: "error",
+            timer: 2000,
+          });
         } else {
-          message.error(json?.message || "Upload failed");
+          sweetAlert({
+            title: json?.message || "Upload failed",
+            icon: "error",
+            timer: 2000,
+          });
         }
         return;
       }
 
-      message.success(json.message || "Audit report uploaded");
+      sweetAlert({
+        title: json.message || "Audit report uploaded successfully",
+        icon: "success",
+        timer: 2000,
+      });
       setDrawerOpen(false);
       setFile(null);
       form.resetFields();
       await fetchReports();
     } catch {
-      message.error("Please fix the form errors");
+      sweetAlert({
+        title: "Please fix the form errors",
+        icon: "error",
+        timer: 2000,
+      });
     } finally {
       setUploading(false);
     }

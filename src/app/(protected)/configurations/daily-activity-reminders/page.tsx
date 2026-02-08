@@ -25,6 +25,7 @@ import {
   message,
 } from "antd";
 import dayjs from "dayjs";
+import sweetAlert from "sweetalert";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
@@ -125,10 +126,18 @@ const DailyActivityRemindersPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        message.success("Configuration saved successfully");
+        sweetAlert({
+          title: "Configuration saved successfully",
+          icon: "success",
+          timer: 2000,
+        });
         fetchData(); // Refresh data
       } else {
-        message.error(data.message || "Failed to save configuration");
+        sweetAlert({
+          title: data.message || "Failed to save configuration",
+          icon: "error",
+          timer: 2000,
+        });
       }
     } catch (error) {
       console.error("Error saving config:", error);
@@ -150,16 +159,22 @@ const DailyActivityRemindersPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        message.success(
-          `Reminders triggered: ${data.data.remindersSent} emails sent`
-        );
+        sweetAlert({
+          title: `Reminders triggered: ${data.data.remindersSent} emails sent`,
+          icon: "success",
+          timer: 2000,
+        });
         fetchData(); // Refresh stats
       } else {
         message.error(data.message || "Failed to trigger reminders");
       }
     } catch (error) {
       console.error("Error triggering reminders:", error);
-      message.error("Failed to trigger reminders");
+      sweetAlert({
+        title: "Failed to trigger reminders",
+        icon: "error",
+        timer: 2000,
+      });
     } finally {
       setTriggering(false);
     }

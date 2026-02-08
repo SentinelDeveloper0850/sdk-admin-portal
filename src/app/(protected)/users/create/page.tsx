@@ -7,6 +7,8 @@ import { Button, Form, Input, Select, message } from "antd";
 
 import PageHeader from "@/app/components/page-header";
 
+import sweetAlert from "sweetalert";
+
 const CreateUser = () => {
   const form = Form.useForm();
   const selectedRole = Form.useWatch("role", form[0]);
@@ -18,7 +20,11 @@ const CreateUser = () => {
     try {
       // Simulate API call (Replace with actual API integration)
 
-      message.success("User created successfully!");
+      sweetAlert({
+        title: `Successfully created user`,
+        icon: "success",
+        timer: 1500,
+      })
       router.back(); // Navigate back to the Vehicles page
     } catch (error) {
       message.error("Failed to create user.");

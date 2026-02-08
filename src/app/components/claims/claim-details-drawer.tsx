@@ -93,14 +93,26 @@ const ClaimDetailsDrawer: React.FC<Props> = ({ open, onClose, claimId }) => {
 
       const json = await res.json();
       if (json.success) {
-        message.success("Status updated");
+        sweetAlert({
+          title: "Status updated",
+          icon: "success",
+          timer: 1500,
+        });
         await refreshClaim();
       } else {
-        message.error("Failed to update status");
+        sweetAlert({
+          title: "Failed to update status",
+          icon: "error",
+          timer: 1500,
+        });
       }
     } catch (error) {
       console.log("🚀 ~ handleStatusUpdate ~ error:", error);
-      message.error("Failed to update status");
+      sweetAlert({
+        title: "Failed to update status",
+        icon: "error",
+        timer: 1500,
+      });
     }
   };
 

@@ -11,10 +11,10 @@ import {
   Space,
   Spin,
   Table,
-  Typography,
-  message,
+  Typography
 } from "antd";
 import dayjs from "dayjs";
+import sweetAlert from "sweetalert";
 
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
@@ -104,12 +104,21 @@ function DutyRosterPage() {
         }),
       });
       const json = await res.json();
-      if (!json?.success)
-        throw new Error(json?.message || "Failed to save roster");
-      message.success("Roster saved");
+      if (!json?.success) throw new Error(json?.message || "Failed to save roster");
+
+      sweetAlert({
+        title: "Roster saved successfully",
+        icon: "success",
+        timer: 2000,
+      })
+
       await refreshRoster();
     } catch (e: any) {
-      message.error(e?.message || "Failed to save roster");
+      sweetAlert({
+        title: e?.message || "Failed to save roster",
+        icon: "error",
+        timer: 2000,
+      })
     } finally {
       setSaving(false);
     }

@@ -46,10 +46,18 @@ const NewClaimDrawer: React.FC<Props> = ({ open, onClose, onSubmitted }) => {
     if (json.success) {
       const doc = { name: file.name, url: json.url };
       setDocuments((prev) => [...prev, doc]);
-      message.success("File uploaded successfully");
+      sweetAlert({
+        title: "File uploaded successfully",
+        icon: "success",
+        timer: 1500,
+      })
       return false; // prevent default upload behavior
     } else {
-      message.error("Upload failed");
+      sweetAlert({
+        title: "File upload failed",
+        icon: "error",
+        timer: 1500,
+      })
       return Upload.LIST_IGNORE;
     }
   };

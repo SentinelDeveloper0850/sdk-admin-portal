@@ -378,9 +378,17 @@ const AssitPoliciesPage = () => {
         console.log(info.file, info.fileList);
       }
       if (info.file.status === "done") {
-        message.success(`${info.file.name} file uploaded successfully`);
+        sweetAlert({
+          title: `${info.file.name} file uploaded successfully`,
+          icon: "success",
+          timer: 2000,
+        });
       } else if (info.file.status === "error") {
-        message.error(`${info.file.name} file upload failed.`);
+        sweetAlert({
+          title: `${info.file.name} file upload failed`,
+          icon: "error",
+          timer: 2000,
+        });
       }
     },
   };

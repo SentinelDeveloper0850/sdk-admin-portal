@@ -26,6 +26,7 @@ import {
   message,
 } from "antd";
 import Papa from "papaparse";
+import sweetAlert from "sweetalert";
 
 import { BankStatementExcelImporter } from "@/app/components/import-tools/bank-statement-xlsx-importer";
 import PageHeader from "@/app/components/page-header";
@@ -127,7 +128,12 @@ export default function TransactionHistoryImporter() {
       setTransactions(updated);
       setEditDrawerVisible(false);
       setCurrentRecord(null);
-      message.success("Transaction updated");
+      sweetAlert({
+        title: "Transaction updated",
+        icon: "success",
+        timer: 1500,
+      })
+
     } catch (err) {
       console.error("Drawer validation failed:", err);
     }
@@ -249,9 +255,11 @@ export default function TransactionHistoryImporter() {
 
         setCsvTransactions(parsedTransactions);
         setPreviewMode(true);
-        message.success(
-          `Successfully parsed ${parsedTransactions.length} transactions`
-        );
+        sweetAlert({
+          title: `Successfully parsed ${parsedTransactions.length} transactions`,
+          icon: "success",
+          timer: 1500,
+        })
       },
       error: (error) => {
         setLoading(false);
@@ -399,10 +407,11 @@ export default function TransactionHistoryImporter() {
       const result = await response.json();
 
       if (result.success) {
-        message.success(
-          result.message ||
-            `Successfully imported ${csvTransactions.length} transactions`
-        );
+        sweetAlert({
+          title: `Successfully imported ${csvTransactions.length} transactions`,
+          icon: "success",
+          timer: 1500,
+        })
 
         // Clear the preview and show the imported transactions in the main table
         const convertedTransactions: EditableTransaction[] =
@@ -765,9 +774,11 @@ export default function TransactionHistoryImporter() {
                               result.message || "Failed to reverse import"
                             );
                           } else {
-                            message.success(
-                              result.message || "Import reversed"
-                            );
+                            sweetAlert({
+                              title: result.message || "Import reversed",
+                              icon: "success",
+                              timer: 1500,
+                            })
                             await fetchImportHistory();
                           }
                         } catch (_e) {

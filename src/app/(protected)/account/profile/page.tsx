@@ -16,6 +16,7 @@ import {
 } from "@nextui-org/react";
 import { App, Drawer, Tag } from "antd";
 import dayjs from "dayjs";
+import sweetAlert from "sweetalert";
 
 import { roleLabels } from "@/utils/helpers/roles";
 
@@ -81,7 +82,12 @@ const ProfilePage: React.FC = () => {
 
     if (json.success) {
       setAvatar(json.url);
-      message.success("Avatar uploaded successfully");
+
+      sweetAlert({
+        title: "Avatar uploaded successfully",
+        icon: "success",
+        timer: 2000,
+      });
       await handleSave(); // auto-save after successful upload
     } else {
       message.error(json.message || "Something went wrong");

@@ -319,7 +319,11 @@ const SignupRequestsPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        message.success("Request deleted successfully");
+        sweetAlert({
+          title: "Request deleted successfully",
+          icon: "success",
+          timer: 2000,
+        })
         // Remove from local state
         setRequests((prev) => prev.filter((req) => req._id !== record._id));
         // Update stats
@@ -335,7 +339,11 @@ const SignupRequestsPage = () => {
 
   const handleActionSuccess = () => {
     fetchRequests();
-    message.success("Action completed successfully");
+    sweetAlert({
+      title: "Action completed successfully",
+      icon: "success",
+      timer: 2000,
+    })
   };
 
   const closeViewDrawer = () => {
@@ -740,7 +748,7 @@ const SignupRequestsPage = () => {
                           }}
                         >
                           {isImageFile(file.originalName) &&
-                          file.cloudinaryUrl ? (
+                            file.cloudinaryUrl ? (
                             <Image
                               src={file.cloudinaryUrl}
                               alt={file.originalName}

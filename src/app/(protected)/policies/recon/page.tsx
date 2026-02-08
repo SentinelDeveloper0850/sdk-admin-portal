@@ -16,6 +16,7 @@ import {
   message,
 } from "antd";
 import Search from "antd/es/input/Search";
+import sweetAlert from "sweetalert";
 
 import {
   PolicyData,
@@ -199,13 +200,26 @@ export default function PolicyReconciliationPage() {
       const data = await response.json();
       if (data.success) {
         setComparisonData(data.data);
-        message.success("Comparison data loaded successfully");
+
+        sweetAlert({
+          title: "Comparison data loaded successfully",
+          icon: "success",
+          timer: 2000,
+        })
       } else {
-        message.error("Failed to load comparison data");
+        sweetAlert({
+          title: "Failed to load comparison data",
+          icon: "error",
+          timer: 2000,
+        })
       }
     } catch (err) {
       console.error("Error fetching comparison data:", err);
-      message.error("Failed to fetch comparison data");
+      sweetAlert({
+        title: "Failed to fetch comparison data",
+        icon: "error",
+        timer: 2000,
+      })
     } finally {
       setComparisonLoading(false);
     }
@@ -233,13 +247,25 @@ export default function PolicyReconciliationPage() {
           current: page,
           pageSize: pageSize,
         });
-        message.success("Unmatched transactions loaded successfully");
+        sweetAlert({
+          title: "Unmatched transactions loaded successfully",
+          icon: "success",
+          timer: 2000,
+        })
       } else {
-        message.error("Failed to load unmatched transactions");
+        sweetAlert({
+          title: "Failed to load unmatched transactions",
+          icon: "error",
+          timer: 2000,
+        })
       }
     } catch (err) {
       console.error("Error fetching unmatched transactions:", err);
-      message.error("Failed to fetch unmatched transactions");
+      sweetAlert({
+        title: "Failed to fetch unmatched transactions",
+        icon: "error",
+        timer: 2000,
+      })
     } finally {
       setUnmatchedLoading(false);
     }
@@ -266,7 +292,11 @@ export default function PolicyReconciliationPage() {
         }));
 
       if (transactionsToUpdate.length === 0) {
-        message.warning("No valid matches found to update");
+        sweetAlert({
+          title: "No valid matches found to update",
+          icon: "warning",
+          timer: 2000,
+        })
         return;
       }
 
@@ -283,13 +313,21 @@ export default function PolicyReconciliationPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        message.error(errorData.message || "Failed to update transactions");
+        sweetAlert({
+          title: errorData.message || "Failed to update transactions",
+          icon: "error",
+          timer: 2000,
+        })
         return;
       }
 
       const data = await response.json();
       if (data.success) {
-        message.success(data.message);
+        sweetAlert({
+          title: data.message || "Transactions updated successfully",
+          icon: "success",
+          timer: 2000,
+        })
         // Refresh the unmatched transactions data
         await fetchUnmatchedTransactions();
       } else {
@@ -297,7 +335,11 @@ export default function PolicyReconciliationPage() {
       }
     } catch (err) {
       console.error("Error updating transactions:", err);
-      message.error("Failed to update transactions");
+      sweetAlert({
+        title: "Failed to update transactions",
+        icon: "error",
+        timer: 2000,
+      })
     } finally {
       setUpdatingTransactions(false);
     }
@@ -321,10 +363,18 @@ export default function PolicyReconciliationPage() {
       a.click();
       window.URL.revokeObjectURL(url);
 
-      message.success("CSV exported successfully");
+      sweetAlert({
+        title: "CSV exported successfully",
+        icon: "success",
+        timer: 2000,
+      })
     } catch (err) {
       console.error("Error exporting CSV:", err);
-      message.error("Failed to export CSV");
+      sweetAlert({
+        title: "Failed to export CSV",
+        icon: "error",
+        timer: 2000,
+      })
     }
   };
 

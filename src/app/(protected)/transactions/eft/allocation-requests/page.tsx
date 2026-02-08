@@ -224,7 +224,11 @@ export default function AllocationRequestsPage() {
       const parsed = parseCSV(csvText);
       setCsvData(parsed);
       setCsvFile(file);
-      message.success(`CSV file loaded with ${parsed.length} records`);
+      sweetAlert({
+        title: `CSV file loaded with ${parsed.length} records`,
+        icon: "success",
+        timer: 1500,
+      })
     };
     reader.readAsText(file);
     return false; // Prevent default upload
@@ -233,6 +237,11 @@ export default function AllocationRequestsPage() {
   const performDuplicateScan = async () => {
     if (!csvData.length) {
       message.error("Please upload a CSV file first");
+      sweetAlert({
+        title: "Please upload a CSV file first",
+        icon: "error",
+        timer: 1500,
+      })
       return;
     }
 
@@ -259,15 +268,24 @@ export default function AllocationRequestsPage() {
         const totalScanned = stats.totalRequests;
 
         setComparisonResults(data);
-
-        message.success(
-          `Scan completed. Found ${duplicateCount} potential duplicates out of ${totalScanned} requests scanned.`
-        );
+        sweetAlert({
+          title: `Scan completed. Found ${duplicateCount} potential duplicates out of ${totalScanned} requests scanned.`,
+          icon: "success",
+          timer: 1500,
+        })
       } else {
-        message.error("Failed to perform duplicate scan");
+        sweetAlert({
+          title: "Failed to perform duplicate scan",
+          icon: "error",
+          timer: 1500,
+        });
       }
     } catch (error) {
-      message.error("Failed to perform duplicate scan");
+      sweetAlert({
+        title: "Failed to perform duplicate scan",
+        icon: "error",
+        timer: 1500,
+      });
       console.error("Duplicate scan error:", error);
     } finally {
       setScanning(false);
@@ -306,6 +324,7 @@ export default function AllocationRequestsPage() {
                     sweetAlert({
                       icon: "error",
                       title: data.message || "Failed to submit",
+                      timer: 1500,
                     });
                   }
                 }}
@@ -342,18 +361,18 @@ export default function AllocationRequestsPage() {
         items={
           isAllocator
             ? [
-                { key: "SUBMITTED", label: "Submitted for Allocation" },
-                { key: "ALLOCATED", label: "Allocated" },
-                { key: "DUPLICATE", label: "Duplicates" },
-              ]
+              { key: "SUBMITTED", label: "Submitted for Allocation" },
+              { key: "ALLOCATED", label: "Allocated" },
+              { key: "DUPLICATE", label: "Duplicates" },
+            ]
             : [
-                { key: "PENDING", label: "Pending Review" },
-                { key: "REJECTED", label: "Rejected" },
-                { key: "APPROVED", label: "Approved" },
-                { key: "SUBMITTED", label: "Submitted for Allocation" },
-                { key: "ALLOCATED", label: "Allocated" },
-                { key: "DUPLICATE", label: "Duplicates" },
-              ]
+              { key: "PENDING", label: "Pending Review" },
+              { key: "REJECTED", label: "Rejected" },
+              { key: "APPROVED", label: "Approved" },
+              { key: "SUBMITTED", label: "Submitted for Allocation" },
+              { key: "ALLOCATED", label: "Allocated" },
+              { key: "DUPLICATE", label: "Duplicates" },
+            ]
         }
       />
 
@@ -405,18 +424,18 @@ export default function AllocationRequestsPage() {
         bordered
         rowSelection={
           filters.status === "APPROVED" ||
-          (isAllocator && filters.status === "SUBMITTED")
+            (isAllocator && filters.status === "SUBMITTED")
             ? {
-                selectedRowKeys,
-                onChange: setSelectedRowKeys,
-                preserveSelectedRowKeys: true,
-                getCheckboxProps: (record: AllocationRequestItem) => ({
-                  disabled: !(
-                    (!isAllocator && record.status === "APPROVED") ||
-                    (isAllocator && record.status === "SUBMITTED")
-                  ),
-                }),
-              }
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+              preserveSelectedRowKeys: true,
+              getCheckboxProps: (record: AllocationRequestItem) => ({
+                disabled: !(
+                  (!isAllocator && record.status === "APPROVED") ||
+                  (isAllocator && record.status === "SUBMITTED")
+                ),
+              }),
+            }
             : undefined
         }
         dataSource={items}
@@ -506,6 +525,7 @@ export default function AllocationRequestsPage() {
                           sweetAlert({
                             icon: "error",
                             title: "Failed to load details",
+                            timer: 1500,
                           });
                           setReviewing(null);
                         }
@@ -514,16 +534,16 @@ export default function AllocationRequestsPage() {
                     },
                     ...(record.status === "APPROVED" && isReviewer
                       ? [
-                          {
-                            key: "reject-approved",
-                            label: "Reject",
-                            danger: true,
-                            onClick: () => {
-                              rejectForm.resetFields();
-                              setRejecting(record);
-                            },
+                        {
+                          key: "reject-approved",
+                          label: "Reject",
+                          danger: true,
+                          onClick: () => {
+                            rejectForm.resetFields();
+                            setRejecting(record);
                           },
-                        ]
+                        },
+                      ]
                       : []),
                   ],
                 }}
@@ -603,7 +623,7 @@ export default function AllocationRequestsPage() {
                       setReviewDetail(undefined);
                       handleRefresh();
                     } else {
-                      sweetAlert({ icon: "error", title: "Failed to approve" });
+                      sweetAlert({ icon: "error", title: "Failed to approve", timer: 1500 });
                     }
                   }}
                 >
@@ -729,8 +749,8 @@ export default function AllocationRequestsPage() {
                   <Descriptions.Item label="Submitted At">
                     {(reviewDetail as any).submittedAt
                       ? new Date(
-                          (reviewDetail as any).submittedAt
-                        ).toLocaleString()
+                        (reviewDetail as any).submittedAt
+                      ).toLocaleString()
                       : "—"}
                   </Descriptions.Item>
                 </>
@@ -745,8 +765,8 @@ export default function AllocationRequestsPage() {
                   <Descriptions.Item label="Approved At">
                     {reviewDetail.approvedAt
                       ? new Date(
-                          (reviewDetail as any).approvedAt
-                        ).toLocaleString()
+                        (reviewDetail as any).approvedAt
+                      ).toLocaleString()
                       : "—"}
                   </Descriptions.Item>
                 </>
@@ -761,8 +781,8 @@ export default function AllocationRequestsPage() {
                   <Descriptions.Item label="Rejected At">
                     {(reviewDetail as any).rejectedAt
                       ? new Date(
-                          (reviewDetail as any).rejectedAt
-                        ).toLocaleString()
+                        (reviewDetail as any).rejectedAt
+                      ).toLocaleString()
                       : "—"}
                   </Descriptions.Item>
                 </>
@@ -777,8 +797,8 @@ export default function AllocationRequestsPage() {
                   <Descriptions.Item label="Cancelled At">
                     {(reviewDetail as any).cancelledAt
                       ? new Date(
-                          (reviewDetail as any).cancelledAt
-                        ).toLocaleString()
+                        (reviewDetail as any).cancelledAt
+                      ).toLocaleString()
                       : "—"}
                   </Descriptions.Item>
                 </>
@@ -865,7 +885,7 @@ export default function AllocationRequestsPage() {
                   setRejecting(null);
                   handleRefresh();
                 } else {
-                  sweetAlert({ icon: "error", title: "Failed to reject" });
+                  sweetAlert({ icon: "error", title: "Failed to reject", timer: 1500 });
                 }
               }}
             >
@@ -991,9 +1011,11 @@ export default function AllocationRequestsPage() {
                                   comparisonResults.importRequests,
                                   filename
                                 );
-                                message.success(
-                                  `Downloaded ${comparisonResults.importRequests.length} requests as ${filename}`
-                                );
+                                sweetAlert({
+                                  icon: "success",
+                                  title: `Downloaded ${comparisonResults.importRequests.length} requests`,
+                                  timer: 1500,
+                                });
                               }}
                             >
                               Download All
@@ -1036,6 +1058,7 @@ export default function AllocationRequestsPage() {
                                   sweetAlert({
                                     icon: "error",
                                     title: data.message || "Failed to allocate",
+                                    timer: 1500,
                                   });
                                 }
                               }}
@@ -1093,9 +1116,11 @@ export default function AllocationRequestsPage() {
                                         [record],
                                         filename
                                       );
-                                      message.success(
-                                        `Downloaded request for policy ${record.policyNumber}`
-                                      );
+                                      sweetAlert({
+                                        icon: "success",
+                                        title: `Downloaded request for policy ${record.policyNumber}`,
+                                        timer: 1500,
+                                      });
                                     }}
                                   >
                                     Download
@@ -1119,9 +1144,11 @@ export default function AllocationRequestsPage() {
 
                                       if (res.ok) {
                                         handleRefresh();
-                                        message.success(
-                                          `Marked policy ${record.policyNumber} as allocated`
-                                        );
+                                        sweetAlert({
+                                          icon: "success",
+                                          title: `Marked policy ${record.policyNumber} as allocated`,
+                                          timer: 1500,
+                                        });
                                       } else {
                                         const data = await res
                                           .json()
@@ -1195,6 +1222,7 @@ export default function AllocationRequestsPage() {
                                     title:
                                       data.message ||
                                       "Failed to mark as duplicates",
+                                    timer: 1500,
                                   });
                                 }
                               } catch (error) {
@@ -1205,6 +1233,7 @@ export default function AllocationRequestsPage() {
                                 sweetAlert({
                                   icon: "error",
                                   title: "Failed to mark as duplicates",
+                                  timer: 1500,
                                 });
                               }
                             }}
@@ -1268,26 +1297,33 @@ export default function AllocationRequestsPage() {
 
                                       if (res.ok) {
                                         handleRefresh();
-                                        message.success(
-                                          `Marked policy ${record.policyNumber} as duplicate`
-                                        );
+                                        sweetAlert({
+                                          icon: "success",
+                                          title: `Marked policy ${record.policyNumber} as duplicate`,
+                                          timer: 1500,
+                                        })
                                       } else {
                                         const data = await res
                                           .json()
                                           .catch(() => ({}));
-                                        message.error(
-                                          data.message ||
-                                            "Failed to mark as duplicate"
-                                        );
+                                        sweetAlert({
+                                          icon: "error",
+                                          title:
+                                            data.message ||
+                                            "Failed to mark as duplicate",
+                                          timer: 1500,
+                                        })
                                       }
                                     } catch (error) {
                                       console.error(
                                         "Error marking duplicate:",
                                         error
                                       );
-                                      message.error(
-                                        "Failed to mark as duplicate"
-                                      );
+                                      sweetAlert({
+                                        icon: "error",
+                                        title: "Failed to mark as duplicate",
+                                        timer: 1500,
+                                      })
                                     }
                                   }}
                                 >

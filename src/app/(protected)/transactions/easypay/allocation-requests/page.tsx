@@ -25,8 +25,7 @@ import {
   Table,
   Tabs,
   Tag,
-  Upload,
-  message,
+  Upload
 } from "antd";
 import dayjs from "dayjs";
 import sweetAlert from "sweetalert";
@@ -270,7 +269,12 @@ export default function AllocationRequestsPage() {
       const parsed = parseCSV(csvText);
       setCsvData(parsed);
       setCsvFile(file);
-      message.success(`CSV file loaded with ${parsed.length} records`);
+      sweetAlert({
+        title: `CSV file loaded with ${parsed.length} records`,
+        icon: "success",
+        timer: 2000,
+      });
+
     };
     reader.readAsText(file);
     return false; // Prevent default upload
@@ -278,7 +282,11 @@ export default function AllocationRequestsPage() {
 
   const performDuplicateScan = async () => {
     if (!csvData.length) {
-      message.error("Please upload a CSV file first");
+      sweetAlert({
+        title: "Please upload a CSV file first",
+        icon: "error",
+        timer: 2000,
+      });
       return;
     }
 
@@ -325,7 +333,7 @@ export default function AllocationRequestsPage() {
           return (
             effectiveDate === csvFormattedTransactionDate &&
             membershipId.toString().trim() ===
-              request.policyNumber.toString().trim()
+            request.policyNumber.toString().trim()
           );
         });
 
@@ -342,12 +350,18 @@ export default function AllocationRequestsPage() {
       setComparisonResults(results);
       const duplicateCount = results.filter((r) => r.isDuplicate).length;
       const totalScanned = results.length;
-      message.success(
-        `Scan completed. Found ${duplicateCount} potential duplicates out of ${totalScanned} requests scanned.`
-      );
+      sweetAlert({
+        title: `Scan completed. Found ${duplicateCount} potential duplicates out of ${totalScanned} requests scanned.`,
+        icon: "success",
+        timer: 3000,
+      });
     } catch (error) {
-      message.error("Failed to perform duplicate scan");
       console.error("Duplicate scan error:", error);
+      sweetAlert({
+        title: "Failed to perform duplicate scan",
+        icon: "error",
+        timer: 2000,
+      });
     } finally {
       setScanning(false);
     }
@@ -421,18 +435,18 @@ export default function AllocationRequestsPage() {
         items={
           isAllocator
             ? [
-                { key: "SUBMITTED", label: "Submitted for Allocation" },
-                { key: "ALLOCATED", label: "Allocated" },
-                { key: "DUPLICATE", label: "Duplicates" },
-              ]
+              { key: "SUBMITTED", label: "Submitted for Allocation" },
+              { key: "ALLOCATED", label: "Allocated" },
+              { key: "DUPLICATE", label: "Duplicates" },
+            ]
             : [
-                { key: "PENDING", label: "Pending Review" },
-                { key: "REJECTED", label: "Rejected" },
-                { key: "APPROVED", label: "Approved" },
-                { key: "SUBMITTED", label: "Submitted for Allocation" },
-                { key: "ALLOCATED", label: "Allocated" },
-                { key: "DUPLICATE", label: "Duplicates" },
-              ]
+              { key: "PENDING", label: "Pending Review" },
+              { key: "REJECTED", label: "Rejected" },
+              { key: "APPROVED", label: "Approved" },
+              { key: "SUBMITTED", label: "Submitted for Allocation" },
+              { key: "ALLOCATED", label: "Allocated" },
+              { key: "DUPLICATE", label: "Duplicates" },
+            ]
         }
       />
 
@@ -489,18 +503,18 @@ export default function AllocationRequestsPage() {
         bordered
         rowSelection={
           filters.status === "APPROVED" ||
-          (isAllocator && filters.status === "SUBMITTED")
+            (isAllocator && filters.status === "SUBMITTED")
             ? {
-                selectedRowKeys,
-                onChange: setSelectedRowKeys,
-                preserveSelectedRowKeys: true,
-                getCheckboxProps: (record: AllocationRequestItem) => ({
-                  disabled: !(
-                    (!isAllocator && record.status === "APPROVED") ||
-                    (isAllocator && record.status === "SUBMITTED")
-                  ),
-                }),
-              }
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+              preserveSelectedRowKeys: true,
+              getCheckboxProps: (record: AllocationRequestItem) => ({
+                disabled: !(
+                  (!isAllocator && record.status === "APPROVED") ||
+                  (isAllocator && record.status === "SUBMITTED")
+                ),
+              }),
+            }
             : undefined
         }
         dataSource={items}
@@ -615,16 +629,16 @@ export default function AllocationRequestsPage() {
                     },
                     ...(record.status === "APPROVED" && isReviewer
                       ? [
-                          {
-                            key: "reject-approved",
-                            label: "Reject",
-                            danger: true,
-                            onClick: () => {
-                              rejectForm.resetFields();
-                              setRejecting(record);
-                            },
+                        {
+                          key: "reject-approved",
+                          label: "Reject",
+                          danger: true,
+                          onClick: () => {
+                            rejectForm.resetFields();
+                            setRejecting(record);
                           },
-                        ]
+                        },
+                      ]
                       : []),
                   ],
                 }}
@@ -827,8 +841,8 @@ export default function AllocationRequestsPage() {
                   <Descriptions.Item label="Submitted At">
                     {(reviewDetail.item as any).submittedAt
                       ? new Date(
-                          (reviewDetail.item as any).submittedAt
-                        ).toLocaleString()
+                        (reviewDetail.item as any).submittedAt
+                      ).toLocaleString()
                       : "—"}
                   </Descriptions.Item>
                 </>
@@ -843,8 +857,8 @@ export default function AllocationRequestsPage() {
                   <Descriptions.Item label="Approved At">
                     {reviewDetail.item.approvedAt
                       ? new Date(
-                          (reviewDetail.item as any).approvedAt
-                        ).toLocaleString()
+                        (reviewDetail.item as any).approvedAt
+                      ).toLocaleString()
                       : "—"}
                   </Descriptions.Item>
                 </>
@@ -859,8 +873,8 @@ export default function AllocationRequestsPage() {
                   <Descriptions.Item label="Rejected At">
                     {(reviewDetail.item as any).rejectedAt
                       ? new Date(
-                          (reviewDetail.item as any).rejectedAt
-                        ).toLocaleString()
+                        (reviewDetail.item as any).rejectedAt
+                      ).toLocaleString()
                       : "—"}
                   </Descriptions.Item>
                 </>
@@ -875,8 +889,8 @@ export default function AllocationRequestsPage() {
                   <Descriptions.Item label="Cancelled At">
                     {(reviewDetail.item as any).cancelledAt
                       ? new Date(
-                          (reviewDetail.item as any).cancelledAt
-                        ).toLocaleString()
+                        (reviewDetail.item as any).cancelledAt
+                      ).toLocaleString()
                       : "—"}
                   </Descriptions.Item>
                 </>
@@ -1088,9 +1102,12 @@ export default function AllocationRequestsPage() {
                                 );
                                 const filename = `easypay_allocation_requests_${timestamp}.csv`;
                                 generateAndDownloadCSV(readyRequests, filename);
-                                message.success(
-                                  `Downloaded ${readyRequests.length} requests as ${filename}`
-                                );
+
+                                sweetAlert({
+                                  title: `Downloaded ${readyRequests.length} requests as ${filename}`,
+                                  icon: "success",
+                                  timer: 2000,
+                                });
                               }}
                             >
                               Download All
@@ -1326,26 +1343,31 @@ export default function AllocationRequestsPage() {
 
                                       if (res.ok) {
                                         handleRefresh();
-                                        message.success(
-                                          `Marked policy ${record.request.policyNumber} as duplicate`
-                                        );
+                                        sweetAlert({
+                                          icon: "success",
+                                          title: `Marked policy ${record.request.policyNumber} as duplicate`,
+                                          timer: 1500,
+                                        });
                                       } else {
                                         const data = await res
                                           .json()
                                           .catch(() => ({}));
-                                        message.error(
-                                          data.message ||
-                                            "Failed to mark as duplicate"
-                                        );
+                                        sweetAlert({
+                                          icon: "error",
+                                          title:
+                                            data.message ||
+                                            "Failed to mark as duplicate",
+                                        })
                                       }
                                     } catch (error) {
                                       console.error(
                                         "Error marking duplicate:",
                                         error
                                       );
-                                      message.error(
-                                        "Failed to mark as duplicate"
-                                      );
+                                      sweetAlert({
+                                        icon: "error",
+                                        title: "Failed to mark as duplicate",
+                                      })
                                     }
                                   }}
                                 >
