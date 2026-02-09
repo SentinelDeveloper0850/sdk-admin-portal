@@ -42,30 +42,22 @@ const LoginPage = () => {
     setError(false);
 
     try {
-      const response = await axios.post(
-        "/api/auth/login",
-        JSON.stringify(values),
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.post("/api/auth/login", JSON.stringify(values), {
+        headers: { "Content-Type": "application/json" },
+      });
 
-      if (response.status != 200) {
-        console.log("login response", response);
+      if (response.status !== 200) {
         setError("Something went wrong");
         return;
       }
 
       const data = response.data;
-      // Update user in context
       setUser(data.user);
 
-      router.push("/dashboard"); // Redirect to dashboard
+      router.push("/session");
     } catch (error: any) {
-      console.error(error.response.data.message);
-      setError(error.response.data.message);
+      console.error(error?.response?.data?.message ?? error);
+      setError(error?.response?.data?.message ?? "Login failed");
     } finally {
       setLoading(false);
     }

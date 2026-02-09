@@ -22,13 +22,15 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
     return false;
   }, [pathname]);
 
+  const isSessionRoute = useMemo(() => pathname.startsWith("/session"), [pathname]);
+
   return (
     <div className="flex h-screen w-full flex-col">
       <AppBarOnline />
       <div className="flex flex-1 overflow-hidden">
-        <aside className="sticky top-0 hidden h-screen shrink-0 pb-10 transition-all duration-200 md:block">
+        {!isSessionRoute && <aside className="sticky top-0 hidden h-screen shrink-0 pb-10 transition-all duration-200 md:block">
           <SideNavBar />
-        </aside>
+        </aside>}
         <main
           className={`flex-1 overflow-y-auto bg-zinc-100 p-4 dark:bg-zinc-800 ${hasContextMenu ? "pr-0 pt-0" : "pr-4 pt-4"}`}
         >

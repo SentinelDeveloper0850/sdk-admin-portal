@@ -44,14 +44,14 @@ const { TabPane } = Tabs;
 const { Option } = Select;
 const { TextArea } = Input;
 
-interface RegionLite {
+export interface RegionLite {
   _id: string;
   id: string; // business id
   name: string;
   code: string;
 }
 
-interface BranchConfig {
+export interface BranchConfig {
   _id: string;
   id?: string; // business id (optional)
   regionId?: string; // business FK
