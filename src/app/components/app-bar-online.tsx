@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   Avatar,
@@ -48,8 +48,6 @@ export default function AppBarOnline() {
   const router = useRouter();
   const { user, setUser, session, clearSession } = useAuth(); // ✅ add session + clearSession
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const hasSession = useMemo(() => !!session, [session]);
 
   const handleLogout = () => {
     // 1) Clear in-memory state FIRST (prevents redirect to /session)

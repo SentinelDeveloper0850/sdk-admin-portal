@@ -47,12 +47,12 @@ export default function Presence({
     try {
       const res = await fetch("/api/auth/logout", { method: "POST" });
       if (!res.ok) throw new Error(`Failed to logout (${res.status})`);
-      window.location.href = "/login";
+      window.location.href = "/auth/signin";
     } catch (error: any) {
       console.error("Logout failed:", error);
-      window.location.href = "/login";
+      window.location.href = "/auth/signin";
     }
-    window.location.href = "/login";
+    window.location.href = "/auth/signin";
   };
 
   // Heartbeat: POST to /api/presence to update user's lastSeenAt
