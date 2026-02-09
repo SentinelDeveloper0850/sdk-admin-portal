@@ -15,16 +15,13 @@ import {
   FileWarning,
   HandCoins,
   PenBox,
-  RefreshCw,
-  ScrollText,
   ShieldCheck,
   Users,
-  XCircle,
+  XCircle
 } from "lucide-react";
 
 import PageHeader from "@/app/components/page-header";
 import { CardContent } from "@/app/components/ui/card";
-import { useToast } from "@/app/hooks/use-toast";
 
 interface DashboardStats {
   userCount: number;
@@ -126,7 +123,9 @@ const DashboardPage: React.FC = () => {
     null
   );
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+
+  const [showDailyActivityComplianceDetails, setShowDailyActivityComplianceDetails] = useState(false);
+  const [showCashUpComplianceDetails, setShowCashUpComplianceDetails] = useState(false);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -150,87 +149,87 @@ const DashboardPage: React.FC = () => {
 
   const cardStats = stats
     ? [
-        {
-          label: "EFT Transactions",
-          value: stats.eftTransactionCount,
-          icon: <Banknote className="h-5 w-5" />,
-          link: "/transactions/eft",
-        },
-        {
-          label: "EasyPay Transactions",
-          value: stats.easypayTransactionCount,
-          icon: <Banknote className="h-5 w-5" />,
-          link: "/transactions/easypay",
-        },
-        {
-          label: "Prepaid Societies (Easipol)",
-          value: stats.prepaidSocietyCount,
-          icon: <ChurchIcon className="h-5 w-5" />,
-          link: "/societies/prepaid",
-        },
-        {
-          label: "Policies (Easipol)",
-          value: stats.policyCount,
-          icon: <ShieldCheck className="h-5 w-5" />,
-          link: "/policies/view",
-        },
-        {
-          label: "Registered Users",
-          value: stats.userCount,
-          icon: <Users className="h-5 w-5" />,
-          link: "/users",
-        },
-        {
-          label: "EFT Allocation Requests",
-          value: stats.pendingItems.eftAllocationRequests,
-          icon:
-            stats.pendingItems.eftAllocationRequests > 0 ? (
-              <FileWarning className="h-5 w-5 text-red-500" />
-            ) : (
-              <HandCoins className="h-5 w-5" />
-            ),
-          link: "/transactions/eft/allocation-requests",
-        },
-        {
-          label: "EasyPay Allocation Requests",
-          value: stats.pendingItems.easypayAllocationRequests,
-          icon:
-            stats.pendingItems.easypayAllocationRequests > 0 ? (
-              <FileWarning className="h-5 w-5 text-red-500" />
-            ) : (
-              <HandCoins className="h-5 w-5" />
-            ),
-          link: "/transactions/easypay/allocation-requests",
-        },
-        {
-          label: "Scheme Societies",
-          value: stats.schemeSocietyCount,
-          icon: <ChurchIcon className="h-5 w-5" />,
-          link: "/societies/scheme",
-        },
-        {
-          label: "Signup Requests",
-          value: stats.pendingItems.signupRequests,
-          icon:
-            stats.pendingItems.signupRequests > 0 ? (
-              <FileWarning className="h-5 w-5 text-red-500" />
-            ) : (
-              <PenBox className="h-5 w-5" />
-            ),
-          link: "/policies/signup-requests",
-        },
-        {
-          label: "Cancellation Requests",
-          value: stats.pendingItems.cancellationRequests,
-          icon:
-            stats.pendingItems.cancellationRequests > 0 ? (
-              <FileWarning className="h-5 w-5 text-red-500" />
-            ) : (
-              <FileText className="h-5 w-5" />
-            ),
-          link: "/policies/cancellation-requests",
-        },
-      ]
+      {
+        label: "EFT Transactions",
+        value: stats.eftTransactionCount,
+        icon: <Banknote className="h-5 w-5" />,
+        link: "/transactions/eft",
+      },
+      {
+        label: "EasyPay Transactions",
+        value: stats.easypayTransactionCount,
+        icon: <Banknote className="h-5 w-5" />,
+        link: "/transactions/easypay",
+      },
+      {
+        label: "Prepaid Societies (Easipol)",
+        value: stats.prepaidSocietyCount,
+        icon: <ChurchIcon className="h-5 w-5" />,
+        link: "/societies/prepaid",
+      },
+      {
+        label: "Policies (Easipol)",
+        value: stats.policyCount,
+        icon: <ShieldCheck className="h-5 w-5" />,
+        link: "/policies/view",
+      },
+      {
+        label: "Registered Users",
+        value: stats.userCount,
+        icon: <Users className="h-5 w-5" />,
+        link: "/users",
+      },
+      {
+        label: "EFT Allocation Requests",
+        value: stats.pendingItems.eftAllocationRequests,
+        icon:
+          stats.pendingItems.eftAllocationRequests > 0 ? (
+            <FileWarning className="h-5 w-5 text-red-500" />
+          ) : (
+            <HandCoins className="h-5 w-5" />
+          ),
+        link: "/transactions/eft/allocation-requests",
+      },
+      {
+        label: "EasyPay Allocation Requests",
+        value: stats.pendingItems.easypayAllocationRequests,
+        icon:
+          stats.pendingItems.easypayAllocationRequests > 0 ? (
+            <FileWarning className="h-5 w-5 text-red-500" />
+          ) : (
+            <HandCoins className="h-5 w-5" />
+          ),
+        link: "/transactions/easypay/allocation-requests",
+      },
+      {
+        label: "Scheme Societies",
+        value: stats.schemeSocietyCount,
+        icon: <ChurchIcon className="h-5 w-5" />,
+        link: "/societies/scheme",
+      },
+      {
+        label: "Signup Requests",
+        value: stats.pendingItems.signupRequests,
+        icon:
+          stats.pendingItems.signupRequests > 0 ? (
+            <FileWarning className="h-5 w-5 text-red-500" />
+          ) : (
+            <PenBox className="h-5 w-5" />
+          ),
+        link: "/policies/signup-requests",
+      },
+      {
+        label: "Cancellation Requests",
+        value: stats.pendingItems.cancellationRequests,
+        icon:
+          stats.pendingItems.cancellationRequests > 0 ? (
+            <FileWarning className="h-5 w-5 text-red-500" />
+          ) : (
+            <FileText className="h-5 w-5" />
+          ),
+        link: "/policies/cancellation-requests",
+      },
+    ]
     : [];
 
   return (
@@ -271,8 +270,96 @@ const DashboardPage: React.FC = () => {
         ))}
       </div>
 
+      {dashboardData && <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+        {/* Compliance Rate */}
+        <Card className="bg-muted border-border border dark:border-[#333]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  Overall Compliance Rate
+                </h3>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-foreground">
+                  {dashboardData.dailyActivityCompliance.complianceRate.toFixed(
+                    1
+                  )}
+                  %
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {dashboardData.dailyActivityCompliance.compliantCount} of{" "}
+                  {dashboardData.dailyActivityCompliance.totalUsers} users
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+              <div
+                className="h-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-300"
+                style={{
+                  width: `${dashboardData.dailyActivityCompliance.complianceRate}%`,
+                }}
+              ></div>
+            </div>
+            <div className="text-muted-foreground mt-2 text-xs">
+              Checking compliance for:{" "}
+              {new Date(
+                Date.now() - 24 * 60 * 60 * 1000
+              ).toLocaleDateString()}{" "}
+              (cutoff: 18:00) • Last updated:{" "}
+              {new Date().toLocaleDateString()} at{" "}
+              {new Date().toLocaleTimeString()}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Compliance Rate */}
+        <Card className="bg-muted border-border border dark:border-[#333]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  Overall Compliance Rate
+                </h3>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-foreground">
+                  {dashboardData.cashUpSubmissionCompliance.complianceRate.toFixed(
+                    1
+                  )}
+                  %
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {dashboardData.cashUpSubmissionCompliance.compliantCount} of{" "}
+                  {dashboardData.cashUpSubmissionCompliance.totalUsers} users
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+              <div
+                className="h-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-300"
+                style={{
+                  width: `${dashboardData.cashUpSubmissionCompliance.complianceRate}%`,
+                }}
+              ></div>
+            </div>
+            <div className="text-muted-foreground mt-2 text-xs">
+              Checking compliance for:{" "}
+              {new Date(
+                Date.now() - 24 * 60 * 60 * 1000
+              ).toLocaleDateString()}{" "}
+              (cutoff: 20:00) • Last updated:{" "}
+              {new Date().toLocaleDateString()} at{" "}
+              {new Date().toLocaleTimeString()}
+            </div>
+          </CardContent>
+        </Card>
+      </div>}
+
       {/* Daily Activity Compliance Section */}
-      {dashboardData?.dailyActivityCompliance && (
+      {dashboardData?.dailyActivityCompliance && showDailyActivityComplianceDetails && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -283,7 +370,7 @@ const DashboardPage: React.FC = () => {
                 Based on yesterday's reports (cutoff: 18:00 daily) • Excludes
                 admins and inactive users
                 {dashboardData.dailyActivityCompliance.expectedSource ===
-                "duty_roster"
+                  "duty_roster"
                   ? " • Expected users from Duty Roster"
                   : " • Expected users: all active users (no roster)"}
               </p>
@@ -318,50 +405,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Compliance Rate */}
-          <Card className="bg-muted border-border border dark:border-[#333]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Overall Compliance Rate
-                  </h3>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-foreground">
-                    {dashboardData.dailyActivityCompliance.complianceRate.toFixed(
-                      1
-                    )}
-                    %
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    {dashboardData.dailyActivityCompliance.compliantCount} of{" "}
-                    {dashboardData.dailyActivityCompliance.totalUsers} users
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                <div
-                  className="h-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-300"
-                  style={{
-                    width: `${dashboardData.dailyActivityCompliance.complianceRate}%`,
-                  }}
-                ></div>
-              </div>
-              <div className="text-muted-foreground mt-2 text-xs">
-                Checking compliance for:{" "}
-                {new Date(
-                  Date.now() - 24 * 60 * 60 * 1000
-                ).toLocaleDateString()}{" "}
-                (cutoff: 18:00) • Last updated:{" "}
-                {new Date().toLocaleDateString()} at{" "}
-                {new Date().toLocaleTimeString()}
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Compliant Users */}
             <Card className="bg-muted border-border border dark:border-[#333]">
               <CardContent className="p-4">
@@ -374,7 +418,7 @@ const DashboardPage: React.FC = () => {
                 </div>
                 <div className="max-h-64 space-y-3 overflow-y-auto">
                   {dashboardData.dailyActivityCompliance.compliantUsers.length >
-                  0 ? (
+                    0 ? (
                     dashboardData.dailyActivityCompliance.compliantUsers.map(
                       (user) => (
                         <div
@@ -469,12 +513,12 @@ const DashboardPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </div>}
         </div>
       )}
 
       {/* Cashup Submission Compliance Section */}
-      {dashboardData?.cashUpSubmissionCompliance && (
+      {dashboardData?.cashUpSubmissionCompliance && showCashUpComplianceDetails && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -485,7 +529,7 @@ const DashboardPage: React.FC = () => {
                 Based on yesterday's cashups (cutoff: 20:00 daily) • Cashiers
                 only • Excludes admins and inactive users
                 {dashboardData.cashUpSubmissionCompliance.expectedSource ===
-                "duty_roster"
+                  "duty_roster"
                   ? " • Expected users from Duty Roster"
                   : " • Expected users: all active users (no roster)"}
               </p>
@@ -521,49 +565,6 @@ const DashboardPage: React.FC = () => {
               </Badge>
             </div>
           </div>
-
-          {/* Compliance Rate */}
-          <Card className="bg-muted border-border border dark:border-[#333]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Overall Compliance Rate
-                  </h3>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-foreground">
-                    {dashboardData.cashUpSubmissionCompliance.complianceRate.toFixed(
-                      1
-                    )}
-                    %
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    {dashboardData.cashUpSubmissionCompliance.compliantCount} of{" "}
-                    {dashboardData.cashUpSubmissionCompliance.totalUsers} users
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                <div
-                  className="h-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-300"
-                  style={{
-                    width: `${dashboardData.cashUpSubmissionCompliance.complianceRate}%`,
-                  }}
-                ></div>
-              </div>
-              <div className="text-muted-foreground mt-2 text-xs">
-                Checking compliance for:{" "}
-                {new Date(
-                  Date.now() - 24 * 60 * 60 * 1000
-                ).toLocaleDateString()}{" "}
-                (cutoff: 20:00) • Last updated:{" "}
-                {new Date().toLocaleDateString()} at{" "}
-                {new Date().toLocaleTimeString()}
-              </div>
-            </CardContent>
-          </Card>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Compliant Users */}
