@@ -117,6 +117,8 @@ const SessionPage = () => {
             mode: values.mode,
             branch: values.mode === "ONSITE" ? values.branch : undefined,
             region: values.mode === "ONSITE" ? values.region : undefined,
+            regionName: values.mode === "ONSITE" ? regions.find(r => r.id === values.region)?.name : undefined,
+            branchName: values.mode === "ONSITE" ? branches.find(b => b._id === values.branch)?.name : undefined,
         });
 
         sweetAlert({ title: "Success", text: "Session set successfully.", icon: "success" });

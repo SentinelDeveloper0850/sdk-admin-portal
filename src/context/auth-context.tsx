@@ -15,6 +15,8 @@ export interface ISession {
   mode: SessionMode;
   branch?: string;
   region?: string;
+  branchName?: string;
+  regionName?: string;
 }
 
 interface AuthContextType {
@@ -59,6 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isExpired = (s: ISession) => new Date(s.expiresAt).getTime() <= Date.now();
 
   const clearSession = () => {
+    router.push("/session");
     setSession(null);
     if (typeof window !== "undefined") localStorage.removeItem(SESSION_STORAGE_KEY);
   };
