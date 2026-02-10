@@ -68,8 +68,8 @@ export async function GET(request: NextRequest) {
 
       const allAttachments = Array.isArray(doc.submissions)
         ? doc.submissions
-            .flatMap((s: any) => (Array.isArray(s?.files) ? s.files : []))
-            .filter(Boolean)
+          .flatMap((s: any) => (Array.isArray(s?.files) ? s.files : []))
+          .filter(Boolean)
         : [];
 
       return {
@@ -100,20 +100,21 @@ export async function GET(request: NextRequest) {
         isLateSubmission: !!doc.isLateSubmission,
         submissions: Array.isArray(doc.submissions)
           ? doc.submissions.map((s: any, idx: number) => ({
-              _idx: idx,
-              invoiceNumber: s?.invoiceNumber ?? null,
-              paymentMethod: s?.paymentMethod ?? null,
-              submittedAmount: s?.submittedAmount ?? null,
-              cashAmount: s?.cashAmount ?? null,
-              cardAmount: s?.cardAmount ?? null,
-              bankDepositReference: s?.bankDepositReference ?? null,
-              bankName: s?.bankName ?? null,
-              depositorName: s?.depositorName ?? null,
-              receiptType: s?.receiptType ?? null,
-              notes: s?.notes ?? null,
-              submittedAt: s?.submittedAt ?? null,
-              files: Array.isArray(s?.files) ? s.files : [],
-            }))
+            _id: String(s?._id),
+            _idx: idx,
+            invoiceNumber: s?.invoiceNumber ?? null,
+            paymentMethod: s?.paymentMethod ?? null,
+            submittedAmount: s?.submittedAmount ?? null,
+            cashAmount: s?.cashAmount ?? null,
+            cardAmount: s?.cardAmount ?? null,
+            bankDepositReference: s?.bankDepositReference ?? null,
+            bankName: s?.bankName ?? null,
+            depositorName: s?.depositorName ?? null,
+            receiptType: s?.receiptType ?? null,
+            notes: s?.notes ?? null,
+            submittedAt: s?.submittedAt ?? null,
+            files: Array.isArray(s?.files) ? s.files : [],
+          }))
           : [],
       };
     });

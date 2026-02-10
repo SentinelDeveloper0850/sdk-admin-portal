@@ -10,7 +10,7 @@ import {
   ExclamationCircleOutlined,
   FileTextOutlined,
   PlusOutlined,
-  ReloadOutlined,
+  ReloadOutlined
 } from "@ant-design/icons";
 import {
   Alert,
@@ -39,13 +39,31 @@ import WeeklySummaryDrawer from "@/app/components/cash-up/weekly-summary-drawer"
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
 
+import ReceiptEditDrawer from "@/app/components/cash-up/receipt-edit-drawer";
+import { SquarePen, Trash2 } from "lucide-react";
 import { ERoles } from "../../../../types/roles.enum";
 import CashUpCountdown from "./CashUpCountdown";
 
 const { Title, Text } = Typography;
 
+interface ISubmissionReceipt {
+  _id: string
+  invoiceNumber?: string | null;
+  paymentMethod?: string | null;
+  submittedAmount?: number | null;
+  cashAmount?: number | null;
+  cardAmount?: number | null;
+  bankDepositReference?: string | null;
+  bankName?: string | null;
+  depositorName?: string | null;
+  notes?: string | null;
+  submittedAt?: string | null;
+  files: string[];
+}
+
 interface ICashUpSubmission {
   _id: string;
+  _idx: number;
   date: string;
   employeeId: string;
   employeeName: string;
@@ -61,20 +79,7 @@ interface ICashUpSubmission {
   isResolved: boolean;
   notes?: string;
   attachments: string[];
-  submissions?: Array<{
-    _idx: number;
-    invoiceNumber?: string | null;
-    paymentMethod?: string | null;
-    submittedAmount?: number | null;
-    cashAmount?: number | null;
-    cardAmount?: number | null;
-    bankDepositReference?: string | null;
-    bankName?: string | null;
-    depositorName?: string | null;
-    notes?: string | null;
-    submittedAt?: string | null;
-    files: string[];
-  }>;
+  submissions?: ISubmissionReceipt[];
   isLateSubmission?: boolean;
 }
 
@@ -117,6 +122,20 @@ const CashUpDashboardPage = () => {
   const [activeDate, setActiveDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [lateModalOpen, setLateModalOpen] = useState(false);
   const [lateDate, setLateDate] = useState(dayjs().subtract(1, "day"));
+
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [receiptToEdit, setReceiptToEdit] = useState<ISubmissionReceipt | null>(null);
+
+  const selectReceiptToEdit = (receipt: ISubmissionReceipt, submission: ICashUpSubmission) => {
+    // Only allow editing if it’s open for changes
+    const canEdit = ["draft", "needs_changes"].includes(norm(submission.status));
+    if (!canEdit) {
+      swal({ title: "Not editable", text: "This submission can’t be edited right now.", icon: "info" });
+      return;
+    }
+    setReceiptToEdit(receipt);
+    setEditDrawerOpen(true);
+  };
 
   const fetchCashUpSubmissions = async () => {
     setLoading(true);
@@ -536,6 +555,46 @@ const CashUpDashboardPage = () => {
     setLoading(false);
   };
 
+  const deleteReceipt = async (receipt: ISubmissionReceipt, submission: ICashUpSubmission) => {
+    const updatedReceipts = (submission.submissions || []).filter(r => r._id !== receipt._id);
+
+    const updatedSubmission = { ...submission, submissions: updatedReceipts };
+
+    setCashUpSubmissions(prev =>
+      prev.map(s => s._id === submission._id ? updatedSubmission : s)
+    );
+
+    try {
+      const res = await fetch("/api/cash-up/delete-receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          receiptId: receipt._id,          // ✅ real id now
+          submissionId: submission._id,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!json.success) {
+        setCashUpSubmissions(prev => prev.map(s => s._id === submission._id ? submission : s));
+        swal({ title: "Error", text: json.message || "Failed to delete receipt", icon: "error" });
+        return;
+      }
+
+      // Your server currently returns updateOne result (not the doc).
+      // So just refetch for correctness unless you change server to return updated doc.
+      await fetchCashUpSubmissions();
+
+      swal({ title: "Deleted", text: "Receipt deleted successfully", icon: "success" });
+    } catch (e) {
+      console.error("Failed to delete receipt:", e);
+      setCashUpSubmissions(prev => prev.map(s => s._id === submission._id ? submission : s));
+      swal({ title: "Error", text: "Failed to delete receipt", icon: "error" });
+    }
+  };
+
+
   return (
     <div className="space-y-6 p-6">
       <PageHeader
@@ -704,7 +763,7 @@ const CashUpDashboardPage = () => {
               <Card
                 size="small"
                 title={
-                  <Title className="my-2" level={4}>
+                  <Title className="my-2 dark:text-white text-sm font-normal" level={5}>
                     Current Submission ({activeDate})
                   </Title>
                 }
@@ -715,8 +774,8 @@ const CashUpDashboardPage = () => {
                   ) &&
                   isOwner(currentSubmission) && (
                     <Button
-                      type="primary"
-                      className="uppercase text-black"
+                      type="primary" size="small"
+                      className="uppercase text-black text-xs"
                       onClick={() => submitForReview(currentSubmission)}
                     >
                       Submit for Review
@@ -777,7 +836,7 @@ const CashUpDashboardPage = () => {
 
                     <Table
                       size="small"
-                      rowKey={(r) => String(r._idx)}
+                      rowKey={(r) => r._id}
                       dataSource={(currentSubmission.submissions || []).map(
                         (s) => ({
                           ...s,
@@ -789,10 +848,10 @@ const CashUpDashboardPage = () => {
                       columns={[
                         {
                           title: "#",
-                          dataIndex: "_idx",
-                          key: "_idx",
+                          dataIndex: "_id",
+                          key: "_id",
                           width: 60,
-                          render: (v: number) => v + 1,
+                          render: (_: any, __: any, index: number) => index + 1,
                         },
                         {
                           title: "Invoice",
@@ -840,9 +899,38 @@ const CashUpDashboardPage = () => {
                           title: "Files",
                           dataIndex: "attachmentsCount",
                           key: "attachmentsCount",
-                          align: "center",
+                          align: "left",
                           render: (v: number, r: any) => <span>{v || 0}</span>,
                         },
+                        {
+                          title: "Actions",
+                          key: "actions",
+                          align: "left",
+                          render: (_: any, record: any) => (
+                            <Space>
+                              <Button type="link" size="small" className="p-0" onClick={() => {
+                                selectReceiptToEdit(record, currentSubmission);
+                              }}>
+                                <SquarePen className="h-4 w-4" />
+                              </Button>
+                              <Button type="link" size="small" className="p-0" danger onClick={() => {
+                                swal({
+                                  title: "Are you sure you want to delete this receipt?",
+                                  text: "This action cannot be undone.",
+                                  icon: "warning",
+                                  buttons: ["Cancel", "Delete"],
+                                  dangerMode: true,
+                                }).then((willDelete) => {
+                                  if (willDelete) {
+                                    deleteReceipt(record, currentSubmission);
+                                  }
+                                });
+                              }}>
+                                <Trash2 color="#b5362e" className="h-4 w-4" />
+                              </Button>
+                            </Space>
+                          )
+                        }
                       ]}
                       pagination={false}
                       locale={{
@@ -862,7 +950,7 @@ const CashUpDashboardPage = () => {
               <Card
                 size="small"
                 title={
-                  <Title className="my-2" level={4}>
+                  <Title className="my-2 dark:text-white text-sm font-normal" level={5}>
                     Previous Submissions
                   </Title>
                 }
@@ -917,6 +1005,27 @@ const CashUpDashboardPage = () => {
           />
         </div>
       </Modal>
+
+      <ReceiptEditDrawer
+        open={editDrawerOpen}
+        onClose={() => { setEditDrawerOpen(false); setReceiptToEdit(null); }}
+        receipt={receiptToEdit}
+        submissionId={currentSubmission?._id || ""}
+        disabled={!currentSubmission || !["draft", "needs_changes"].includes(norm(currentSubmission.status))}
+        onUpdated={(updatedReceipt) => {
+          // Update local state without refetch
+          if (!currentSubmission) return;
+
+          setCashUpSubmissions(prev =>
+            prev.map(s => {
+              if (s._id !== currentSubmission._id) return s;
+              const nextSubs = (s.submissions || []).map(r => r._id === updatedReceipt._id ? { ...r, ...updatedReceipt } : r);
+              return { ...s, submissions: nextSubs };
+            })
+          );
+        }}
+      />
+
 
       {/* Policy Receipts Drawer */}
       <PolicyReceiptsDrawer

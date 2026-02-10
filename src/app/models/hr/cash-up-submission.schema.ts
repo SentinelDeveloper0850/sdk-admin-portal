@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-export interface ICashUpSubmissionSubmission {
+export interface ICashUpSubmissionReceipt {
   files: any[]; // Temporary until we know the type that is returned from cloudinary upload
   invoiceNumber?: string;
   submittedAmount: number;
@@ -19,7 +19,7 @@ export interface ICashUpSubmissionSubmission {
 export interface ICashUpSubmission {
   _id?: string;
   submissionIdentifier: string;
-  submissions: ICashUpSubmissionSubmission[];
+  submissions: ICashUpSubmissionReceipt[];
   date: string;
   totalAmount: number;
   reviewNotes: string[];
