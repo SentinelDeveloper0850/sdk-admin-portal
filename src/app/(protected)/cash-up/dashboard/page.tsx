@@ -119,6 +119,8 @@ const CashUpDashboardPage = () => {
     dayjs().format("YYYY-MM-DD")
   );
 
+  const [activeTab, setActiveTab] = useState<"current" | "previous">("current");
+
   const [activeDate, setActiveDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [lateModalOpen, setLateModalOpen] = useState(false);
   const [lateDate, setLateDate] = useState(dayjs().subtract(1, "day"));
@@ -432,6 +434,35 @@ const CashUpDashboardPage = () => {
     },
   ];
 
+  const previousColumns = [
+    ...columns,
+    {
+      title: "Actions",
+      key: "actions",
+      align: "right" as const,
+      render: (_: any, rec: ICashUpSubmission) => {
+        const editable = ["draft", "needs_changes"].includes(norm(rec.status));
+        const owner = isOwner(rec);
+
+        if (!editable || !owner) return null;
+
+        return (
+          <Button
+            size="small"
+            type="primary"
+            className="uppercase text-black text-xs"
+            onClick={() => {
+              setActiveDate(rec.date);      // rec.date is already YYYY-MM-DD in your API
+              setActiveTab("current");
+            }}
+          >
+            {norm(rec.status) === "needs_changes" ? "Fix" : "Continue"}
+          </Button>
+        );
+      },
+    },
+  ];
+
   const statsCards = [
     {
       title: "Awaiting Review",
@@ -594,6 +625,10 @@ const CashUpDashboardPage = () => {
     }
   };
 
+  const canEditReceipts =
+    !!currentSubmission &&
+    isOwner(currentSubmission) &&
+    ["draft", "needs_changes"].includes(norm(currentSubmission.status));
 
   return (
     <div className="space-y-6 p-6">
@@ -754,7 +789,8 @@ const CashUpDashboardPage = () => {
 
       {/* Current vs Previous */}
       <Tabs
-        defaultActiveKey="current"
+        defaultActiveKey={activeTab}
+        onChange={(k) => setActiveTab(k as any)}
         items={[
           {
             key: "current",
@@ -802,6 +838,14 @@ const CashUpDashboardPage = () => {
                         showIcon
                         message="Capturing a late submission"
                         description={`You are capturing receipts for ${dayjs(activeDate).format("DD MMM YYYY")}. This will be flagged as a late submission when submitted for review.`}
+                      />
+                    )}
+                    {activeDate !== today && currentSubmission && (
+                      <Alert
+                        type="info"
+                        showIcon
+                        message="Viewing a previous submission"
+                        description={`You’re working on the submission for ${dayjs(activeDate).format("DD MMM YYYY")}.`}
                       />
                     )}
                     <div className="flex flex-wrap gap-3">
@@ -906,30 +950,47 @@ const CashUpDashboardPage = () => {
                           title: "Actions",
                           key: "actions",
                           align: "left",
-                          render: (_: any, record: any) => (
-                            <Space>
-                              <Button type="link" size="small" className="p-0" onClick={() => {
-                                selectReceiptToEdit(record, currentSubmission);
-                              }}>
-                                <SquarePen className="h-4 w-4" />
-                              </Button>
-                              <Button type="link" size="small" className="p-0" danger onClick={() => {
-                                swal({
-                                  title: "Are you sure you want to delete this receipt?",
-                                  text: "This action cannot be undone.",
-                                  icon: "warning",
-                                  buttons: ["Cancel", "Delete"],
-                                  dangerMode: true,
-                                }).then((willDelete) => {
-                                  if (willDelete) {
-                                    deleteReceipt(record, currentSubmission);
-                                  }
-                                });
-                              }}>
-                                <Trash2 color="#b5362e" className="h-4 w-4" />
-                              </Button>
-                            </Space>
-                          )
+                          render: (_: any, record: any) => {
+                            const canEdit =
+                              !!currentSubmission &&
+                              isOwner(currentSubmission) &&
+                              ["draft", "needs_changes"].includes(norm(currentSubmission.status));
+
+                            if (!canEdit) return null; // hides the whole cell in other states
+
+                            return (
+                              <Space>
+                                <Button
+                                  type="link"
+                                  size="small"
+                                  className="p-0"
+                                  onClick={() => selectReceiptToEdit(record, currentSubmission)}
+                                >
+                                  <SquarePen className="h-4 w-4" />
+                                </Button>
+
+                                <Button
+                                  type="link"
+                                  size="small"
+                                  className="p-0"
+                                  danger
+                                  onClick={() => {
+                                    swal({
+                                      title: "Are you sure you want to delete this receipt?",
+                                      text: "This action cannot be undone.",
+                                      icon: "warning",
+                                      buttons: ["Cancel", "Delete"],
+                                      dangerMode: true,
+                                    }).then((willDelete) => {
+                                      if (willDelete) deleteReceipt(record, currentSubmission);
+                                    });
+                                  }}
+                                >
+                                  <Trash2 color="#b5362e" className="h-4 w-4" />
+                                </Button>
+                              </Space>
+                            );
+                          },
                         }
                       ]}
                       pagination={false}
@@ -962,7 +1023,7 @@ const CashUpDashboardPage = () => {
                 ) : (
                   <Table
                     dataSource={previousSubmissions}
-                    columns={columns as ColumnType<ICashUpSubmission>[]}
+                    columns={previousColumns as ColumnType<ICashUpSubmission>[]}
                     rowKey="_id"
                     pagination={{
                       pageSize: 10,
