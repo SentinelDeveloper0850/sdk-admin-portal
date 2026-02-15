@@ -7,7 +7,13 @@ a:hover {
 }
 
 .dark .ant-form-item-label > label {
-  color: white !important;
+  color: #9ca3af;
+}
+
+.dark .ant-form-item-extra,
+.dark .ant-form-item-explain,
+.dark .ant-form-item-explain-error {
+  color: #6b7280;
 }
 
 .dark {
@@ -311,6 +317,31 @@ a:hover {
   background-color: #2a2a2a;
 }
 
+/* Input.Search icon color in dark mode */
+.dark .ant-input-search .anticon {
+  color: #9ca3af; /* gray-400 */
+}
+
+/* Search button text/icon */
+.dark .ant-input-search-button {
+  color: #9ca3af;
+  border-color: #374151; /* gray-700 */
+}
+
+/* Hover state */
+.dark .ant-input-search-button:hover {
+  color: #d1d5db; /* gray-300 */
+  border-color: #4b5563; /* gray-600 */
+}
+
+.dark .ant-input-clear-icon {
+  color: #9ca3af;
+}
+
+.dark .ant-input-clear-icon:hover {
+  color: #d1d5db;
+}
+
 .dark .ant-radio-wrapper {
   color: white;
 }
@@ -398,9 +429,10 @@ a:hover {
 }
 
 .dark .ant-btn-default:hover,
-.dark .ant-btn-default:focus {
-  background-color: #2a2a2a;
-  border-color: #555;
+.dark .ant-btn-default:focus {  
+  background-color: #2a2a2a !important;
+  border-color: #555 !important;
+  color: #ffac00 !important;
 }
 
 /* Text & Link Buttons */

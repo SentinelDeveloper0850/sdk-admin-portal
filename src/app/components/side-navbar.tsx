@@ -33,6 +33,7 @@ import {
   HiUserGroup
 } from "react-icons/hi2";
 
+import { FileTextOutlined } from "@ant-design/icons";
 import { ERoles } from "../../types/roles.enum";
 import { useRole } from "../hooks/use-role";
 
@@ -249,12 +250,18 @@ const SideNavBar = () => {
     },
     {
       id: 9,
+      name: "Documents",
+      icon: <FileTextOutlined />,
+      url: "/dms/documents",
+    },
+    {
+      id: 10,
       name: "Knowledge Hub",
       icon: <FileText size={18} />,
       url: "/knowledge-hub",
     },
     {
-      id: 13,
+      id: 11,
       name: "Status",
       icon: <Server size={18} />,
       url: "/status",
@@ -262,7 +269,7 @@ const SideNavBar = () => {
       group: "Management",
     },
     {
-      id: 14,
+      id: 12,
       name: "Configurations",
       icon: <Settings size={18} />,
       url: "/configurations",
