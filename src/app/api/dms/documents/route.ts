@@ -1,19 +1,16 @@
+import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
+import "@/app/models/hr/user.schema"; // side-effect: registers model
+
 import { DmsDocumentVersionModel } from "@/app/models/dms/document-version.schema";
 import { DmsDocumentModel } from "@/app/models/dms/document.schema";
+import UserModel from "@/app/models/hr/user.schema";
 import { RegionModel } from "@/app/models/system/region.schema";
-import mongoose from "mongoose";
-
-// --- Helpers (adjust to your RBAC shape) ---
-function userHasAnyRole(user: any, roles: string[]) {
-    const userRoles: string[] = user?.roles ?? (user?.role ? [user.role] : []);
-    return roles.some((r) => userRoles.includes(r));
-}
 
 const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId");
 
@@ -67,6 +64,7 @@ export async function GET(request: NextRequest) {
         }
 
         const docs = await DmsDocumentModel.find(filter)
+            .populate({ path: "updatedBy", model: UserModel, select: "firstName lastName name email" })
             .sort({ updatedAt: -1 })
             .lean();
 

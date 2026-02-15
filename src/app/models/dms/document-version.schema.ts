@@ -57,7 +57,7 @@ const DmsDocumentVersionSchema = new Schema<IDmsDocumentVersion>(
         checksum: { type: String, default: "" },
         notes: { type: String, trim: true, default: "" },
 
-        uploadedBy: { type: Schema.Types.ObjectId, ref: "User" },
+        uploadedBy: { type: Schema.Types.ObjectId, ref: "users" },
         uploadedAt: { type: Date, default: () => new Date() },
     },
     { timestamps: true }

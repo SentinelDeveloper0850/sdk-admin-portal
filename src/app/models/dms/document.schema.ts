@@ -57,8 +57,8 @@ const DmsDocumentSchema = new Schema<IDmsDocument>(
 
         isActive: { type: Boolean, default: true, index: true },
 
-        createdBy: { type: Schema.Types.ObjectId, ref: "User" },
-        updatedBy: { type: Schema.Types.ObjectId, ref: "User" },
+        createdBy: { type: Schema.Types.ObjectId, ref: "users" },
+        updatedBy: { type: Schema.Types.ObjectId, ref: "users" },
     },
     { timestamps: true }
 );

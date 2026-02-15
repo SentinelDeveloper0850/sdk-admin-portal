@@ -49,6 +49,12 @@ type DmsDoc = {
     regionId?: string | null;
     isActive: boolean;
     updatedAt?: string;
+    updatedBy?: {
+        firstName?: string;
+        lastName?: string;
+        name?: string;
+        email?: string;
+    };
     currentVersionId?: string;
     currentVersion?: DmsCurrentVersion | null;
 };
@@ -376,7 +382,7 @@ export default function DmsDocumentsPage() {
             render: (_, row) => (
                 <div>
                     <div className="font-medium">{row.title}</div>
-                    <small className="text-xs dark:text-gray-400 italics">
+                    <small className="text-xs dark:text-gray-500 italics">
                         {row.slug}
                     </small>
                 </div>
@@ -407,7 +413,7 @@ export default function DmsDocumentsPage() {
             render: (_, row) => {
                 const v = row.currentVersion;
                 if (!v) return <Tag>None</Tag>;
-                return <Tag color="green">v{v.versionNumber}</Tag>;
+                return <Tag color="green">Current approved version</Tag>;
             },
         },
         {
@@ -416,6 +422,23 @@ export default function DmsDocumentsPage() {
             key: "updatedAt",
             width: 160,
             render: (d?: string) => (d ? dayjs(d).format("YYYY-MM-DD HH:mm") : "—"),
+        },
+        {
+            title: "Last Updated By",
+            key: "updatedBy",
+            width: 200,
+            render: (_, row) => {
+                const user = row.updatedBy;
+                if (!user) return <Tag>System</Tag>;
+
+                const displayName =
+                    user.name ||
+                    `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
+                    user.email ||
+                    "Unknown";
+
+                return <span className="text-sm dark:text-gray-300">{displayName}</span>;
+            },
         },
         {
             title: "Actions",
@@ -428,18 +451,16 @@ export default function DmsDocumentsPage() {
                     <Space>
                         <Button
                             size="small"
-                            type="primary"
                             disabled={!url}
                             onClick={() => {
                                 // simplest “print”: open pdf in new tab and print from viewer
                                 if (url) window.open(url, "_blank", "noopener,noreferrer");
-                            }}
-                        >
+                            }}>
                             Print
                         </Button>
 
                         {/* Placeholder for next step (upload new version) */}
-                        {isManagement && <Button size="small" onClick={() => openUploadDrawer(row)}>
+                        {isManagement && <Button size="small" type={!row.currentVersion ? "primary" : "default"} onClick={() => openUploadDrawer(row)}>
                             <UploadOutlined /> New Version
                         </Button>}
                     </Space>
@@ -517,7 +538,7 @@ export default function DmsDocumentsPage() {
                     loading={loading || refreshing}
                     columns={columns}
                     dataSource={documents}
-                    rowClassName="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                    rowClassName={(record) => `cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${!record.currentVersion ? "bg-red-50 dark:bg-red-900/20" : ""}`}
                     pagination={{ pageSize: 10, showSizeChanger: true }}
                 />
             </div>

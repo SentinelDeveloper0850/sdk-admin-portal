@@ -266,6 +266,48 @@ This portal is organized around major operational domains. Each module combines 
   - **Branches:** HR records often carry branch references (`branchID`, `branchName`) coordinated with `BranchModel`.
   - **Daily audit & reminders:** HR activity feeds into daily audit, reminders, and compliance reporting.
 
+### Document Management System (DMS)
+
+- **Purpose:**  
+  Provide a centralised, version-controlled repository of approved operational documents (e.g. Joining Forms, Terms & Conditions, Amendment Forms) so staff can print the latest version on demand without relying on a specific individual.
+
+- **UI:**  
+  `src/app/(protected)/dms/documents/page.tsx`
+
+- **APIs:**  
+  - `GET/POST /api/dms/documents` – list and create document records  
+  - `POST /api/dms/documents/[id]/versions` – upload and manage document versions  
+  - `POST /api/upload/dms-documents` – Cloudinary-backed PDF upload endpoint  
+
+- **Key models:**
+  - `DmsDocumentModel` – `src/app/models/dms/document.schema.ts`  
+    - Stores document metadata (title, slug, category, region scope, tags, `currentVersionId`, audit fields).
+  - `DmsDocumentVersionModel` – `src/app/models/dms/document-version.schema.ts`  
+    - Stores versioned file metadata (`fileUrl`, `filePublicId`, `versionNumber`, `mimeType`, `uploadedBy`, `uploadedAt`, `notes`, `isCurrent`, `isArchived`).
+
+- **Core concepts:**
+  - **Document container + version history:**  
+    A document is a logical container; each uploaded file becomes a numbered version.
+  - **Current approved version:**  
+    Only one version can be marked `isCurrent = true`. The document stores `currentVersionId` for fast access.
+  - **Region-scoped documents:**  
+    Documents may optionally be tied to a region (`regionId`). Slugs are prefixed by region code (e.g. `JHB-joining-form`) to enforce uniqueness and clarity.
+  - **Management-only uploads:**  
+    Only users with management roles (e.g. `SYSTEM_ADMIN`, `ADMIN`, `MANAGER`) can create documents or upload new versions. Other staff can view and print current approved versions.
+  - **Operational printing workflow:**  
+    The table highlights missing versions and exposes a primary **Print** action to ensure staff always use the latest approved document.
+
+- **Relationships:**
+  - **Users:** `createdBy`, `updatedBy`, and `uploadedBy` reference `UserModel` for audit visibility.
+  - **Branches/Regions:** region-scoped documents align with branch operations via `regionId`.
+  - **Cloudinary:** document files are stored externally and referenced by URL + public ID for future replacement or archival.
+
+- **Operational impact:**
+  - Removes bottlenecks (e.g. reliance on specific staff to provide printed forms).
+  - Prevents outdated documents from circulating.
+  - Introduces governance and auditability into operational paperwork.
+  - Establishes foundation for future compliance features (expiry dates, effective dates, audit logs).
+
 ### System configurations & policy rules
 
 - **Purpose:** Centralise business and technical configuration so behaviour can be tuned without code changes.
