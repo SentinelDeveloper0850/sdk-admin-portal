@@ -29,6 +29,7 @@ interface AuthContextType {
   userId?: string;
   loading: boolean;
   isAdmin: boolean;
+  isManagement: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -167,7 +168,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!session) router.push("/session");
   }, [user, session, loading, isAuthRoute, isSessionRoute, router]);
 
+  const userRoles = user?.roles ?? [];
+  const roles = [user?.role!, ...userRoles];
+
   const isAdmin = user?.role === "admin";
+  const isManagement = roles.includes("admin") || roles.includes("manager");
 
   if (loading) return <div>Loading...</div>;
 
@@ -183,6 +188,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         userId: user?._id?.toString(),
         loading,
         isAdmin,
+        isManagement
       }}
     >
       {children}
