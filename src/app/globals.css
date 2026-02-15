@@ -716,6 +716,51 @@ a:hover {
     background: unset !important;
 }
 
+/* =========================
+   AntD Upload (fileList) — Dark Mode
+   ========================= */
+
+/* File name + icons */
+.dark .ant-upload-list-item-name,
+.dark .ant-upload-list-item .anticon,
+.dark .ant-upload-list-item-actions .anticon {
+  color: #9ca3af; /* gray-400 */
+}
+
+/* Hover states (make it clearer, not neon) */
+.dark .ant-upload-list-item:hover .ant-upload-list-item-name,
+.dark .ant-upload-list-item:hover .ant-upload-list-item-actions .anticon {
+  color: #d1d5db; /* gray-300 */
+}
+
+/* Error state still visible */
+.dark .ant-upload-list-item-error .ant-upload-list-item-name,
+.dark .ant-upload-list-item-error .ant-upload-list-item-actions .anticon {
+  color: #f87171; /* red-400 */
+}
+
+/* Optional: make the remove icon easier to see */
+.dark .ant-upload-list-item-actions .anticon-delete {
+  color: #9ca3af;
+}
+.dark .ant-upload-list-item-actions .anticon-delete:hover {
+  color: #f87171; /* red-400 */
+}
+
+/* If you're using picture/card list types later, keep their borders sensible */
+.dark .ant-upload-list-picture-card-container,
+.dark .ant-upload-list-picture-container {
+  border-color: #374151; /* gray-700 */
+}
+
+.dark .ant-upload-list-item {
+  border-radius: 8px;
+}
+
+.dark .ant-upload-list-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 @keyframes pattern-drift {
   0%   { transform: translate3d(0, 0, 0) rotate(-1.5deg) scale(1.01); }
   50%  { transform: translate3d(-10px, 8px, 0) rotate(1.5deg) scale(1.01); }

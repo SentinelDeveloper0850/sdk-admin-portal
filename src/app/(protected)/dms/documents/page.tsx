@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import PageHeader from "@/app/components/page-header";
-import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import { useAuth } from "@/context/auth-context";
+import { PlusOutlined, ReloadOutlined, UploadOutlined } from "@ant-design/icons";
 import {
     Button,
     Drawer,
@@ -11,15 +12,15 @@ import {
     Input,
     Select,
     Space,
+    Switch,
     Table,
     Tag,
-    Typography,
+    Upload
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import type { UploadFile } from "antd/es/upload/interface";
 import dayjs from "dayjs";
 import swal from "sweetalert";
-
-const { Title, Text } = Typography;
 
 type Category =
     | "FORMS"
@@ -78,26 +79,50 @@ function prettyCategory(cat: Category) {
 }
 
 export default function DmsDocumentsPage() {
+    // Loading states
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
-    const [docs, setDocs] = useState<DmsDoc[]>([]);
+
+    const [documents, setDocuments] = useState<DmsDoc[]>([]);
     const [regions, setRegions] = useState<Region[]>([]);
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
 
     // Filters
     const [q, setQ] = useState("");
     const [category, setCategory] = useState<Category | undefined>(undefined);
     const [regionId, setRegionId] = useState<string | undefined>(undefined);
 
+    // Upload drawer states
+    const [isUploadOpen, setIsUploadOpen] = useState(false);
+    const [selectedDoc, setSelectedDoc] = useState<DmsDoc | null>(null);
+    const [uploadingVersion, setUploadingVersion] = useState(false);
+    const [uploadForm] = Form.useForm();
+
+    const [uploadFileList, setUploadFileList] = useState<UploadFile[]>([]);
+
     // Create drawer
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [creatingDocument, setCreatingDocument] = useState(false);
     const [createForm] = Form.useForm();
+
+    const { isManagement } = useAuth();
 
     const regionLookup = useMemo(() => {
         const m = new Map<string, Region>();
         regions.forEach((r) => m.set(String(r._id), r));
         return m;
     }, [regions]);
+
+    const openUploadDrawer = (doc: DmsDoc) => {
+        setSelectedDoc(doc);
+        setUploadFileList([]);
+        uploadForm.resetFields();
+        uploadForm.setFieldsValue({
+            setAsCurrent: true,
+            versionNotes: `Update ${doc.title}.`,
+        });
+        setIsUploadOpen(true);
+    };
 
     async function fetchDocs() {
         setLoading(true);
@@ -121,7 +146,7 @@ export default function DmsDocumentsPage() {
                 throw new Error(json?.error?.message ?? "Failed to load documents");
             }
 
-            setDocs(json.data ?? []);
+            setDocuments(json.data ?? []);
         } catch (err: any) {
             swal({
                 title: "Error",
@@ -165,43 +190,181 @@ export default function DmsDocumentsPage() {
 
     async function onCreate(values: any) {
         setCreatingDocument(true);
+
+        let createdDocId: string | null = null;
+
         try {
-            const payload = {
+            const fileObj = fileList?.[0]?.originFileObj as File | undefined;
+            if (!fileObj) {
+                swal({ title: "Missing file", text: "Please select the PDF for Version 1.", icon: "warning" });
+                return;
+            }
+
+            if (fileObj.type !== "application/pdf") {
+                swal({
+                    title: "Invalid file",
+                    text: "Only PDF files are allowed.",
+                    icon: "warning",
+                });
+                return;
+            }
+
+            // 1) Create document record without version info
+            const docPayload = {
                 title: values.title,
                 category: values.category,
                 slug: values.slug,
                 regionId: values.regionId || undefined,
                 description: values.description || undefined,
-                tags: values.tags ? String(values.tags).split(",").map((t: string) => t.trim()).filter(Boolean) : undefined,
+                tags: values.tags
+                    ? String(values.tags).split(",").map((t: string) => t.trim()).filter(Boolean)
+                    : undefined,
                 isActive: true,
             };
 
-            const res = await fetch("/api/dms/documents", {
+            const docRes = await fetch("/api/dms/documents", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(docPayload),
             });
 
-            const json = await res.json();
-            if (!json?.success) throw new Error(json?.error?.message ?? "Failed to create document");
+            const docJson = await docRes.json();
+            if (!docJson?.success) throw new Error(docJson?.error?.message ?? "Failed to create document");
 
+            const createdDoc: DmsDoc = docJson.data;
+            createdDocId = createdDoc._id;
 
-            swal({
-                title: "Success",
-                text: "Document created successfully",
-                icon: "success",
-            })
+            // 2) Upload file to Cloudinary via dms-documents upload api
+            const formData = new FormData();
+            formData.append("file", fileObj);
+
+            const uploadRes = await fetch("/api/upload/dms-documents", {
+                method: "POST",
+                body: formData,
+            });
+
+            const uploadJson = await uploadRes.json();
+            if (!uploadJson?.success) {
+                throw new Error(uploadJson?.message ?? "Failed to upload PDF");
+            }
+
+            const { url, publicId, bytes, originalFilename, format } = uploadJson.data;
+
+            // 3) Create Version 1 via your versions endpoint
+            const v1Payload = {
+                fileUrl: url,
+                filePublicId: publicId,
+                mimeType: fileObj.type || "application/pdf",
+                originalFileName: originalFilename ? `${originalFilename}.${format ?? "pdf"}` : fileObj.name,
+                fileSizeBytes: bytes ?? fileObj.size,
+                notes: values.versionNotes || "Initial release.",
+                setAsCurrent: values.setAsCurrent ?? true,
+            };
+
+            const vRes = await fetch(`/api/dms/documents/${createdDoc._id}/versions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(v1Payload),
+            });
+
+            const vJson = await vRes.json();
+            if (!vJson?.success) throw new Error(vJson?.error?.message ?? "Failed to create version 1");
+
+            swal({ title: "Success", text: "Document + Version 1 created successfully", icon: "success" });
+
             setIsCreateOpen(false);
             createForm.resetFields();
+            setFileList([]);
             fetchDocs();
         } catch (err: any) {
+            // UX safeguard: if doc was created but version upload failed, show a warning and let them upload v1 manually from the table (instead of leaving them with a broken doc and no recourse)
+            if (createdDocId) {
+                swal({
+                    title: "Partial success",
+                    text: "Document created but upload failed — please upload v1 from the table.",
+                    icon: "warning",
+                });
+
+                // Optional: refresh docs so the newly created doc appears immediately
+                fetchDocs();
+                setIsCreateOpen(false);
+                createForm.resetFields();
+                setFileList([]);
+                return;
+            }
+
             swal({
                 title: "Error",
                 text: err?.message ?? "Failed to create document",
                 icon: "error",
-            })
+            });
         } finally {
-            setCreatingDocument(false)
+            setCreatingDocument(false);
+        }
+    }
+
+    async function onUploadVersion(values: any) {
+        setUploadingVersion(true);
+        try {
+            if (!selectedDoc?._id) throw new Error("No document selected");
+
+            const fileObj = uploadFileList?.[0]?.originFileObj as File | undefined;
+            if (!fileObj) {
+                swal({ title: "Missing file", text: "Please select a PDF.", icon: "warning" });
+                return;
+            }
+            if (fileObj.type !== "application/pdf") {
+                swal({ title: "Invalid file", text: "Only PDF files are allowed.", icon: "warning" });
+                return;
+            }
+
+            // 1) upload to cloudinary via your endpoint
+            const fd = new FormData();
+            fd.append("file", fileObj);
+
+            const uploadRes = await fetch("/api/upload/dms-documents", {
+                method: "POST",
+                body: fd,
+            });
+
+            const uploadJson = await uploadRes.json();
+            if (!uploadJson?.success) throw new Error(uploadJson?.message ?? "Failed to upload PDF");
+
+            const { url, publicId, bytes, originalFilename, format } = uploadJson.data;
+
+            // 2) create version record
+            const vPayload = {
+                fileUrl: url,
+                filePublicId: publicId,
+                mimeType: "application/pdf",
+                originalFileName: originalFilename
+                    ? `${originalFilename}.${format ?? "pdf"}`
+                    : fileObj.name,
+                fileSizeBytes: bytes ?? fileObj.size,
+                notes: values.versionNotes || "",
+                setAsCurrent: values.setAsCurrent ?? true,
+            };
+
+            const vRes = await fetch(`/api/dms/documents/${selectedDoc._id}/versions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(vPayload),
+            });
+
+            const vJson = await vRes.json();
+            if (!vJson?.success) throw new Error(vJson?.error?.message ?? "Failed to create version");
+
+            swal({ title: "Success", text: "Version uploaded successfully", icon: "success" });
+
+            setIsUploadOpen(false);
+            setSelectedDoc(null);
+            setUploadFileList([]);
+            uploadForm.resetFields();
+            fetchDocs();
+        } catch (err: any) {
+            swal({ title: "Error", text: err?.message ?? "Failed to upload version", icon: "error" });
+        } finally {
+            setUploadingVersion(false);
         }
     }
 
@@ -260,17 +423,12 @@ export default function DmsDocumentsPage() {
             width: 220,
             render: (_, row) => {
                 const url = row.currentVersion?.fileUrl;
+                console.log("🚀 ~ DmsDocumentsPage ~ url:", url)
                 return (
                     <Space>
                         <Button
                             size="small"
-                            disabled={!url}
-                            onClick={() => url && window.open(url, "_blank", "noopener,noreferrer")}
-                        >
-                            Preview
-                        </Button>
-                        <Button
-                            size="small"
+                            type="primary"
                             disabled={!url}
                             onClick={() => {
                                 // simplest “print”: open pdf in new tab and print from viewer
@@ -281,9 +439,9 @@ export default function DmsDocumentsPage() {
                         </Button>
 
                         {/* Placeholder for next step (upload new version) */}
-                        <Button size="small" disabled>
-                            Upload
-                        </Button>
+                        {isManagement && <Button size="small" onClick={() => openUploadDrawer(row)}>
+                            <UploadOutlined /> New Version
+                        </Button>}
                     </Space>
                 );
             },
@@ -300,12 +458,12 @@ export default function DmsDocumentsPage() {
                 >
                     Refresh
                 </Button>
-                <Button
+                {isManagement && <Button
                     onClick={() => setIsCreateOpen(true)}
                     icon={<PlusOutlined />}
                 >
                     Create Document
-                </Button>
+                </Button>}
             </Space>]} />
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -358,8 +516,8 @@ export default function DmsDocumentsPage() {
                     rowKey="_id"
                     loading={loading || refreshing}
                     columns={columns}
-                    dataSource={docs}
-                    rowClassName="cursor-pointer hover:bg-gray-100"
+                    dataSource={documents}
+                    rowClassName="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                     pagination={{ pageSize: 10, showSizeChanger: true }}
                 />
             </div>
@@ -425,10 +583,89 @@ export default function DmsDocumentsPage() {
                         <Input placeholder="onboarding, forms" />
                     </Form.Item>
 
+                    <Form.Item
+                        label="Version 1 PDF"
+                        required
+                        extra={<span className="dark:text-gray-500">Upload the initial approved PDF for this document.</span>}
+                    >
+                        <Upload
+                            accept="application/pdf"
+                            maxCount={1}
+                            fileList={fileList}
+                            beforeUpload={() => false}
+                            onChange={({ fileList }) => setFileList(fileList)}
+                        >
+                            <Button icon={<UploadOutlined />}>Select PDF</Button>
+                        </Upload>
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Version notes"
+                        name="versionNotes"
+                        initialValue="Initial release."
+                        extra={<span className="dark:text-gray-500">Shown in version history (keep it short and clear).</span>}
+                    >
+                        <Input.TextArea rows={2} placeholder="Initial release." />
+                    </Form.Item>
+
+                    <Form.Item label="Set as current" name="setAsCurrent" initialValue={true} valuePropName="checked">
+                        <Switch />
+                    </Form.Item>
+
                     <Space>
                         <Button onClick={() => setIsCreateOpen(false)}>Cancel</Button>
                         <Button type="primary" htmlType="submit" loading={creatingDocument}>
                             Create
+                        </Button>
+                    </Space>
+                </Form>
+            </Drawer>
+
+            <Drawer
+                title={selectedDoc ? `Upload Version — ${selectedDoc.title}` : "Upload Version"}
+                open={isUploadOpen}
+                onClose={() => setIsUploadOpen(false)}
+                width={520}
+                destroyOnClose
+            >
+                <Form layout="vertical" form={uploadForm} onFinish={onUploadVersion}>
+                    <Form.Item
+                        label="PDF File"
+                        required
+                        extra={<span className="dark:text-gray-500">Upload the next approved PDF version.</span>}
+                    >
+                        <Upload
+                            accept="application/pdf"
+                            maxCount={1}
+                            fileList={uploadFileList}
+                            beforeUpload={() => false}
+                            onChange={({ fileList }) => setUploadFileList(fileList)}
+                        >
+                            <Button icon={<UploadOutlined />}>Select PDF</Button>
+                        </Upload>
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Version notes"
+                        name="versionNotes"
+                        extra={<span className="dark:text-gray-500">Shown in version history.</span>}
+                    >
+                        <Input.TextArea rows={2} placeholder="Describe what changed..." />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Set as current"
+                        name="setAsCurrent"
+                        initialValue={true}
+                        valuePropName="checked"
+                    >
+                        <Switch />
+                    </Form.Item>
+
+                    <Space>
+                        <Button onClick={() => setIsUploadOpen(false)}>Cancel</Button>
+                        <Button type="primary" htmlType="submit" loading={uploadingVersion}>
+                            Upload
                         </Button>
                     </Space>
                 </Form>

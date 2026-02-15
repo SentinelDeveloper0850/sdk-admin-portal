@@ -43,8 +43,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             );
         }
 
-        // Restrict upload to managers/admins
-        if (!userHasAnyRole(user, ["SYSTEM_ADMIN", "ADMIN", "MANAGER"])) {
+        const userRoles = user.roles ?? [];
+        const roles = [user.role!, ...userRoles];
+
+        // Check if roles contains "admin" or "manager"
+        if (!roles.includes("admin") && !roles.includes("manager")) {
             return NextResponse.json(
                 { success: false, error: { message: "Not authorized" } },
                 { status: 403 }
