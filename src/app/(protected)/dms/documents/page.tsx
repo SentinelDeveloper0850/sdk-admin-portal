@@ -374,6 +374,16 @@ export default function DmsDocumentsPage() {
         }
     }
 
+    async function logPrint(docId: string) {
+        // fire-and-forget, don't block printing
+        fetch(`/api/dms/documents/${docId}/events`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eventType: "PRINT" }),
+            keepalive: true,
+        }).catch(() => { });
+    };
+
     const columns: ColumnsType<DmsDoc> = [
         {
             title: "Document",
@@ -453,8 +463,9 @@ export default function DmsDocumentsPage() {
                             size="small"
                             disabled={!url}
                             onClick={() => {
-                                // simplest “print”: open pdf in new tab and print from viewer
-                                if (url) window.open(url, "_blank", "noopener,noreferrer");
+                                if (!url) return;
+                                logPrint(row._id);
+                                window.open(url, "_blank", "noopener,noreferrer");
                             }}>
                             Print
                         </Button>
