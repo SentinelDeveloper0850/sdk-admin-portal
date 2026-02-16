@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import UsersModel from "@/app/models/hr/user.schema";
+import UsersModel from "@/app/models/auth/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 

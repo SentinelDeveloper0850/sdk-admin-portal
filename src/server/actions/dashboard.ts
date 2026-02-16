@@ -1,9 +1,9 @@
 "use server";
 
+import { UserModel } from "@/app/models/auth/user.schema";
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
 import { CashUpSubmissionModel } from "@/app/models/hr/cash-up-submission.schema";
 import { DailyActivityModel } from "@/app/models/hr/daily-activity.schema";
-import { UserModel } from "@/app/models/hr/user.schema";
 import { ClaimModel } from "@/app/models/scheme/claim.schema";
 import { EasypayTransactionModel } from "@/app/models/scheme/easypay-transaction.schema";
 import { EftTransactionModel } from "@/app/models/scheme/eft-transaction.schema";
@@ -290,7 +290,7 @@ export const getDashboardData = async () => {
           complianceRate:
             expectedUsersForCompliance.length > 0
               ? (compliantUsers.length / expectedUsersForCompliance.length) *
-                100
+              100
               : 0,
           totalUsers: expectedUsersForCompliance.length,
           compliantCount: compliantUsers.length,

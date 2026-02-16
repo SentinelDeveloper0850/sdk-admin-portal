@@ -2,8 +2,8 @@
 
 import dayjs from "dayjs";
 
+import { UserModel } from "@/app/models/auth/user.schema";
 import { DailyActivityModel } from "@/app/models/hr/daily-activity.schema";
-import { UserModel } from "@/app/models/hr/user.schema";
 import { DailyActivityReminderConfigModel } from "@/app/models/system/daily-activity-reminder.schema";
 import { connectToDatabase } from "@/lib/db";
 import {

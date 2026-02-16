@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import UsersModel from "@/app/models/hr/user.schema";
+import UsersModel from "@/app/models/auth/user.schema";
 
 // JWT secret and expiration
 const JWT_EXPIRES_IN = "8h";

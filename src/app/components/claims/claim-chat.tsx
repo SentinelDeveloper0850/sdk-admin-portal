@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Spinner } from "@nextui-org/react";
 import dayjs from "dayjs";
 
-import { IUser } from "@/app/models/hr/user.schema";
+import { IUser } from "@/app/models/auth/user.schema";
 import { IClaimComment } from "@/app/models/scheme/claim.schema";
 import { useAuth } from "@/context/auth-context";
 
@@ -48,16 +48,14 @@ const ClaimChat = ({ comments, onSendMessage, loading }: IProps) => {
           return (
             <div
               key={comment.createdAt.toString()}
-              className={`flex ${
-                isAuthor ? "justify-end" : "justify-start"
-              } w-fit max-w-[75%]`}
+              className={`flex ${isAuthor ? "justify-end" : "justify-start"
+                } w-fit max-w-[75%]`}
             >
               <div
-                className={`max-w-xs rounded-xl px-4 py-2 text-sm shadow ${
-                  isAuthor
+                className={`max-w-xs rounded-xl px-4 py-2 text-sm shadow ${isAuthor
                     ? "rounded-br-none bg-primary/75 text-gray-800"
                     : "rounded-bl-none border bg-white text-gray-800"
-                }`}
+                  }`}
               >
                 {!isAuthor && (
                   <small className="mr-6 font-bold">{author.name}</small>

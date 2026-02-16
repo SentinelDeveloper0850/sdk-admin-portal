@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import UserModel from "@/app/models/hr/user.schema";
+import UserModel from "@/app/models/auth/user.schema";
 import { PolicyCancellationRequestModel } from "@/app/models/scheme/policy-cancellation-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { getUserFromRequest } from "@/lib/auth";
@@ -40,13 +40,13 @@ export async function GET(
     // Manually fetch user details and attach them
     const submittedBy = (cancellationRequest as any).submittedBy
       ? await UserModel.findById((cancellationRequest as any).submittedBy)
-          .select("name email")
-          .lean()
+        .select("name email")
+        .lean()
       : null;
     const reviewedBy = (cancellationRequest as any).reviewedBy
       ? await UserModel.findById((cancellationRequest as any).reviewedBy)
-          .select("name email")
-          .lean()
+        .select("name email")
+        .lean()
       : null;
 
     const cancellationRequestWithUsers = {

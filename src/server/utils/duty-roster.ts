@@ -1,5 +1,5 @@
+import { UserModel } from "@/app/models/auth/user.schema";
 import { DutyRosterModel } from "@/app/models/hr/duty-roster.schema";
-import { UserModel } from "@/app/models/hr/user.schema";
 import { StaffMemberModel } from "@/app/models/staff-member.schema";
 
 export type ComplianceExpectedSource = "duty_roster" | "all_active_users";

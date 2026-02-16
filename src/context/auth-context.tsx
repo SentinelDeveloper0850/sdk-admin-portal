@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import type { IUser } from "@/app/models/hr/user.schema";
+import type { IUser } from "@/app/models/auth/user.schema";
 import axios from "axios";
 import { usePathname, useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";

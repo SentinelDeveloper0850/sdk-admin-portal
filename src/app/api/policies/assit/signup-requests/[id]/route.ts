@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { UserModel } from "@/app/models/hr/user.schema";
+import { UserModel } from "@/app/models/auth/user.schema";
 import { PolicySignUpModel } from "@/app/models/scheme/policy-signup-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { connectToDatabase } from "@/lib/db";

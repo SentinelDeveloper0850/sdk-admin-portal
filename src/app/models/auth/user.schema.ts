@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-import { IEmployee } from "./employee.schema";
+import { IEmployee } from "../hr/employee.schema";
 
 // Define the interface for TypeScript
 export interface IUser extends Document {

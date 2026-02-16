@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { QueryOptions } from "mongoose";
 
+import UserModel from "@/app/models/auth/user.schema";
 import { AllocationRequestModel } from "@/app/models/hr/allocation-request.schema";
-import UserModel from "@/app/models/hr/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 

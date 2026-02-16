@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import jwt from "jsonwebtoken";
 
-import UsersModel from "@/app/models/hr/user.schema";
+import UsersModel from "@/app/models/auth/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 const JWT_SECRET = process.env.JWT_SECRET ?? null;

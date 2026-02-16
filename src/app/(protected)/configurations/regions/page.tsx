@@ -24,7 +24,7 @@ import sweetAlert from "sweetalert";
 import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
-import { IUser } from "@/app/models/hr/user.schema";
+import { IUser } from "@/app/models/auth/user.schema";
 import { useAuth } from "@/context/auth-context";
 import { debounce, deriveRegionCode } from "@/lib/utils";
 

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@clerk/backend";
 
 import { AuthIdentityModel } from "@/app/models/auth-identity.schema";
-import UserModel from "@/app/models/hr/user.schema";
+import UserModel from "@/app/models/auth/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const runtime = "nodejs"; // important for Mongoose

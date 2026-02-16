@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import jwt from "jsonwebtoken";
 
-import UserModel, { IUser } from "@/app/models/hr/user.schema";
+import UserModel, { IUser } from "@/app/models/auth/user.schema";
 
 const rawSecret = process.env.JWT_SECRET;
 const JWT_SECRET: jwt.Secret | null = rawSecret ?? null;

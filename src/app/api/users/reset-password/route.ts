@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { generateTemporaryPassword } from "@/utils/generators/password";
 
-import UsersModel from "@/app/models/hr/user.schema";
+import UsersModel from "@/app/models/auth/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { sendPasswordResetEmail } from "@/lib/email";

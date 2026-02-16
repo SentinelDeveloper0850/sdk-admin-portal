@@ -30,7 +30,7 @@ import sweetAlert from "sweetalert";
 
 import ContentLoading from "@/app/components/content-loading";
 import PageHeader from "@/app/components/page-header";
-import { IUser } from "@/app/models/hr/user.schema";
+import { IUser } from "@/app/models/auth/user.schema";
 import { IStaffMember } from "@/app/models/staff-member.schema";
 
 dayjs.extend(relativeTime);

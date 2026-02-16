@@ -1,6 +1,6 @@
 "use server";
 
-import { UserModel } from "@/app/models/hr/user.schema";
+import { UserModel } from "@/app/models/auth/user.schema";
 import {
   IPolicySignUp,
   PolicySignUpModel,

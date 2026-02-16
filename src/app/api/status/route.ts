@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { UserModel } from "@/app/models/auth/user.schema";
 import { CalendarEventModel } from "@/app/models/calendar-event.schema";
 import { FuneralModel } from "@/app/models/funeral.schema";
 import AllocationRequestModel from "@/app/models/hr/allocation-request.schema";
 import { DailyActivityModel } from "@/app/models/hr/daily-activity.schema";
-import { UserModel } from "@/app/models/hr/user.schema";
 import { NotificationModel } from "@/app/models/notification.schema";
 import { ClaimModel } from "@/app/models/scheme/claim.schema";
 import EasypayTransactionModel from "@/app/models/scheme/easypay-transaction.schema";

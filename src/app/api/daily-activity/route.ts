@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
+import UserModel from "@/app/models/auth/user.schema";
 import { DailyActivityModel } from "@/app/models/hr/daily-activity.schema";
-import UserModel from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export async function GET(request: Request) {
@@ -32,11 +32,11 @@ export async function GET(request: Request) {
           ...report.toObject(),
           author: user
             ? {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                avatarUrl: user.avatarUrl,
-              }
+              _id: user._id,
+              name: user.name,
+              email: user.email,
+              avatarUrl: user.avatarUrl,
+            }
             : null,
         };
       })

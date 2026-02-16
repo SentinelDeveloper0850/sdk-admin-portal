@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import * as XLSX from "xlsx";
 
+import UserModel from "@/app/models/auth/user.schema";
 import { CashUpAuditReportModel } from "@/app/models/hr/cash-up-audit-report.schema";
-import UserModel from "@/app/models/hr/user.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { connectToDatabase } from "@/lib/db";

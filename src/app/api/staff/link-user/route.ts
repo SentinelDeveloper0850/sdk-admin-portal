@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Optional but recommended: ensures user model is registered for populate
-import { UserModel } from "@/app/models/hr/user.schema";
+import { UserModel } from "@/app/models/auth/user.schema";
 import { StaffMemberModel } from "@/app/models/staff-member.schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";

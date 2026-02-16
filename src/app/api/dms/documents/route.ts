@@ -5,11 +5,11 @@ import { z } from "zod";
 import { getUserFromRequest } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
-import "@/app/models/hr/user.schema"; // side-effect: registers model
+import "@/app/models/auth/user.schema"; // side-effect: registers model
 
+import UserModel from "@/app/models/auth/user.schema";
 import { DmsDocumentVersionModel } from "@/app/models/dms/document-version.schema";
 import { DmsDocumentModel } from "@/app/models/dms/document.schema";
-import UserModel from "@/app/models/hr/user.schema";
 import { RegionModel } from "@/app/models/system/region.schema";
 
 const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId");

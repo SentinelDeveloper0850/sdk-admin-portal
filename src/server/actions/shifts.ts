@@ -1,5 +1,5 @@
+import { IUser } from "@/app/models/auth/user.schema";
 import { ShiftModel as Model } from "@/app/models/hr/shift.schema";
-import { IUser } from "@/app/models/hr/user.schema";
 import { connectToDatabase } from "@/lib/db";
 
 export const getAllShiftsForCalendar = async () => {

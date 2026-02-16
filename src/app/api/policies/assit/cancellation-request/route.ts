@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import UserModel from "@/app/models/hr/user.schema";
+import UserModel from "@/app/models/auth/user.schema";
 import PolicyCancellationRequest from "@/app/models/scheme/policy-cancellation-request.schema";
 import { PolicyModel } from "@/app/models/scheme/policy.schema";
 import { getUserFromRequest } from "@/lib/auth";
@@ -205,13 +205,13 @@ export async function GET(request: NextRequest) {
       requests.map(async (request: any) => {
         const submittedBy = request.submittedBy
           ? await UserModel.findById(request.submittedBy)
-              .select("name email")
-              .lean()
+            .select("name email")
+            .lean()
           : null;
         const reviewedBy = request.reviewedBy
           ? await UserModel.findById(request.reviewedBy)
-              .select("name email")
-              .lean()
+            .select("name email")
+            .lean()
           : null;
 
         return {

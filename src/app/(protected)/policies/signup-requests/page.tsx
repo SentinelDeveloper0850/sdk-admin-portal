@@ -27,7 +27,7 @@ import PageHeader from "@/app/components/page-header";
 import { PolicySignupActionModals } from "@/app/components/policy-signup-action-modals";
 import { PolicySignupActions } from "@/app/components/policy-signup-actions";
 import { PolicySignupViewModal } from "@/app/components/policy-signup-view-modal";
-import { IUser } from "@/app/models/hr/user.schema";
+import { IUser } from "@/app/models/auth/user.schema";
 import { IPolicySignUp } from "@/app/models/scheme/policy-signup-request.schema";
 import { useAuth } from "@/context/auth-context";
 
