@@ -1,10 +1,9 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
-import { Button } from "@nextui-org/react";
-import { Form, Radio, Select } from "antd";
+import { Button, Form, Radio, Select } from "antd";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import sweetAlert from "sweetalert";
 
 const getId = (x: any) => String(x?._id ?? x?.id ?? "");
@@ -30,7 +29,9 @@ const SessionPage = () => {
 
     const [branches, setBranches] = useState<any[]>([]);
     const [regions, setRegions] = useState<any[]>([]);
+
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     const greeting = useMemo(() => getTimeGreeting(), []);
     const firstName = useMemo(
@@ -46,7 +47,7 @@ const SessionPage = () => {
             if (data?.success && data?.data) {
                 const normalized = data.data.map((r: any) => ({
                     ...r,
-                    _normId: getId(r),
+                    _normId: getId(r), // <- always string
                 }));
                 setRegions(normalized);
             }
@@ -64,8 +65,7 @@ const SessionPage = () => {
             if (data.success && data.data) {
                 const normalized = data.data.map((b: any) => ({
                     ...b,
-                    _normId: getId(b),
-                    _normRegionId: getRegionId(b),
+                    _normId: getId(b), // <- always string
                 }));
                 setBranches(normalized);
             } else {
@@ -92,38 +92,76 @@ const SessionPage = () => {
         fetchRegions();
     }, []);
 
-    const mode = Form.useWatch("mode", form);
-    const regionId = Form.useWatch("region", form);
+    const mode = Form.useWatch("mode", form) as "ONSITE" | "REMOTE" | undefined;
+    const regionId = Form.useWatch("region", form) as string | undefined;
+    const branchId = Form.useWatch("branch", form) as string | undefined;
 
+    const randomPrimaryBox = useRef(0);
+
+    const randomizePrimaryBox = () => {
+        const prev = randomPrimaryBox.current;
+        let next = Math.floor(Math.random() * 9);
+        while (next === prev) {
+            next = Math.floor(Math.random() * 9);
+        }
+        randomPrimaryBox.current = next;
+    }
+
+    const canContinue = useMemo(() => {
+        if (submitting || loading) return false;
+        if (mode === "REMOTE") return true;
+        if (mode === "ONSITE") return Boolean(regionId && branchId);
+        return false;
+    }, [mode, regionId, branchId, submitting, loading]);
+
+    // ✅ filter branches by normalized region string id
     const filteredBranches = useMemo(() => {
         if (!regionId) return [];
-        return branches.filter((b) => b.regionId === regionId);
+        return branches.filter((b) => String(b.regionDoc?._id) === String(regionId));
     }, [branches, regionId]);
 
+    // reset branch whenever region changes
     useEffect(() => {
-        // reset branch whenever region changes
         form.setFieldsValue({ branch: undefined });
     }, [regionId, form]);
 
+    // clear region/branch if remote
     useEffect(() => {
         if (mode === "REMOTE") {
             form.setFieldsValue({ region: undefined, branch: undefined });
         }
+
+        randomizePrimaryBox();
     }, [mode, form]);
 
-    const onFinish = (values: any) => {
-        startSession({
-            userId: user!._id as string,
-            mode: values.mode,
-            branch: values.mode === "ONSITE" ? values.branch : undefined,
-            region: values.mode === "ONSITE" ? values.region : undefined,
-            regionName: values.mode === "ONSITE" ? regions.find(r => r.id === values.region)?.name : undefined,
-            branchName: values.mode === "ONSITE" ? branches.find(b => b._id === values.branch)?.name : undefined,
-        });
+    const onFinish = async (values: any) => {
+        try {
+            setSubmitting(true);
+            const selectedRegion = regions.find((r) => String(r._id) === String(values.region));
+            const selectedBranch = branches.find((b) => String(b._id) === String(values.branch));
 
-        sweetAlert({ title: "Success", text: "Session set successfully.", icon: "success" });
-        router.push("/dashboard");
+            startSession({
+                userId: user!._id as string,
+                mode: values.mode,
+                branch: values.mode === "ONSITE" ? String(values.branch) : undefined,
+                region: values.mode === "ONSITE" ? String(values.region) : undefined,
+                regionName: values.mode === "ONSITE" ? selectedRegion?.name : undefined,
+                branchName: values.mode === "ONSITE" ? selectedBranch?.name : undefined,
+            });
+
+            sweetAlert({ title: "Success", text: "Session set successfully.", icon: "success" });
+            router.push("/dashboard");
+        } catch (error) {
+            console.error("Error starting session:", error);
+            sweetAlert({ title: "Error", text: "Failed to start session.", icon: "error" });
+        } finally {
+            setSubmitting(false);
+        }
     };
+
+    useEffect(() => {
+        randomizePrimaryBox();
+    }, []);
 
     return (
         <div className="mx-auto w-full max-w-5xl px-4 py-10">
@@ -157,8 +195,9 @@ const SessionPage = () => {
                                         allowClear
                                         placeholder="Select region"
                                         loading={loading}
+                                        // ✅ option values match stored form value (string)
                                         options={regions.map((r) => ({
-                                            value: r.id,
+                                            value: String(r._id),
                                             label: r.name,
                                         }))}
                                     />
@@ -171,7 +210,7 @@ const SessionPage = () => {
                                         placeholder={regionId ? "Select branch" : "Select a region first"}
                                         loading={loading}
                                         options={filteredBranches.map((b) => ({
-                                            value: b._id,
+                                            value: String(b._id),
                                             label: b.name,
                                         }))}
                                     />
@@ -179,7 +218,12 @@ const SessionPage = () => {
                             </>
                         )}
 
-                        <Button color="primary" fullWidth onClick={() => form.submit()}>
+                        <Button
+                            type="primary"
+                            block
+                            disabled={!canContinue}
+                            loading={submitting}
+                            onClick={() => form.submit()}>
                             Continue
                         </Button>
 
@@ -190,16 +234,14 @@ const SessionPage = () => {
                 </div>
 
                 {/* RIGHT: Illustration */}
-                <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-amber-50 via-white to-zinc-50 p-6 shadow-sm dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950">
+                <div className="relative overflow-hidden min-h-[480px] rounded-2xl border border-zinc-200 bg-gradient-to-br from-amber-50 via-white to-zinc-50 p-6 shadow-sm dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950">
                     <div className="relative z-10">
-                        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                            Today’s context
-                        </h2>
+                        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Today’s context</h2>
                         <p className="mt-1 max-w-sm text-sm text-zinc-600 dark:text-zinc-400">
                             Pick your location to keep the branch queue accurate and avoid “who stole my ticket?” moments.
                         </p>
 
-                        <div className="mt-6 grid grid-cols-2 gap-3">
+                        <div className="mt-6 grid grid-cols-3 gap-3">
                             <div className="rounded-xl border border-zinc-200 bg-white/70 p-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60">
                                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Mode</p>
                                 <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-white">
@@ -211,12 +253,25 @@ const SessionPage = () => {
                                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Region</p>
                                 <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-white">
                                     {mode === "REMOTE"
-                                        ? "—"
-                                        : regions.find((r) => r.id === regionId)?.name ?? "Not selected"}
+                                        ? "--"
+                                        : !regionId
+                                            ? "--"
+                                            : regions.find((r) => String(r._id) === String(regionId))?.name ?? "Not selected"}
                                 </p>
                             </div>
 
-                            <div className="col-span-2 rounded-xl border border-zinc-200 bg-white/70 p-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60">
+                            <div className="rounded-xl border border-zinc-200 bg-white/70 p-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60">
+                                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Branch</p>
+                                <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-white">
+                                    {mode === "REMOTE"
+                                        ? "--"
+                                        : !branchId
+                                            ? "--"
+                                            : branches.find((b) => String(b._id) === String(branchId))?.name ?? "Not selected"}
+                                </p>
+                            </div>
+
+                            <div className="col-span-3 rounded-xl border border-zinc-200 bg-white/70 p-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60">
                                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Why we ask</p>
                                 <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
                                     Your queue actions are routed based on branch context. Choosing correctly keeps the workflow clean.
@@ -235,8 +290,11 @@ const SessionPage = () => {
                             {Array.from({ length: 9 }).map((_, i) => (
                                 <div
                                     key={i}
-                                    className="h-10 w-10 rounded-xl border border-zinc-200 bg-white/70 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60"
-                                />
+                                    className={`h-10 w-10 rounded-xl border flex items-center justify-center border-zinc-200 bg-white/70 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60 ${i === randomPrimaryBox.current ? "text-amber-500" : ""
+                                        }`}
+                                >
+                                    {i === randomPrimaryBox.current ? "X" : ""}
+                                </div>
                             ))}
                         </div>
                     </div>
