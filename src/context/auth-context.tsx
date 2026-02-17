@@ -66,6 +66,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isSessionRoute = useMemo(() => pathname.startsWith("/session"), [pathname]);
 
   const settingContextRef = useRef(false);
+  const refreshingRef = useRef(false);
+
+  const kickedRef = useRef(false);
 
   const alertLockRef = useRef(false);
   const lastAlertRef = useRef<{ code?: string; at: number }>({ code: undefined, at: 0 });
@@ -311,6 +314,88 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const refreshDbContext = async () => {
+    if (!user?._id) return;
+    if (refreshingRef.current) return;
+
+    refreshingRef.current = true;
+
+    try {
+      const ctxRes = await axios.get("/api/session/context");
+      const ctx = ctxRes.data;
+
+      // If API itself failed, don’t kick — just fail quietly
+      if (!ctx?.success) return;
+
+      // DB session revoked/expired/missing -> kick to session selection (once)
+      if (!ctx?.hasSession) {
+        if (!kickedRef.current) {
+          kickedRef.current = true;
+          setSession(null);
+
+          // Only show popup if we’re not already on the session page
+          if (!isSessionRoute) {
+            sweetAlert({
+              title: "Session ended",
+              text: "Your working session was ended. Please select context again.",
+              icon: "warning",
+            });
+            router.push("/session");
+          }
+        }
+        return;
+      }
+
+      // If we have a session again, allow future kick warnings (important)
+      if (kickedRef.current) kickedRef.current = false;
+
+      // DB session exists, but no working context set yet
+      if (!ctx?.hasContext) {
+        setSession(null);
+        if (!isSessionRoute) router.push("/session");
+        return;
+      }
+
+      // Refresh local snapshot (names/expiresAt/lastSeen)
+      setSession(
+        buildSession(
+          {
+            userId: String(user._id),
+            mode: ctx.mode,
+            region: ctx.regionId ?? undefined,
+            branch: ctx.branchId ?? undefined,
+            regionName: ctx.regionName ?? undefined,
+            branchName: ctx.branchName ?? undefined,
+          },
+          ctx.expiresAt ?? null
+        )
+      );
+    } catch {
+      // ignore transient errors
+    } finally {
+      refreshingRef.current = false;
+    }
+  };
+
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user?._id) return;
+    if (isAuthRoute || isSessionRoute) return;
+
+    const tick = () => refreshDbContext();
+
+    const interval = setInterval(tick, 60_000);
+    const onFocus = () => tick();
+
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user?._id, isAuthRoute, isSessionRoute]);
 
   // Enforce: logged-in user must have a working context (except auth/session pages)
   useEffect(() => {
