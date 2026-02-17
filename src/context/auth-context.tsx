@@ -4,7 +4,8 @@
 import type { IUser } from "@/app/models/auth/user.schema";
 import axios from "axios";
 import { usePathname, useRouter } from "next/navigation";
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import sweetAlert from "sweetalert";
 
 export type SessionMode = "ONSITE" | "REMOTE";
 
@@ -24,8 +25,9 @@ interface AuthContextType {
   setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
   session: ISession | null;
   setSession: React.Dispatch<React.SetStateAction<ISession | null>>;
-  startSession: (input: Omit<ISession, "createdAt" | "expiresAt">) => void;
+  startSession: (input: Omit<ISession, "createdAt" | "expiresAt">) => Promise<void>;
   clearSession: () => void;
+  refreshSession: () => Promise<void>;
   userId?: string;
   loading: boolean;
   isAdmin: boolean;
@@ -34,13 +36,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const SESSION_STORAGE_KEY = "sdk_session";
-const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12 hours
+const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12 hours (fallback only)
+
+type SessionContextResponse = {
+  success: boolean;
+  hasSession?: boolean;
+  hasContext?: boolean;
+  mode?: SessionMode;
+  regionId?: string | null;
+  branchId?: string | null;
+  regionName?: string | null;
+  branchName?: string | null;
+  expiresAt?: string | Date | null;
+  code?: string;
+  message?: string;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<IUser | null>(null);
   const [session, setSession] = useState<ISession | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [sessionHydrating, setSessionHydrating] = useState(true);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -48,9 +65,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isAuthRoute = useMemo(() => pathname.startsWith("/auth"), [pathname]);
   const isSessionRoute = useMemo(() => pathname.startsWith("/session"), [pathname]);
 
-  const buildSession = (input: Omit<ISession, "createdAt" | "expiresAt">): ISession => {
+  const settingContextRef = useRef(false);
+
+  const alertLockRef = useRef(false);
+  const lastAlertRef = useRef<{ code?: string; at: number }>({ code: undefined, at: 0 });
+
+  const shouldShowAlert = (code?: string) => {
+    // already showing one
+    if (alertLockRef.current) return false;
+
+    // prevent repeated same-code alerts within a cooldown window
+    const COOLDOWN_MS = 10_000;
+    const now = Date.now();
+
+    if (lastAlertRef.current.code === code && now - lastAlertRef.current.at < COOLDOWN_MS) {
+      return false;
+    }
+
+    lastAlertRef.current = { code, at: now };
+    return true;
+  };
+
+  const buildSession = (
+    input: Omit<ISession, "createdAt" | "expiresAt">,
+    expiresAtFromServer?: string | Date | null
+  ): ISession => {
     const now = new Date();
-    const expires = new Date(now.getTime() + SESSION_TTL_MS);
+
+    const expires =
+      expiresAtFromServer != null
+        ? new Date(expiresAtFromServer)
+        : new Date(now.getTime() + SESSION_TTL_MS);
 
     return {
       ...input,
@@ -59,68 +104,174 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   };
 
-  const isExpired = (s: ISession) => new Date(s.expiresAt).getTime() <= Date.now();
-
   const clearSession = () => {
-    router.push("/session");
     setSession(null);
-    if (typeof window !== "undefined") localStorage.removeItem(SESSION_STORAGE_KEY);
+    // Keep them logged in, just force context selection
+    router.push("/session");
   };
 
-  const hydrateSessionForUser = (u: IUser | null) => {
-    if (typeof window === "undefined") return;
+  const hydrateFromDbContext = async (u: IUser) => {
+    const ctxRes = await axios.get<SessionContextResponse>("/api/session/context");
+    const ctx = ctxRes.data;
+    console.log("🚀 ~ hydrateFromDbContext ~ ctx:", ctx)
 
-    if (!u?._id) {
-      clearSession();
-      return;
-    }
-
-    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (!raw) {
+    if (!ctx?.success) {
       setSession(null);
       return;
     }
+
+    // Auth is valid, but no DB session record (or it's expired/revoked)
+    if (!ctx.hasSession) {
+      setSession(null);
+      return;
+    }
+
+    // DB session exists, but no working context set yet
+    if (!ctx.hasContext) {
+      setSession(null);
+      if (!isSessionRoute) router.push("/session");
+      return;
+    }
+
+    // Build local snapshot from DB
+    setSession(
+      buildSession(
+        {
+          userId: String(u._id),
+          mode: (ctx.mode ?? "ONSITE") as SessionMode,
+          region: ctx.regionId ?? undefined,
+          branch: ctx.branchId ?? undefined,
+          regionName: ctx.regionName ?? undefined,
+          branchName: ctx.branchName ?? undefined,
+        },
+        ctx.expiresAt ?? null
+      )
+    );
+  };
+
+  const safeAlert = async (opts: any, code?: string) => {
+    if (!shouldShowAlert(code)) return;
 
     try {
-      const s = JSON.parse(raw) as ISession;
+      alertLockRef.current = true;
+      await sweetAlert(opts);
+    } finally {
+      alertLockRef.current = false;
+    }
+  };
 
-      // must belong to this user
-      if (String(s.userId) !== String(u._id)) {
-        localStorage.removeItem(SESSION_STORAGE_KEY);
-        setSession(null);
+  const handleLifecycle = async (code?: string) => {
+    // Avoid popping alerts on the page you're about to redirect to
+    const onSignin = pathname.startsWith("/auth/signin");
+    const onSession = pathname.startsWith("/session");
+
+    switch (code) {
+      case "AUTH_EXPIRED":
+        if (!onSignin) {
+          await safeAlert(
+            {
+              title: "Session expired",
+              text: "Your login session has expired. Please sign in again to continue.",
+              icon: "warning",
+            },
+            code
+          );
+        }
+        router.push("/auth/signin");
         return;
-      }
 
-      // expiry check
-      if (isExpired(s)) {
-        localStorage.removeItem(SESSION_STORAGE_KEY);
-        setSession(null);
+      case "AUTH_INVALID":
+        if (!onSignin) {
+          await safeAlert(
+            {
+              title: "Authentication error",
+              text: "Your session is no longer valid. Please sign in again.",
+              icon: "warning",
+            },
+            code
+          );
+        }
+        router.push("/auth/signin");
         return;
-      }
 
-      setSession(s);
-    } catch {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
-      setSession(null);
+      case "USER_NOT_FOUND":
+        if (!onSignin) {
+          await safeAlert(
+            {
+              title: "Account unavailable",
+              text: "Your account could not be found. Please contact your administrator.",
+              icon: "error",
+            },
+            code
+          );
+        }
+        router.push("/auth/signin");
+        return;
+
+      case "SESSION_CONTEXT_REQUIRED":
+      case "SESSION_CONTEXT_EXPIRED":
+        if (!onSession) {
+          await safeAlert(
+            {
+              title: "Select working location",
+              text: "Please confirm where you're working from today to continue.",
+              icon: "info",
+            },
+            code
+          );
+        }
+        router.push("/session");
+        return;
+
+      default:
+        router.push("/auth/signin");
+        return;
     }
   };
 
   const fetchUser = async () => {
     try {
+      setSessionHydrating(true);
+
       const userRes = await axios.get("/api/auth/user");
       const u = userRes.data.user ?? null;
-      setUser(u);
-      hydrateSessionForUser(u);
-    } catch (error: any) {
-      console.error("Error fetching user:", error);
-      if (error.response?.status === 401) {
+
+      if (!u?._id) {
         setUser(null);
-        clearSession();
+        setSession(null);
         router.push("/auth/signin");
+        return;
       }
+
+      setUser(u);
+
+      // DB-backed working session context
+      await hydrateFromDbContext(u);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        const code = error.response?.data?.code;
+
+        await handleLifecycle(code);
+
+        setUser(null);
+        setSession(null);
+        router.push("/auth/signin");
+        return;
+      }
+
+      console.error("Error fetching user/session:", error);
+      setUser(null);
+      setSession(null);
+      router.push("/auth/signin");
     } finally {
+      setSessionHydrating(false);
       setLoading(false);
     }
+  };
+
+  const refreshSession = async () => {
+    if (!user?._id) return;
+    await hydrateFromDbContext(user);
   };
 
   // Initial bootstrap
@@ -129,47 +280,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist session automatically
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const startSession = async (input: Omit<ISession, "createdAt" | "expiresAt">) => {
+    settingContextRef.current = true;
+    try {
+      await axios.post("/api/session/context", {
+        mode: input.mode,
+        regionId: input.mode === "ONSITE" ? input.region : null,
+        branchId: input.mode === "ONSITE" ? input.branch : null,
+      });
 
-    if (!session) {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
-      return;
+      // ✅ Immediately set local session so guard doesn't bounce you back
+      setSession(
+        buildSession(
+          {
+            userId: input.userId,
+            mode: input.mode,
+            region: input.region,
+            branch: input.branch,
+            regionName: input.regionName,
+            branchName: input.branchName,
+          },
+          null
+        )
+      );
+
+      // ✅ Then refresh from DB to sync expiresAt + names (optional but nice)
+      await refreshSession();
+    } finally {
+      settingContextRef.current = false;
     }
-
-    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-  }, [session]);
-
-  // Auto-expire
-  useEffect(() => {
-    if (!session) return;
-
-    const timer = setInterval(() => {
-      if (isExpired(session)) {
-        clearSession();
-      }
-    }, 30_000);
-
-    return () => clearInterval(timer);
-  }, [session]);
-
-  const startSession = (input: Omit<ISession, "createdAt" | "expiresAt">) => {
-    setSession(buildSession(input));
   };
 
-  // Enforce: logged-in user must have a session (except auth/session pages)
+
+  // Enforce: logged-in user must have a working context (except auth/session pages)
   useEffect(() => {
-    if (loading) return;
+    if (loading || sessionHydrating) return;
+    if (settingContextRef.current) return; // ✅ don't fight the session page
     if (!user) return;
 
     if (isAuthRoute || isSessionRoute) return;
 
     if (!session) router.push("/session");
-  }, [user, session, loading, isAuthRoute, isSessionRoute, router]);
+  }, [user, session, loading, sessionHydrating, isAuthRoute, isSessionRoute, router]);
 
   const userRoles = user?.roles ?? [];
-  const roles = [user?.role!, ...userRoles];
+  const roles = [user?.role!, ...userRoles].filter(Boolean);
 
   const isAdmin = user?.role === "admin";
   const isManagement = roles.includes("admin") || roles.includes("manager");
@@ -185,10 +340,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession,
         startSession,
         clearSession,
+        refreshSession,
         userId: user?._id?.toString(),
         loading,
         isAdmin,
-        isManagement
+        isManagement,
       }}
     >
       {children}

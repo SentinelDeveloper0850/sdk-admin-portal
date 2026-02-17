@@ -218,3 +218,5 @@ branchSchema.statics.findNear = function (
 export const BranchModel =
   mongoose.models.branches ||
   mongoose.model<IBranch>("branches", branchSchema, "branches");
+
+export default BranchModel;

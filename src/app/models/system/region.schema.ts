@@ -66,3 +66,5 @@ regionSchema.pre("save", function (next) {
 export const RegionModel =
   mongoose.models.regions ||
   mongoose.model<IRegion>("regions", regionSchema, "regions");
+
+export default RegionModel;

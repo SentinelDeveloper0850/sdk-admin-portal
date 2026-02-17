@@ -137,10 +137,11 @@ const SessionPage = () => {
     const onFinish = async (values: any) => {
         try {
             setSubmitting(true);
+
             const selectedRegion = regions.find((r) => String(r._id) === String(values.region));
             const selectedBranch = branches.find((b) => String(b._id) === String(values.branch));
 
-            startSession({
+            await startSession({
                 userId: user!._id as string,
                 mode: values.mode,
                 branch: values.mode === "ONSITE" ? String(values.branch) : undefined,
@@ -149,7 +150,7 @@ const SessionPage = () => {
                 branchName: values.mode === "ONSITE" ? selectedBranch?.name : undefined,
             });
 
-            sweetAlert({ title: "Success", text: "Session set successfully.", icon: "success" });
+            await sweetAlert({ title: "Success", text: "Session set successfully.", icon: "success" });
             router.push("/dashboard");
         } catch (error) {
             console.error("Error starting session:", error);
@@ -158,6 +159,7 @@ const SessionPage = () => {
             setSubmitting(false);
         }
     };
+
 
     useEffect(() => {
         randomizePrimaryBox();
@@ -288,12 +290,11 @@ const SessionPage = () => {
                     <div className="pointer-events-none absolute bottom-6 right-6 z-0">
                         <div className="grid grid-cols-3 gap-2 opacity-60">
                             {Array.from({ length: 9 }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className={`h-10 w-10 rounded-xl border flex items-center justify-center border-zinc-200 bg-white/70 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60 ${i === randomPrimaryBox.current ? "text-amber-500" : ""
+                                <div key={i}
+                                    className={`h-10 w-10 rounded-xl text-xs font-semibold border flex items-center justify-center border-zinc-200 bg-white/70 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60 ${i === randomPrimaryBox.current ? "text-amber-500" : ""
                                         }`}
                                 >
-                                    {i === randomPrimaryBox.current ? "X" : ""}
+                                    {i === randomPrimaryBox.current ? "SDK" : ""}
                                 </div>
                             ))}
                         </div>

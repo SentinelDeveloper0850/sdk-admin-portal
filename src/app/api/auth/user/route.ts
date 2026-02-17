@@ -1,7 +1,6 @@
+import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-
-import jwt from "jsonwebtoken";
 
 import UsersModel from "@/app/models/auth/user.schema";
 import { connectToDatabase } from "@/lib/db";
@@ -19,9 +18,11 @@ export async function GET() {
   }
 
   const token = (await cookies()).get("auth-token")?.value;
-
   if (!token) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { message: "Unauthorized", code: "AUTH_MISSING" },
+      { status: 401 }
+    );
   }
 
   try {
@@ -34,13 +35,25 @@ export async function GET() {
 
     const user = await UsersModel.findById(decoded.userId).select("-password");
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "User not found", code: "USER_NOT_FOUND" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ user }, { status: 200 });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.error("Error verifying token:", error.message);
-    return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+    // ✅ differentiate expiration vs invalid
+    if (error?.name === "TokenExpiredError") {
+      return NextResponse.json(
+        { message: "Session expired. Please sign in again.", code: "AUTH_EXPIRED" },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Invalid token", code: "AUTH_INVALID" },
+      { status: 401 }
+    );
   }
 }
