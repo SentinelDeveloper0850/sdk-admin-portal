@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { IconCoffin, IconPigMoney, IconSteeringWheel } from "@tabler/icons-react";
 import { Tooltip } from "antd";
@@ -33,14 +33,65 @@ import {
   HiUserGroup
 } from "react-icons/hi2";
 
-import { FileTextOutlined } from "@ant-design/icons";
+import { FileTextOutlined, SafetyOutlined } from "@ant-design/icons";
 import { ERoles } from "../../types/roles.enum";
 import { useRole } from "../hooks/use-role";
+
+type MenuItem = {
+  id: string | number;
+  name: string;
+  url?: string;
+  icon?: React.ReactNode;
+  group?: string;
+  allowedRoles?: ERoles[];
+  children?: MenuItem[];
+};
+
+const filterMenuTree = (items: MenuItem[], hasRole: (roles: ERoles[]) => boolean): MenuItem[] => {
+  return items
+    .map((item) => {
+      const children = item.children ? filterMenuTree(item.children, hasRole) : undefined;
+
+      const allowed =
+        !item.allowedRoles || hasRole(item.allowedRoles);
+
+      // keep item if allowed AND (no children OR has children after filtering)
+      if (!allowed) return null;
+
+      if (children && children.length === 0 && item.children) {
+        // parent had children but all got filtered out
+        // keep parent only if it has a url (clickable leaf)
+        return item.url ? { ...item, children: [] } : null;
+      }
+
+      return { ...item, children };
+    })
+    .filter(Boolean) as MenuItem[];
+};
+
+const ManagementRoles = [
+  ERoles.Admin,
+  ERoles.HRManager,
+  ERoles.BranchManager,
+  ERoles.RegionalManager,
+];
 
 const SideNavBar = () => {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null); // track open submenu
+
+  const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
+  const keyOf = (id: string | number) => String(id);
+
+  const toggleKey = (id: string | number) => {
+    const k = keyOf(id);
+    setOpenKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  };
 
   const menuItems = [
     {
@@ -250,127 +301,245 @@ const SideNavBar = () => {
     },
     {
       id: 9,
-      name: "Documents",
-      icon: <FileTextOutlined />,
-      url: "/dms/documents",
+      name: "Resources",
+      icon: <FileTextOutlined style={{ fontSize: 18 }} />,
+      url: "/resources",
+      children: [
+        {
+          id: "official-documents",
+          name: "Official Documents",
+          icon: <FileTextOutlined />,
+          url: "/resources/documents",
+        },
+        {
+          id: "knowledge-hub",
+          name: "Knowledge Hub",
+          icon: <FileTextOutlined />,
+          url: "/resources/knowledge-hub",
+        },
+      ],
     },
     {
       id: 10,
-      name: "Knowledge Hub",
-      icon: <FileText size={18} />,
-      url: "/knowledge-hub",
-    },
-    {
-      id: 11,
-      name: "Status",
-      icon: <Server size={18} />,
-      url: "/status",
-      allowedRoles: [...Object.values(ERoles)],
-      group: "Management",
-    },
-    {
-      id: 12,
-      name: "Configurations",
-      icon: <Settings size={18} />,
-      url: "/configurations",
-      allowedRoles: [
-        ERoles.Admin,
-        ERoles.BranchManager,
-        ERoles.RegionalManager,
-      ],
-      group: "Management",
+      name: "Management",
+      icon: <SafetyOutlined size={18} />,
+      url: "/management",
+      allowedRoles: ManagementRoles,
       children: [
         {
-          id: "staff-members",
-          name: "Staff Members",
-          url: "/configurations/staff-members",
-          allowedRoles: [
-            ERoles.Admin,
-            ERoles.HRManager,
-            ERoles.BranchManager,
-            ERoles.RegionalManager,
-          ],
-          icon: <HiUserGroup size={18} />,
-        },
-        {
-          id: "users",
-          name: "Portal Users",
-          icon: <UserPen size={18} />,
-          url: "/users",
-          allowedRoles: [ERoles.Admin, ERoles.HRManager],
+          id: "system-status",
+          name: "System Status",
+          icon: <Server size={18} />,
+          url: "/management/system-status",
+          allowedRoles: ManagementRoles,
           group: "Management",
         },
         {
-          id: "drivers-config",
-          name: "Drivers",
-          url: "/configurations/drivers",
-          allowedRoles: [ERoles.Admin],
-          icon: <IconSteeringWheel size={18} />,
+          id: "active-sessions",
+          name: "Active Sessions",
+          icon: <SafetyOutlined size={18} />,
+          url: "/management/active-sessions",
+          allowedRoles: ManagementRoles,
+          group: "Management",
         },
         {
-          id: "regions-config",
-          name: "Regions",
-          url: "/configurations/regions",
-          allowedRoles: [ERoles.Admin, ERoles.RegionalManager],
-          icon: <HiMapPin size={18} />,
-        },
-        {
-          id: "branches-config",
-          name: "Branches",
-          url: "/configurations/branches",
-          allowedRoles: [
-            ERoles.Admin,
-            ERoles.BranchManager,
-            ERoles.RegionalManager,
+          id: "system-configurations",
+          name: "System Configurations",
+          icon: <Settings size={18} />,
+          url: "/management/configurations",
+          allowedRoles: ManagementRoles,
+          group: "Management",
+          children: [
+            {
+              id: "staff-members",
+              name: "Staff Members",
+              url: "/configurations/staff-members",
+              allowedRoles: ManagementRoles,
+              icon: <HiUserGroup size={18} />,
+            },
+            {
+              id: "users",
+              name: "Portal Users",
+              icon: <UserPen size={18} />,
+              url: "/users",
+              allowedRoles: ManagementRoles,
+              group: "Management",
+            },
+            {
+              id: "drivers-config",
+              name: "Drivers",
+              url: "/configurations/drivers",
+              allowedRoles: ManagementRoles,
+              icon: <IconSteeringWheel size={18} />,
+            },
+            {
+              id: "regions-config",
+              name: "Regions",
+              url: "/configurations/regions",
+              allowedRoles: ManagementRoles,
+              icon: <HiMapPin size={18} />,
+            },
+            {
+              id: "branches-config",
+              name: "Branches",
+              url: "/configurations/branches",
+              allowedRoles: ManagementRoles,
+              icon: <HiBuildingOffice size={18} />,
+            },
+            {
+              id: "duty-roster-config",
+              name: "Duty Roster",
+              url: "/configurations/roster",
+              allowedRoles: ManagementRoles,
+              icon: <HiClock size={18} />,
+            },
           ],
-          icon: <HiBuildingOffice size={18} />,
-        },
-        {
-          id: "duty-roster-config",
-          name: "Duty Roster",
-          url: "/configurations/roster",
-          allowedRoles: [
-            ERoles.Admin,
-            ERoles.HRManager,
-            ERoles.BranchManager,
-            ERoles.RegionalManager,
-          ],
-          icon: <HiClock size={18} />,
         },
       ],
     },
   ];
 
-  const toggleSubmenu = (id: number) => {
-    setOpenMenuId((prev) => (prev === id ? null : id));
-  };
-
   const { hasRole } = useRole();
 
-  const filteredMenuItems = menuItems
-    .map((item) => {
-      // Filter children if any
-      const children = item.children?.filter(
-        (child) => !child.allowedRoles || hasRole(child.allowedRoles)
-      );
+  const filteredMenuItems = useMemo(
+    () => filterMenuTree(menuItems as MenuItem[], hasRole),
+    [hasRole]
+  );
 
-      return {
-        ...item,
-        children,
-      };
-    })
-    .filter(
-      (item) =>
-        (!item.allowedRoles || hasRole(item.allowedRoles)) &&
-        (item.children === undefined || item.children.length > 0)
-    );
+  const collectOpenKeysForPath = (items: MenuItem[], path: string, parents: string[] = []): string[] => {
+    for (const item of items) {
+      const k = String(item.id);
+      const nextParents = [...parents, k];
+
+      // If this node matches
+      if (item.url && path.startsWith(item.url)) return parents;
+
+      // If any descendant matches, open this chain
+      if (item.children?.length) {
+        const match = collectOpenKeysForPath(item.children, path, nextParents);
+        if (match.length) return nextParents;
+      }
+    }
+    return [];
+  };
 
   useEffect(() => {
-    const parent = filteredMenuItems.find((item) =>
-      item.children?.some((child) => pathname.startsWith(child.url || ""))
+    const keys = collectOpenKeysForPath(filteredMenuItems as MenuItem[], pathname);
+    setOpenKeys(new Set(keys));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const SideNavItem = ({
+    item,
+    level,
+    collapsed,
+    pathname,
+    openKeys,
+    toggleKey,
+  }: {
+    item: MenuItem;
+    level: number;
+    collapsed: boolean;
+    pathname: string;
+    openKeys: Set<string>;
+    toggleKey: (id: string | number) => void;
+  }) => {
+    const hasChildren = !!item.children?.length;
+    const isOpen = openKeys.has(String(item.id));
+
+    const isActive = item.url ? pathname.startsWith(item.url) : false;
+    const isDescActive = hasChildren
+      ? item.children!.some((c) => (c.url ? pathname.startsWith(c.url) : false))
+      : false;
+
+    const active = isActive || isDescActive;
+
+    const opened = hasChildren && isOpen;
+    const highlighted = active || opened;
+
+    const baseClass = "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
+
+    const borderClass = highlighted
+      ? "border-l-4 border-l-primary text-primary"
+      : "border-l-4 border-l-transparent";
+
+    const bgClass = highlighted
+      ? "bg-amber-50 dark:bg-zinc-800/40"
+      : "";
+
+    const indent = level === 0 ? "" : `ml-${Math.min(level * 3, 12)}`; // keep it sane
+
+    if (hasChildren) {
+      return (
+        <div>
+          <div
+            className={`${baseClass} ${borderClass} ${bgClass} ${indent} justify-between`}
+            onClick={() => {
+              if (collapsed) return; // in collapsed mode we won't expand nested menus
+              toggleKey(item.id);
+            }}
+          >
+            <div className="flex items-center gap-3">
+              {item.icon}
+              {!collapsed && (
+                <p className="text-xs font-normal uppercase tracking-wider">
+                  {item.name}
+                </p>
+              )}
+            </div>
+
+            {!collapsed && (
+              <ChevronDown
+                size={16}
+                className={`transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"}`}
+              />
+            )}
+          </div>
+
+          {!collapsed && isOpen && (
+            <div>
+              {item.children!.map((child) => (
+                <SideNavItem
+                  key={String(child.id)}
+                  item={child}
+                  level={level + 1}
+                  collapsed={collapsed}
+                  pathname={pathname}
+                  openKeys={openKeys}
+                  toggleKey={toggleKey}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const content = (
+      <div className={`${baseClass} ${borderClass} ${indent}`}>
+        {item.icon}
+        {!collapsed && (
+          <p className="text-xs font-normal uppercase tracking-wider">
+            {item.name}
+          </p>
+        )}
+      </div>
     );
-    if (parent) setOpenMenuId(parent.id);
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    if (!item.url) return <div>{content}</div>;
+
+    return (
+      <Link href={item.url}>
+        {collapsed ? (
+          <Tooltip title={item.name} placement="right">
+            {content}
+          </Tooltip>
+        ) : (
+          content
+        )}
+      </Link>
+    );
+  };
 
   return (
     <section
@@ -388,102 +557,19 @@ const SideNavBar = () => {
       </div>
 
       <div className="grid gap-0">
-        {filteredMenuItems.map((item) => {
-          const isChildActive = !!item.children?.some((child) =>
-            pathname.startsWith(child.url || "")
-          );
-          const isActive = isChildActive || pathname.startsWith(item.url || "");
-          const baseClass =
-            "flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#FFC107] hover:text-[#2B3E50]";
-          const borderClass = isActive
-            ? "border-l-4 border-l-primary text-primary"
-            : "border-l-4 border-l-transparent";
-
-          if (item.children && item.children.length > 0) {
-            const isOpen = openMenuId === item.id;
-
-            return (
-              <div key={item.id}>
-                <div
-                  className={`${baseClass} ${borderClass} justify-between`}
-                  onClick={() => {
-                    if (collapsed) {
-                      setCollapsed(false);
-                      setOpenMenuId((prev) =>
-                        prev === item.id ? null : item.id
-                      );
-                      return;
-                    }
-                    toggleSubmenu(item.id);
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    {item.icon}
-                    {!collapsed && (
-                      <p className="text-xs font-normal uppercase tracking-wider">
-                        {item.name}
-                      </p>
-                    )}
-                  </div>
-
-                  {!collapsed && (
-                    <ChevronDown
-                      size={16}
-                      className={`transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"}`}
-                    />
-                  )}
-                </div>
-
-                {isOpen &&
-                  !collapsed &&
-                  item.children.map((child) => {
-                    const childActive = pathname.startsWith(child.url || "");
-                    return (
-                      <Link key={child.id} href={child.url!}>
-                        <div
-                          className={`ml-6 flex items-center gap-2 px-4 py-2 text-sm hover:bg-[#ffe082] ${childActive
-                            ? "font-semibold text-primary"
-                            : "text-gray-600"
-                            }`}
-                        >
-                          <span className="inline-flex w-5 justify-center">
-                            {child.icon ?? null}
-                          </span>
-                          <span>{child.name}</span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-              </div>
-            );
-          }
-
-          const content = (
-            <div className={`${baseClass} ${borderClass}`}>
-              {item.icon}
-              {!collapsed && (
-                <p className="text-xs font-normal uppercase tracking-wider">
-                  {item.name}
-                </p>
-              )}
-            </div>
-          );
-
-          return item.url ? (
-            <Link key={item.id} href={item.url}>
-              {collapsed ? (
-                <Tooltip title={item.name} placement="right">
-                  {content}
-                </Tooltip>
-              ) : (
-                content
-              )}
-            </Link>
-          ) : (
-            <div key={item.id}>{content}</div>
-          );
-        })}
+        {(filteredMenuItems as MenuItem[]).map((item) => (
+          <SideNavItem
+            key={String(item.id)}
+            item={item}
+            level={0}
+            collapsed={collapsed}
+            pathname={pathname}
+            openKeys={openKeys}
+            toggleKey={toggleKey}
+          />
+        ))}
       </div>
+
     </section>
   );
 };

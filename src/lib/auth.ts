@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import jwt from "jsonwebtoken";
 
@@ -29,4 +29,33 @@ export async function getUserFromRequest(req: NextRequest) {
   } catch {
     return null;
   }
+}
+
+/**
+ * ✅ Use in management-only API routes.
+ * Returns either:
+ * - { user } on success
+ * - NextResponse on failure (401/403)
+ */
+export async function requireManagementFromRequest(req: NextRequest) {
+  const user = await getUserFromRequest(req);
+
+  if (!user) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized", code: "AUTH_MISSING" },
+      { status: 401 }
+    );
+  }
+
+  const roles = [user.role, ...(user.roles ?? [])].filter(Boolean);
+  const isManagement = roles.includes("admin") || roles.includes("manager");
+
+  if (!isManagement) {
+    return NextResponse.json(
+      { success: false, message: "Forbidden", code: "FORBIDDEN" },
+      { status: 403 }
+    );
+  }
+
+  return { user };
 }
