@@ -455,22 +455,44 @@ const SideNavBar = () => {
     [hasRole]
   );
 
-  const collectOpenKeysForPath = (items: MenuItem[], path: string, parents: string[] = []): string[] => {
+  const collectOpenKeysForPath = (
+    items: MenuItem[],
+    path: string,
+    parents: string[] = []
+  ): string[] => {
+    const pathnameOnly = (path.split("?")[0] || "").replace(/\/+$/, "");
+
     for (const item of items) {
       const k = String(item.id);
       const nextParents = [...parents, k];
+      const hasChildren = !!item.children?.length;
 
-      // If this node matches
-      if (item.url && path.startsWith(item.url)) return parents;
+      // 1) Try deeper first (best match wins)
+      if (hasChildren) {
+        const match = collectOpenKeysForPath(item.children!, pathnameOnly, nextParents);
+        if (match.length) return match;
+      }
 
-      // If any descendant matches, open this chain
-      if (item.children?.length) {
-        const match = collectOpenKeysForPath(item.children, path, nextParents);
-        if (match.length) return nextParents;
+      // 2) Match this item (exact OR leaf prefix)
+      if (item.url) {
+        const itemUrl = item.url.replace(/\/+$/, "");
+
+        const isExact = pathnameOnly === itemUrl;
+
+        // prefix match only if it's a real segment boundary
+        const isLeafPrefix =
+          !hasChildren &&
+          (pathnameOnly === itemUrl || pathnameOnly.startsWith(itemUrl + "/"));
+
+        if (isExact || isLeafPrefix) {
+          return parents; // open ancestors, not the leaf itself
+        }
       }
     }
+
     return [];
   };
+
 
   useEffect(() => {
     const keys = collectOpenKeysForPath(filteredMenuItems as MenuItem[], pathname);
