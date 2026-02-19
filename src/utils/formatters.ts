@@ -23,9 +23,9 @@ export const formatToMoney = (
       i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands) +
       (decimalCount
         ? decimal +
-          Math.abs(Number(amount) - Number(i))
-            .toFixed(decimalCount)
-            .slice(2)
+        Math.abs(Number(amount) - Number(i))
+          .toFixed(decimalCount)
+          .slice(2)
         : "")
     );
   } catch (e) {
@@ -41,7 +41,7 @@ export const formatToMoneyWithCurrency = (
 ) => {
   let cleanAmount = amount?.toString().replace(",", "").trim();
   try {
-    return `R${formatToMoney(cleanAmount, decimalCount, decimal, thousands)}`;
+    return `R ${formatToMoney(cleanAmount, decimalCount, decimal, thousands)}`;
   } catch (e) {
     console.log(e);
   }

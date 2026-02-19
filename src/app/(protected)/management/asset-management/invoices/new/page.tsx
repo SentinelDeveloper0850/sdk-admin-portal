@@ -255,7 +255,7 @@ export default function AmsNewInvoiceIntakePage() {
                 icon: "success",
             });
 
-            router.push("/ams/assets");
+            router.push("/management/asset-management/assets");
         } catch (e: any) {
             swal({
                 title: "Error",
@@ -372,7 +372,7 @@ export default function AmsNewInvoiceIntakePage() {
     );
 
     return (
-        <div>
+        <div className="p-4">
             <PageHeader
                 title="New Intake"
                 subtitle="Upload an invoice and register assets purchased"
@@ -391,7 +391,7 @@ export default function AmsNewInvoiceIntakePage() {
                 ]}
             />
 
-            <div style={{ padding: 16 }}>
+            <div>
                 <Form form={form} layout="vertical">
                     <Space size={16} style={{ width: "100%", alignItems: "flex-start" }} wrap>
                         <Form.Item

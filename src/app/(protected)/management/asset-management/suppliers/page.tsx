@@ -70,7 +70,7 @@ export default function AmsSuppliersPage() {
     );
 
     return (
-        <div style={{ padding: 16 }}>
+        <div className="p-4">
             <PageHeader
                 title="Suppliers"
                 subtitle="Manage your suppliers and their details"

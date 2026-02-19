@@ -104,7 +104,7 @@ export default function AmsInvoicesPage() {
     );
 
     return (
-        <div>
+        <div className="p-4">
             <PageHeader
                 title="Purchase Invoices"
                 subtitle="View and manage procurement invoices"
@@ -123,7 +123,7 @@ export default function AmsInvoicesPage() {
                 ]}
             />
 
-            <div style={{ padding: 16 }}>
+            <div>
                 <Space style={{ marginBottom: 16 }}>
                     <Input
                         placeholder="Search invoices..."

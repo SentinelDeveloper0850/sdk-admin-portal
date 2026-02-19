@@ -573,6 +573,46 @@ a:hover {
   color: #fff;
 }
 
+/* =========================
+   AntD Descriptions — Dark Mode Fix
+   ========================= */
+
+.dark .ant-descriptions-bordered {
+  border-color: #333 !important;
+}
+
+.dark .ant-descriptions-bordered .ant-descriptions-view {
+  background-color: #212121 !important;
+  border-color: #333 !important;
+}
+
+/* Table borders */
+.dark .ant-descriptions-bordered table {
+  border-color: #333 !important;
+}
+
+.dark .ant-descriptions-bordered .ant-descriptions-row > th,
+.dark .ant-descriptions-bordered .ant-descriptions-row > td {
+  border-color: #333 !important;
+}
+
+/* Label cells */
+.dark .ant-descriptions-bordered .ant-descriptions-item-label {
+  background-color: #2a2a2a !important; /* slightly lighter than content */
+  color: #9ca3af !important;            /* gray-400 */
+}
+
+/* Content cells */
+.dark .ant-descriptions-bordered .ant-descriptions-item-content {
+  background-color: #212121 !important;
+  color: #ffffff !important;
+}
+
+/* Optional: make colon/extra separators behave */
+.dark .ant-descriptions-item-label::after {
+  color: #6b7280 !important; /* gray-500 */
+}
+
 .dark .ant-list {
   background-color: #212121;
   color: #fff;
