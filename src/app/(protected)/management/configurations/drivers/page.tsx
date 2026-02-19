@@ -374,4 +374,4 @@ const DriversPage = () => {
     );
 };
 
-export default withRoleGuard(DriversPage, [ERoles.Admin, ERoles.HRManager]);
+export default withRoleGuard(DriversPage, [ERoles.Admin, ERoles.HRManager, ERoles.RegionalManager]);

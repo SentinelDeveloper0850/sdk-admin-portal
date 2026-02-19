@@ -9,7 +9,7 @@ import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
 
-import { ERoles } from "../../../../types/roles.enum";
+import { ERoles } from "@/types/roles.enum";
 
 const { Title, Paragraph, Text } = Typography;
 

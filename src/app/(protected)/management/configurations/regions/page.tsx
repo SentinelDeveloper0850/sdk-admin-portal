@@ -28,7 +28,7 @@ import { IUser } from "@/app/models/auth/user.schema";
 import { useAuth } from "@/context/auth-context";
 import { debounce, deriveRegionCode } from "@/lib/utils";
 
-import { ERoles } from "../../../../types/roles.enum";
+import { ERoles } from "@/types/roles.enum";
 
 const { Option } = Select;
 

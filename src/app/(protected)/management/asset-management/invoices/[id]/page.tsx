@@ -8,9 +8,11 @@ import { useEffect, useMemo, useState } from "react";
 import swal from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
+import { ERoles } from "@/types/roles.enum";
 import { formatToMoneyWithCurrency } from "@/utils/formatters";
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
-export default function AmsInvoiceDetailsPage() {
+const AmsInvoiceDetailsPage = () => {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const invoiceId = params?.id;
@@ -185,3 +187,5 @@ export default function AmsInvoiceDetailsPage() {
         </div>
     );
 }
+
+export default withRoleGuard(AmsInvoiceDetailsPage, [ERoles.Admin, ERoles.ITManager, ERoles.ProcurementManager, ERoles.FinanceManager]);

@@ -31,6 +31,7 @@ import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
+import { ERoles } from "@/types/roles.enum";
 
 interface ReminderConfig {
   isEnabled: boolean;
@@ -491,4 +492,4 @@ const DailyActivityRemindersPage = () => {
   );
 };
 
-export default withRoleGuard(DailyActivityRemindersPage, ["admin"]);
+export default withRoleGuard(DailyActivityRemindersPage, [ERoles.Admin]);

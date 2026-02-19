@@ -9,7 +9,7 @@ import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 import PageHeader from "@/app/components/page-header";
 
-import { ERoles } from "../../../../types/roles.enum";
+import { ERoles } from "@/types/roles.enum";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -51,39 +51,6 @@ const SystemConfigurationsPage = () => {
                     configurations.
                   </Paragraph>
                 </div>
-
-                {/* <div className="space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <Title level={4} className="mb-2 flex items-center gap-2">
-                      <Settings size={20} className="text-blue-600" />
-                      Planned Features
-                    </Title>
-                    <ul className="text-left space-y-2 text-gray-600">
-                      <li>• General system settings management</li>
-                      <li>• Security and authentication configurations</li>
-                      <li>• Email and notification settings</li>
-                      <li>• Policy management and enforcement</li>
-                      <li>• System health monitoring</li>
-                      <li>• Audit logging and compliance</li>
-                    </ul>
-                  </div>
-
-                  <Space direction="vertical" size="large" className="w-full">
-                    <Button
-                      type="primary"
-                      size="large"
-                      onClick={() => router.push('/configurations/branches')}
-                    >
-                      Manage Branch Configurations
-                    </Button>
-                    <Button
-                      size="large"
-                      onClick={() => router.push('/dashboard')}
-                    >
-                      Return to Dashboard
-                    </Button>
-                  </Space>
-                </div> */}
               </div>
             </Card>
           </Col>

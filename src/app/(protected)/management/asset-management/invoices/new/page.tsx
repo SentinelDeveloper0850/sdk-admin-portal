@@ -9,6 +9,8 @@ import { useEffect, useMemo, useState } from "react";
 import swal from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
+import { ERoles } from "@/types/roles.enum";
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 type Supplier = {
     _id: string;
@@ -40,7 +42,7 @@ const CATEGORY_OPTIONS = [
     "Other",
 ].map((v) => ({ label: v, value: v }));
 
-export default function AmsNewInvoiceIntakePage() {
+const AmsNewInvoiceIntakePage = () => {
     const router = useRouter();
 
     const [form] = Form.useForm();
@@ -465,3 +467,5 @@ export default function AmsNewInvoiceIntakePage() {
         </div>
     );
 }
+
+export default withRoleGuard(AmsNewInvoiceIntakePage, [ERoles.Admin, ERoles.ITManager, ERoles.ProcurementManager, ERoles.FinanceManager]);

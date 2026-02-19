@@ -32,6 +32,8 @@ import ContentLoading from "@/app/components/content-loading";
 import PageHeader from "@/app/components/page-header";
 import { IUser } from "@/app/models/auth/user.schema";
 import { IStaffMember } from "@/app/models/staff-member.schema";
+import { ERoles } from "@/types/roles.enum";
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 dayjs.extend(relativeTime);
 
@@ -1094,4 +1096,4 @@ const StaffMemberPage = () => {
   );
 };
 
-export default StaffMemberPage;
+export default withRoleGuard(StaffMemberPage, [ERoles.Admin, ERoles.HRManager, ERoles.RegionalManager]);;

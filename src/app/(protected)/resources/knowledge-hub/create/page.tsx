@@ -15,7 +15,7 @@ import {
   editorJsToMarkdown,
 } from "@/app/components/editor/editorjs-converters";
 
-import { ERoles } from "../../../../types/roles.enum";
+import { ERoles } from "@/types/roles.enum";
 
 const EditorJsEditor = dynamic(
   () => import("@/app/components/editor/EditorJsEditor"),

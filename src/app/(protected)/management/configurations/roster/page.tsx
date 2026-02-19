@@ -247,4 +247,4 @@ function DutyRosterPage() {
   );
 }
 
-export default withRoleGuard(DutyRosterPage, [ERoles.Admin, ERoles.HRManager]);
+export default withRoleGuard(DutyRosterPage, [ERoles.Admin, ERoles.HRManager, ERoles.RegionalManager]);

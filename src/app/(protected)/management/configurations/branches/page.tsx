@@ -37,8 +37,7 @@ import { withRoleGuard } from "@/utils/utils/with-role-guard";
 import PageHeader from "@/app/components/page-header";
 import { IUser } from "@/app/models/auth/user.schema";
 import { useAuth } from "@/context/auth-context";
-
-import { ERoles } from "../../../../types/roles.enum";
+import { ERoles } from "@/types/roles.enum";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -919,4 +918,4 @@ const BranchConfigurationsPage = () => {
   );
 };
 
-export default withRoleGuard(BranchConfigurationsPage, [ERoles.Admin]);
+export default withRoleGuard(BranchConfigurationsPage, [ERoles.Admin, ERoles.RegionalManager]);

@@ -28,11 +28,7 @@ import PageHeader from "@/app/components/page-header";
 import { useAuth } from "@/context/auth-context";
 import { generateCemeteryCode } from "@/utils";
 
-import { ERoles } from "../../../../types/roles.enum";
-
-// src/app/(protected)/configurations/cemeteries/page.tsx
-
-// src/app/(protected)/configurations/cemeteries/page.tsx
+import { ERoles } from "@/types/roles.enum";
 
 const { Option } = Select;
 
@@ -745,4 +741,4 @@ const CemeteriesConfigurationsPage = () => {
   );
 };
 
-export default withRoleGuard(CemeteriesConfigurationsPage, [ERoles.Admin]);
+export default withRoleGuard(CemeteriesConfigurationsPage, [ERoles.Admin, ERoles.RegionalManager]);

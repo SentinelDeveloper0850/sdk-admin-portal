@@ -7,6 +7,8 @@ import { useEffect, useMemo, useState } from "react";
 import swal from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
+import { ERoles } from "@/types/roles.enum";
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
 type Supplier = {
     _id: string;
@@ -36,7 +38,7 @@ const WARRANTY_OPTIONS = [
     { label: "90 days", value: 90 },
 ];
 
-export default function AmsAssetsPage() {
+const AmsAssetsPage = () => {
     const [loading, setLoading] = useState(false);
     const [assets, setAssets] = useState<any[]>([]);
 
@@ -272,3 +274,5 @@ export default function AmsAssetsPage() {
         </div>
     );
 }
+
+export default withRoleGuard(AmsAssetsPage, [ERoles.Admin, ERoles.ITManager, ERoles.ProcurementManager, ERoles.InventoryManager]);

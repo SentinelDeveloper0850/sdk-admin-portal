@@ -8,8 +8,10 @@ import { useEffect, useMemo, useState } from "react";
 import swal from "sweetalert";
 
 import PageHeader from "@/app/components/page-header";
+import { ERoles } from "@/types/roles.enum";
+import { withRoleGuard } from "@/utils/utils/with-role-guard";
 
-export default function AmsInvoicesPage() {
+const AmsInvoicesPage = () => {
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
@@ -148,3 +150,5 @@ export default function AmsInvoicesPage() {
         </div>
     );
 }
+
+export default withRoleGuard(AmsInvoicesPage, [ERoles.Admin, ERoles.ITManager, ERoles.ProcurementManager, ERoles.FinanceManager]);
