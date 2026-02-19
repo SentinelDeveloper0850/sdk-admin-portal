@@ -9,7 +9,9 @@ import { Tooltip } from "antd";
 import {
   Banknote,
   BarChart3,
+  Boxes,
   Briefcase,
+  Building2,
   Calendar,
   ChevronDown,
   ChevronsLeft,
@@ -17,8 +19,11 @@ import {
   ClipboardList,
   FilePen,
   FileText,
+  HardDrive,
   LayoutDashboard,
   ListOrdered,
+  PlusCircle,
+  Receipt,
   Server,
   Settings,
   Shield,
@@ -32,6 +37,7 @@ import {
   HiOutlineDocumentCurrencyDollar,
   HiUserGroup
 } from "react-icons/hi2";
+
 
 import { FileTextOutlined, SafetyOutlined } from "@ant-design/icons";
 import { ERoles } from "../../types/roles.enum";
@@ -343,6 +349,49 @@ const SideNavBar = () => {
           group: "Management",
         },
         {
+          id: "asset-management",
+          name: "Asset Management",
+          icon: <Boxes size={18} />, // or Database / HardDrive / Boxes
+          url: "/management/asset-management",
+          allowedRoles: ManagementRoles,
+          group: "Management",
+          children: [
+            {
+              id: "ams-assets",
+              name: "Assets",
+              icon: <HardDrive size={18} />,
+              url: "/management/asset-management/assets",
+              allowedRoles: ManagementRoles,
+              group: "Asset Management",
+            },
+            {
+              id: "ams-invoices",
+              name: "Purchase Invoices",
+              icon: <Receipt size={18} />,
+              url: "/management/asset-management/invoices",
+              allowedRoles: ManagementRoles,
+              group: "Asset Management",
+            },
+            {
+              id: "ams-suppliers",
+              name: "Suppliers",
+              icon: <Building2 size={18} />,
+              url: "/management/asset-management/suppliers",
+              allowedRoles: ManagementRoles,
+              group: "Asset Management",
+            },
+            // Optional shortcut (only if you want it)
+            {
+              id: "ams-new-intake",
+              name: "New Intake",
+              icon: <PlusCircle size={18} />,
+              url: "/management/asset-management/invoices/new",
+              allowedRoles: ManagementRoles,
+              group: "Asset Management",
+            },
+          ],
+        },
+        {
           id: "system-configurations",
           name: "System Configurations",
           icon: <Settings size={18} />,
@@ -467,13 +516,14 @@ const SideNavBar = () => {
       ? "bg-amber-50 dark:bg-zinc-800/40"
       : "";
 
-    const indent = level === 0 ? "" : `ml-${Math.min(level * 3, 12)}`; // keep it sane
+    const indentPx = Math.min(level * 14, 42); // tweak if you want more/less indentation
 
     if (hasChildren) {
       return (
         <div>
           <div
-            className={`${baseClass} ${borderClass} ${bgClass} ${indent} justify-between`}
+            className={`${baseClass} ${borderClass} ${bgClass} justify-between`}
+            style={{ paddingLeft: 16 + indentPx }}
             onClick={() => {
               if (collapsed) return; // in collapsed mode we won't expand nested menus
               toggleKey(item.id);
@@ -516,7 +566,7 @@ const SideNavBar = () => {
     }
 
     const content = (
-      <div className={`${baseClass} ${borderClass} ${indent}`}>
+      <div className={`${baseClass} ${borderClass}`} style={{ paddingLeft: 16 + indentPx }}>
         {item.icon}
         {!collapsed && (
           <p className="text-xs font-normal uppercase tracking-wider">
