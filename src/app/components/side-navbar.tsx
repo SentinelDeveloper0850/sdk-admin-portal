@@ -83,7 +83,7 @@ const ManagementRoles = [
 ];
 
 const SideNavBar = () => {
-  const pathname = usePathname();
+  const pathname = usePathname(); ``
   const [collapsed, setCollapsed] = useState(true);
 
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
@@ -402,7 +402,7 @@ const SideNavBar = () => {
             {
               id: "staff-members",
               name: "Staff Members",
-              url: "/configurations/staff-members",
+              url: "/management/configurations/staff-members",
               allowedRoles: ManagementRoles,
               icon: <HiUserGroup size={18} />,
             },
@@ -417,28 +417,28 @@ const SideNavBar = () => {
             {
               id: "drivers-config",
               name: "Drivers",
-              url: "/configurations/drivers",
+              url: "/management/configurations/drivers",
               allowedRoles: ManagementRoles,
               icon: <IconSteeringWheel size={18} />,
             },
             {
               id: "regions-config",
               name: "Regions",
-              url: "/configurations/regions",
+              url: "/management/configurations/regions",
               allowedRoles: ManagementRoles,
               icon: <HiMapPin size={18} />,
             },
             {
               id: "branches-config",
               name: "Branches",
-              url: "/configurations/branches",
+              url: "/management/configurations/branches",
               allowedRoles: ManagementRoles,
               icon: <HiBuildingOffice size={18} />,
             },
             {
               id: "duty-roster-config",
               name: "Duty Roster",
-              url: "/configurations/roster",
+              url: "/management/configurations/roster",
               allowedRoles: ManagementRoles,
               icon: <HiClock size={18} />,
             },
